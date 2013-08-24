@@ -1,0 +1,16 @@
+.Notes-cabal.org
+.Notes-diagrams.org
+.Notes-hakyll.org
+.Notes-platform.org
+.Notes-xmonad.org
+book/
+diagrams/
+example/
+paper/HaskellCheatSheet.pdf
+paper/History_of_Haskell-Hudak-Hughes-Peyton-Jones-Wadler.pdf
+paper/designing_typesafe_haskell_apis-Snoyman.pdf
+paper/monad-reader/issue22/gadt.hs-save
+paper/monad-reader/issue22/issue22.pdf
+paper/monad-reader/issue22/r.hs
+paper/twoDznA.pdf
+paper/twoDznQ.pdf
