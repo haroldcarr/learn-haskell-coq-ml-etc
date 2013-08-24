@@ -18,8 +18,10 @@ was an introduction to [[http://www.impredicative.com/ur/tutorial/tlc.html][type
 What follows is a compressed summary of the info in that article.
 The page numbers refer to Anton's tutorial.
 
-(Note: the info below is 3rd-hand info, go to Anton's article for
-1st and 2nd-hand info and follow his references for 1st-hand info.)
+Notes:
+- The info below is 3rd-hand info, go to Anton's article for 1st and
+  2nd-hand info and follow his references for 1st-hand info.
+- The code extracted from below is at GitHub: [[https://github.com/haroldcarr/learn-haskell/blob/master/paper/monad-reader/issue22/gadt.hs][gadt.hs]].
 
 ------------------------------------------------------------------------------
 * Intro (p. 5)
