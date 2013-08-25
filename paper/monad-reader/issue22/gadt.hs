@@ -2,6 +2,9 @@
 {-# LANGUAGE GADTs, ExistentialQuantification, DataKinds, TypeFamilies, TypeOperators, MultiParamTypeClasses, FlexibleInstances #-}
 
 import Data.Char
+import Debug.Trace
+
+debug = flip trace
 
 data Test a = TI Int | TS String a
 
@@ -181,7 +184,7 @@ data NatSing (n::Nat'''') where
 
 repeatElem'''' :: a -> NatSing n -> List'''' a n
 repeatElem'''' _ ZeroSing     = Nil''''
-repeatElem'''' x (SuccSing n) = Cons'''' x (repeatElem'''' x n)  -- note: substraction done by structural induction
+repeatElem'''' x (SuccSing n) = Cons'''' x (repeatElem'''' x n)  -- note: subtraction done by structural induction
 
 type family   (m::Nat'''')  :< (n::Nat'''') :: Bool
 type instance  m            :< 'Zero''''     = 'False
@@ -283,7 +286,7 @@ data Node a (bh::Nat) (c::Color) where
               -> Node a (IncBH c bh) c
 
 instance Show a => Show (Node a b c) where
-    show  E          = "(E 0 B)"
+    show  E          = "eb"
     show (N c l x r) = "(N"
                          ++ " " ++ (show c)
                          ++ " " ++ (show l)
@@ -306,35 +309,40 @@ insert :: Ord a => Tree a -> a -> Tree a
 insert (Root t) v = blacken (insert' t v) where
     insert' :: Ord a => Node a n c -> a -> IntNode a n
     insert'     n@(N c l a r) x
-        | x < a = leftBalance  c (insert' l x) a          r
-        | x > a = rightBalance c          l    a (insert' r x)
-        | otherwise = IntNode  c          l    a          r
+        | x < a = leftBalance  c (insert' l x) a          r    `debug` "i<"
+        | x > a = rightBalance c          l    a (insert' r x) `debug` "i>"
+        | otherwise = IntNode  c          l    a          r    `debug` "i="
     insert'        E          x =
-                      IntNode  SR         E    x          E
+                      IntNode  SR         E    x          E    `debug` "iE"
     blacken (IntNode _ l x r) =
-                      Root  (N SB         l    x          r)
+                      Root  (N SB         l    x          r)   `debug` "blacken"
 
 leftBalance :: ColorSingleton c
                -> IntNode a n -> a -> Node a n c'
                   -> IntNode a (IncBH c n)
-leftBalance SB (IntNode SR (N SR a              x       b) y       c)   z d =
-                IntNode SR (N SB a              x       b) y (N SB c    z d)
-leftBalance SB (IntNode SR       a              x (N SR b  y       c))  z d =
-                IntNode SR (N SB a              x       b) y (N SB c    z d)
+-- 1:
+leftBalance         SB (IntNode SR (N SR a              x       b) y       c)   z d =
+            IntNode SR (N       SB       a              x       b) y (N SB c    z d)    `debug` "lb1"
+-- 2:
+leftBalance         SB (IntNode SR       a              x (N SR b  y       c))  z d =
+            IntNode SR (N       SB       a              x       b) y (N SB c    z d)    `debug` "lb2"
+-- 3:
 -- tree balanced, but need to change type from IntNode to Node:
-leftBalance c  (IntNode SB       a              x       b)              z d =
-                IntNode c  (N SB a              x       b)              z d
+leftBalance         c  (IntNode SB       a              x       b)              z d =
+            IntNode c  (N       SB       a              x       b)              z d     `debug` "lb3"
+-- 4:
 -- red nodes must have black children
-leftBalance c  (IntNode SR       a@(N SB _ _ _) x       b@(N SB _ _ _)) z d =
-                IntNode c  (N SR a              x       b)              z d
+leftBalance         c  (IntNode SR       a@(N SB _ _ _) x       b@(N SB _ _ _)) z d =
+            IntNode c  (N       SR       a              x       b)              z d     `debug` "lb4"
+-- 5:
 -- red nodes must have black children
-leftBalance c  (IntNode SR  E                   x          E)           z d =
-                IntNode c  (N SR    E           x          E)           z d
+leftBalance         c  (IntNode SR       E              x          E)           z d =
+            IntNode c  (N       SR       E              x          E)           z d     `debug` "lb5"
 
 -- cannot happen, but not enough type info to omit:
-leftBalance _  (IntNode SR (N SR    _           _       _) _       _)   _ _ =
+leftBalance         _  (IntNode SR        (N SR _ _ _)  _          _)           _ _ =
                 error "cannot happen"
-leftBalance _  (IntNode SR  _                           _ (N SR _ _ _)) _ _ =
+leftBalance         _  (IntNode SR      _               _         (N SR _ _ _)) _ _ =
                 error "cannot happen"
 
 -- The case of one regular node and one leaf node is not valid,
@@ -344,16 +352,22 @@ leftBalance _  (IntNode SR  _                           _ (N SR _ _ _)) _ _ =
 rightBalance :: ColorSingleton c
                -> Node a n c' -> a -> IntNode a n
                   -> IntNode a (IncBH c n)
-rightBalance SB               a x       (IntNode SR b              y (N SR c  z d)) =
-             IntNode SR (N SB a x                   b)             y (N SB c  z d)
-rightBalance SB               a x (IntNode SR (N SR b              y       c) z d)  =
-             IntNode SR (N SB a x                   b)             y (N SB c  z d)
-rightBalance c                a x (IntNode SB       b              y            d)  =
-             IntNode c        a x             (N SB b              y            d)
-rightBalance c                a x (IntNode SR       b@(N SB _ _ _) y            d@(N SB _ _ _)) =
-             IntNode c        a x             (N SR b              y            d)
-rightBalance c                a x (IntNode SR  E                   y  E)            =
-             IntNode c        a x             (N SR E              y  E)
+-- 1:
+rightBalance               SB a x (IntNode SR       b              y (N SR c  z d)) =
+             IntNode SR (N SB a x                   b)             y (N SB c  z d)    `debug` "rb1"
+-- 2:
+rightBalance               SB a x (IntNode SR (N SR b              y       c) z d)  =
+             IntNode SR (N SB a x                   b)             y (N SB c  z d)    `debug` "rb2"
+-- 3:
+rightBalance         c        a x (IntNode SB       b              y            d)  =
+             IntNode c        a x (N       SB       b              y            d)    `debug` "rb3"
+-- 4:
+rightBalance         c        a x (IntNode SR       b@(N SB _ _ _) y            d@(N SB _ _ _)) =
+             IntNode c        a x (N       SR       b              y            d)    `debug` "rb4"
+-- 5:
+rightBalance         c        a x (IntNode SR  E                   y  E)            =
+             IntNode c        a x (N       SR  E                   y  E)              `debug` "rb5"
+
 rightBalance _                _ _ (IntNode SR (N SR _ _ _)         _  _)            =
              error "cannot happen"
 rightBalance _                _ _ (IntNode SR _                    _ (N SR _ _ _))  =

@@ -6,6 +6,13 @@
 #+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
+#+BEGIN_HTML
+---
+title: Type Level Computation in Haskell via GADTs
+tags: haskell, GADT, type-level-computation
+---
+#+END_HTML
+
 ------------------------------------------------------------------------------
 * Generalized Algebraic Data Types in Haskell by Anton Dergunov
 
@@ -17,6 +24,10 @@ was an introduction to [[http://www.impredicative.com/ur/tutorial/tlc.html][type
 
 What follows is a compressed summary of the info in that article.
 The page numbers refer to Anton's tutorial.
+
+#+BEGIN_HTML
+<!-- MORE -->
+#+END_HTML
 
 Notes:
 - The info below is 3rd-hand info, go to Anton's article for 1st and
@@ -46,6 +57,9 @@ Theoretical foundation for GADTs is [[http://en.wikipedia.org/wiki/Dependent_typ
 {-# LANGUAGE GADTs, ExistentialQuantification, DataKinds, TypeFamilies, TypeOperators, MultiParamTypeClasses, FlexibleInstances #-}
 
 import Data.Char
+import Debug.Trace
+
+debug = flip trace
 #+END_SRC
 
 Example [[http://en.wikipedia.org/wiki/Algebraic_data_type][Algebraic Data Type]] (ADT):
@@ -53,10 +67,12 @@ Example [[http://en.wikipedia.org/wiki/Algebraic_data_type][Algebraic Data Type]
 - TI/TS : value constructors
   - each value constructor can specify zero or more components
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 data Test a = TI Int | TS String a
 #+END_SRC
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 :t TI
 -- TI :: Int -> Test a
@@ -156,7 +172,7 @@ PROBLEM: type checker accepts:
 -- AddInt'' (IntVal'' 5) (BoolVal'' True) :: ExtExpr''
 #+END_EXAMPLE
 
-Since =ExtExpr='' is NOT parameteterized by return value type, evaluation function is complicated:
+Since =ExtExpr='' is NOT parameterized by return value type, evaluation function is complicated:
 
 #+BEGIN_SRC haskell
 evaluate'' :: ExtExpr'' -> Maybe (Either Int Bool)
@@ -448,6 +464,7 @@ FIX:
 - extend representation, adding value constructor (done above in =data Type t=).
 - add to patterns of encode functions (done above in =encode TDyn=).
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 let e = Dyn (TList TDyn) d
 :t e
@@ -630,6 +647,7 @@ To implement concatenation need type-level Peano addition.
 - Requires =TypeFamilies=
 - p. 18
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 type family Plus''' a b
 type instance Plus''' Zero'''     n = n
@@ -640,6 +658,7 @@ concatenate''' Nil''' ys = ys
 concatenate''' (Cons''' x xs) ys = Cons''' x (concatenate''' xs ys)
 #+END_SRC
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 let c = concatenate''' (Cons''' 1 $ Cons''' 2 $ Nil''') (Cons''' 3 $ Cons''' 4 $ Nil''')
 :t c
@@ -659,10 +678,12 @@ FIX: Types classify values.  Kinds classify types.  So declare a new kind:
 - But, due to promotion, =Nat=' also a kind; =Zero=' / =Succ=' also types.
 - Sometimes necessary to prepend quote (e.g., '=Succ=') to refer to *type* (not value constructor)
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 data Nat'''' = Zero'''' | Succ'''' Nat''''
 #+END_SRC
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 -- Type-level representation of number two (although prepended quote not necessary here):
 type    Two = 'Succ'''' ('Succ'''' 'Zero'''')
@@ -716,7 +737,7 @@ Can now define:
 #+BEGIN_SRC haskell
 repeatElem'''' :: a -> NatSing n -> List'''' a n
 repeatElem'''' _ ZeroSing     = Nil''''
-repeatElem'''' x (SuccSing n) = Cons'''' x (repeatElem'''' x n)  -- note: substraction done by structural induction
+repeatElem'''' x (SuccSing n) = Cons'''' x (repeatElem'''' x n)  -- note: subtraction done by structural induction
 #+END_SRC
 
 #+BEGIN_EXAMPLE
@@ -732,7 +753,7 @@ Example: do not exceed list length
 
 Requires =TypeOperators=
 
-Requires type-level magnitude comparision function (defined by structural induction):
+Requires type-level magnitude comparison function (defined by structural induction):
 
 #+BEGIN_SRC haskell
 type family   (m::Nat'''')  :< (n::Nat'''') :: Bool
@@ -747,12 +768,14 @@ type instance ('Succ'''' m) :< ('Succ'''' n) = m :< n
 - ensure           =n :< m=
 - note: =~= is equality constraint
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 nthElem'''' :: (n :< m) ~ 'True => List'''' a m -> NatSing n -> a
 nthElem'''' (Cons'''' x  _) ZeroSing     = x
 nthElem'''' (Cons'''' _ xs) (SuccSing n) = nthElem'''' xs n
 #+END_SRC
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 let ne = nthElem'''' (repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing)) (SuccSing $ SuccSing ZeroSing)
 --    Couldn't match type 'False with 'True
@@ -779,7 +802,9 @@ let ne = nthElem'''' (repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing))        
 * Proving Correctness of Red-Black Tree Insert (p. 21)
 
 - [[http://en.wikipedia.org/wiki/Red%E2%80%93black_tree][Red-Black Trees]]
-- Stephanie Weirich's slides ([[http://www.seas.upenn.edu/~sweirich/talks/flops2012.pdf][pdf]]) for reference [7] (p. 33).
+- [[http://www.seas.upenn.edu/~sweirich/][Stephanie Weirich's]]
+  - slides ([[http://www.seas.upenn.edu/~sweirich/talks/flops2012.pdf][pdf]]) for reference [7] (p. 33)
+  - [[http://www.seas.upenn.edu/~cis552/12fa/schedule.html][course/code]] - scroll down to RedBlack[1|2|3]
 
 #+BEGIN_SRC haskell
 data Color   = R | B deriving (Eq, Show)
@@ -787,7 +812,7 @@ data Node' a = E' | N' Color (Node' a) a (Node' a)
 type Tree' a = Node' a
 #+END_SRC
 
-For any node =N c l x r= values less than =x= are stored in =l=, otherwise =r=:
+For any node =N c l x r=, values less than =x= are stored in =l=, otherwise =r=:
 
 #+BEGIN_SRC haskell
 member' :: Ord a => a -> Tree' a -> Bool
@@ -813,6 +838,7 @@ Ensure operations take /O/ (log /n/ ) time,
 -  /Black Height/: For each node, all paths from that node to leaf
    contain same number of black nodes.
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 insert' :: Ord a => Tree' a -> a -> Tree' a
 insert' t v = blacken (insert'' t v) where
@@ -830,6 +856,7 @@ ensuring invariants:
 - 1: blacken root
 - 3: =leftBalance= / =rightBalance=
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 leftBalance' :: Node' a -> Node' a
 leftBalance' (N' B (N' R (N' R a x       b) y       c)  z d) =
@@ -956,7 +983,7 @@ Valid colors for a node on type level.  Can be done via type families
 class ValidColors (parent::Color) (child1::Color) (child2::Color)
 #+END_SRC
 
-Functions not needed on =ValidColore=, just valid instance (requires =FlexibleInstances=):
+Functions not needed on =ValidColors=, just valid instance (requires =FlexibleInstances=):
 
 #+BEGIN_SRC haskell
 instance ValidColors R B  B  -- red with only black children
@@ -974,7 +1001,7 @@ data Node a (bh::Nat) (c::Color) where
               -> Node a (IncBH c bh) c
 
 instance Show a => Show (Node a b c) where
-    show  E          = "(E 0 B)"
+    show  E          = "eb"
     show (N c l x r) = "(N"
                          ++ " " ++ (show c)
                          ++ " " ++ (show l)
@@ -1010,13 +1037,13 @@ insert :: Ord a => Tree a -> a -> Tree a
 insert (Root t) v = blacken (insert' t v) where
     insert' :: Ord a => Node a n c -> a -> IntNode a n
     insert'     n@(N c l a r) x
-        | x < a = leftBalance  c (insert' l x) a          r
-        | x > a = rightBalance c          l    a (insert' r x)
-        | otherwise = IntNode  c          l    a          r
+        | x < a = leftBalance  c (insert' l x) a          r    `debug` "i<"
+        | x > a = rightBalance c          l    a (insert' r x) `debug` "i>"
+        | otherwise = IntNode  c          l    a          r    `debug` "i="
     insert'        E          x =
-                      IntNode  SR         E    x          E
+                      IntNode  SR         E    x          E    `debug` "iE"
     blacken (IntNode _ l x r) =
-                      Root  (N SB         l    x          r)
+                      Root  (N SB         l    x          r)   `debug` "blacken"
 #+END_SRC
 
 Before, passed whole =Node= as param.
@@ -1028,24 +1055,29 @@ using =IntNode=:
 leftBalance :: ColorSingleton c
                -> IntNode a n -> a -> Node a n c'
                   -> IntNode a (IncBH c n)
-leftBalance SB (IntNode SR (N SR a              x       b) y       c)   z d =
-                IntNode SR (N SB a              x       b) y (N SB c    z d)
-leftBalance SB (IntNode SR       a              x (N SR b  y       c))  z d =
-                IntNode SR (N SB a              x       b) y (N SB c    z d)
+-- 1:
+leftBalance         SB (IntNode SR (N SR a              x       b) y       c)   z d =
+            IntNode SR (N       SB       a              x       b) y (N SB c    z d)    `debug` "lb1"
+-- 2:
+leftBalance         SB (IntNode SR       a              x (N SR b  y       c))  z d =
+            IntNode SR (N       SB       a              x       b) y (N SB c    z d)    `debug` "lb2"
+-- 3:
 -- tree balanced, but need to change type from IntNode to Node:
-leftBalance c  (IntNode SB       a              x       b)              z d =
-                IntNode c  (N SB a              x       b)              z d
+leftBalance         c  (IntNode SB       a              x       b)              z d =
+            IntNode c  (N       SB       a              x       b)              z d     `debug` "lb3"
+-- 4:
 -- red nodes must have black children
-leftBalance c  (IntNode SR       a@(N SB _ _ _) x       b@(N SB _ _ _)) z d =
-                IntNode c  (N SR a              x       b)              z d
+leftBalance         c  (IntNode SR       a@(N SB _ _ _) x       b@(N SB _ _ _)) z d =
+            IntNode c  (N       SR       a              x       b)              z d     `debug` "lb4"
+-- 5:
 -- red nodes must have black children
-leftBalance c  (IntNode SR  E                   x          E)           z d =
-                IntNode c  (N SR    E           x          E)           z d
+leftBalance         c  (IntNode SR       E              x          E)           z d =
+            IntNode c  (N       SR       E              x          E)           z d     `debug` "lb5"
 
 -- cannot happen, but not enough type info to omit:
-leftBalance _  (IntNode SR (N SR    _           _       _) _       _)   _ _ =
+leftBalance         _  (IntNode SR        (N SR _ _ _)  _          _)           _ _ =
                 error "cannot happen"
-leftBalance _  (IntNode SR  _                           _ (N SR _ _ _)) _ _ =
+leftBalance         _  (IntNode SR      _               _         (N SR _ _ _)) _ _ =
                 error "cannot happen"
 
 -- The case of one regular node and one leaf node is not valid,
@@ -1059,16 +1091,22 @@ p. 38
 rightBalance :: ColorSingleton c
                -> Node a n c' -> a -> IntNode a n
                   -> IntNode a (IncBH c n)
-rightBalance SB               a x       (IntNode SR b              y (N SR c  z d)) =
-             IntNode SR (N SB a x                   b)             y (N SB c  z d)
-rightBalance SB               a x (IntNode SR (N SR b              y       c) z d)  =
-             IntNode SR (N SB a x                   b)             y (N SB c  z d)
-rightBalance c                a x (IntNode SB       b              y            d)  =
-             IntNode c        a x             (N SB b              y            d)
-rightBalance c                a x (IntNode SR       b@(N SB _ _ _) y            d@(N SB _ _ _)) =
-             IntNode c        a x             (N SR b              y            d)
-rightBalance c                a x (IntNode SR  E                   y  E)            =
-             IntNode c        a x             (N SR E              y  E)
+-- 1:
+rightBalance               SB a x (IntNode SR       b              y (N SR c  z d)) =
+             IntNode SR (N SB a x                   b)             y (N SB c  z d)    `debug` "rb1"
+-- 2:
+rightBalance               SB a x (IntNode SR (N SR b              y       c) z d)  =
+             IntNode SR (N SB a x                   b)             y (N SB c  z d)    `debug` "rb2"
+-- 3:
+rightBalance         c        a x (IntNode SB       b              y            d)  =
+             IntNode c        a x (N       SB       b              y            d)    `debug` "rb3"
+-- 4:
+rightBalance         c        a x (IntNode SR       b@(N SB _ _ _) y            d@(N SB _ _ _)) =
+             IntNode c        a x (N       SR       b              y            d)    `debug` "rb4"
+-- 5:
+rightBalance         c        a x (IntNode SR  E                   y  E)            =
+             IntNode c        a x (N       SR  E                   y  E)              `debug` "rb5"
+
 rightBalance _                _ _ (IntNode SR (N SR _ _ _)         _  _)            =
              error "cannot happen"
 rightBalance _                _ _ (IntNode SR _                    _ (N SR _ _ _))  =
@@ -1097,17 +1135,75 @@ elements (Root t) = aux t [] where
 
 #+BEGIN_EXAMPLE
 member 100 $                         insert (Root E) 100
-member 100 $                 insert (insert (Root E) 100) 101
+member   0 $                 insert (insert (Root E) 100) 101
 member 100 $         insert (insert (insert (Root E) 100) 101) 1
-member 100 $ insert (insert (insert (insert (Root E) 100) 101) 1) 0
+member   0 $ insert (insert (insert (insert (Root E) 100) 101) 1) 0
 elements   $ insert (insert (insert (insert (Root E) 100) 101) 1) 0
+-- [0,1,100,101]
+#+END_EXAMPLE
+
+[[http://cs.lmu.edu/~ray/notes/redblacktrees/]]
+
+In progress ...
+
+#+BEGIN_EXAMPLE
+let root  = (Root E)
+
+(Root eb)
+
+let one   = insert root   4
+
+iE
+blacken
+(Root (N B eb 4 eb))
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let two   = insert one    7
+
+i>
+iE
+rb5
+blacken
+(Root (N B eb 4 (N R eb 7 eb)))
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let three = insert two   12
+
+i>
+i>
+iE
+rb5
+rb1
+blacken
+(Root (N B (N B eb 4 eb) 7 (N B eb 12 eb)))
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let four  = insert three 15
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let five  = insert four   3
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let six   = insert five   5
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let seven = insert six   14
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let eight = insert seven 18
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let nine  = insert eight 16
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+let ten   = insert nine  17
 #+END_EXAMPLE
 
 # --------------------------------------------------
 ** Red-Black Tree proofs in Agda and Coq
 
 - [[http://wiki.portal.chalmers.se/agda/pmwiki.php][Agda]]
-  - See [[http://www.cs.cmu.edu/~drl/][Dan Licata's]] lecture videos linked at
+  - See [[http://www.cs.cmu.edu/~drl/][Dan Licata's]] lecture videos at
     [[http://www.cs.uoregon.edu/research/summerschool/summer13/curriculum.html][Oregon Programming Languages Summer School 2013]]
     (scroll down)
 - [[http://coq.inria.fr/][Coq]]
