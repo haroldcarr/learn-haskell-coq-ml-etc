@@ -355,3 +355,18 @@ rightBalance _                _ _ (IntNode SR (N SR _ _ _)         _  _)        
              error "cannot happen"
 rightBalance _                _ _ (IntNode SR _                    _ (N SR _ _ _))  =
              error "cannot happen"
+
+member :: Ord a => a -> Tree a -> Bool
+member x (Root t) = mem x t where
+    mem :: Ord a => a -> Node a bh c -> Bool
+    mem x E = False
+    mem x (N _ l y r)
+        | x < y     = mem x l
+        | x > y     = mem x r
+        | otherwise = True
+
+elements :: Ord a => Tree a -> [a]
+elements (Root t) = aux t [] where
+    aux :: Ord a => Node a bh c -> [a] -> [a]
+    aux E xs = xs
+    aux (N _ l y r) xs = aux l (y : aux r xs)

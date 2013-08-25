@@ -8,6 +8,8 @@ diagrams/
 example/
 paper/HaskellCheatSheet.pdf
 paper/History_of_Haskell-Hudak-Hughes-Peyton-Jones-Wadler.pdf
+paper/Ralf_Hinze-Generic_Programming_Extension_for_Haskell.ps
+paper/Ralf_Hinze-Generic_Programs_and_Proofs.ps
 paper/designing_typesafe_haskell_apis-Snoyman.pdf
 paper/monad-reader/issue22/gadt.hs-save
 paper/monad-reader/issue22/issue22.pdf
