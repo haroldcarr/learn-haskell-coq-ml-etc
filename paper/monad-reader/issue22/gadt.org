@@ -782,7 +782,7 @@ let ne = nthElem'''' (repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing))        
 - Stephanie Weirich's slides ([[http://www.seas.upenn.edu/~sweirich/talks/flops2012.pdf][pdf]]) for reference [7] (p. 33).
 
 #+BEGIN_SRC haskell
-data Color   = R | B
+data Color   = R | B deriving (Eq, Show)
 data Node' a = E' | N' Color (Node' a) a (Node' a)
 type Tree' a = Node' a
 #+END_SRC
@@ -851,7 +851,7 @@ rightBalance' (N' B       a x (N' R (N' R b  y       c) z d))  =
 Add black height:
 
 #+BEGIN_SRC haskell
-data Nat = Zero | Succ Nat
+data Nat = Zero | Succ Nat deriving (Eq, Show)
 #+END_SRC
 
 #+BEGIN_EXAMPLE
@@ -868,7 +868,7 @@ Increment done via type family (requires =TypeFamilies=, =DataKinds=) (p. 24):
 
 #+BEGIN_SRC haskell
 type family IncBH (c::Color) (bh::Nat) :: Nat
-type instance IncBH R bh = bh
+type instance IncBH R bh =      bh
 type instance IncBH B bh = Succ bh
 #+END_SRC
 
@@ -881,8 +881,8 @@ data ColorSingleton (c::Color) where
     SB :: ColorSingleton B
 
 instance Show (ColorSingleton c) where
-    show SR = show "R"
-    show SB = show "B"
+    show SR = "R"
+    show SB = "B"
 #+END_SRC
 
 Value of singleton type passed to =Node= value constructor and
@@ -960,7 +960,7 @@ Functions not needed on =ValidColore=, just valid instance (requires =FlexibleIn
 
 #+BEGIN_SRC haskell
 instance ValidColors R B  B  -- red with only black children
-instance ValidColors B c1 c2 -- black with children of any color
+instance ValidColors B lc rc -- black with children of any color
 #+END_SRC
 
 Add color type as param to =Node= and restrict to =ValidColors=
@@ -969,18 +969,18 @@ Add color type as param to =Node= and restrict to =ValidColors=
 #+BEGIN_SRC haskell
 data Node a (bh::Nat) (c::Color) where
     E :: Node a 'Zero B
-    N :: ValidColors c c1 c1 => ColorSingleton c
-           -> Node a bh c1 -> a -> Node a bh c2
+    N :: ValidColors c lc rc => ColorSingleton c
+           -> Node a bh lc -> a -> Node a bh rc
               -> Node a (IncBH c bh) c
 
-instance Show (Node a b c) where
-    show  E          = show "(E 0 B)"
-    show (N c l x r) = show "(N"
-                           ++ " " ++ (show c)
-                           ++ " " ++ (show l)
-                        -- ++ " " ++ (show x) -- TODO
-                           ++ " " ++ (show r)
-                           ++ ")"
+instance Show a => Show (Node a b c) where
+    show  E          = "(E 0 B)"
+    show (N c l x r) = "(N"
+                         ++ " " ++ (show c)
+                         ++ " " ++ (show l)
+                         ++ " " ++ (show x)
+                         ++ " " ++ (show r)
+                         ++ ")"
 #+END_SRC
 
 Root of =Tree= is black (1st invariant):
@@ -988,6 +988,9 @@ Root of =Tree= is black (1st invariant):
 #+BEGIN_SRC haskell
 data Tree a where
     Root :: Node a bh B -> Tree a
+
+instance Show a => Show (Tree a) where
+    show (Root t) = "(Root " ++ show t ++")"
 #+END_SRC
 
 Insert can temporarily invalidate 3rd invariant.
@@ -1093,16 +1096,11 @@ elements (Root t) = aux t [] where
 #+END_SRC
 
 #+BEGIN_EXAMPLE
-let tree = insert (Root E) 100
-let tree = insert tree     101
-let tree = insert tree       1
-member 100 tree
-elements tree
-
-member 100 $                 insert (Root E) 100
-member 100 $         insert (insert (Root E) 100) 101
-member 100 $ insert (insert (insert (Root E) 100) 101) 1
-elements $ insert (insert (insert (Root E) 100) 101) 1
+member 100 $                         insert (Root E) 100
+member 100 $                 insert (insert (Root E) 100) 101
+member 100 $         insert (insert (insert (Root E) 100) 101) 1
+member 100 $ insert (insert (insert (insert (Root E) 100) 101) 1) 0
+elements   $ insert (insert (insert (insert (Root E) 100) 101) 1) 0
 #+END_EXAMPLE
 
 # --------------------------------------------------

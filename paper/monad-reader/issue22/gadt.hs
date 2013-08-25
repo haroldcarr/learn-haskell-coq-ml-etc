@@ -192,7 +192,7 @@ nthElem'''' :: (n :< m) ~ 'True => List'''' a m -> NatSing n -> a
 nthElem'''' (Cons'''' x  _) ZeroSing     = x
 nthElem'''' (Cons'''' _ xs) (SuccSing n) = nthElem'''' xs n
 
-data Color   = R | B
+data Color   = R | B deriving (Eq, Show)
 data Node' a = E' | N' Color (Node' a) a (Node' a)
 type Tree' a = Node' a
 
@@ -225,10 +225,10 @@ rightBalance' (N' B       a x (N' R       b  y (N' R c  z d))) =
 rightBalance' (N' B       a x (N' R (N' R b  y       c) z d))  =
                N' R (N' B a x             b) y (N' B c  z d)
 
-data Nat = Zero | Succ Nat
+data Nat = Zero | Succ Nat deriving (Eq, Show)
 
 type family IncBH (c::Color) (bh::Nat) :: Nat
-type instance IncBH R bh = bh
+type instance IncBH R bh =      bh
 type instance IncBH B bh = Succ bh
 
 data ColorSingleton (c::Color) where
@@ -236,8 +236,8 @@ data ColorSingleton (c::Color) where
     SB :: ColorSingleton B
 
 instance Show (ColorSingleton c) where
-    show SR = show "R"
-    show SB = show "B"
+    show SR = "R"
+    show SB = "B"
 
 data Node4 a (bh::Nat) where
     E4 :: Node4 a 'Zero
@@ -274,25 +274,28 @@ rightBalance4 (N4 SB        a x (N4 SR (N4 SR b  y        c) z d))  =
 class ValidColors (parent::Color) (child1::Color) (child2::Color)
 
 instance ValidColors R B  B  -- red with only black children
-instance ValidColors B c1 c2 -- black with children of any color
+instance ValidColors B lc rc -- black with children of any color
 
 data Node a (bh::Nat) (c::Color) where
     E :: Node a 'Zero B
-    N :: ValidColors c c1 c1 => ColorSingleton c
-           -> Node a bh c1 -> a -> Node a bh c2
+    N :: ValidColors c lc rc => ColorSingleton c
+           -> Node a bh lc -> a -> Node a bh rc
               -> Node a (IncBH c bh) c
 
-instance Show (Node a b c) where
-    show  E          = show "(E 0 B)"
-    show (N c l x r) = show "(N"
-                           ++ " " ++ (show c)
-                           ++ " " ++ (show l)
-                        -- ++ " " ++ (show x) -- TODO
-                           ++ " " ++ (show r)
-                           ++ ")"
+instance Show a => Show (Node a b c) where
+    show  E          = "(E 0 B)"
+    show (N c l x r) = "(N"
+                         ++ " " ++ (show c)
+                         ++ " " ++ (show l)
+                         ++ " " ++ (show x)
+                         ++ " " ++ (show r)
+                         ++ ")"
 
 data Tree a where
     Root :: Node a bh B -> Tree a
+
+instance Show a => Show (Tree a) where
+    show (Root t) = "(Root " ++ show t ++")"
 
 data IntNode a (n::Nat) where
     IntNode :: ColorSingleton c
