@@ -1,0 +1,5 @@
+Where I try code from Haskell books, articles, etc.
+
+e.g.,:
+
+- [[https://github.com/haroldcarr/learn-haskell/blob/master/paper/monad-reader/issue22/gadt.org][Type Level Computation in Haskell via GADTs]]
