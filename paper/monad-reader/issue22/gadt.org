@@ -13,6 +13,9 @@ tags: haskell, GADT, type-level-computation
 ---
 #+END_HTML
 
+# Created       : 2013 Aug 18 (Sun) 11:14:50 by carr.
+Last Modified : 2013 Aug 27 (Tue) 11:27:05 by carr.
+
 ------------------------------------------------------------------------------
 * Generalized Algebraic Data Types in Haskell by Anton Dergunov
 
