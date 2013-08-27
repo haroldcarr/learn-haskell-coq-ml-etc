@@ -1,16 +1,56 @@
+# NOT USING: 
+# also see ./.git/info/exclude
+
+# FROM: https://github.com/github/gitignore/blob/master/Haskell.gitignore
+
+dist
+cabal-dev
+*.o
+*.hi
+*.chi
+*.chs.h
+.virthualenv
+
+# CUSTOM:
+
+.DS_Store
+.DS_Store?
+
+*.pdf
+**/dist
+
 .Notes-cabal.org
 .Notes-diagrams.org
 .Notes-hakyll.org
 .Notes-platform.org
 .Notes-xmonad.org
-book/
+
+book/Discrete_Mathematics_Using_a_Computer
+book/Haskell_Road_to_Logic_Maths_and_Programming
+
+book/Learn_You_a_Haskell/helloworld
+book/Learn_You_a_Haskell/l.hs
+
+
+
+
+book/Parallel_and_Concurrent
+book/Pearls_of_Functional_Algorithm_Design-Richard_Bird.pdf
+
+book/Real_World_Haskell/r.hs
+
+book/Yesod
+
 diagrams/
+
 example/
+
 paper/HaskellCheatSheet.pdf
 paper/History_of_Haskell-Hudak-Hughes-Peyton-Jones-Wadler.pdf
 paper/Ralf_Hinze-Generic_Programming_Extension_for_Haskell.ps
 paper/Ralf_Hinze-Generic_Programs_and_Proofs.ps
 paper/designing_typesafe_haskell_apis-Snoyman.pdf
+paper/haskell-distributed/
 paper/monad-reader/issue22/gadt.hs-save
 paper/monad-reader/issue22/issue22.pdf
 paper/monad-reader/issue22/r.hs

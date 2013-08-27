@@ -262,17 +262,17 @@ insert4 (Root4 t) v = blacken (insert' t v) where
 
 
 leftBalance4  :: Node4 a bh -> Node4 a bh
-leftBalance4  (N4 SB (N4 SR (N4 SR a x       b) y        c)  z d) =
-               N4 SR (N4 SB       a x        b) y (N4 SB c   z d)
-leftBalance4  (N4 SB (N4 SR       a x (N4 SR b  y        c)) z d) =
-               N4 SR (N4 SB       a x        b) y (N4 SB c   z d)
+leftBalance4  (N4 SB (N4 SR (N4 SR a x        b) y        c)  z d) =
+               N4 SR (N4 SB        a x        b) y (N4 SB c   z d)
+leftBalance4  (N4 SB (N4 SR        a x (N4 SR b  y        c)) z d) =
+               N4 SR (N4 SB        a x        b) y (N4 SB c   z d)
 leftBalance4 n = n
 
 rightBalance4 :: Node4 a bh -> Node4 a bh
-rightBalance4 (N4 SB        a x (N4 SR        b  y (N4 SR c  z d))) =
-               N4 SR (N4 SB a x               b) y (N4 SB c  z d)
-rightBalance4 (N4 SB        a x (N4 SR (N4 SR b  y        c) z d))  =
-               N4 SR (N4 SB a x               b) y (N4 SB c  z d)
+rightBalance4 (N4 SB        a x (N4 SR        b  y (N4 SR c   z d))) =
+               N4 SR (N4 SB a x               b) y (N4 SB c   z d)
+rightBalance4 (N4 SB        a x (N4 SR (N4 SR b  y        c)  z d))  =
+               N4 SR (N4 SB a x               b) y (N4 SB c   z d)
 
 class ValidColors (parent::Color) (child1::Color) (child2::Color)
 
