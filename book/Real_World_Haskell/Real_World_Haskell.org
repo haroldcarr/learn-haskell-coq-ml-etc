@@ -2,15 +2,13 @@
 
 {-
 Created       : 2011 Dec 31 (Sat) 19:56:38 by carr.
-Last Modified : 2013 Jul 31 (Wed) 21:50:07 by carr.
+Last Modified : 2013 Aug 27 (Tue) 11:01:51 by carr.
 
 http://blog.tty.nl/category/haskell/real-world-haskell/
 http://haskell.elkstein.org/2009/04/solutions-to-chapter-4-p-97.html
 -}
 
--- HC: 2013-07-30: what is this for?
--- import RecursiveContents
-
+import RecursiveContents -- from this Directory
 import Data.Char (digitToInt, isDigit, isSpace)
 import Data.Either
 import Data.List
@@ -33,7 +31,7 @@ debug = flip trace
 :i    (^)
 :type (^)
 :t    (^)
--- tell us more about types:
+-- output more about types:
 :set +t
 :unset +t
 -- ghci store value of last evaluated expression in:  it
@@ -95,7 +93,7 @@ a Haskell type can have parameters that can be bound to types.
 Def: parameterized or polymorphic type: if a type contains type parameters.
 
 OO languages usually have subtype polymorphism (via subclassing).
-Haskell is not oo. It does not provide subtype polymorphism.
+Haskell is not OO. It does not provide subtype polymorphism.
 
 Coercion polymorphism: value of one type implicitly converted into
 value of another type (e.g., auto conversion between ints and floats).
