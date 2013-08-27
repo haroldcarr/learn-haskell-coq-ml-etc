@@ -3,3 +3,5 @@ Where I try code from Haskell books, articles, etc.
 e.g.,:
 
 - [[https://github.com/haroldcarr/learn-haskell/blob/master/paper/monad-reader/issue22/gadt.org][Type Level Computation in Haskell via GADTs]]
+
+- [[https://github.com/haroldcarr/learn-haskell/blob/master/book/Real_World_Haskell/Real_World_Haskell.org][Real World Haskell]]
