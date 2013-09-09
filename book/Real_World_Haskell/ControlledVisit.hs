@@ -3,7 +3,10 @@ module ControlledVisit where
 -- "fix" imports
 import Control.Monad (filterM, forM, liftM)
 import System.Directory (doesDirectoryExist, getDirectoryContents, Permissions(..), getModificationTime, getPermissions)
-import System.Time (ClockTime(..))
+
+-- import System.Time (ClockTime(..)) -- deprecated
+import Data.Time.Clock
+
 import System.FilePath (takeExtension, (</>))
 import Control.Exception (bracket, handle, SomeException)
 import System.IO (IOMode(..), hClose, hFileSize, openFile)
@@ -14,20 +17,23 @@ data Info = Info {
       infoPath    :: FilePath
     , infoPerms   :: Maybe Permissions
     , infoSize    :: Maybe Integer
-    , infoModTime :: Maybe ClockTime
+    , infoModTime :: Maybe UTCTime
     } deriving (Eq, Ord, Show)
 
--- Limitation: avoids recursing into directories,
---             but can’t filter other names until after generating entire list of names in a tree.
+-- Limitation:
+--   can’t filter other names until after generating entire list of names in a tree.
 
--- Control which directories are entered and when.
--- Given a function that takes a list of Info representing subdirs.
---       Returns list with elements, removed and/or ordered differently.
+-- Control which directories are entered and when (avoids recursing into directories)
+-- Given
+--   a function that takes a list of Info representing subdirs,
+--     and returns list with elements removed and/or ordered differently.
+--   a starting path
 traverse :: ([Info] -> [Info]) -> FilePath -> IO [Info]
 traverse order path = do
     -- get contents at this level (skipping . and ..)
     names <- getUsefulContents path
-    -- prepend the path to all contents, and add the path as well
+    -- prepend the path (current directory) to all contents
+    -- add the path (current directory) to list also
     -- get information on each item
     contents <- mapM getInfo (path : map (path </>) names)
     -- "order" the contents (see above) then either drop into subdirs or return info on files
@@ -38,7 +44,7 @@ traverse order path = do
             then traverse order (infoPath info)
             else return [info]
 
--- same as traverse above but more verbose
+-- same as traverse above but more verbose (i.e., less experienced Haskell programmer)
 traverseVerbose order path = do
     names <- getDirectoryContents path
     let usefulNames = filter (`notElem` [".", ".."]) names
@@ -82,15 +88,4 @@ maybeIO act = handle handler (Just `liftM` act)
 isDirectory :: Info -> Bool
 isDirectory = maybe False searchable . infoPerms
 
-{-
-:m Data.Maybe
-maybe :: b -> (a -> b) -> Maybe a -> b
-maybe : if given Nothing then return its First arg (default value)
-      : otherwise pass value inside Just to function and return function's value
-maybe False id (Just False)
-maybe False id (Just True)
-maybe True id (Just False)
-maybe True id (Just True)
-maybe False id Nothing
-maybe True  id Nothing
--}
+-- End of file.

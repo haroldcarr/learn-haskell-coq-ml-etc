@@ -21,6 +21,7 @@ cabal-dev
 
 .Notes-cabal.org
 .Notes-diagrams.org
+.Notes-distributed-haskell.org
 .Notes-hakyll.org
 .Notes-platform.org
 .Notes-xmonad.org

@@ -1,6 +1,6 @@
 module RecursiveContents (getRecursiveContents) where
 
--- forM is like mapM, but args reversed (i.e., list first, the function)
+-- forM is like mapM, but args reversed (i.e., list first, then function)
 import Control.Monad (forM)
 -- getDirectoryContents does not recurse
 import System.Directory (doesDirectoryExist, getDirectoryContents)
@@ -19,4 +19,3 @@ getRecursiveContents topdir = do
             then getRecursiveContents path
             else return [path]
     return (concat paths)
-

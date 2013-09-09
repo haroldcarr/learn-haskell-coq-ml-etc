@@ -7,7 +7,7 @@
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
 # Created       : 2011 Dec 31 (Sat) 19:56:38 by carr.
-Last Modified : 2013 Aug 27 (Tue) 14:41:48 by carr.
+Last Modified : 2013 Sep 08 (Sun) 22:32:06 by carr.
 
 ------------------------------------------------------------------------------
 * Intro
@@ -94,7 +94,7 @@ let x = 3
 -- x :: Integer = 3
 #+END_EXAMPLE
 
-** exercises - p 16
+** exercises - p. 16
 
 3: [[file:WC.hs]]
 
@@ -156,7 +156,7 @@ See "Theorems for free" by Philip Wadler
 [[http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.38.9875]]
 
 
-** exercises - p 39/79
+** exercises - p. 39/79
 
 #+BEGIN_SRC haskell
 -- 2 and 3
@@ -328,7 +328,7 @@ t1'
 -- it :: Tree Integer
 #+END_EXAMPLE
 
-** exercises - p 60/100
+** exercises - p. 60/100
 
 #+BEGIN_SRC haskell
 -- 1
@@ -455,7 +455,7 @@ dropper' _     []          = []
 dropper' n (_:xs)          = dropper (n - 1) xs
 #+END_SRC
 
-** exercises - p 69/
+** exercises - p. 69/
 
 #+BEGIN_SRC haskell
 -- 1 and 2
@@ -611,11 +611,11 @@ turns               _ = []
 -- let ts = turns [Point 1 1, Point 2 2, Point 3 1, Point 5 6, Point (-1) 3, Point 4 0]
 -- length ts
 
--- 13 TODO - p 70/110
+-- 13 TODO - p. 70/110
 #+END_SRC
 
 ------------------------------------------------------------------------------
-* 4 Functional Programming - p 71/111
+* 4 Functional Programming - p. 71/111
 
 [[file:InteractWith.hs]]
 
@@ -695,7 +695,7 @@ fooPair = Pair 1 2.0
 barPair = True `Pair` "quux"
 #+END_SRC
 
-** working with lists - p 77/117
+** working with lists - p. 77/117
 
 =Prelude= reexports some of Data.List contents
 
@@ -818,7 +818,7 @@ words "the \r quick \t brown\n\n\nfox"        ==  ["the","quick","brown","fox"]
 unwords ["jumps", "over", "the", "lazy", "dog"] ==  "jumps over the lazy dog"
 #+END_EXAMPLE
 
-** exercises - p 84/124
+** exercises - p. 84/124
 
 #+BEGIN_SRC haskell
 -- 1
@@ -958,7 +958,7 @@ transposeText' "hello\nworld\n"            ==  "hw\neo\nlr\nll\nod\n"
 
 *computing one answer over a collection* : =foldl= / =foldr=
 
-p 92/132
+p. 92/132
 
 ** =foldl= (left)
 
@@ -1057,10 +1057,10 @@ foldl (+) 0 [1..10000000]                     ==  50000005000000
 foldl' (+) 0 [1..10000000]                    ==  50000005000000
 #+END_EXAMPLE
 
-** exercises - p 97/137
+** exercises - p. 97/137
 
 #+BEGIN_SRC haskell
--- 1, 2 and 3 write asInt from p 85/125 (repeated below) using fold? and error
+-- 1, 2 and 3 write asInt from p. 85/125 (repeated below) using fold? and error
 
 loop :: Int -> String -> Int
 loop acc       [] = acc
@@ -1387,7 +1387,7 @@ putStrLn (pretty 10 jvalue)
 putStrLn (pretty 20 jvalue)
 putStrLn (pretty 30 jvalue)
 
--- exercises - p 130/170
+-- exercises - p. 130/170
 
 -- fill TODO
 fill :: Int -> Doc -> Doc
@@ -1396,7 +1396,7 @@ fill :: Int -> Doc -> Doc
 
 
 
--- creating a package using Cabal - p 131/171
+-- creating a package using Cabal - p. 131/171
 
 ghc-pkg        list
 ghc-pkg --user list
@@ -1419,7 +1419,7 @@ cabal install prettyjson --dry-run
 ------------------------------------------------------------------------------
 * 6 Using Typeclasses
 
-- TODO - do again - especially from - p 149/189
+- TODO - do again - especially from - p. 149/189
 
 #+BEGIN_SRC haskell
 {-
@@ -1563,25 +1563,30 @@ fromJValue (JBool False) :: Either JSONError JValue
 ------------------------------------------------------------------------------
 * 9 I/O Case Study : unix "find"
 
-#+BEGIN_SRC haskell
-{-
-ghci
+p. 213/254
 
--- 213/254
-cat RecursiveContents.hs
+[[file:RecursiveContents.hs]]
+
+#+BEGIN_EXAMPLE
 :l RecursiveContents
+:t getRecursiveContents
 getRecursiveContents ".."
+#+END_EXAMPLE
 
--- 215/255
-cat SimpleFinder.hs
+p. 215/255
+
+[[file:SimpleFinder.hs]]
+
+#+BEGIN_EXAMPLE
 :l SimpleFinder
-simpleFind id "."
-
 :m +System.FilePath
 :t takeExtension
 simpleFind (\p -> takeExtension p == ".hs") "."
+#+END_EXAMPLE
 
--- 217/257
+p. 217/257
+
+#+BEGIN_EXAMPLE
 :m +System.Directory
 :t doesFileExist
 doesFileExist "."
@@ -1590,40 +1595,78 @@ doesDirectoryExist "."
 :i Permissions
 getPermissions "."
 getModificationTime "."
+#+END_EXAMPLE
 
--- 218/258
-cat BetterPredicate.hs
+p. 218/258
+
+[[file:BetterPredicate.hs]]
+
+#+BEGIN_EXAMPLE
 :l BetterPredicate
 betterFind myTest "."
-:t betterFind (sizeP `equalP` 1024)
+:t betterFind (sizeP `equalP` 767)
+betterFind (sizeP `equalP` 767) "."
+betterFind (sizeP `greaterP` 767) "."
 betterFind myTest2 "."
 betterFind myTest3 "."
 betterFind myTest4 "."
+#+END_EXAMPLE
 
--- controlling traversal - p 226/266
-cat ControlledVisit.hs
+controlling traversal - p. 226/266
+
+
+[[file:ControlledVisit.hs]]
+
+#+BEGIN_EXAMPLE
 :l ControlledVisit
+
+:m Data.Maybe
+:t maybe
+-- maybe :: b -> (a -> b) -> Maybe a -> b
+
+-- maybe : if given Nothing then return its First arg (default value)
+--       : otherwise pass value inside Just to function and return function's value
+
+maybe False id (Just False)
+-- False
+maybe False id (Just True)
+-- True
+maybe True id (Just False)
+-- False
+maybe True id (Just True)
+-- True
+maybe False id Nothing
+-- False
+maybe True  id Nothing
+-- True
 
 traverse id "."
 let filterP = foldl (\acc x -> let test = maybe False executable . infoPerms in if test x then x:acc else acc) []
 traverse filterP "."
+#+END_EXAMPLE
 
--- another way 230/270
-cat FoldDir.hs
+another way p. 230/270
+
+[[file:FoldDir.hs]]
+
+#+BEGIN_EXAMPLE
 :l FoldDir
 foldTree atMostThreePictures [] "."
 foldTree countDirectories    0  "."
+foldTree countDirectories    0  "/Volumes/my-music/"
+#+END_EXAMPLE
 
--- exercises - p 232/272
--- TODO
+** exercises - p. 228/268
+- TODO: 1, 2, 3, 4
 
--- exercises - p 234/274
--- TODO
--}
-#+END_SRC
+** exercises - p. 232/272
+- TODO: 1, 2, 3
+
+** exercises - p. 234/274
+- TODO: 1, 2
 
 ------------------------------------------------------------------------------
-* 10 Code Case Studay: Parsing a Binary Data Format - p 235/275
+* 10 Code Case Studay: Parsing a Binary Data Format - p. 235/275
 
 #+BEGIN_SRC haskell
 {-
@@ -1666,7 +1709,127 @@ parse (chr <$> fromIntegral <$> parseByte) input
 #+END_SRC
 
 ------------------------------------------------------------------------------
-* 21 Using Databases
+* 20 Systems Programming in Haskell p. 467/507
+
+** Running External Programs
+
+#+BEGIN_EXAMPLE
+:m System.Cmd
+rawSystem "ls" ["-l", "/Users/carr"]
+#+END_EXAMPLE
+
+** Directory and File Information p. 468/508
+
+#+BEGIN_EXAMPLE
+:m System.Directory
+d <- getCurrentDirectory
+d
+setCurrentDirectory ".."
+getCurrentDirectory
+setCurrentDirectory d
+getCurrentDirectory
+
+getDirectoryContents d
+getDirectoryContents d >>= return . filter (`notElem` [".", ".."])
+
+getHomeDirectory
+getAppUserDataDirectory "emacs"
+getUserDocumentsDirectory
+#+END_EXAMPLE
+
+** Program Termination p. 469/509
+
+=System.Exit=
+
+** Dates and Times p. 470/510
+
+[[http://tab.snarc.org/posts/haskell/2011-12-16-date-in-haskell.html]]
+
+deprecated: =ClockTime= --- use =Data.Time.Clock=
+
+- [[http://www.haskell.org/haskellwiki/Cookbook/Dates_And_Time]]
+- [[http://hackage.haskell.org/packages/archive/convertible/1.0.11.1/doc/html/src/Data-Convertible-Instances-Time.html]]
+- [[http://pleac.sourceforge.net/pleac_haskell/datesandtimes.html]]
+- [[http://www.haskell.org/ghc/docs/7.0.2/html/libraries/time-1.2.0.3/Data-Time.html]]
+
+#+BEGIN_EXAMPLE
+:m Data.Time.Clock
+:i UTCTime
+:t UTCTime
+:t utctDay
+getCurrentTime
+t <- getCurrentTime
+utctDay t
+utctDayTime t
+
+#+END_EXAMPLE
+
+p. 472/512
+
+deprecated: =CalendarTime= --- use =Data.Time.Calendar=
+
+#+BEGIN_EXAMPLE
+:m Data.Time.Calendar
+isLeapYear 2015
+isLeapYear 2016
+:i ModifiedJulianDay
+:i toModifiedJulianDay
+#+END_EXAMPLE
+
+** File Modification Times p. 475/515
+
+#+BEGIN_EXAMPLE
+:m System.Directory
+getModificationTime "/etc/passwd"
+#+END_EXAMPLE
+
+[[file:posixtime.hs]]
+
+#+BEGIN_EXAMPLE
+:m +Data.Time
+c <- getCurrentTime
+let (y,m,d) = toGregorian $ utctDay c
+
+
+
+getPOSIXTime
+
+
+
+
+:m +System.Posix.Files
+stat <- getFileStatus "."
+let epoch = accessTime stat
+:t realToFrac epoch
+:t realToFrac epoch :: POSIXTime
+realToFrac epoch :: POSIXTime
+let pt = realToFrac epoch :: POSIXTime
+let ut = posixSecondsToUTCTime pt
+:m +Data.Time.Clock
+utctDay     ut
+utctDayTime ut
+
+
+:m +Data.Time.Clock.POSIX
+
+getPOSIXTime
+:t posixSecondsToUTCTime
+posixSecondsToUTCTime 0
+posixSecondsToUTCTime 1378700467
+posixSecondsToUTCTime epoch
+
+
+
+:m +Data.Time.Clock
+:m +Data.Time.Calendar
+fromGregorian 2011 12 16
+UTCTime (fromGregorian 2011 12 16) (fromIntegral $ 12 * 3600)
+
+:l posixtime
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* 21 Using Databases p. 493/533
 
 #+BEGIN_SRC haskell
 {-

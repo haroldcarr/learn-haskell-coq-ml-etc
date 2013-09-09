@@ -1,6 +1,9 @@
 import Control.Monad (filterM)
 import System.Directory (Permissions(..), getModificationTime, getPermissions)
-import System.Time (ClockTime(..))
+
+-- import System.Time (ClockTime(..)) -- deprecated
+import Data.Time.Clock
+
 import System.FilePath (takeExtension)
 import Control.Exception (bracket, handle, SomeException)
 import System.IO (IOMode(..), hClose, hFileSize, openFile)
@@ -12,10 +15,8 @@ import RecursiveContents (getRecursiveContents)
 type Predicate =  FilePath      -- path to directory entry
                -> Permissions   -- permissions
                -> Maybe Integer -- file size (Nothing if not file)
-               -> ClockTime     -- last modified
+               -> UTCTime       -- last modified
                -> Bool
-
-betterFind :: Predicate -> FilePath -> IO [FilePath]
 
 -- Sequencing 186/225
 -- do blocks are shortcut notations for joining actions together.
@@ -24,7 +25,9 @@ betterFind :: Predicate -> FilePath -> IO [FilePath]
 -- (>>=) Runs first action, passes its result to second action.
 --       Result is second's.  : getLine >>= putStrLn
 
--- filterM enables us to use pure "p" in I/O monad
+-- filterM enables us to use pure "p" (predicate) in I/O monad
+
+betterFind :: Predicate -> FilePath -> IO [FilePath]
 betterFind p path = getRecursiveContents path >>= filterM check
     -- check pred is an IO-capable wrapper of pure pred p
     -- it does the IO and then lets p make the decision
@@ -34,11 +37,14 @@ betterFind p path = getRecursiveContents path >>= filterM check
               modified <- getModificationTime name
               return (p name perms size modified)
 
-getFileSize :: FilePath -> IO (Maybe Integer)
-
+-- returns (Maybe <filesize) or Nothing (if not file or on exception)
 -- handle is "catch" : given a function to call on exception; and function to run "in catch"
--- bracket is "finally" : arg1: first action; arg2: last "finally" action; arg3: in-between action
+-- bracket is "finally"
+--   arg1: first action - acquires resource
+--   arg2: last "finally" action
+--   arg3: action to perform in-between first and last
 -- http://stackoverflow.com/questions/7878065/get-size-of-file-in-haskell
+getFileSize :: FilePath -> IO (Maybe Integer)
 getFileSize path = handle handler $
     bracket (openFile path ReadMode) (hClose) (\h -> do
         size <- hFileSize h
@@ -51,13 +57,14 @@ getFileSize path = handle handler $
 getFileSize path = handle (\_ -> return Nothing) $
     bracket (openFile path ReadMode) hClose $ \h -> do
         size <- hFileSize h
-        return (Just size)-}
+        return (Just size)
+-}
 
 -- 221/261
 
--- first try
+-- .hs files over 1K
 myTest path _ (Just size) _ =
-    takeExtension path == ".hs" && size > 1024 -- 131072
+    takeExtension path == ".hs" && size > 1024
 myTest _ _ _ _ = False
 
 -- DSL to replace myTest
@@ -68,14 +75,13 @@ myTest _ _ _ _ = False
 type InfoP a =  FilePath      -- path to directory entry
              -> Permissions   -- permissions
              -> Maybe Integer -- file size (Nothing if not file)
-             -> ClockTime     -- last modified
+             -> UTCTime       -- last modified
              -> a
 
--- access a slot in InfoP
+-- access slots in InfoP
 pathP :: InfoP FilePath
 pathP path _ _ _ = path
 
--- access a slot in InfoP
 sizeP :: InfoP Integer
 sizeP _ _ (Just size) _ = size
 sizeP _ _ Nothing     _ = -1
@@ -88,7 +94,7 @@ equalP f k = \w x y z -> f w x y z == k
 equalP' :: (Eq a) => InfoP a -> a -> InfoP Bool
 equalP' f k w x y z = f w x y z == k
 
--- avoiding boilerplate with lifting 223/263
+-- avoiding boilerplate with lifting p. 223/263
 -- rather than write more functions like "equalP"
 -- write code that will lift them.
 
@@ -101,7 +107,7 @@ greaterP, lesserP :: (Ord a) => InfoP a -> a -> InfoP Bool
 greaterP = liftP (>)
 lesserP  = liftP (<)
 
--- gluing predicates together 224/264
+-- gluing predicates together p. 224/264
 
 liftP2 :: (a -> b -> c) -> InfoP a -> InfoP b -> InfoP c
 liftP2 q f g w x y z = f w x y z `q` g w x y z
@@ -114,7 +120,7 @@ constP :: a -> InfoP a
 constP k _ _ _ _ = k
 liftP' q f k w x y z = f w x y z `q` constP k w x y z
 
--- myTest (see above) written with combinators (above) 225/265
+-- myTest (see above) written with combinators (above) p. 225/265
 
 liftPath :: (FilePath -> a) -> InfoP a
 liftPath f w _ _ _ = f w

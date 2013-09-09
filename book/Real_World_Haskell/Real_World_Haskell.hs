@@ -254,7 +254,7 @@ turns               _ = []
 -- let ts = turns [Point 1 1, Point 2 2, Point 3 1, Point 5 6, Point (-1) 3, Point 4 0]
 -- length ts
 
--- 13 TODO - p 70/110
+-- 13 TODO - p. 70/110
 
 data a `Pair` b = a `Pair` b deriving (Show)
 fooPair = Pair 1 2.0
@@ -357,7 +357,7 @@ identity xs = foldr (:) [] xs
 append :: [a] -> [a] -> [a]
 append xs ys = foldr (:) ys xs
 
--- 1, 2 and 3 write asInt from p 85/125 (repeated below) using fold? and error
+-- 1, 2 and 3 write asInt from p. 85/125 (repeated below) using fold? and error
 
 loop :: Int -> String -> Int
 loop acc       [] = acc
@@ -552,7 +552,7 @@ putStrLn (pretty 10 jvalue)
 putStrLn (pretty 20 jvalue)
 putStrLn (pretty 30 jvalue)
 
--- exercises - p 130/170
+-- exercises - p. 130/170
 
 -- fill TODO
 fill :: Int -> Doc -> Doc
@@ -561,7 +561,7 @@ fill :: Int -> Doc -> Doc
 
 
 
--- creating a package using Cabal - p 131/171
+-- creating a package using Cabal - p. 131/171
 
 ghc-pkg        list
 ghc-pkg --user list
@@ -705,63 +705,6 @@ toJValue $ JNumber 3.4
 [fromJValue "foo", Left "bar"]
 fromJValue (JBool False) :: Either JSONError Bool
 fromJValue (JBool False) :: Either JSONError JValue
--}
-
-{-
-ghci
-
--- 213/254
-cat RecursiveContents.hs
-:l RecursiveContents
-getRecursiveContents ".."
-
--- 215/255
-cat SimpleFinder.hs
-:l SimpleFinder
-simpleFind id "."
-
-:m +System.FilePath
-:t takeExtension
-simpleFind (\p -> takeExtension p == ".hs") "."
-
--- 217/257
-:m +System.Directory
-:t doesFileExist
-doesFileExist "."
-doesDirectoryExist "."
-:i getPermissions
-:i Permissions
-getPermissions "."
-getModificationTime "."
-
--- 218/258
-cat BetterPredicate.hs
-:l BetterPredicate
-betterFind myTest "."
-:t betterFind (sizeP `equalP` 1024)
-betterFind myTest2 "."
-betterFind myTest3 "."
-betterFind myTest4 "."
-
--- controlling traversal - p 226/266
-cat ControlledVisit.hs
-:l ControlledVisit
-
-traverse id "."
-let filterP = foldl (\acc x -> let test = maybe False executable . infoPerms in if test x then x:acc else acc) []
-traverse filterP "."
-
--- another way 230/270
-cat FoldDir.hs
-:l FoldDir
-foldTree atMostThreePictures [] "."
-foldTree countDirectories    0  "."
-
--- exercises - p 232/272
--- TODO
-
--- exercises - p 234/274
--- TODO
 -}
 
 {-

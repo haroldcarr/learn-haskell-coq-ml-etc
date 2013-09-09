@@ -1,12 +1,19 @@
-import Char (toLower)
+-- import Char (toLower)
+import Data.Char (toLower)
+
 import Control.Monad (filterM, forM, liftM)
 import System.Directory (doesDirectoryExist, getDirectoryContents, Permissions(..), getModificationTime, getPermissions)
-import System.Time (ClockTime(..))
+
+-- import System.Time (ClockTime(..)) -- deprecated
+import Data.Time.Clock
+
 import System.FilePath (takeExtension, takeFileName, (</>))
 import Control.Exception (bracket, handle, SomeException)
 import System.IO (IOMode(..), hClose, hFileSize, openFile)
 
 import ControlledVisit
+
+-- p. 230/270
 
 -- Think of filesystem traversal as a fold over the directory hierarchy.
 -- Iterate controls our fold.
@@ -46,7 +53,7 @@ foldTree iter initSeed path = do
                 | otherwise        -> walk seed' names
     walk seed _ = return (Continue seed)
 
--- 231/271
+-- p. 231/271
 
 atMostThreePictures :: Iterator [FilePath]
 atMostThreePictures paths info
