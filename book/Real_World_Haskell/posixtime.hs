@@ -7,24 +7,22 @@ import Data.Time.Clock.POSIX
 
 import System.Posix.Types
 
--- getTimes :: FilePath -> IO (UTCTime, UTCTime, UTCTime)
+import Data.Convertible
+import Data.Convertible.Instances.Time
+
+getTimes :: FilePath -> IO (UTCTime, UTCTime, UTCTime)
 getTimes fp = do
     stat <- getFileStatus fp
-    return (xx (accessTime       stat),
-            xx (modificationTime stat),
-            xx (statusChangeTime stat))
+    return (toUTC (accessTime       stat),
+            toUTC (modificationTime stat),
+            toUTC (statusChangeTime stat))
 
-xx i = i
+toUTC :: EpochTime -> UTCTime
+toUTC et = posixSecondsToUTCTime pt
+    where pt = realToFrac et :: POSIXTime
 
--- Converts an Epoch time represented with an arbitrary Real to a ClockTime.
--- This input could be a CTime from Foreign.C.Types or an EpochTime from
--- System.Posix.Types.
-epochToClockTime :: Real a => a -> ClockTime
-epochToClockTime x =
-    TOD seconds secfrac
-    where ratval = toRational x
-          seconds = floor ratval
-          secfrac = floor $ (ratval - (seconds % 1) ) * picosecondfactor
-          picosecondfactor = 10 ^ 12
+toUTC' :: EpochTime -> UTCTime
+toUTC' et = convert pt
+    where pt = realToFrac et :: POSIXTime
 
 -- End of file.

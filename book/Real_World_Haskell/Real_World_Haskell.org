@@ -7,7 +7,7 @@
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
 # Created       : 2011 Dec 31 (Sat) 19:56:38 by carr.
-Last Modified : 2013 Sep 08 (Sun) 22:32:06 by carr.
+Last Modified : 2013 Sep 09 (Mon) 17:38:18 by carr.
 
 ------------------------------------------------------------------------------
 * Intro
@@ -1743,14 +1743,19 @@ getUserDocumentsDirectory
 
 ** Dates and Times p. 470/510
 
-[[http://tab.snarc.org/posts/haskell/2011-12-16-date-in-haskell.html]]
-
 deprecated: =ClockTime= --- use =Data.Time.Clock=
 
-- [[http://www.haskell.org/haskellwiki/Cookbook/Dates_And_Time]]
+#+BEGIN_EXAMPLE
+sudo cabal install convertible
+#+END_EXAMPLE
+
+- [[http://hackage.haskell.org/package/convertible]]
 - [[http://hackage.haskell.org/packages/archive/convertible/1.0.11.1/doc/html/src/Data-Convertible-Instances-Time.html]]
-- [[http://pleac.sourceforge.net/pleac_haskell/datesandtimes.html]]
+- [[http://www.haskell.org/haskellwiki/Cookbook/Dates_And_Time]]
 - [[http://www.haskell.org/ghc/docs/7.0.2/html/libraries/time-1.2.0.3/Data-Time.html]]
+- [[http://pleac.sourceforge.net/pleac_haskell/datesandtimes.html]]
+- [[http://tab.snarc.org/posts/haskell/2011-12-16-date-in-haskell.html]]
+
 
 #+BEGIN_EXAMPLE
 :m Data.Time.Clock
@@ -1778,55 +1783,62 @@ isLeapYear 2016
 
 ** File Modification Times p. 475/515
 
-#+BEGIN_EXAMPLE
-:m System.Directory
-getModificationTime "/etc/passwd"
-#+END_EXAMPLE
-
 [[file:posixtime.hs]]
 
 #+BEGIN_EXAMPLE
+:m +System.Directory
+getModificationTime "/etc/passwd"
+
 :m +Data.Time
-c <- getCurrentTime
-let (y,m,d) = toGregorian $ utctDay c
-
-
-
-getPOSIXTime
-
-
-
-
-:m +System.Posix.Files
-stat <- getFileStatus "."
-let epoch = accessTime stat
-:t realToFrac epoch
-:t realToFrac epoch :: POSIXTime
-realToFrac epoch :: POSIXTime
-let pt = realToFrac epoch :: POSIXTime
-let ut = posixSecondsToUTCTime pt
 :m +Data.Time.Clock
-utctDay     ut
-utctDayTime ut
-
-
 :m +Data.Time.Clock.POSIX
-
-getPOSIXTime
-:t posixSecondsToUTCTime
-posixSecondsToUTCTime 0
-posixSecondsToUTCTime 1378700467
-posixSecondsToUTCTime epoch
-
-
-
-:m +Data.Time.Clock
 :m +Data.Time.Calendar
+:m +System.Posix.Files
+
 fromGregorian 2011 12 16
 UTCTime (fromGregorian 2011 12 16) (fromIntegral $ 12 * 3600)
 
+c <- getCurrentTime
+let (y,m,d) = toGregorian $ utctDay c
+y
+
 :l posixtime
+
+stat <- getFileStatus "."
+let epochA = accessTime stat
+let epochM = modificationTime stat
+:t epochA
+epochA
+epochM
+epochA < epochM
+:t epochA
+:t realToFrac epochA
+:t realToFrac epochA :: POSIXTime
+realToFrac epochA :: POSIXTime
+let pt = realToFrac epochA :: POSIXTime
+let ut = posixSecondsToUTCTime pt
+utctDay     ut
+utctDayTime ut
+
+:t posixSecondsToUTCTime
+posixSecondsToUTCTime 0
+p <- getPOSIXTime
+posixSecondsToUTCTime p
+
+:m +Data.Convertible
+:m +Data.Convertible.Instances.Time
+
+:i Convertible
+:i safeConvert
+:t safeConvert
+
+toUTC  epochA
+toUTC' epochA
 #+END_EXAMPLE
+
+** Extended Example: Piping p. 476/516
+
+TODO
 
 ------------------------------------------------------------------------------
 * 21 Using Databases p. 493/533
