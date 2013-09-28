@@ -5,3 +5,6 @@ e.g.,:
 - [[https://github.com/haroldcarr/learn-haskell/blob/master/paper/monad-reader/issue22/gadt.org][Type Level Computation in Haskell via GADTs]]
 
 - [[https://github.com/haroldcarr/learn-haskell/blob/master/book/Real_World_Haskell/Real_World_Haskell.org][Real World Haskell]]
+
+- [[https://github.com/haroldcarr/learn-haskell/tree/master/course/coursera-fp-odersky-but-in-haskell][Solutions in Haskell to Martin Odersky's Functional Programming Principles in Scala coursera course]]
+
