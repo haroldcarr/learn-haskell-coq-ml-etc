@@ -1,3 +1,8 @@
+{-
+Created       : 2013 Sep 27 (Sat) 09:01:51 by carr.
+Last Modified : 2013 Sep 29 (Sun) 09:02:48 by carr.
+-}
+
 module X00Lists where
 
 sum' :: [Int] -> Int

@@ -1,3 +1,8 @@
+{-
+Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
+Last Modified : 2013 Sep 29 (Sun) 09:03:14 by carr.
+-}
+
 module X02FunSets where
 
 import Data.List (intercalate)

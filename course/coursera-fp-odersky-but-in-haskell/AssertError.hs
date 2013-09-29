@@ -1,3 +1,8 @@
+{-
+Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
+Last Modified : 2013 Sep 29 (Sun) 09:02:57 by carr.
+-}
+
 module AssertError where
 
 import Control.Exception (ErrorCall(ErrorCall), evaluate)

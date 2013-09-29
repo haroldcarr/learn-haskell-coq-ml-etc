@@ -1,7 +1,19 @@
+{-
+Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
+Last Modified : 2013 Sep 29 (Sun) 10:09:12 by carr.
+-}
+
+module X02FunSetsWorksheet
+( sum'
+, product'
+-- ...
+-- note: we would not export `reduce` if this was a module for Rational
+) where
+
 import Test.HUnit
 import AssertError
 
--- Currying
+-- currying
 sum' :: (Int -> Int) -> Int -> Int -> Int
 sum' f a b =
     if (a > b) then 0
@@ -22,7 +34,7 @@ sp u spf f a b = iter a
             else spf (f x) (iter (x+1))
 
 
--- Functions taking functions and returning functions
+-- higher-order functions: functions that take functions as args and/or return functions results
 tolerance = 0.0001
 
 isCloseEnough :: Double -> Double -> Bool
@@ -43,7 +55,7 @@ averageDamp f x = (x + f x) / 2
 sqrt' :: Double -> Double
 sqrt' x = fixedPoint (averageDamp (\y -> x / y)) 1.0
 
-tests = TestList
+higherOrderFunctionTests = TestList
     [
      TestCase $ assertEqual "product"      6                  (product' (\x->x+1) 1 2)
     ,TestCase $ assertEqual "fact 5"     120                  (fact 5)
@@ -53,6 +65,51 @@ tests = TestList
     ,TestCase $ assertEqual "sqrt"         1.4142135623746899 (sqrt' 2)
     ]
 
-main = runTestTT tests
+-- Data
+
+type Numer = Int
+type Denom = Int
+data Rational' = Rational' Numer Denom deriving (Show)
+
+add :: Rational' -> Rational' -> Rational'
+add (Rational' n1 d1) (Rational' n2 d2) =
+    Rational' (n1 * d2 + n2 * d1) (d1 * d2)
+
+neg :: Rational' -> Rational'
+neg (Rational' n d) = Rational' (-n) d
+
+sub :: Rational' -> Rational' -> Rational'
+sub r1 r2 = add r1 $ neg r2
+
+toString :: Rational' -> String
+toString (Rational' n d) = (show n) ++ "/" ++ (show d)
+
+x = Rational' 1 3
+y = Rational' 5 7
+z = Rational' 3 2
+
+-- http://hackage.haskell.org/package/base-4.6.0.1/docs/Data-Ratio.html
+-- http://www.haskell.org/ghc/docs/7.4.2/html/libraries/base/src/GHC-Real.html
+
+reduce :: Rational' -> Rational'
+reduce (Rational' _ 0) = error "Rational': zero denominator"
+reduce (Rational' n d) = Rational' (n `quot` g) (d `quot` g)
+  where
+    g = gcd n d
+    gcd a b = if b == 0 then a else gcd b $ a `mod` b
+
+dataTypeTests = TestList
+    [
+     TestCase $ assertEqual "add rat"           "22/21"     (toString $ add x y)
+    ,TestCase $ assertEqual "sub rat"          "-79/42"     (toString $ (sub (sub x y) z))
+    ,TestCase $ assertEqual "add rat self"      "70/49"     (toString $ add y y)
+    ,TestCase $ assertEqual "add rat self gcd"  "10/7"      (toString $ reduce $ add y y)
+    ,TestCase $ assertError "rat zero denom" "Rational': zero denominator"
+                                                            (reduce (Rational' 1 0))
+    ]
+
+main = do
+    runTestTT higherOrderFunctionTests
+    runTestTT dataTypeTests
 
 -- End of file.

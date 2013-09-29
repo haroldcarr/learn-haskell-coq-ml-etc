@@ -1,3 +1,8 @@
+{-
+Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
+Last Modified : 2013 Sep 29 (Sun) 09:03:08 by carr.
+-}
+
 module X01RecFun where
 
 import Control.Applicative
