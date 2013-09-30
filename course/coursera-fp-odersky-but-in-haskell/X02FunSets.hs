@@ -1,37 +1,46 @@
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Sep 29 (Sun) 09:03:14 by carr.
+Last Modified : 2013 Sep 30 (Mon) 09:07:15 by carr.
+
+See my question and answers on Set representation:
+    http://stackoverflow.com/questions/19086408/haskell-how-to-define-instance-show-set-for-type-set-int-bool
+
+Also:
+    http://stackoverflow.com/questions/5889696/difference-between-data-and-newtype-in-haskell
+
+NOTE: LANGUAGE above only needed for Set' representation below.
 -}
 
 module X02FunSets where
 
 import Data.List (intercalate)
 
-type Set = Int -> Bool
-
+newtype Set = Set (Int -> Bool)
 
 contains :: Set -> Int -> Bool
-contains s elem = s elem
+contains (Set s) elem = s elem
 
 singletonSet :: Int -> Set
-singletonSet elem = \x -> x == elem
+singletonSet elem = Set (\x -> x == elem)
 
 union :: Set -> Set -> Set
-union s t = \x -> s x || t x
+union (Set s) (Set t) = Set (\x -> s x || t x)
 
 intersect :: Set -> Set -> Set
-intersect s t = \x -> s x && t x
+intersect (Set s) (Set t) = Set (\x -> s x && t x)
 
 diff :: Set -> Set -> Set
-diff s t = \x -> s x  && (not $ t x)
+diff (Set s) (Set t) = Set (\x -> s x  && (not $ t x))
 
 filter' :: Set -> (Int -> Bool) -> Set
-filter' s p = \x -> s x && p x -- same as intersect
+filter' (Set s) p = Set (\x -> s x && p x) -- same as intersect
 
 bound = 1000
 
 forall :: Set -> (Int -> Bool) -> Bool
-forall s p = iter (-bound)
+forall (Set s) p = iter (-bound)
   where iter a =
             if      a > bound        then True
             else if s a && not (p a) then False
@@ -41,19 +50,51 @@ exists :: Set -> (Int -> Bool) -> Bool
 exists s p = not $ forall s $ \x -> not (p x)
 
 map' :: Set -> (Int -> Int) -> Set
-map' s f = iter (-bound) $ \x -> False
+map' (Set s) f = iter (-bound) $ \x -> False
   where iter a m =
-            if      a > bound then m
+            if      a > bound then Set m
             else if s a       then iter (a+1) $ \x -> if x == f a then True else m x
             else                   iter (a+1) m
 
-toString :: Set -> String
-toString s =
-    let xs = [(show x) | x <- [(-bound) .. bound], contains s x]
-    in "{" ++ (intercalate "," xs) ++ "}"
+instance Show Set where
+    show (Set s) =
+        let xs = [(show x) | x <- [(-bound) .. bound], s x]
+        in "{" ++ (intercalate "," xs) ++ "}"
 
 {-
 def printSet(s: Set) = println(toString(s))
 -}
+
+-- ALTERNATE
+
+type Set' = Int -> Bool
+
+contains' :: Set' -> Int -> Bool
+contains' s elem = s elem
+
+intersect' :: Set' -> Set' -> Set'
+intersect' s t = \x -> s x && t x
+
+toString :: Set' -> String
+toString s =
+    let xs = [(show x) | x <- [(-bound) .. bound], contains' s x]
+    in "{" ++ (intercalate "," xs) ++ "}"
+
+instance Show Set' where show = toString
+
+{-
+anyIntBoolFun1 = \x -> -10 < x
+anyIntBoolFun2 = \x ->   x < 0
+setIntBoolFun1 = Set anyIntBoolFun1
+setIntBoolFun2 = Set anyIntBoolFun2
+
+main = do
+    putStrLn $ show $ intersect  setIntBoolFun1 setIntBoolFun2
+    putStrLn $ show $ intersect' anyIntBoolFun1 anyIntBoolFun2
+-}
+
+-- *Main> main
+-- {-9,-8,-7,-6,-5,-4,-3,-2,-1}
+-- {-9,-8,-7,-6,-5,-4,-3,-2,-1}
 
 -- End of file.

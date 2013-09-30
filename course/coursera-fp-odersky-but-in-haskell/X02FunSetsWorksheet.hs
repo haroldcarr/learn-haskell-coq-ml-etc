@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Sep 29 (Sun) 10:09:12 by carr.
+Last Modified : 2013 Sep 29 (Sun) 18:29:32 by carr.
 -}
 
 module X02FunSetsWorksheet
@@ -69,7 +69,7 @@ higherOrderFunctionTests = TestList
 
 type Numer = Int
 type Denom = Int
-data Rational' = Rational' Numer Denom deriving (Show)
+data Rational' = Rational' Numer Denom
 
 add :: Rational' -> Rational' -> Rational'
 add (Rational' n1 d1) (Rational' n2 d2) =
@@ -81,8 +81,8 @@ neg (Rational' n d) = Rational' (-n) d
 sub :: Rational' -> Rational' -> Rational'
 sub r1 r2 = add r1 $ neg r2
 
-toString :: Rational' -> String
-toString (Rational' n d) = (show n) ++ "/" ++ (show d)
+instance Show Rational' where
+    show (Rational' n d) = (show n) ++ "/" ++ (show d)
 
 x = Rational' 1 3
 y = Rational' 5 7
@@ -100,10 +100,10 @@ reduce (Rational' n d) = Rational' (n `quot` g) (d `quot` g)
 
 dataTypeTests = TestList
     [
-     TestCase $ assertEqual "add rat"           "22/21"     (toString $ add x y)
-    ,TestCase $ assertEqual "sub rat"          "-79/42"     (toString $ (sub (sub x y) z))
-    ,TestCase $ assertEqual "add rat self"      "70/49"     (toString $ add y y)
-    ,TestCase $ assertEqual "add rat self gcd"  "10/7"      (toString $ reduce $ add y y)
+     TestCase $ assertEqual "add rat"           "22/21"     (show $ add x y)
+    ,TestCase $ assertEqual "sub rat"          "-79/42"     (show $ (sub (sub x y) z))
+    ,TestCase $ assertEqual "add rat self"      "70/49"     (show $ add y y)
+    ,TestCase $ assertEqual "add rat self gcd"  "10/7"      (show $ reduce $ add y y)
     ,TestCase $ assertError "rat zero denom" "Rational': zero denominator"
                                                             (reduce (Rational' 1 0))
     ]
