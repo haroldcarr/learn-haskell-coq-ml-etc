@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Sep 29 (Sun) 18:29:32 by carr.
+Last Modified : 2013 Sep 30 (Mon) 14:52:23 by carr.
 -}
 
 module X02FunSetsWorksheet
@@ -56,8 +56,7 @@ sqrt' :: Double -> Double
 sqrt' x = fixedPoint (averageDamp (\y -> x / y)) 1.0
 
 higherOrderFunctionTests = TestList
-    [
-     TestCase $ assertEqual "product"      6                  (product' (\x->x+1) 1 2)
+    [TestCase $ assertEqual "product"      6                  (product' (\x->x+1) 1 2)
     ,TestCase $ assertEqual "fact 5"     120                  (fact 5)
     ,TestCase $ assertEqual "sp+"          5                  (sp 0 (\x y->x+y)(\x->x+1) 1 2)
     ,TestCase $ assertEqual "sp*"          6                  (sp 1 (\x y->x*y)(\x->x+1) 1 2)
@@ -74,12 +73,23 @@ data Rational' = Rational' Numer Denom
 add :: Rational' -> Rational' -> Rational'
 add (Rational' n1 d1) (Rational' n2 d2) =
     Rational' (n1 * d2 + n2 * d1) (d1 * d2)
+(+:) :: Rational' -> Rational' -> Rational'
+(+:)  = add
 
 neg :: Rational' -> Rational'
 neg (Rational' n d) = Rational' (-n) d
+-- custom unary prefix operator:
+-- http://haskell.1045720.n5.nabble.com/Custom-unary-operator-extension-td3099118.html
 
 sub :: Rational' -> Rational' -> Rational'
 sub r1 r2 = add r1 $ neg r2
+(-:) :: Rational' -> Rational' -> Rational'
+(-:) = sub
+
+less :: Rational' -> Rational' -> Bool
+less (Rational' n1 d1) (Rational' n2 d2) = n1 * d2 < n2 * d1
+(<:)  :: Rational' -> Rational' -> Bool
+(<:) = less
 
 instance Show Rational' where
     show (Rational' n d) = (show n) ++ "/" ++ (show d)
@@ -99,13 +109,19 @@ reduce (Rational' n d) = Rational' (n `quot` g) (d `quot` g)
     gcd a b = if b == 0 then a else gcd b $ a `mod` b
 
 dataTypeTests = TestList
-    [
-     TestCase $ assertEqual "add rat"           "22/21"     (show $ add x y)
+    [TestCase $ assertEqual "add rat"           "22/21"     (show $ add x y)
+    ,TestCase $ assertEqual "add rat infix"     "22/21"     (show $ x `add` y)
+    ,TestCase $ assertEqual "add rat operator"  "22/21"     (show $ x +:    y)
     ,TestCase $ assertEqual "sub rat"          "-79/42"     (show $ (sub (sub x y) z))
+    ,TestCase $ assertEqual "sub rat infix"    "-79/42"     (show $ x `sub` y `sub` z)
+    ,TestCase $ assertEqual "sub rat op"       "-79/42"     (show $ x -:    y -:    z)
     ,TestCase $ assertEqual "add rat self"      "70/49"     (show $ add y y)
     ,TestCase $ assertEqual "add rat self gcd"  "10/7"      (show $ reduce $ add y y)
     ,TestCase $ assertError "rat zero denom" "Rational': zero denominator"
                                                             (reduce (Rational' 1 0))
+    ,TestCase $ assertEqual "less rat"          True        (less x   y)
+    ,TestCase $ assertEqual "less rat infix"    True        (x `less` y)
+    ,TestCase $ assertEqual "less rat operator" True        (x <:     y)
     ]
 
 main = do
