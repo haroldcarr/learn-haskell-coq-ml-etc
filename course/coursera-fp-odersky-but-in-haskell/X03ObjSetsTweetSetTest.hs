@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Oct 02 (Wed) 09:51:20 by carr.
+Last Modified : 2013 Oct 02 (Wed) 15:56:16 by carr.
 -}
 
 module X03ObjSetsTweetSetTest where
@@ -50,7 +50,7 @@ appleKeywords  = ["ios", "iOS", "iphone", "iPhone", "ipad", "iPad"]
 
 main = do
     runTestTT tests
-    --
+
     gizmodoTweets     <- parseTweets gizmodoJSON
     techcrunchTweets  <- parseTweets techcrunchJSON
     engadgetTweets    <- parseTweets engadgetJSON
@@ -60,26 +60,20 @@ main = do
     mashableTweets    <- parseTweets mashableJSON
 
     let all = allTweets [gizmodoTweets, techcrunchTweets, engadgetTweets, amazondealsTweets, cnetTweets, gadgetlabTweets,  mashableTweets]
-    print (size all)
     runTestTT $ TestList[TestCase $ assertEqual "size all"         695 (size all)]
     -- foreach all  (\x -> putStrLn (show x))
 
-    let googleTweets = collectByKeywords all googleKeywords Empty
-    print (size googleTweets)
+    let googleTweets = collectByKeywords all googleKeywords
     runTestTT $ TestList[TestCase $ assertEqual "size googleTweets" 38 (size googleTweets)]
 
-    let appleTweets  = collectByKeywords all appleKeywords Empty
-    print (size appleTweets)
+    let appleTweets  = collectByKeywords all appleKeywords
     runTestTT $ TestList[TestCase $ assertEqual "size appleTweets" 150 (size appleTweets)]
 
     let trending = descendingByRetweet $ googleTweets `union ` appleTweets
-    print (length trending)
     runTestTT $ TestList[TestCase $ assertEqual "size trending"    179 (length trending)] -- TODO : why is this not 150 + 38 (maybe because of identical text but different users)
 
     -- TODO : ensure that selected Tweets in trending are as expected
 
     forM_ trending (\x -> putStrLn (show x))
-
-
 
 -- End of file.

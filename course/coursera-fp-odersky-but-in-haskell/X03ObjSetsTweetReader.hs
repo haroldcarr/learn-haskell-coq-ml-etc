@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 21:00:47 by carr.
-Last Modified : 2013 Oct 02 (Wed) 09:41:36 by carr.
+Last Modified : 2013 Oct 02 (Wed) 15:53:17 by carr.
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -38,12 +38,7 @@ parseTweets x =
         Left e -> error (show e)
 
 allTweets :: [Tweets] -> TweetSet
-allTweets tl = allTweets' tl Empty
-  where
-    allTweets'    [] acc = acc
-    allTweets' ((Tweets tl):t) acc = allTweets' t $ allTweets'' tl acc
-      where
-        allTweets''    [] acc = acc
-        allTweets'' (h:t) acc = allTweets'' t $ incl acc h
+allTweets tl = foldr outerStep Empty tl
+  where outerStep (Tweets tl) acc = foldr (\h acc -> incl acc h) acc tl
 
 -- End of file.

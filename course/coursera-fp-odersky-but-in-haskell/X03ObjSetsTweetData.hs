@@ -1,10 +1,9 @@
 {-
 Created       : 2013 Oct 01 (Tue) 20:21:49 by carr.
-Last Modified : 2013 Oct 02 (Wed) 08:03:04 by carr.
+Last Modified : 2013 Oct 02 (Wed) 15:54:58 by carr.
 -}
 
 module X03ObjSetsTweetData where
-
 
 ------------------------------------------------------------------------------
 
@@ -110,7 +109,6 @@ gizmodoJSON = "{\"tweets\": [\
 \{ \"user\": \"gizmodo\", \"text\": \"The weirdest thing people hate about the iPhone 5: http://t.co/GMwuRp8D\", \"retweets\": 202.0 },\
 \{ \"user\": \"gizmodo\", \"text\": \"Data centers waste a completely absurd amount of energy. http://t.co/NcO9pXqb\", \"retweets\": 58.0 }\
 \]}"
-
 
 ------------------------------------------------------------------------------
 
@@ -322,8 +320,6 @@ engadgetJSON = "{\"tweets\": [\
 \{ \"user\": \"engadget\", \"text\": \"Sony's Xperia T is now available on O2 and ThreeUK, Walther PPK/S not included -  http://t.co/LlZsSzqQ\", \"retweets\": 7.0 }\
 \]}"
 
-
-
 ------------------------------------------------------------------------------
 
 amazondealsJSON = "{\"tweets\": [\
@@ -428,7 +424,6 @@ amazondealsJSON = "{\"tweets\": [\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! $101.15 - BISSELL Lift-Off Steam Mop http://t.co/kE5YhYZZ\", \"retweets\": 2.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Deal of the Day: Starting from $3.99 Each: Essential MP3 Albums for Your Collection http://t.co/wotNjjir\", \"retweets\": 5.0 }\
 \]}"
-
 
 ------------------------------------------------------------------------------
 
