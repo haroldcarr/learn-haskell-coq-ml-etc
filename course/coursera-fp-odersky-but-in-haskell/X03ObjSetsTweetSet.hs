@@ -1,11 +1,10 @@
 {-
 Created       : 2013 Oct 01 (Tue) 13:26:19 by carr.
-Last Modified : 2013 Oct 01 (Tue) 15:12:40 by carr.
+Last Modified : 2013 Oct 01 (Tue) 18:57:45 by carr.
 -}
 
 module X03ObjSetsTweetSet where
 
---  ==============================================================================
 -- represent tweets.
 type User = String
 type Text = String
@@ -18,19 +17,19 @@ instance Show Tweet where
         "User: " ++ u ++ "\n" ++
         "Text: " ++ t ++ " [" ++ (show r) ++ "]"
 
+-- A set of Tweet implemented as a binary search tree.
 data TweetSet =
       Empty
     | NonEmpty Tweet TweetSet TweetSet
 
 filter' :: (Tweet -> Bool) -> TweetSet -> TweetSet
 filter' p ts = filterAcc p ts Empty
-
-filterAcc :: (Tweet -> Bool) -> TweetSet -> TweetSet -> TweetSet
-filterAcc p Empty            acc = Empty
-filterAcc p (NonEmpty e l r) acc =
-    let result = (filterAcc p l acc) `union` (filterAcc p r acc)
-    in if p e then result `incl` e
-       else        result
+  where
+    filterAcc p Empty            acc = Empty
+    filterAcc p (NonEmpty e l r) acc =
+        let result = (filterAcc p l acc) `union` (filterAcc p r acc)
+        in if p e then result `incl` e
+           else        result
 
 union :: TweetSet -> TweetSet -> TweetSet
 union Empty x = x
@@ -41,19 +40,18 @@ union this that =
 mostRetweeted :: TweetSet -> Tweet
 mostRetweeted Empty = error "NoSuchElementException"
 mostRetweeted ts@(NonEmpty e l r) = mostRetweetedAcc ts e
-
-mostRetweetedAcc :: TweetSet -> Tweet -> Tweet
-mostRetweetedAcc Empty currentMax = currentMax
-mostRetweetedAcc (NonEmpty e l r) currentMax =
-    max e (max (mostRetweetedAcc l currentMax) (mostRetweetedAcc r currentMax))
   where
-    max x@(Tweet _ _ xRetweets) y@(Tweet _ _ yRetweets) = if (xRetweets > yRetweets) then x else y
+    mostRetweetedAcc Empty currentMax = currentMax
+    mostRetweetedAcc (NonEmpty e l r) currentMax =
+        max e $ max (mostRetweetedAcc l currentMax) $ mostRetweetedAcc r currentMax
+      where
+        max x@(Tweet _ _ xRetweets) y@(Tweet _ _ yRetweets) = if (xRetweets > yRetweets) then x else y
 
-descendingByRetweet :: TweetSet -> TweetList
-descendingByRetweet Empty = Nil
-descendingByRetweet ts@(NonEmpty e l r) =
-    let mostret = mostRetweeted ts
-    in Cons mostret $ descendingByRetweet (remove ts mostret)
+descendingByRetweet :: TweetSet -> [Tweet]
+descendingByRetweet Empty = []
+descendingByRetweet ts =
+    let most = mostRetweeted ts
+    in most : (descendingByRetweet $ remove ts most)
 
 isEmptyTS :: TweetSet -> Bool
 isEmptyTS Empty = True
@@ -81,7 +79,6 @@ remove    (NonEmpty elem@(Tweet _ elemText _) l r) x@(Tweet _ xText _) =
     else if elemText <    xText then NonEmpty elem l            (remove r x)
     else                              union l r
 
-
 contains :: TweetSet -> Tweet -> Bool
 contains Empty _ = False
 contains (NonEmpty (Tweet _ elemText _) l r) x@(Tweet _ xText _) =
@@ -92,28 +89,6 @@ contains (NonEmpty (Tweet _ elemText _) l r) x@(Tweet _ xText _) =
 size :: TweetSet -> Int
 size Empty = 0
 size (NonEmpty _ l r) = 1 + (size l) + (size r)
-
--- ==============================================================================
-
-data TweetList =
-      Nil
-    | Cons Tweet TweetList
-
-headTL :: TweetList -> Tweet
-headTL Nil = error "headTL Nil"
-headTL (Cons h _) = h
-
-tailTL :: TweetList -> TweetList
-tailTL Nil = error "tailTL Nil"
-tailTL (Cons _ t) = t
-
-isEmptyTL :: TweetList -> Bool
-isEmptyTL Nil = True
-isEmptyTL (Cons _ _) = False
-
-instance Show TweetList where
-    show Nil = "Nil"
-    show (Cons (Tweet _ _ retweets) t) = (show retweets) ++ ":" ++ (show t)
 
 {-
 //  ==============================================================================
@@ -134,7 +109,7 @@ object GoogleVsApple {
    * A list of all tweets mentioning a keyword from either apple or google,
    * sorted by the number of retweets.
    */
-  lazy val trending: TweetList = googleTweets.union(appleTweets).descendingByRetweet
+  lazy val trending: [Tweet] = googleTweets.union(appleTweets).descendingByRetweet
 }
 
 object Main extends App {

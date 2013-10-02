@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Oct 01 (Tue) 15:15:12 by carr.
+Last Modified : 2013 Oct 01 (Tue) 18:58:36 by carr.
 -}
 
 module X03ObjSetsTweetSetTest where
@@ -17,7 +17,6 @@ d     =           (Tweet "d" "d body"  9)
 set4c = incl set3 c
 set4d = incl set3 d
 set5  = incl set4c d
-
 
 seven  =    NonEmpty (Tweet "7" "7" 7) Empty Empty
 three  =  incl seven (Tweet "3" "3" 3)
@@ -37,8 +36,8 @@ tests = TestList
     ,TestCase $ assertEqual "union: set4c and set4d"    4     (size (union set4c set4d))
     ,TestCase $ assertEqual "union: with empty set (1)" 4     (size (union set5 set1))
     ,TestCase $ assertEqual "union: with empty set (2)" 4     (size (union set1 set5))
-    ,TestCase $ assertEqual "descending: set5"          False (isEmptyTL trends)
-    ,TestCase $ assertEqual "descending: ..."           True  (((getUser (headTL trends)) == "a") || ((getUser (headTL trends)) == "b"))
+    ,TestCase $ assertEqual "descending: set5"          False (null trends)
+    ,TestCase $ assertEqual "descending: ..."           True  (((getUser (head trends)) == "a") || ((getUser (head trends)) == "b"))
     ]
 
 main = do
