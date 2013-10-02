@@ -1,9 +1,11 @@
 {-
 Created       : 2013 Oct 01 (Tue) 13:26:19 by carr.
-Last Modified : 2013 Oct 01 (Tue) 18:57:45 by carr.
+Last Modified : 2013 Oct 02 (Wed) 09:39:20 by carr.
 -}
 
 module X03ObjSetsTweetSet where
+
+import Data.List (isInfixOf)
 
 -- represent tweets.
 type User = String
@@ -90,31 +92,17 @@ size :: TweetSet -> Int
 size Empty = 0
 size (NonEmpty _ l r) = 1 + (size l) + (size r)
 
-{-
-//  ==============================================================================
-object GoogleVsApple {
-  val google = List("android", "Android", "galaxy", "Galaxy", "nexus", "Nexus")
-  val apple = List("ios", "iOS", "iphone", "iPhone", "ipad", "iPad")
+foreach :: TweetSet -> (Tweet -> IO ()) -> IO ()
+foreach Empty            f = return ()
+foreach (NonEmpty e l r) f = do
+    f e
+    foreach l f
+    foreach r f
 
-  val all: TweetSet = TweetReader.allTweets
-
-  def collect(l:List[String], acc:TweetSet): TweetSet =
-      if (l.isEmpty) acc
-      else collect(l.tail, acc.union(all.filter((x:Tweet) => x.text.contains(l.head))))
-
-  lazy val googleTweets: TweetSet = collect(google, new Empty)
-  lazy val appleTweets: TweetSet = collect(apple, new Empty)
-
-  /**
-   * A list of all tweets mentioning a keyword from either apple or google,
-   * sorted by the number of retweets.
-   */
-  lazy val trending: [Tweet] = googleTweets.union(appleTweets).descendingByRetweet
-}
-
-object Main extends App {
-  // Print the trending tweets
-  GoogleVsApple.trending foreach println
-}
--}
+collectByKeywords :: TweetSet -> [String] -> TweetSet -> TweetSet
+collectByKeywords    all         keywords    acc =
+    if (null keywords) then acc
+    else collectByKeywords all (tail keywords) $
+                           union acc (filter' (\(Tweet _ text _) -> isInfixOf (head keywords) text)
+                                              all)
 -- End of file.

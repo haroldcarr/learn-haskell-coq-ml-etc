@@ -1,21 +1,24 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Oct 01 (Tue) 18:58:36 by carr.
+Last Modified : 2013 Oct 02 (Wed) 09:51:20 by carr.
 -}
 
 module X03ObjSetsTweetSetTest where
 
-import Test.HUnit
 import AssertError
+import Control.Monad
+import Test.HUnit
+import X03ObjSetsTweetData
+import X03ObjSetsTweetReader
 import X03ObjSetsTweetSet
 
 set1  = Empty
-set2  = incl set1 (Tweet "a" "a body" 20)
-set3  = incl set2 (Tweet "b" "b body" 20)
-c     =           (Tweet "c" "c body"  7)
-d     =           (Tweet "d" "d body"  9)
-set4c = incl set3 c
-set4d = incl set3 d
+set2  = incl set1  (Tweet "a" "a body" 20)
+set3  = incl set2  (Tweet "b" "b body" 20)
+c     =            (Tweet "c" "c body"  7)
+d     =            (Tweet "d" "d body"  9)
+set4c = incl set3  c
+set4d = incl set3  d
 set5  = incl set4c d
 
 seven  =    NonEmpty (Tweet "7" "7" 7) Empty Empty
@@ -40,7 +43,43 @@ tests = TestList
     ,TestCase $ assertEqual "descending: ..."           True  (((getUser (head trends)) == "a") || ((getUser (head trends)) == "b"))
     ]
 
+------------------------------------------------------------------------------
+
+googleKeywords = ["android", "Android", "galaxy", "Galaxy", "nexus", "Nexus"]
+appleKeywords  = ["ios", "iOS", "iphone", "iPhone", "ipad", "iPad"]
+
 main = do
     runTestTT tests
+    --
+    gizmodoTweets     <- parseTweets gizmodoJSON
+    techcrunchTweets  <- parseTweets techcrunchJSON
+    engadgetTweets    <- parseTweets engadgetJSON
+    amazondealsTweets <- parseTweets amazondealsJSON
+    cnetTweets        <- parseTweets cnetJSON
+    gadgetlabTweets   <- parseTweets gadgetlabJSON
+    mashableTweets    <- parseTweets mashableJSON
+
+    let all = allTweets [gizmodoTweets, techcrunchTweets, engadgetTweets, amazondealsTweets, cnetTweets, gadgetlabTweets,  mashableTweets]
+    print (size all)
+    runTestTT $ TestList[TestCase $ assertEqual "size all"         695 (size all)]
+    -- foreach all  (\x -> putStrLn (show x))
+
+    let googleTweets = collectByKeywords all googleKeywords Empty
+    print (size googleTweets)
+    runTestTT $ TestList[TestCase $ assertEqual "size googleTweets" 38 (size googleTweets)]
+
+    let appleTweets  = collectByKeywords all appleKeywords Empty
+    print (size appleTweets)
+    runTestTT $ TestList[TestCase $ assertEqual "size appleTweets" 150 (size appleTweets)]
+
+    let trending = descendingByRetweet $ googleTweets `union ` appleTweets
+    print (length trending)
+    runTestTT $ TestList[TestCase $ assertEqual "size trending"    179 (length trending)] -- TODO : why is this not 150 + 38 (maybe because of identical text but different users)
+
+    -- TODO : ensure that selected Tweets in trending are as expected
+
+    forM_ trending (\x -> putStrLn (show x))
+
+
 
 -- End of file.
