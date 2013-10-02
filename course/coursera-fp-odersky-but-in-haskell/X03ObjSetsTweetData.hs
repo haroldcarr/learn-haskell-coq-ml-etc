@@ -1,9 +1,12 @@
 {-
 Created       : 2013 Oct 01 (Tue) 20:21:49 by carr.
-Last Modified : 2013 Oct 02 (Wed) 07:17:11 by carr.
+Last Modified : 2013 Oct 02 (Wed) 07:35:03 by carr.
 -}
 
 module X03ObjSetsTweetData where
+
+
+------------------------------------------------------------------------------
 
 gizmodo = "{\"tweets\": [\
 \{ \"user\": \"gizmodo\", \"text\": \"Kindle Paperwhite Review: Forget Everything Else, This Is the E-Reader You Want http://t.co/737W6aNC\", \"retweets\": 51.0 },\
@@ -108,6 +111,9 @@ gizmodo = "{\"tweets\": [\
 \{ \"user\": \"gizmodo\", \"text\": \"Data centers waste a completely absurd amount of energy. http://t.co/NcO9pXqb\", \"retweets\": 58.0 }\
 \]}"
 
+
+------------------------------------------------------------------------------
+
 techcrunch = "{\"tweets\": [\
 \{ \"user\": \"TechCrunch\", \"text\": \"Resignation Media Hires CEO John Ellis To Run Tapiture, Its Fast-Growing Pinterest For Men  http://t.co/ctn7oWJc by @anthonyha\", \"retweets\": 18.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"FreedomPop Opens Its Freemium Internet Service To The Masses With New Public Beta http://t.co/35mA9Adp by @chrisvelazco\", \"retweets\": 27.0 },\
@@ -211,6 +217,8 @@ techcrunch = "{\"tweets\": [\
 \{ \"user\": \"TechCrunch\", \"text\": \"Most Docks Should Work With The Lightning Adapter And iPhone 5 http://t.co/oGlTupcK by @johnbiggs\", \"retweets\": 13.0 }\
 \]}"
 
+------------------------------------------------------------------------------
+
 engadget = "{\"tweets\": [\
 \{ \"user\": \"engadget\", \"text\": \"Sony reveals Japan prices for Windows 8 VAIO machines -  http://t.co/FRCu2XVb\", \"retweets\": 18.0 },\
 \{ \"user\": \"engadget\", \"text\": \"FreedomPop's pay-as-you-go data service launches in beta, offering 500MB of free WiMAX per month -  http://t.co/Ny48yXUl\", \"retweets\": 10.0 },\
@@ -260,7 +268,7 @@ engadget = "{\"tweets\": [\
 \{ \"user\": \"engadget\", \"text\": \"Microsoft details its own Windows 8 rollout, lessons learned from 'dogfooding' -  http://t.co/bg5swwsm\", \"retweets\": 33.0 },\
 \{ \"user\": \"engadget\", \"text\": \"PBS draws link between digital music ethics and magic spells, somehow makes it look simple (video) -  http://t.co/Fx7sPphG\", \"retweets\": 7.0 },\
 \{ \"user\": \"engadget\", \"text\": \"PSA: iPhone 5 available in 22 more countries, on Cricket and US regional carriers galore -  http://t.co/lE4dLNQC\", \"retweets\": 18.0 },\
-\{ \"user\": \"engadget\", \"text\": \"It's now a surprise to hear of a company listening to its users, issuing an apology and vowing to make it better.\" (http://t.co/R5bu5Wp1)\", \"retweets\": 49.0 },\
+\{ \"user\": \"engadget\", \"text\": \"It's now a surprise to hear of a company listening to its users, issuing an apology and vowing to make it better. (http://t.co/R5bu5Wp1)\", \"retweets\": 49.0 },\
 \{ \"user\": \"engadget\", \"text\": \"Wikipad CEO James Bower defends his gaming tablet's $500 pricing, why one device beats two -  http://t.co/eUiFdD8g\", \"retweets\": 11.0 },\
 \{ \"user\": \"engadget\", \"text\": \"Parallella project: designed to bring mouth-watering power to a board similar in size to the Raspberry Pi for $99. http://t.co/lOz8cmX8\", \"retweets\": 12.0 },\
 \{ \"user\": \"engadget\", \"text\": \"Kodak dropping out of the consumer inkjet printer business in 2013 -  http://t.co/bpE6f6Za\", \"retweets\": 20.0 },\
@@ -313,6 +321,10 @@ engadget = "{\"tweets\": [\
 \{ \"user\": \"engadget\", \"text\": \"From the lab: Lumia 920 image stabilization and 808 drop test at Nokia R&amp;D (video) -  http://t.co/s9zFp7hU\", \"retweets\": 13.0 },\
 \{ \"user\": \"engadget\", \"text\": \"Sony's Xperia T is now available on O2 and ThreeUK, Walther PPK/S not included -  http://t.co/LlZsSzqQ\", \"retweets\": 7.0 }\
 \]}"
+
+
+
+------------------------------------------------------------------------------
 
 amazondeals = "{\"tweets\": [\
 \{ \"user\": \"amazondeals\", \"text\": \"Deal of the Day: 50% Off Select BEARPAW Boots &amp; Slippers http://t.co/ZBvpSN33\", \"retweets\": 0.0 },\
@@ -417,6 +429,9 @@ amazondeals = "{\"tweets\": [\
 \{ \"user\": \"amazondeals\", \"text\": \"Deal of the Day: Starting from $3.99 Each: Essential MP3 Albums for Your Collection http://t.co/wotNjjir\", \"retweets\": 5.0 }\
 \]}"
 
+
+------------------------------------------------------------------------------
+
 cnet = "{\"tweets\": [\
 \{ \"user\": \"CNET\", \"text\": \"HP aims for business users with ElitePad 900 Windows 8 tablet http://t.co/XyOipAdL\", \"retweets\": 10.0 },\
 \{ \"user\": \"CNET\", \"text\": \"RT @CNETNews: Apple rolls out fix for iPhone 5 Wi-Fi network data bug http://t.co/Gz13JfDD\", \"retweets\": 93.0 },\
@@ -520,6 +535,8 @@ cnet = "{\"tweets\": [\
 \{ \"user\": \"CNET\", \"text\": \"HTC One X+ turns up in O2 brochure, Jelly Bean in tow http://t.co/MGvjw24E\", \"retweets\": 26.0 }\
 \]}"
 
+------------------------------------------------------------------------------
+
 gadgetlab = "{\"tweets\": [\
 \{ \"user\": \"gadgetlab\", \"text\": \"A Clean, Well-Lighted Face: The Kindle Paperwhite http://t.co/WlUPzZbS by @strngwys\", \"retweets\": 11.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Maps? Purple halos in photos? Screen glitches? What? iPhone 5 'problems' explained http://t.co/xVGBVhGE by @redgirlsays\", \"retweets\": 22.0 },\
@@ -533,7 +550,7 @@ gadgetlab = "{\"tweets\": [\
 \{ \"user\": \"gadgetlab\", \"text\": \"Ballmer Pitches Window 8 to Developers, But Keeps Tight Reign On Surface: http://t.co/TdkBZbXR by @alexandra_chang\", \"retweets\": 15.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Gadget Lab Show: Apple?s iPhone 5 Wins, Maps App Fails http://t.co/9gLGvagS with @redgirlsays + @strngwys\", \"retweets\": 13.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"BlackBerry 10 features all-in-one approach to the inbox http://t.co/UzTPt3Dh by @strngwys\", \"retweets\": 14.0 },\
-\{ \"user\": \"gadgetlab\", \"text\": \"Update on @redgirlsays' #walletless adventures -- Living Walletless, Week One: My Kingdom for a Bagel\" http://t.co/3zEIPqdl\", \"retweets\": 8.0 },\
+\{ \"user\": \"gadgetlab\", \"text\": \"Update on @redgirlsays' #walletless adventures -- 'Living Walletless, Week One: My Kingdom for a Bagel' http://t.co/3zEIPqdl\", \"retweets\": 8.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Foxconn rioting leaves factory closed, dozens injured http://t.co/VSgFcak5 by @redgirlsays\", \"retweets\": 29.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Who's Waiting in Line for the #iPhone5? These People Are: http://t.co/qeYJaGu2 by @redgirlsays\", \"retweets\": 21.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Operation iPhone Drop: From Cargo Plane to Door Stoop http://t.co/TEuxL13p By @strngwys\", \"retweets\": 11.0 },\
@@ -594,7 +611,7 @@ gadgetlab = "{\"tweets\": [\
 \{ \"user\": \"gadgetlab\", \"text\": \"?iPhone 5 is the best phone we?ve ever made,? @PSchiller says http://t.co/DwtKQkSu #Apple LIVEBLOG\", \"retweets\": 27.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple says #iPhone5 has a 4-inch screen you can still comfortably use with one hand http://t.co/DwtKQkSu LIVEBLOG\", \"retweets\": 23.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple #iPhone5 comes in either Slate (aka black) or White http://t.co/DwtKQkSu LIVEBLOG\", \"retweets\": 17.0 },\
-\{ \"user\": \"gadgetlab\", \"text\": \"#Apple: Shared Photo Streams in #iOS6  is 'easiest way to share photos with your friends?' http://t.co/DwtKQkSu #iPhone5 LIVEBLOG #iPhone5\", \"retweets\": 11.0 },\
+\{ \"user\": \"gadgetlab\", \"text\": \"#Apple: Shared Photo Streams in #iOS6  is easiest way to share photos with your friends? http://t.co/DwtKQkSu #iPhone5 LIVEBLOG #iPhone5\", \"retweets\": 11.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple now talking iOS 6 updates for the #iPhone5 http://t.co/DwtKQkSu LIVEBLOG\", \"retweets\": 25.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 Lightning connector is 80% smaller than old 30-pin connectors http://t.co/DwtKQkSu LIVEBLOG #Apple\", \"retweets\": 15.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 has smaller, new connecter called 'Lightning' in a nod to Thunderbolt ports on Macs http://t.co/DwtKQkSu LIVEBLOG #Apple\", \"retweets\": 32.0 },\
@@ -622,6 +639,8 @@ gadgetlab = "{\"tweets\": [\
 \{ \"user\": \"gadgetlab\", \"text\": \"@redgirlsays on the scene at Apple's iPhone 5 unveiling &amp; she has photos...of the outside of the event. Inside soon! http://t.co/5AtpHCfY\", \"retweets\": 0.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Demoing at an Apple Event: Secretive, Stressful, and (Probably) Worth It http://t.co/7NOIDSJw by @strngwys\", \"retweets\": 11.0 }\
 \]}"
+
+------------------------------------------------------------------------------
 
 mashable = "{\"tweets\": [\
 \{ \"user\": \"mashable\", \"text\": \"Which is sorriest, #Apple Maps or #Siri? @Charlie_White has the comic - http://t.co/YRXXJXGY\", \"retweets\": 55.0 },\
