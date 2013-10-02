@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 21:00:47 by carr.
-Last Modified : 2013 Oct 01 (Tue) 21:42:13 by carr.
+Last Modified : 2013 Oct 02 (Wed) 07:22:26 by carr.
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -32,10 +32,19 @@ instance FromJSON Tweet where
                            t .: "retweets"
     parseJSON _ = mzero
 
-main = do
-    let toParse = C8.pack gizmodo
+parse x =
+    let toParse = C8.pack x
       in case (eitherDecode' toParse :: Either String Tweets) of
         Right r -> print r
-        Left e -> print "E" -- e
+        Left e -> print e
+
+main = do
+    parse gizmodo
+    parse techcrunch
+--    parse engadget -- "Failed reading: satisfyWith"
+    parse amazondeals
+    parse cnet
+--    parse gadgetlab -- "Failed reading: satisfyWith"
+    parse mashable
 
 -- End of file.

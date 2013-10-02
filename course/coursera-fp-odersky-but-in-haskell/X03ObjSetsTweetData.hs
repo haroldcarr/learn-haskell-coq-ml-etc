@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 20:21:49 by carr.
-Last Modified : 2013 Oct 01 (Tue) 21:40:15 by carr.
+Last Modified : 2013 Oct 02 (Wed) 07:17:11 by carr.
 -}
 
 module X03ObjSetsTweetData where
@@ -108,7 +108,7 @@ gizmodo = "{\"tweets\": [\
 \{ \"user\": \"gizmodo\", \"text\": \"Data centers waste a completely absurd amount of energy. http://t.co/NcO9pXqb\", \"retweets\": 58.0 }\
 \]}"
 
-techCrunch = "{\"tweets\": [\
+techcrunch = "{\"tweets\": [\
 \{ \"user\": \"TechCrunch\", \"text\": \"Resignation Media Hires CEO John Ellis To Run Tapiture, Its Fast-Growing Pinterest For Men  http://t.co/ctn7oWJc by @anthonyha\", \"retweets\": 18.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"FreedomPop Opens Its Freemium Internet Service To The Masses With New Public Beta http://t.co/35mA9Adp by @chrisvelazco\", \"retweets\": 27.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Dish And The Dream Of Internet TV http://t.co/y8KcSl8G by @ryanlawler\", \"retweets\": 25.0 },\
@@ -139,7 +139,7 @@ techCrunch = "{\"tweets\": [\
 \{ \"user\": \"TechCrunch\", \"text\": \"Simon Cowell And http://t.co/7lk1PBvp Are Creating An X Factor To Find The Next Mark Zuckerberg http://t.co/ZesTDWMs by @leenarao\", \"retweets\": 192.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"How Technology Is Empowering Teachers, Minting Millionaires, And Improving Education   http://t.co/EgFaGI6w by @ripemp\", \"retweets\": 154.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Italians Take Up The Torch To Ignite Their Own Tech Startup Scene http://t.co/zAuoFO4t by @mikebutcher\", \"retweets\": 89.0 },\
-\{ \"user\": \"TechCrunch\", \"text\": \"A Tech Way Around \"Creative Block\" http://t.co/H6eOyiay by @alexcornell\", \"retweets\": 50.0 },\
+\{ \"user\": \"TechCrunch\", \"text\": \"A Tech Way Around 'Creative Block' http://t.co/H6eOyiay by @alexcornell\", \"retweets\": 50.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Klout Would Like Potential Employers To Consider Your Score Before Hiring You. And That's Stupid. http://t.co/YmnMj271 by @thatdrew\", \"retweets\": 204.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"A Venture Capitalist's E-Commerce Shopping List http://t.co/tA7VbXBT by @VCSerge\", \"retweets\": 55.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Five Big Changes In The iOS 6 App Store (And What Developers Should Do) http://t.co/pkMSN96G by @sarahintampa\", \"retweets\": 76.0 },\
@@ -158,13 +158,13 @@ techCrunch = "{\"tweets\": [\
 \{ \"user\": \"TechCrunch\", \"text\": \"Startup Success Requires The Drive For Data http://t.co/Yl2JpFCI by @jeffma\", \"retweets\": 78.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Here Are The Singers Competing In Next Week's 'American Idol For The Geek Set' http://t.co/OcBvSOLl by @anthonyha\", \"retweets\": 20.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Ford CTO Paul Mascarenas On Bridging The Worlds Of Silicon Valley And Motor City [TCTV] http://t.co/oeD4AD5n by @loyalelectron\", \"retweets\": 21.0 },\
-\{ \"user\": \"TechCrunch\", \"text\": \"Apple Adds A Clarifying Description To Its \"Apps For Passbook\" Page In The App Store http://t.co/fkj4P0EP by @drizzled\", \"retweets\": 42.0 },\
+\{ \"user\": \"TechCrunch\", \"text\": \"Apple Adds A Clarifying Description To Its 'Apps For Passbook' Page In The App Store http://t.co/fkj4P0EP by @drizzled\", \"retweets\": 42.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Post-SingTel Acquisition, Photo Aggregation App Pixable Gets An Image-Centric Redesign http://t.co/pNS4tFke by @anthonyha\", \"retweets\": 12.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Rest In Peace, Charles Alfred Eldon: A Pioneer Of Silicon Valley, A Role Model For This New Generation http://t.co/3p1mt486 by @eldon\", \"retweets\": 89.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"TechCrunch Giveaway: Free Tickets To Box's 2012 #BoxWorks Event http://t.co/t4l8IIrK by @elinblesener\", \"retweets\": 35.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Cloud Security Firm Qualys' IPO Opens At $12/Share, Raising $71.8M http://t.co/n2WNQkuH by @ingridlunden\", \"retweets\": 18.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"The FeedBurner Deathwatch Continues: Google Kills AdSense For Feeds http://t.co/CztoKUFP by @fredericl\", \"retweets\": 31.0 },\
-\{ \"user\": \"TechCrunch\", \"text\": \"Google's \"Spring\" Cleaning In Fall: AdSense For Feeds, Classic Plus, Spreadsheet Gadgets Get The Axe http://t.co/pSeE3fCS by @thatdrew\", \"retweets\": 26.0 },\
+\{ \"user\": \"TechCrunch\", \"text\": \"Google's 'Spring' Cleaning In Fall: AdSense For Feeds, Classic Plus, Spreadsheet Gadgets Get The Axe http://t.co/pSeE3fCS by @thatdrew\", \"retweets\": 26.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Gillmor Gang Live  09.28.12   (TCTV) http://t.co/eUf0Df0q by @stevegillmor\", \"retweets\": 6.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Facebook Shares Jump More Than 6% After Gifts Launch. (Hooray For New Revenue Streams.) http://t.co/8fEXj2kG by @kimmaicutler\", \"retweets\": 99.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Evernote Listens To Unhappy Skitch 2.0 Users: Brings Back Some Old Features And Version 1.0 http://t.co/y2YRxxyJ by @fredericl\", \"retweets\": 29.0 },\
@@ -172,7 +172,7 @@ techCrunch = "{\"tweets\": [\
 \{ \"user\": \"TechCrunch\", \"text\": \"Ptch Partners With Paramount, Letting Users Remix Their Own Paranormal Activity Found Footage  http://t.co/28vTlzvu by @ryanlawler\", \"retweets\": 17.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Foursquare Partners With OpenTable To Make Reservations Simple http://t.co/EUz36s6i by @thatdrew\", \"retweets\": 82.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Treasure Data Launches Cloud-Based Data Warehouse With Investment From Ruby Creator Yukihiro ?Ma... http://t.co/Ds9mYFAX by @alexwilliams\", \"retweets\": 15.0 },\
-\{ \"user\": \"TechCrunch\", \"text\": \"Meet Apple's \"New CEO,\" Tom Brooks http://t.co/fdyX3Oox by @drizzled\", \"retweets\": 54.0 },\
+\{ \"user\": \"TechCrunch\", \"text\": \"Meet Apple's 'New CEO,' Tom Brooks http://t.co/fdyX3Oox by @drizzled\", \"retweets\": 54.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Music-Sharing Startup MyStream Preps Android Launch, Looks Beyond Music http://t.co/CusbX5mh by @anthonyha\", \"retweets\": 18.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"HP's Open webOS Goes 1.0, Can Now Be Ported To New Devices http://t.co/xljTC0L7 by @drizzled\", \"retweets\": 60.0 },\
 \{ \"user\": \"TechCrunch\", \"text\": \"Another Day, Another Eyeful Of HTC's Mildly-Updated One X+ http://t.co/LLU27dkp by @chrisvelazco\", \"retweets\": 16.0 },\
@@ -321,7 +321,7 @@ amazondeals = "{\"tweets\": [\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! $129.99 - Giulio Romano Piemonte Black Silicone Watch http://t.co/7v1ovQCQ\", \"retweets\": 1.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! $59.99 - Stuhrling Original Men's Roulette Swiss Quartz Watch http://t.co/vreVCFvJ\", \"retweets\": 0.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! Marware Microshell for Fire (not for HD) http://t.co/Mtb1Uoea\", \"retweets\": 0.0 },\
-\{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! Belkin Quilted Case for Fire HD 7in\" http://t.co/gxpUszgw\", \"retweets\": 0.0 },\
+\{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! Belkin Quilted Case for Fire HD 7in http://t.co/gxpUszgw\", \"retweets\": 0.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! $17.99 - iHome Rechargeable Speaker for Kindle Fire http://t.co/JCIBkwS1\", \"retweets\": 2.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! $119.95 - Shun Premier 7-Inch Santoku Knife http://t.co/Lpsyh0gY\", \"retweets\": 3.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! $39.99 - Crock-Pot Cook Travel Serve 6-Quart Programmable Slow Cooker http://t.co/8HlHPMh3\", \"retweets\": 2.0 },\
@@ -331,7 +331,7 @@ amazondeals = "{\"tweets\": [\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! $89.99 - Canon imageCLASS Laser Multifunction Printer http://t.co/RAiMddij\", \"retweets\": 2.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! Marware Jurni for Kindle + Kindle Paperwhite http://t.co/TzliFyFm\", \"retweets\": 2.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! $19.99 - Amazon Kindle DX Leather Cover http://t.co/BRDBNBsz\", \"retweets\": 4.0 },\
-\{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! Verso Duct Tape Case for Fire HD 7in\" http://t.co/UID1EZfo\", \"retweets\": 1.0 },\
+\{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! Verso Duct Tape Case for Fire HD 7in http://t.co/UID1EZfo\", \"retweets\": 1.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! Lightwedge Reading Light for Kindle E-readers http://t.co/8WvOPwib\", \"retweets\": 1.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Deal of the Day: $1.99 Kindle Mysteries &amp; Thrillers http://t.co/ApOcFD5g\", \"retweets\": 7.0 },\
 \{ \"user\": \"amazondeals\", \"text\": \"Lightning Deal! Lewis N. Clark Sport Pack  http://t.co/ax9n0p4I\", \"retweets\": 0.0 },\
@@ -491,7 +491,7 @@ cnet = "{\"tweets\": [\
 \{ \"user\": \"CNET\", \"text\": \"Minecraft creator says he won't certify the game for Windows 8 http://t.co/xqo84j2B\", \"retweets\": 25.0 },\
 \{ \"user\": \"CNET\", \"text\": \"How to change your Twitter header photo http://t.co/FCs8hpTs\", \"retweets\": 27.0 },\
 \{ \"user\": \"CNET\", \"text\": \"The tweets in the Discovery tab just got a lot more relevant http://t.co/v6IWlTdQ\", \"retweets\": 5.0 },\
-\{ \"user\": \"CNET\", \"text\": \"RT @CNETNews: Tim Cook's \"Mapology\": What's missing is any explanation why Apple would issue a beta app it knew would frustrate you http ...\", \"retweets\": 32.0 },\
+\{ \"user\": \"CNET\", \"text\": \"RT @CNETNews: Tim Cook's 'Mapology': What's missing is any explanation why Apple would issue a beta app it knew would frustrate you http ...\", \"retweets\": 32.0 },\
 \{ \"user\": \"CNET\", \"text\": \"How to set up an Android tablet as a second display for your PC or Mac http://t.co/YynJll9N\", \"retweets\": 48.0 },\
 \{ \"user\": \"CNET\", \"text\": \"A Texas company is joining the patent wars by suing Apple over spreadsheet technology http://t.co/sntXqimH\", \"retweets\": 16.0 },\
 \{ \"user\": \"CNET\", \"text\": \"Eying the iPad's turf, Intel and the Windows 8 gang is set to make a play for business users http://t.co/7OEr4hqc\", \"retweets\": 7.0 },\
@@ -511,10 +511,10 @@ cnet = "{\"tweets\": [\
 \{ \"user\": \"CNET\", \"text\": \"Music publisher Sony/ATV killed Apple's iPhone 5 music service, report says http://t.co/whx2JbAO\", \"retweets\": 22.0 },\
 \{ \"user\": \"CNET\", \"text\": \"5 great, cheap plasma TVs http://t.co/4QYARxB8\", \"retweets\": 10.0 },\
 \{ \"user\": \"CNET\", \"text\": \"How RIM could get you to buy into BlackBerry 10 http://t.co/AUo08CkG\", \"retweets\": 15.0 },\
-\{ \"user\": \"CNET\", \"text\": \"RT @CNETNews: Apple \"fell short\" with iOS 6 maps, and we are \"extremely sorry,\" CEO Tim Cook says in open letter http://t.co/t1U4497r\", \"retweets\": 139.0 },\
+\{ \"user\": \"CNET\", \"text\": \"RT @CNETNews: Apple 'fell short' with iOS 6 maps, and we are 'extremely sorry,' CEO Tim Cook says in open letter http://t.co/t1U4497r\", \"retweets\": 139.0 },\
 \{ \"user\": \"CNET\", \"text\": \"iPhone 5 to iPhone 4S: I vibrate so much harder than you http://t.co/1XMZVvVE\", \"retweets\": 43.0 },\
 \{ \"user\": \"CNET\", \"text\": \"Leak: Photos of RIM's BlackBerry 10 phones hit the web http://t.co/X0OvqMwL\", \"retweets\": 46.0 },\
-\{ \"user\": \"CNET\", \"text\": \"RT @CNETNews: Apple's Tim Cook: We are \"extremely sorry\" about those problems with iOS 6 Maps http://t.co/rlcCUgQO\", \"retweets\": 114.0 },\
+\{ \"user\": \"CNET\", \"text\": \"RT @CNETNews: Apple's Tim Cook: We are 'extremely sorry' about those problems with iOS 6 Maps http://t.co/rlcCUgQO\", \"retweets\": 114.0 },\
 \{ \"user\": \"CNET\", \"text\": \"Samsung Galaxy Music leak shows budget music phone http://t.co/aTAjDKk2\", \"retweets\": 14.0 },\
 \{ \"user\": \"CNET\", \"text\": \"Bad Piggies review: Angry Birds follow-up bolts on complexity http://t.co/lmfK0Yjd\", \"retweets\": 16.0 },\
 \{ \"user\": \"CNET\", \"text\": \"HTC One X+ turns up in O2 brochure, Jelly Bean in tow http://t.co/MGvjw24E\", \"retweets\": 26.0 }\
@@ -547,7 +547,7 @@ gadgetlab = "{\"tweets\": [\
 \{ \"user\": \"gadgetlab\", \"text\": \"Any Blackberry users (in the SF area) that are planning to switch to another smartphone platform? @alexandra_chang wants to talk.\", \"retweets\": 11.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Downloaded iOS 6 yet? Here are 13 tips, tricks and hidden features: http://t.co/IXWOHkXB by @strngwys and @redgirlsays\", \"retweets\": 95.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"The details and specs on HTC's Windows Phone 8X and 8S: http://t.co/k8b0kQCZ by @alexandra_chang\", \"retweets\": 14.0 },\
-\{ \"user\": \"gadgetlab\", \"text\": \"HTC's 8X and 8S are \"Windows Phone's Best Shot\": http://t.co/2egTC11C by @alexandra_chang\", \"retweets\": 10.0 },\
+\{ \"user\": \"gadgetlab\", \"text\": \"HTC's 8X and 8S are 'Windows Phone's Best Shot': http://t.co/2egTC11C by @alexandra_chang\", \"retweets\": 10.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Motorola?s Razr i: A Razr M With Intel Inside http://t.co/eLtTIxan by @nateog\", \"retweets\": 19.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Hi-Call Phone Gloves Bring Inspector Gadget Functionality to Life http://t.co/IbsRzeew by @nateog\", \"retweets\": 33.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Amazon Kindle Fire HD Teardown http://t.co/IR9rx6h3 by @nateog\", \"retweets\": 35.0 },\
@@ -594,17 +594,17 @@ gadgetlab = "{\"tweets\": [\
 \{ \"user\": \"gadgetlab\", \"text\": \"?iPhone 5 is the best phone we?ve ever made,? @PSchiller says http://t.co/DwtKQkSu #Apple LIVEBLOG\", \"retweets\": 27.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple says #iPhone5 has a 4-inch screen you can still comfortably use with one hand http://t.co/DwtKQkSu LIVEBLOG\", \"retweets\": 23.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple #iPhone5 comes in either Slate (aka black) or White http://t.co/DwtKQkSu LIVEBLOG\", \"retweets\": 17.0 },\
-\{ \"user\": \"gadgetlab\", \"text\": \"#Apple: Shared Photo Streams in #iOS6  is \"easiest way to share photos with your friends?\" http://t.co/DwtKQkSu #iPhone5 LIVEBLOG #iPhone5\", \"retweets\": 11.0 },\
+\{ \"user\": \"gadgetlab\", \"text\": \"#Apple: Shared Photo Streams in #iOS6  is 'easiest way to share photos with your friends?' http://t.co/DwtKQkSu #iPhone5 LIVEBLOG #iPhone5\", \"retweets\": 11.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple now talking iOS 6 updates for the #iPhone5 http://t.co/DwtKQkSu LIVEBLOG\", \"retweets\": 25.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 Lightning connector is 80% smaller than old 30-pin connectors http://t.co/DwtKQkSu LIVEBLOG #Apple\", \"retweets\": 15.0 },\
-\{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 has smaller, new connecter called \"Lightning\" in a nod to Thunderbolt ports on Macs http://t.co/DwtKQkSu LIVEBLOG #Apple\", \"retweets\": 32.0 },\
+\{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 has smaller, new connecter called 'Lightning' in a nod to Thunderbolt ports on Macs http://t.co/DwtKQkSu LIVEBLOG #Apple\", \"retweets\": 32.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 front camera shoots 720p, has Face detection &amp; #Apple announces FaceTime over cellular networks http://t.co/DwtKQkSu LIVEBLOG\", \"retweets\": 94.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple #iPhone5 has 40% faster photo capture thanks iPhone 4S http://t.co/DwtKQkSu LIVEBLOG\", \"retweets\": 17.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 has camera has new image sensor for better low light photos &amp; is 25% smaller http://t.co/DwtKQkSu LIVEBLOG #Apple\", \"retweets\": 21.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple #iPhone5 camera is 8megapixels...same as iPhone 4S. But it's not the same camera http://t.co/DwtKQkSu #LIVEBLOG\", \"retweets\": 30.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple #iPhone5 battery: 8hrs of 3G talk time, 8hrs of LTE or 3G browsing, 10hrs of WiFi browsing, 225hrs of standby http://t.co/DwtKQkSu\", \"retweets\": 121.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"We've updated every aspect of iPhone 5,? @PSchiller says. #Apple #iPhone5 LIVEBLOG http://t.co/DwtKQkSu\", \"retweets\": 16.0 },\
-\{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 display has 44% more color saturation. #Apple says its \"most accurate\" in industry http://t.co/DwtKQkSu LIVEBLOG by @redgirlsays\", \"retweets\": 21.0 },\
+\{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 display has 44% more color saturation. #Apple says its 'most accurate' in industry http://t.co/DwtKQkSu LIVEBLOG by @redgirlsays\", \"retweets\": 21.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#iPhone5 new A6 chip has 2x faster graphics and processing power http://t.co/DwtKQkSu LIVEBLOG by @redgirlsays\", \"retweets\": 31.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"Yes, the #iPhone5 does have LTE. #Apple liveblog http://t.co/DwtKQkSu\", \"retweets\": 19.0 },\
 \{ \"user\": \"gadgetlab\", \"text\": \"#Apple #iPhone5 photos up on our liveblog ---&gt; http://t.co/DwtKQkSu\", \"retweets\": 35.0 },\
@@ -655,7 +655,7 @@ mashable = "{\"tweets\": [\
 \{ \"user\": \"mashable\", \"text\": \"4 Tips to Avoid Work-From-Home Email Scams http://t.co/j4qxnmrj\", \"retweets\": 43.0 },\
 \{ \"user\": \"mashable\", \"text\": \"10 Amazing Google Earth and Maps Discoveries http://t.co/UyDMs135\", \"retweets\": 144.0 },\
 \{ \"user\": \"mashable\", \"text\": \"Top 5 Apps Your Kids Will Love This Week http://t.co/7YeW58Af\", \"retweets\": 39.0 },\
-\{ \"user\": \"mashable\", \"text\": \"#DidYouKnow T9 is short for \"Text on 9 keys\"? http://t.co/9rAFobkz\", \"retweets\": 145.0 },\
+\{ \"user\": \"mashable\", \"text\": \"#DidYouKnow T9 is short for 'Text on 9 keys'? http://t.co/9rAFobkz\", \"retweets\": 145.0 },\
 \{ \"user\": \"mashable\", \"text\": \"Is your university better at social networking than you are? See how it ranks here: http://t.co/6aM1zpFa\", \"retweets\": 57.0 },\
 \{ \"user\": \"mashable\", \"text\": \"Facebook's upgraded its Messenger app for iPhone, and @ToddWasserman took it for a spin: http://t.co/MMgCEsJ2\", \"retweets\": 47.0 },\
 \{ \"user\": \"mashable\", \"text\": \"Imagine how it would feel to get fired from @Facebook. One man describes his experience. @joannellepan has the story -...\", \"retweets\": 21.0 },\
@@ -666,7 +666,7 @@ mashable = "{\"tweets\": [\
 \{ \"user\": \"mashable\", \"text\": \"#DidYouKnow the Dvorak is a more efficient keyboard layout than QWERTY? http://t.co/IlHnfSsz\", \"retweets\": 162.0 },\
 \{ \"user\": \"mashable\", \"text\": \"Find out which fashion brands dominate social media - @ToddWasserman brings you this handy chart: http://t.co/hArNJOkE\", \"retweets\": 49.0 },\
 \{ \"user\": \"mashable\", \"text\": \"This iPad keyboard reveals what's wrong with Kickstarter. @PetePachal reviews it: http://t.co/2yjhGnY9\", \"retweets\": 18.0 },\
-\{ \"user\": \"mashable\", \"text\": \"Apple's given up on calling its Maps app the \"most powerful ever.\" @ToddWasserman explains why: http://t.co/3YatPmWf\", \"retweets\": 98.0 },\
+\{ \"user\": \"mashable\", \"text\": \"Apple's given up on calling its Maps app the 'most powerful ever.' @ToddWasserman explains why: http://t.co/3YatPmWf\", \"retweets\": 98.0 },\
 \{ \"user\": \"mashable\", \"text\": \"Week's worth of TV boiled down to the best 12 GIFs, thanks to the keen eye of @ChristErickson http://t.co/BAUiteqd\", \"retweets\": 22.0 },\
 \{ \"user\": \"mashable\", \"text\": \"Power Nap With This Head-Consuming Ostrich Pillow http://t.co/d34dzlPT\", \"retweets\": 107.0 },\
 \{ \"user\": \"mashable\", \"text\": \"#Bots Drive 16% of U.S. Web Traffic [INFOGRAPHIC] http://t.co/lfFAjUy6\", \"retweets\": 84.0 },\
@@ -726,4 +726,4 @@ mashable = "{\"tweets\": [\
 \{ \"user\": \"mashable\", \"text\": \"Think Apple Maps Is Bad? Remember the Tale of MobileMe http://t.co/Koeew9eU\", \"retweets\": 41.0 }\
 \]}"
 
--- End of file.
+-- End of file
