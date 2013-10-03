@@ -1,7 +1,9 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 02 (Wed) 22:12:05 by carr.
+Last Modified : 2013 Oct 03 (Thu) 15:48:16 by carr.
 -}
+
+module X02FunSetsTest where
 
 import Test.HUnit
 import AssertError
@@ -14,6 +16,7 @@ sl0    = Set (< 0)
 sg0    = Set (> 0)
 s1to9  = Set (\x -> x > 0 && x < 10)
 s6to14 = Set (\x -> x > 5 && x < 15)
+{-# ANN isEven "HLint: ignore Redundant lambda" #-}
 isEven =      \x -> x `mod` 2 == 0
 sEven  = Set isEven
 

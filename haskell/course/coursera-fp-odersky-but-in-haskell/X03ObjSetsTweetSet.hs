@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 13:26:19 by carr.
-Last Modified : 2013 Oct 02 (Wed) 22:02:43 by carr.
+Last Modified : 2013 Oct 03 (Thu) 15:49:11 by carr.
 -}
 
 module X03ObjSetsTweetSet where
@@ -98,6 +98,7 @@ foreach (NonEmpty e l r) f = do
     foreach l f
     foreach r f
 
+{-# ANN collectByKeywords "HLint: ignore Eta reduce" #-}
 collectByKeywords :: TweetSet -> [String] -> TweetSet
 collectByKeywords    tweetSet    keywords = foldr step Empty keywords
   where step kw acc = union acc $ filter' (\(Tweet _ text _) -> isInfixOf kw text) tweetSet

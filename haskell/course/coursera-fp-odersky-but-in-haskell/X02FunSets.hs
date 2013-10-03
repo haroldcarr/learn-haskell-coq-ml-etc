@@ -2,7 +2,7 @@
 
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 02 (Wed) 22:11:22 by carr.
+Last Modified : 2013 Oct 03 (Thu) 15:47:50 by carr.
 
 See my question and answers on Set representation:
     http://stackoverflow.com/questions/19086408/haskell-how-to-define-instance-show-set-for-type-set-int-bool
@@ -19,8 +19,9 @@ import Data.List (intercalate)
 
 newtype Set = Set (Int -> Bool)
 
+{-# ANN contains   "HLint: ignore Eta reduce" #-}
 contains :: Set -> Int -> Bool
-contains (Set s) = s -- applies s to an int (not shown)
+contains (Set s) elem = s elem
 
 singletonSet :: Int -> Set
 singletonSet elem = Set (== elem)
@@ -69,11 +70,15 @@ def printSet(s: Set) = println(toString(s))
 
 type Set' = Int -> Bool
 
+{-# ANN contains'  "HLint: ignore Eta reduce" #-}
 contains' :: Set' -> Int -> Bool
-contains' s = s
+contains' s elem = s elem
 
+{-# ANN intersect' "HLint: ignore Redundant lambda" #-}
 intersect' :: Set' -> Set' -> Set'
-intersect' s t x = s x && t x
+intersect' s t = \x -> s x && t x
+-- can be expressed (but leaving explicit anonfun to be consistent with above):
+-- s t elem = s elem && t elem
 
 toString :: Set' -> String
 toString s =

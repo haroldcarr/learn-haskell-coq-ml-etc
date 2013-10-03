@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 21:00:47 by carr.
-Last Modified : 2013 Oct 02 (Wed) 21:55:30 by carr.
+Last Modified : 2013 Oct 03 (Thu) 15:46:39 by carr.
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -37,8 +37,10 @@ parseTweets x =
         Right r -> return r
         Left e -> error (show e)
 
+-- TODO : this blows up runghc - but is seen by hlint (regardless of where I put it in file)
+-- {-# ANN allTweets "HLint: ignore Eta reduce" #-}
 allTweets :: [Tweets] -> TweetSet
-allTweets = foldr outerStep Empty
+allTweets {- tweets -} = foldr outerStep Empty {- tweets -}
   where outerStep (Tweets tl) acc = foldr (flip incl) acc tl
 
 -- End of file.

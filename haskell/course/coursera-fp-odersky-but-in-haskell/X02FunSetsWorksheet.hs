@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 02 (Wed) 21:53:09 by carr.
+Last Modified : 2013 Oct 03 (Thu) 15:48:46 by carr.
 -}
 
 module X02FunSetsWorksheet
@@ -41,8 +41,9 @@ isCloseEnough :: Double -> Double -> Bool
 isCloseEnough x y =
     abs((x - y) / x) / x < tolerance
 
+{-# ANN fixedPoint "HLint: ignore Eta reduce" #-}
 fixedPoint :: (Double -> Double) -> Double -> Double
-fixedPoint f = iter
+fixedPoint f firstGuess = iter firstGuess
   where iter guess =
             let next = f guess
             in if isCloseEnough guess next then next
