@@ -1,4 +1,4 @@
-Where I try code from Haskell books, articles, etc.
+Where I try code from Haskell, Coq, ML, ... books, articles, courses, ...
 
 e.g.,:
 
