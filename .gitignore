@@ -1,15 +1,5 @@
-# NOT USING: 
+# NOT USING:
 # also see ./.git/info/exclude
-
-# FROM: https://github.com/github/gitignore/blob/master/Haskell.gitignore
-
-dist
-cabal-dev
-*.o
-*.hi
-*.chi
-*.chs.h
-.virthualenv
 
 # CUSTOM:
 
@@ -19,11 +9,51 @@ cabal-dev
 *.pdf
 **/dist
 
+# ------------------------------------------------------------------------------
+# COQ
+
+*.glob
+*.vo
+
+coq/.README.*
+coq/book/*-orig
+coq/book/*-repeat
+
+coq/book/CPDT*
+
+coq/book/SF-2013-07-18-worked/x07MoreProp.v
+coq/book/SF-2013-07-18-worked/x08Logic.v
+coq/book/SF-2013-07-18-worked/x09ProofObjects.v
+coq/book/SF-2013-07-18-worked/x10MoreInd.v
+coq/book/SF-2013-07-18-worked/x11SfLib.v
+coq/book/SF-2013-07-18-worked/x12Imp.v
+coq/book/SF-2013-07-18-worked/x13ImpParser.v
+coq/book/SF-2013-07-18-worked/x14ImpCEvalFun.v
+coq/book/SF-2013-07-18-worked/x15Extraction.v
+coq/book/SF-2013-07-18-worked/x16Equiv.v
+coq/book/SF-2013-07-18-worked/x17Hoare.v
+coq/book/SF-2013-07-18-worked/x18Hoare2.v
+
+coq/course/
+
+# ------------------------------------------------------------------------------
+
 erlang
 f-sharp
 forth
 foundations
 functional-programming
+
+# ------------------------------------------------------------------------------
+# HASKELL
+# FROM: https://github.com/github/gitignore/blob/master/Haskell.gitignore
+dist
+cabal-dev
+*.o
+*.hi
+*.chi
+*.chs.h
+.virthualenv
 
 haskell/.Notes-cabal.org
 haskell/.Notes-diagrams.org
@@ -63,6 +93,8 @@ haskell/paper/monad-reader/issue22/r.hs
 haskell/paper/twoDznA.pdf
 haskell/paper/twoDznQ.pdf
 
+# ------------------------------------------------------------------------------
+
 java
 javascript
 lisp
@@ -73,3 +105,4 @@ python
 ruby
 scala
 
+# End of file.
