@@ -19,6 +19,12 @@ cabal-dev
 *.pdf
 **/dist
 
+erlang
+f-sharp
+forth
+foundations
+functional-programming
+
 haskell/.Notes-cabal.org
 haskell/.Notes-diagrams.org
 haskell/.Notes-distributed-haskell.org
@@ -56,3 +62,14 @@ haskell/paper/monad-reader/issue22/issue22.pdf
 haskell/paper/monad-reader/issue22/r.hs
 haskell/paper/twoDznA.pdf
 haskell/paper/twoDznQ.pdf
+
+java
+javascript
+lisp
+ml
+oz
+perl
+python
+ruby
+scala
+
