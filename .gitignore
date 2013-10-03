@@ -19,40 +19,40 @@ cabal-dev
 *.pdf
 **/dist
 
-.Notes-cabal.org
-.Notes-diagrams.org
-.Notes-distributed-haskell.org
-.Notes-hakyll.org
-.Notes-platform.org
-.Notes-xmonad.org
+haskell/.Notes-cabal.org
+haskell/.Notes-diagrams.org
+haskell/.Notes-distributed-haskell.org
+haskell/.Notes-hakyll.org
+haskell/.Notes-platform.org
+haskell/.Notes-xmonad.org
 
-book/Discrete_Mathematics_Using_a_Computer
-book/Haskell_Road_to_Logic_Maths_and_Programming
+haskell/book/Discrete_Mathematics_Using_a_Computer
+haskell/book/Haskell_Road_to_Logic_Maths_and_Programming
 
-book/Learn_You_a_Haskell/helloworld
-book/Learn_You_a_Haskell/l.hs
+haskell/book/Learn_You_a_Haskell/helloworld
+haskell/book/Learn_You_a_Haskell/l.hs
 
-book/Parallel_and_Concurrent
-book/Pearls_of_Functional_Algorithm_Design-Richard_Bird.pdf
+haskell/book/Parallel_and_Concurrent
+haskell/book/Pearls_of_Functional_Algorithm_Design-Richard_Bird.pdf
 
-book/Real_World_Haskell/InteractWith
-book/Real_World_Haskell/r.hs
-book/Real_World_Haskell/Real_World_Haskell.html
+haskell/book/Real_World_Haskell/InteractWith
+haskell/book/Real_World_Haskell/r.hs
+haskell/book/Real_World_Haskell/Real_World_Haskell.html
 
-book/Yesod
+haskell/book/Yesod
 
-diagrams/
+haskell/diagrams/
 
-example/
+haskell/example/
 
-paper/HaskellCheatSheet.pdf
-paper/History_of_Haskell-Hudak-Hughes-Peyton-Jones-Wadler.pdf
-paper/Ralf_Hinze-Generic_Programming_Extension_for_Haskell.ps
-paper/Ralf_Hinze-Generic_Programs_and_Proofs.ps
-paper/designing_typesafe_haskell_apis-Snoyman.pdf
-paper/haskell-distributed/
-paper/monad-reader/issue22/gadt.hs-save
-paper/monad-reader/issue22/issue22.pdf
-paper/monad-reader/issue22/r.hs
-paper/twoDznA.pdf
-paper/twoDznQ.pdf
+haskell/paper/HaskellCheatSheet.pdf
+haskell/paper/History_of_Haskell-Hudak-Hughes-Peyton-Jones-Wadler.pdf
+haskell/paper/Ralf_Hinze-Generic_Programming_Extension_for_Haskell.ps
+haskell/paper/Ralf_Hinze-Generic_Programs_and_Proofs.ps
+haskell/paper/designing_typesafe_haskell_apis-Snoyman.pdf
+haskell/paper/haskell-distributed/
+haskell/paper/monad-reader/issue22/gadt.hs-save
+haskell/paper/monad-reader/issue22/issue22.pdf
+haskell/paper/monad-reader/issue22/r.hs
+haskell/paper/twoDznA.pdf
+haskell/paper/twoDznQ.pdf
