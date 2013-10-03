@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Oct 02 (Wed) 15:56:16 by carr.
+Last Modified : 2013 Oct 02 (Wed) 22:13:22 by carr.
 -}
 
 module X03ObjSetsTweetSetTest where
@@ -15,8 +15,8 @@ import X03ObjSetsTweetSet
 set1  = Empty
 set2  = incl set1  (Tweet "a" "a body" 20)
 set3  = incl set2  (Tweet "b" "b body" 20)
-c     =            (Tweet "c" "c body"  7)
-d     =            (Tweet "d" "d body"  9)
+c     =             Tweet "c" "c body"  7
+d     =             Tweet "d" "d body"  9
 set4c = incl set3  c
 set4d = incl set3  d
 set5  = incl set4c d
@@ -33,14 +33,14 @@ getUser     (Tweet user _ _       ) = user
 getRetweets (Tweet _    _ retweets) = retweets
 
 tests = TestList
-    [TestCase $ assertEqual "filter': on empty set"     0     (size (filter' (\x -> (getUser x) == "a") set1))
-    ,TestCase $ assertEqual "filter': a on set5"        1     (size (filter' (\x -> (getUser x) == "a") set5))
-    ,TestCase $ assertEqual "filter': 20 on set5"       2     (size (filter' (\x -> (getRetweets x) == 20) set5))
-    ,TestCase $ assertEqual "union: set4c and set4d"    4     (size (union set4c set4d))
-    ,TestCase $ assertEqual "union: with empty set (1)" 4     (size (union set5 set1))
-    ,TestCase $ assertEqual "union: with empty set (2)" 4     (size (union set1 set5))
+    [TestCase $ assertEqual "filter': on empty set"     0     (size (filter' (\x -> getUser     x == "a") set1))
+    ,TestCase $ assertEqual "filter': a on set5"        1     (size (filter' (\x -> getUser     x == "a") set5))
+    ,TestCase $ assertEqual "filter': 20 on set5"       2     (size (filter' (\x -> getRetweets x ==  20) set5))
+    ,TestCase $ assertEqual "union: set4c and set4d"    4     (size (set4c `union` set4d))
+    ,TestCase $ assertEqual "union: with empty set (1)" 4     (size (set5  `union` set1))
+    ,TestCase $ assertEqual "union: with empty set (2)" 4     (size (set1  `union` set5))
     ,TestCase $ assertEqual "descending: set5"          False (null trends)
-    ,TestCase $ assertEqual "descending: ..."           True  (((getUser (head trends)) == "a") || ((getUser (head trends)) == "b"))
+    ,TestCase $ assertEqual "descending: ..."           True  ((getUser (head trends) == "a") || (getUser (head trends) == "b"))
     ]
 
 ------------------------------------------------------------------------------
@@ -74,6 +74,6 @@ main = do
 
     -- TODO : ensure that selected Tweets in trending are as expected
 
-    forM_ trending (\x -> putStrLn (show x))
+    forM_ trending print
 
 -- End of file.

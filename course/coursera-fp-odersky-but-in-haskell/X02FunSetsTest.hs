@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Sep 29 (Sun) 22:23:06 by carr.
+Last Modified : 2013 Oct 02 (Wed) 22:12:05 by carr.
 -}
 
 import Test.HUnit
@@ -10,18 +10,18 @@ import X02FunSets
 s1     = singletonSet 1
 s2     = singletonSet 2
 s3     = singletonSet 3
-sl0    = Set (\x -> x < 0)
-sg0    = Set (\x -> x > 0)
+sl0    = Set (< 0)
+sg0    = Set (> 0)
 s1to9  = Set (\x -> x > 0 && x < 10)
 s6to14 = Set (\x -> x > 5 && x < 15)
 isEven =      \x -> x `mod` 2 == 0
-sEven  = Set (isEven)
+sEven  = Set isEven
 
-us1s2   = union s1  s2
-usl0sg0 = union sl0 sg0
+us1s2        = s1  `union` s2
+usl0sg0      = sl0 `union` sg0
 
-is1s2        = intersect s1    s2
-is1to9s6to14 = intersect s1to9 s6to14
+is1s2        = s1    `intersect` s2
+is1to9s6to14 = s1to9 `intersect` s6to14
 
 ds1s2        = diff s1    s2
 ds1to9s6to14 = diff s1to9 s6to14
@@ -45,7 +45,7 @@ tests = TestList
     ,TestCase $ assertEqual "intersect 2"     False    (contains is1s2 2)
     ,TestCase $ assertEqual "intersect 3"     False    (contains is1s2 3)
     ,TestCase $ assertEqual "intersect s1 s2" "{}"     (show is1s2)
-    ,TestCase $ assertEqual "intersect s1 s1" True     (contains (intersect s1 s1) 1)
+    ,TestCase $ assertEqual "intersect s1 s1" True     (contains (s1 `intersect` s1) 1)
     ,TestCase $ assertEqual "intersect -10"   False    (contains is1to9s6to14 (-10))
     ,TestCase $ assertEqual "intersect   5"   False    (contains is1to9s6to14    5 )
     ,TestCase $ assertEqual "intersect   9"   True     (contains is1to9s6to14    9 )
@@ -87,24 +87,24 @@ tests = TestList
     ,TestCase $ assertEqual "filter s1to9 sEven" "{2,4,6,8}" (show fs1to9sEven)
 
     -- FORALL
-    ,TestCase $ assertEqual "forall 1"     True  (forall s1               (\x->x==1) )
-    ,TestCase $ assertEqual "forall 2"     False (forall s2               (\x->x==1) )
-    ,TestCase $ assertEqual "forall 3"     False (forall s3               (\x->x==1) )
-    ,TestCase $ assertEqual "forall True"  True  (forall (Set (\x->True)) (\x->True) )
-    ,TestCase $ assertEqual "forall False" False (forall (Set (\x->True)) (\x->False))
-    ,TestCase $ assertEqual "forall >0"    True  (forall s1to9            (\x->x>0)  )
+    ,TestCase $ assertEqual "forall 1"     True  (forall s1                 (== 1) )
+    ,TestCase $ assertEqual "forall 2"     False (forall s2                 (== 1) )
+    ,TestCase $ assertEqual "forall 3"     False (forall s3                 (== 1) )
+    ,TestCase $ assertEqual "forall True"  True  (forall (Set (const True)) (const True))
+    ,TestCase $ assertEqual "forall False" False (forall (Set (const True)) (const False))
+    ,TestCase $ assertEqual "forall >0"    True  (forall s1to9              (> 0))
 
     -- EXISTS
-    ,TestCase $ assertEqual "exists 1"     True  (exists s1               (\x->x==1) )
-    ,TestCase $ assertEqual "exists 2"     False (exists s2               (\x->x==1) )
-    ,TestCase $ assertEqual "exists 3"     False (exists s3               (\x->x==1) )
-    ,TestCase $ assertEqual "exists True"  True  (exists (Set (\x->True)) (\x->True) )
-    ,TestCase $ assertEqual "exists False" False (exists (Set (\x->True)) (\x->False))
-    ,TestCase $ assertEqual "exists sEven" True  (exists s1to9            isEven     )
+    ,TestCase $ assertEqual "exists 1"     True  (exists s1                 (== 1))
+    ,TestCase $ assertEqual "exists 2"     False (exists s2                 (== 1))
+    ,TestCase $ assertEqual "exists 3"     False (exists s3                 (== 1))
+    ,TestCase $ assertEqual "exists True"  True  (exists (Set (const True)) (const True))
+    ,TestCase $ assertEqual "exists False" False (exists (Set (const True)) (const False))
+    ,TestCase $ assertEqual "exists sEven" True  (exists s1to9              isEven)
 
     -- MAP
-    ,TestCase $ assertEqual "map +1" "{2}"                               (show (map' s1     (\x->x+1)))
-    ,TestCase $ assertEqual "map +2" "{8,9,10,11,12,13,14,15,16}"        (show (map' s6to14 (\x->x+2)))
+    ,TestCase $ assertEqual "map +1" "{2}"                               (show (map' s1     (+ 1)))
+    ,TestCase $ assertEqual "map +2" "{8,9,10,11,12,13,14,15,16}"        (show (map' s6to14 (+ 2)))
     ,TestCase $ assertEqual "map *x" "{36,49,64,81,100,121,144,169,196}" (show (map' s6to14 (\x->x*x)))
 
     ]
