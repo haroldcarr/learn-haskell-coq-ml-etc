@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Oct 04 (Fri) 12:53:15 by carr.
+# Last Modified : 2013 Oct 04 (Fri) 14:07:33 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -91,6 +91,7 @@ haskell/paper/Ralf_Hinze-Generic_Programming_Extension_for_Haskell.ps
 haskell/paper/Ralf_Hinze-Generic_Programs_and_Proofs.ps
 haskell/paper/designing_typesafe_haskell_apis-Snoyman.pdf
 haskell/paper/fpcomplete/UserTelBasicLensing.h*
+haskell/paper/fpcomplete/UserTelBasicLensing.md
 haskell/paper/haskell-distributed/
 haskell/paper/monad-reader/issue22/gadt.hs-save
 haskell/paper/monad-reader/issue22/issue22.pdf
