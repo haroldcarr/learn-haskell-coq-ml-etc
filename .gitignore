@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Oct 03 (Thu) 15:07:08 by carr.
+# Last Modified : 2013 Oct 04 (Fri) 12:53:15 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -64,6 +64,7 @@ haskell/.Notes-distributed-haskell.org
 haskell/.Notes-hakyll.org
 haskell/.Notes-platform.org
 haskell/.Notes-xmonad.org
+haskell/.Notes.org
 
 haskell/book/Discrete_Mathematics_Using_a_Computer
 haskell/book/Haskell_Road_to_Logic_Maths_and_Programming
@@ -89,6 +90,7 @@ haskell/paper/History_of_Haskell-Hudak-Hughes-Peyton-Jones-Wadler.pdf
 haskell/paper/Ralf_Hinze-Generic_Programming_Extension_for_Haskell.ps
 haskell/paper/Ralf_Hinze-Generic_Programs_and_Proofs.ps
 haskell/paper/designing_typesafe_haskell_apis-Snoyman.pdf
+haskell/paper/fpcomplete/UserTelBasicLensing.h*
 haskell/paper/haskell-distributed/
 haskell/paper/monad-reader/issue22/gadt.hs-save
 haskell/paper/monad-reader/issue22/issue22.pdf

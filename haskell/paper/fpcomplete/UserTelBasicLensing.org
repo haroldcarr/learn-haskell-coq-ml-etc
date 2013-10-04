@@ -1,0 +1,301 @@
+#+TITLE:       Joseph Abrahamson's Basic Lensing digested and extended with action examples and links
+#+AUTHOR:      Joseph Abrahamson (digest by Harold Carr)
+#+DESCRIPTION: Basic Lensing
+#+PROPERTY:    tangle UserTelBasicLensing.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+# Created       : 2013 Oct 03 (Thu) 17:24:45 by carr.
+Last Modified : 2013 Oct 04 (Fri) 12:47:07 by carr.
+
+------------------------------------------------------------------------------
+* Intro
+
+** source
+
+This is a digest of [[http://jspha.com/][Joseph Abrahamson]]'s [[https://www.fpcomplete.com/user/tel/basic-lensing][Basic Lensing FPComplete
+tutorial]].  I have shown his examples in action.  And I have added
+links.
+
+see also:
+- [[http://hackage.haskell.org/package/lens][=Control.Lens=]]
+- [[https://plus.google.com/u/0/113063331545548237308/about][Edward Kmett]]
+- [[http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html]]
+
+** A lens "focuses" on a smaller part of a larger object.
+
+#+BEGIN_SRC haskell
+{-# LANGUAGE TemplateHaskell #-}
+
+module UserTelBasicLensing where
+
+import Control.Lens
+
+data Arc      = Arc      { _degree   :: Int, _minute    :: Int, _second :: Int } deriving (Show)
+data Location = Location { _latitude :: Arc, _longitude :: Arc }                 deriving (Show)
+#+END_SRC
+
+Underscores in record names are a =Control.Lens= convention for generating template haskell (TH).
+
+Next is a TH splice. It generates lenses automatically based on record functions in =Location=.
+
+#+BEGIN_SRC haskell
+$(makeLenses ''Location)
+#+END_SRC
+
+Above creates two lenses:
+
+#+BEGIN_EXAMPLE
+:t latitude
+-- latitude  :: Functor f => (Arc -> f Arc) -> Location -> f Location
+
+:t longitude
+-- longitude :: Functor f => (Arc -> f Arc) -> Location -> f Location
+#+END_EXAMPLE
+
+The [[http://hackage.haskell.org/package/lens-3.9.2/docs/Control-Lens-Lens.html#t:Lens][=type= of =Lens=]] is
+
+#+BEGIN_EXAMPLE
+type Lens s t a b = forall f. Functor f => (a -> f b) -> s -> f t
+type Lens' s a = Lens s s a a
+#+END_EXAMPLE
+
+So the types above can be viewed as:
+
+#+BEGIN_EXAMPLE
+-- latitude  :: Lens' Location Arc
+-- longitude :: Lens' Location Arc
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* lenses used as getters/setters
+
+The single =longitude= value (likewise for =latitude=) can be used to get or set that part of =Location= :
+
+#+BEGIN_SRC haskell
+getLongitude :: Location -> Arc
+getLongitude = view longitude
+
+setLongitude :: Arc -> Location -> Location
+setLongitude = set longitude
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+let l = Location (Arc 1 2 3) (Arc 4 5 6)
+getLongitude l
+-- Arc {_degree = 4, _minute = 5, _second = 6}
+
+setLongitude (Arc 40 50 60) l
+-- Location {_latitude = Arc {_degree = 1, _minute = 2, _second = 3}, _longitude = Arc {_degree = 40, _minute = 50, _second = 60}}
+
+l
+-- Location {_latitude = Arc {_degree = 1, _minute = 2, _second = 3}, _longitude = Arc {_degree = 4, _minute = 5, _second = 6}}
+#+END_EXAMPLE
+
+** getters/setters without lenses
+
+#+BEGIN_SRC haskell
+getLongitudeR :: Location -> Arc
+getLongitudeR (Location { _longitude = lat }) = lat
+
+setLongitudeR :: Arc -> Location -> Location
+setLongitudeR lat loc = loc { _longitude = lat }
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+setLongitudeR (Arc 44 55 66) l
+-- Location {_latitude = Arc {_degree = 1, _minute = 2, _second = 3}, _longitude = Arc {_degree = 44, _minute = 55, _second = 66}}
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* another way to build lenses using =lens=
+
+#+BEGIN_EXAMPLE
+:t lens
+-- lens :: Functor f => (s -> a) -> (s -> b -> t) -> (a -> f b) -> s -> f t
+--   i.e.,:
+-- lens :: (c -> a) -> (c -> a -> c) -> Lens' c a
+#+END_EXAMPLE
+
+The following are identical:
+
+#+BEGIN_EXAMPLE
+:t lens getLongitudeR (flip setLongitudeR)
+-- lens getLongitudeR (flip setLongitudeR)      :: Functor f => (Arc -> f Arc) -> Location -> f Location
+
+:t lens getLongitude (flip setLongitude)
+-- lens getLongitude (flip setLongitude)        :: Functor f => (Arc -> f Arc) -> Location -> f Location
+
+:t lens (view longitude) (flip $ set longitude)
+-- lens (view longitude) (flip $ set longitude) :: Functor f => (Arc -> f Arc) -> Location -> f Location
+
+:t longitude
+-- longitude                                    :: Functor f => (Arc -> f Arc) -> Location -> f Location
+#+END_EXAMPLE
+
+Above shows a law of lenses: for all lenses, =l=:
+
+#+BEGIN_EXAMPLE
+l == lens (view l) (flip $ set l)
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* lens benefits
+
+Benefits of wrapping getters/setters together:
+
+- export just the lenses instead of the record functions
+- use other kinds of combinators to operate on these lenses for affecting the "focal" record values
+
+E.g., modification via combinator named =over=:
+
+#+BEGIN_SRC haskell
+{-# ANN modifyLongitude "HLint: ignore Redundant bracket" #-}
+modifyLongitude  :: (Arc -> Arc) -> (Location -> Location)
+modifyLongitude  f = longitude `over` f
+
+arcTimes11 :: Arc -> Arc
+arcTimes11 (Arc a b c) = Arc (a*11) (b*11) (c*11)
+
+longitudeTimes11 :: Location -> Location
+longitudeTimes11 = modifyLongitude arcTimes11
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+longitudeTimes11 l
+-- Location {_latitude = Arc {_degree = 1, _minute = 2, _second = 3}, _longitude = Arc {_degree = 44, _minute = 55, _second = 66}}
+#+END_EXAMPLE
+
+=over= lifts given function between getter and setter to create a
+function which modifies a part of the greater whole.
+
+------------------------------------------------------------------------------
+* composing lens to dive deeper into structure
+
+#+BEGIN_SRC haskell
+$(makeLenses ''Arc)
+
+getDegreeOfLon :: Location -> Int
+getDegreeOfLon = view degree . view longitude
+
+setDegreeOfLon :: Int -> Location -> Location
+setDegreeOfLon = over longitude . set degree
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+:t degree
+-- degree :: Functor f => (Int -> f Int) -> Arc -> f Arc
+
+:t minute
+-- minute :: Functor f => (Int -> f Int) -> Arc -> f Arc
+
+:t second
+-- second :: Functor f => (Int -> f Int) -> Arc -> f Arc
+
+getDegreeOfLon l
+-- 4
+
+setDegreeOfLon 202 l
+-- Location {_latitude = Arc {_degree = 1, _minute = 2, _second = 3}, _longitude = Arc {_degree = 202, _minute = 5, _second = 6}}
+#+END_EXAMPLE
+
+** compose manually
+
+#+BEGIN_SRC haskell
+{-# ANN degreeOfLon'Manually "HLint: ignore Use camelCase" #-}
+degreeOfLon'Manually :: Lens' Location Int
+degreeOfLon'Manually = lens getDegreeOfLon (flip setDegreeOfLon)
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+:t degreeOfLon'Manually
+-- degreeOfLon'Manually :: Functor f => (Int -> f Int) -> Location -> f Location
+
+view degreeOfLon'Manually l
+-- 4
+
+set degreeOfLon'Manually 202 l
+-- Location {_latitude = Arc {_degree = 1, _minute = 2, _second = 3}, _longitude = Arc {_degree = 202, _minute = 5, _second = 6}}
+#+END_EXAMPLE
+
+** compose using =(.)=
+
+#+BEGIN_SRC haskell
+-- degreeOfLon :: Functor f => (Int -> f Int) -> Location -> f Location
+degreeOfLon :: Lens' Location Int
+degreeOfLon = longitude . degree
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+:t :t (.)
+-- (.) :: (b -> c) -> (a -> b) -> a -> c
+--   i.e.,:
+-- (.) :: Lens' a b -> Lens' b c -> Lens' a c
+
+view degreeOfLon l
+-- 4
+
+set degreeOfLon 202 l
+-- Location {_latitude = Arc {_degree = 1, _minute = 2, _second = 3}, _longitude = Arc {_degree = 202, _minute = 5, _second = 6}}
+#+END_EXAMPLE
+
+** other ways of combining lenses, e.g., like =(,)= and =Either=
+
+*=(,)=*
+
+#+BEGIN_SRC haskell
+p :: Lens' (Location, Location) (Arc, Arc)
+p = latitude `alongside` longitude
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+let  l10 = Location (Arc  10  20  30) (Arc  40  50  60)
+let l100 = Location (Arc 100 200 300) (Arc 400 500 600)
+
+view p (l10, l100)
+-- (Arc {_degree = 10, _minute = 20, _second = 30},Arc {_degree = 400, _minute = 500, _second = 600})
+
+set p ((Arc 111 222 333), (Arc 444 555 666)) (l10, l100)
+-- (Location {_latitude = Arc {_degree = 111, _minute = 222, _second = 333}, _longitude = Arc {_degree = 40, _minute = 50, _second = 60}},Location {_latitude = Arc {_degree = 100, _minute = 200, _second = 300}, _longitude = Arc {_degree = 444, _minute = 555, _second = 666}})
+#+END_EXAMPLE
+
+*=Either=*
+
+#+BEGIN_SRC haskell
+ei :: Lens' (Either Arc Arc) Int
+ei = choosing degree minute
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+let  a10 = Arc  10  20  30
+let a100 = Arc 100 200 300
+
+view ei (Left   a10)
+-- 10
+view ei (Right  a10)
+-- 20
+view ei (Left  a100)
+-- 100
+view ei (Right a100)
+-- 200
+
+set ei (-1) (Left   a10)
+-- Left (Arc {_degree = -1, _minute = 20, _second = 30})
+
+set ei (-1) (Right a100)
+-- Right (Arc {_degree = 100, _minute = -1, _second = 300})
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* Summary
+
+lens abstraction
+- idea of holding on to a value that's focused on a smaller part of a larger type
+- algebra for combining (via pairs and eithers, products and coproducts), composing, and modifying these values
+- subsume record syntax
+- minimizes book-keeping on getters and setters
+
+Lens can do /lots/ more.
+
+# End of file.
