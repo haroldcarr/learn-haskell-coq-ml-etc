@@ -1,4 +1,4 @@
-#+TITLE:       Joseph Abrahamson's Basic Lensing tutorial digested and extended with action examples and links
+#+TITLE:       Joseph Abrahamson's Basic Lensing tutorial digested and extended with acttiention examples and links
 #+AUTHOR:      Joseph Abrahamson (digest by Harold Carr)
 #+DESCRIPTION: Basic Lensing
 #+PROPERTY:    tangle UserTelBasicLensing.hs
@@ -7,7 +7,7 @@
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
 # Created       : 2013 Oct 03 (Thu) 17:24:45 by carr.
-Last Modified : 2013 Oct 04 (Fri) 21:00:47 by carr.
+Last Modified : 2013 Oct 05 (Sat) 15:49:16 by carr.
 
 # https://www.fpcomplete.com/tutorial-preview/2290/VSoplsjSiJ
 
@@ -22,8 +22,8 @@ This is a digest of [[http://jspha.com/][Joseph Abrahamson]]'s [[https://www.fpc
 - verified examples via unit testing
 
 see also:
-- [[http://hackage.haskell.org/package/lens][=Control.Lens=]]
-- [[https://plus.google.com/u/0/113063331545548237308/about][Edward Kmett]]
+- [[http://www.cis.upenn.edu/~bcpierce/][Benjamin C. Pierce]] et. al. "Quotient Lenses" ([[http://www.cis.upenn.edu/~bcpierce/papers/quotient-lenses.pdf][pdf]])
+- [[https://plus.google.com/u/0/113063331545548237308/about][Edward Kmett]]'s [[http://hackage.haskell.org/package/lens][=Control.Lens=]]
 - [[http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html]]
 - [[http://www.haskellforall.com/2012/01/haskell-for-mainstream-programmers_28.html]]
 
@@ -76,25 +76,59 @@ So the types above can be viewed as:
 ------------------------------------------------------------------------------
 * lenses used as getters/setters
 
-The single =longitude= value (likewise for =latitude=) can be used to get or set that part of =Location= :
+A lens is a function that get be used to get (via =view=) or set (via =set=) a part of a data structure.
+
+In this example case, =longitude= (likewise for =latitude=) can be
+used to =view= or =set= that part of =Location= :
+
+*=view=*
 
 #+BEGIN_EXAMPLE
+:t view
+-- view :: Control.Monad.Reader.Class.MonadReader s m => Getting a s a -> m a
+
+:i Getting
+-- type Getting r s a = (a -> Accessor r a) -> s -> Accessor r s
+
+:i Accessor
+-- newtype Accessor r a = Accessor {runAccessor :: r}
+
+:t runAccessor
+-- runAccessor :: Accessor r a -> r
+
 :t view longitude
 -- view longitude :: Control.Monad.Reader.Class.MonadReader Location m => m Arc
 --   i.e.,:
 -- view longitude :: Location -> Arc
+#+END_EXAMPLE
+
+*=set=*
+
+#+BEGIN_EXAMPLE
+:t set
+-- set :: ASetter s t a b -> b -> s -> t
+
+:i ASetter
+-- type ASetter s t a b = (a -> Mutator b) -> s -> Mutator t
+
+:i Mutator
+-- newtype Mutator a = Control.Lens.Internal.Setter.Mutator {Control.Lens.Internal.Setter.runMutator :: a}
+
+:t Control.Lens.Internal.Setter.runMutator
+-- Control.Lens.Internal.Setter.runMutator :: Mutator a -> a
 
 :t set longitude
 -- set longitude :: Arc -> Location -> Location
 #+END_EXAMPLE
 
-The following uses unit tests (rather than example GHCI input/output) to ensure correctness of examples.
+The following examples use unit tests (rather than GHCI input/output) to ensure correctness.
 
 #+BEGIN_SRC haskell
 t :: (Eq a) => (Show a) => String -> a -> a -> Test
 t testName actual expected  = TestCase $ assertEqual testName expected actual
 
 l = Location (Arc 1 2 3) (Arc 4 5 6)
+
 t01 = t "01"
       (view longitude l)
       (Arc 4 5 6)
@@ -105,10 +139,14 @@ t02 = t "02"
 
 t03 = t "03"
       l
-      (Location (Arc 1 2 3) (Arc 4 5 6))
+      (Location (Arc 1 2 3) (Arc 4  5  6))
 #+END_SRC
 
 ** getters/setters without lenses
+
+Lenses are useful because, in /immutable/ Haskell, to change nested
+fields in a data structure you need to recreate all the objects
+wrapped around the value that you are changing:
 
 #+BEGIN_SRC haskell
 getLongitudeR :: Location -> Arc
@@ -121,6 +159,8 @@ t04 = t "04"
       (setLongitudeR (Arc 44 55 66) l)
       (Location (Arc 1 2 3) (Arc 44 55 66))
 #+END_SRC
+
+The lens version does this for you "automatically".
 
 ------------------------------------------------------------------------------
 * another way to build lenses using =lens=
@@ -240,9 +280,9 @@ t09 = t "09"
       (Location (Arc 1 2 3) (Arc 4 5 202))
 #+END_SRC
 
-** other ways of combining lenses, e.g., like =(,)= and =Either=
+** combining lenses as pairs or =Either=
 
-*=(,)=*
+pairs, i.e., *=(,)=*
 
 #+BEGIN_SRC haskell
 p :: Lens' (Location, Location) (Arc, Arc)
@@ -264,7 +304,7 @@ t11 = t "11"
 
 #+BEGIN_SRC haskell
 ei :: Lens' (Either Arc Arc) Int
-ei = choosing degree minute
+ei = choosing degree second
 
 a10  = Arc  10  20  30
 a100 = Arc 100 200 300
@@ -274,20 +314,20 @@ t12 = t "12"
       10
 t13 = t "13"
       (view ei (Right  a10))
-      20
+      30
 t14 = t "14"
       (view ei (Left  a100))
       100
 t15 = t "15"
       (view ei (Right a100))
-      200
+      300
 
 t16 = t "16"
       (set ei (-1) (Left   a10))
       (Left (Arc (-1) 20 30))
-t17= t "17"
-     (set ei (-1) (Right a100))
-     (Right (Arc 100 (-1) 300))
+t17 = t "17"
+      (set ei (-1) (Right a100))
+      (Right (Arc 100 200 (-1)))
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -310,7 +350,7 @@ main = runTestTT $ TestList[t01, t02, t03, t04, t05, t06, t07, t08, t09, t10, t1
 
 #+BEGIN_EXAMPLE
 main
--- Counts {cases = 19, tried = 19, errors = 0, failures = 0}
+-- Counts {cases = 17, tried = 17, errors = 0, failures = 0}
 #+END_EXAMPLE
 
 Thanks for to [[http://www.haskellforall.com/][Gabriel Gonzalez]] for useful feedback incorporated before publishing.
