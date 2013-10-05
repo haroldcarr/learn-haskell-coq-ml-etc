@@ -7,17 +7,16 @@
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
 # Created       : 2013 Oct 03 (Thu) 17:24:45 by carr.
-Last Modified : 2013 Oct 04 (Fri) 14:45:01 by carr.
+Last Modified : 2013 Oct 04 (Fri) 21:00:47 by carr.
 
--- https://www.fpcomplete.com/tutorial-preview/2290/VSoplsjSiJ
+# https://www.fpcomplete.com/tutorial-preview/2290/VSoplsjSiJ
 
 ------------------------------------------------------------------------------
 * intro
 
 ** source
 
-This is a digest of [[http://jspha.com/][Joseph Abrahamson]]'s [[https://www.fpcomplete.com/user/tel/basic-lensing][Basic Lensing FPComplete
-tutorial]].  I have
+This is a digest of [[http://jspha.com/][Joseph Abrahamson]]'s [[https://www.fpcomplete.com/user/tel/basic-lensing][Basic Lensing FPComplete tutorial]].  I have
 - shown his examples in action
 - added links
 - verified examples via unit testing
@@ -26,6 +25,7 @@ see also:
 - [[http://hackage.haskell.org/package/lens][=Control.Lens=]]
 - [[https://plus.google.com/u/0/113063331545548237308/about][Edward Kmett]]
 - [[http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html]]
+- [[http://www.haskellforall.com/2012/01/haskell-for-mainstream-programmers_28.html]]
 
 ** A lens "focuses" on a smaller part of a larger object.
 
@@ -43,7 +43,7 @@ data Location = Location { _latitude :: Arc, _longitude :: Arc }                
 
 Underscores in record names above are a =Control.Lens= convention for generating template haskell (TH).
 
-Following is a TH splice. It generates lenses automatically based on record functions in =Location=:
+The following is a TH splice. It generates lenses automatically based on record functions in =Location=:
 
 #+BEGIN_SRC haskell
 $(makeLenses ''Location)
@@ -78,13 +78,15 @@ So the types above can be viewed as:
 
 The single =longitude= value (likewise for =latitude=) can be used to get or set that part of =Location= :
 
-#+BEGIN_SRC haskell
-getLongitude :: Location -> Arc
-getLongitude = view longitude
+#+BEGIN_EXAMPLE
+:t view longitude
+-- view longitude :: Control.Monad.Reader.Class.MonadReader Location m => m Arc
+--   i.e.,:
+-- view longitude :: Location -> Arc
 
-setLongitude :: Arc -> Location -> Location
-setLongitude = set longitude
-#+END_SRC
+:t set longitude
+-- set longitude :: Arc -> Location -> Location
+#+END_EXAMPLE
 
 The following uses unit tests (rather than example GHCI input/output) to ensure correctness of examples.
 
@@ -93,17 +95,17 @@ t :: (Eq a) => (Show a) => String -> a -> a -> Test
 t testName actual expected  = TestCase $ assertEqual testName expected actual
 
 l = Location (Arc 1 2 3) (Arc 4 5 6)
-t010 = t "010"
-       (getLongitude l)
-       (Arc 4 5 6)
+t01 = t "01"
+      (view longitude l)
+      (Arc 4 5 6)
 
-t020 = t "020"
-       (setLongitude (Arc 40 50 60) l)
-       (Location (Arc 1 2 3) (Arc 40 50 60))
+t02 = t "02"
+      (set longitude (Arc 40 50 60) l)
+      (Location (Arc 1 2 3) (Arc 40 50 60))
 
-t030 = t "030"
-       l
-       (Location (Arc 1 2 3) (Arc 4 5 6))
+t03 = t "03"
+      l
+      (Location (Arc 1 2 3) (Arc 4 5 6))
 #+END_SRC
 
 ** getters/setters without lenses
@@ -115,9 +117,9 @@ getLongitudeR (Location { _longitude = lat }) = lat
 setLongitudeR :: Arc -> Location -> Location
 setLongitudeR lat loc = loc { _longitude = lat }
 
-t040 = t "040"
-       (setLongitudeR (Arc 44 55 66) l)
-       (Location (Arc 1 2 3) (Arc 44 55 66))
+t04 = t "04"
+      (setLongitudeR (Arc 44 55 66) l)
+      (Location (Arc 1 2 3) (Arc 44 55 66))
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -135,9 +137,6 @@ The following are identical:
 #+BEGIN_EXAMPLE
 :t lens getLongitudeR (flip setLongitudeR)
 -- lens getLongitudeR (flip setLongitudeR)      :: Functor f => (Arc -> f Arc) -> Location -> f Location
-
-:t lens getLongitude (flip setLongitude)
--- lens getLongitude (flip setLongitude)        :: Functor f => (Arc -> f Arc) -> Location -> f Location
 
 :t lens (view longitude) (flip $ set longitude)
 -- lens (view longitude) (flip $ set longitude) :: Functor f => (Arc -> f Arc) -> Location -> f Location
@@ -173,25 +172,19 @@ arcTimes11 (Arc a b c) = Arc (a*11) (b*11) (c*11)
 longitudeTimes11 :: Location -> Location
 longitudeTimes11 = modifyLongitude arcTimes11
 
-t050 = t "050"
-       (longitudeTimes11 l)
-       (Location (Arc 1 2 3) (Arc 44 55 66))
+t05 = t "05"
+      (longitudeTimes11 l)
+      (Location (Arc 1 2 3) (Arc 44 55 66))
 #+END_SRC
 
 =over= lifts given function between getter and setter to create a
 function which modifies a part of the greater whole.
 
 ------------------------------------------------------------------------------
-* composing lens to dive deeper into structure
+* composing lens via =(.)= to go deeper into structure
 
 #+BEGIN_SRC haskell
 $(makeLenses ''Arc)
-
-getDegreeOfLon :: Location -> Int
-getDegreeOfLon = view degree . view longitude
-
-setDegreeOfLon :: Int -> Location -> Location
-setDegreeOfLon = over longitude . set degree
 #+END_SRC
 
 #+BEGIN_EXAMPLE
@@ -205,62 +198,46 @@ setDegreeOfLon = over longitude . set degree
 -- second :: Functor f => (Int -> f Int) -> Arc -> f Arc
 #+END_EXAMPLE
 
-#+BEGIN_SRC haskell
-t060 = t "060"
-       (getDegreeOfLon l)
-       4
-
-t070 = t "070"
-       (setDegreeOfLon 202 l)
-       (Location (Arc 1 2 3) (Arc 202 5 6))
-#+END_SRC
-
-** compose manually
-
-#+BEGIN_SRC haskell
-{-# ANN degreeOfLon'Manually "HLint: ignore Use camelCase" #-}
-degreeOfLon'Manually :: Lens' Location Int
-degreeOfLon'Manually = lens getDegreeOfLon (flip setDegreeOfLon)
-#+END_SRC
-
-#+BEGIN_EXAMPLE
-:t degreeOfLon'Manually
--- degreeOfLon'Manually :: Functor f => (Int -> f Int) -> Location -> f Location
-#+END_EXAMPLE
-
-#+BEGIN_SRC haskell
-t080 = t "080"
-       (view degreeOfLon'Manually l)
-       4
-
-t090 = t "090"
-       (set degreeOfLon'Manually 202 l)
-       (Location (Arc 1 2 3) (Arc 202 5 6))
-#+END_SRC
-
-** compose using =(.)=
-
-#+BEGIN_SRC haskell
--- degreeOfLon :: Functor f => (Int -> f Int) -> Location -> f Location
-degreeOfLon :: Lens' Location Int
-degreeOfLon = longitude . degree
-#+END_SRC
+Now use =(.)= to get deeper inside =Location=:
 
 #+BEGIN_EXAMPLE
 :t (.)
 -- (.) :: (b -> c) -> (a -> b) -> a -> c
 --   i.e.,:
 -- (.) :: Lens' a b -> Lens' b c -> Lens' a c
+
+:t longitude . degree
+-- longitude . degree :: Functor f => (Int -> f Int) -> Location -> f Location
+--   i.e.,:
+-- longitude . degree :: Lens' Location Int
+
+:t view (longitude . degree)
+-- view (longitude . degree) :: Control.Monad.Reader.Class.MonadReader Location m => m Int
+--   i.e.,:
+-- view (longitude . degree) :: Location -> Int
+
+:t set  (longitude . degree)
+-- set  (longitude . degree) :: Int -> Location -> Location
 #+END_EXAMPLE
 
-#+BEGIN_SRC haskell
-t100 = t "100"
-       (view degreeOfLon l)
-       4
+Using the above type signatures as a guide, we can get/set specific parts of =Location=:
 
-t110 = t "110"
-       (set degreeOfLon 202 l)
-       (Location (Arc 1 2 3) (Arc 202 5 6))
+#+BEGIN_SRC haskell
+t06 = t "06"
+      (view (longitude . degree) l)
+      4
+
+t07 = t "07"
+      (set  (longitude . degree) 202 l)
+      (Location (Arc 1 2 3) (Arc 202 5 6))
+
+t08 = t "08"
+      (view (longitude . second) l)
+      6
+
+t09 = t "09"
+      (set  (longitude . second) 202 l)
+      (Location (Arc 1 2 3) (Arc 4 5 202))
 #+END_SRC
 
 ** other ways of combining lenses, e.g., like =(,)= and =Either=
@@ -274,13 +251,13 @@ p = latitude `alongside` longitude
 l10  = Location (Arc  10  20  30) (Arc  40  50  60)
 l100 = Location (Arc 100 200 300) (Arc 400 500 600)
 
-t120 = t "120"
-       (view p (l10, l100))
-       (Arc 10 20 30, Arc 400 500 600)
+t10 = t "10"
+      (view p (l10, l100))
+      (Arc 10 20 30, Arc 400 500 600)
 
-t130 = t "130"
-       (set p (Arc 111 222 333, Arc 444 555 666) (l10, l100))
-       (Location (Arc 111 222 333) (Arc 40 50 60), Location (Arc 100 200 300) (Arc 444 555 666))
+t11 = t "11"
+      (set p (Arc 111 222 333, Arc 444 555 666) (l10, l100))
+      (Location (Arc 111 222 333) (Arc 40 50 60), Location (Arc 100 200 300) (Arc 444 555 666))
 #+END_SRC
 
 *=Either=*
@@ -292,26 +269,25 @@ ei = choosing degree minute
 a10  = Arc  10  20  30
 a100 = Arc 100 200 300
 
-t140 = t "140"
-       (view ei (Left   a10))
-       10
-t150 = t "150"
-       (view ei (Right  a10))
-       20
-t160 = t "160"
-       (view ei (Left  a100))
-       100
-t170 = t "170"
-       (view ei (Right a100))
-       200
+t12 = t "12"
+      (view ei (Left   a10))
+      10
+t13 = t "13"
+      (view ei (Right  a10))
+      20
+t14 = t "14"
+      (view ei (Left  a100))
+      100
+t15 = t "15"
+      (view ei (Right a100))
+      200
 
-t180 = t "180"
-       (set ei (-1) (Left   a10))
-       (Left (Arc (-1) 20 30))
-
-t190 = t "190"
-       (set ei (-1) (Right a100))
-       (Right (Arc 100 (-1) 300))
+t16 = t "16"
+      (set ei (-1) (Left   a10))
+      (Left (Arc (-1) 20 30))
+t17= t "17"
+     (set ei (-1) (Right a100))
+     (Right (Arc 100 (-1) 300))
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -329,7 +305,7 @@ Lens can do /lots/ more.
 * example accuracy
 
 #+BEGIN_SRC haskell
-main = runTestTT $ TestList[t010, t020, t030, t040, t050, t060, t070, t080, t090, t100, t110, t120, t130, t140, t150, t160, t170, t180, t190]
+main = runTestTT $ TestList[t01, t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t12, t13, t14, t15, t16, t17]
 #+END_SRC
 
 #+BEGIN_EXAMPLE
