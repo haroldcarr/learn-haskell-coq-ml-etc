@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Oct 04 (Fri) 14:07:33 by carr.
+# Last Modified : 2013 Oct 07 (Mon) 08:59:17 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -101,6 +101,7 @@ haskell/paper/twoDznQ.pdf
 
 # ------------------------------------------------------------------------------
 
+icfp
 java
 javascript
 lisp

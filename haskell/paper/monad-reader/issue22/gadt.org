@@ -14,7 +14,7 @@ tags: haskell, GADT, type-level-computation
 #+END_HTML
 
 # Created       : 2013 Aug 18 (Sun) 11:14:50 by carr.
-Last Modified : 2013 Aug 27 (Tue) 11:27:05 by carr.
+Last Modified : 2013 Oct 06 (Sun) 21:07:57 by carr.
 
 ------------------------------------------------------------------------------
 * Generalized Algebraic Data Types in Haskell by Anton Dergunov
@@ -66,8 +66,8 @@ debug = flip trace
 #+END_SRC
 
 Example [[http://en.wikipedia.org/wiki/Algebraic_data_type][Algebraic Data Type]] (ADT):
-- Test  : type constructor
-- TI/TS : value constructors
+- =Test=  : type constructor
+- =TI= / =TS= : value constructors
   - each value constructor can specify zero or more components
 
 @@html:&nbsp;@@
@@ -809,6 +809,7 @@ let ne = nthElem'''' (repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing))        
   - slides ([[http://www.seas.upenn.edu/~sweirich/talks/flops2012.pdf][pdf]]) for reference [7] (p. 33)
   - [[http://www.seas.upenn.edu/~cis552/12fa/schedule.html][course/code]] - scroll down to RedBlack[1|2|3]
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 data Color   = R | B deriving (Eq, Show)
 data Node' a = E' | N' Color (Node' a) a (Node' a)
