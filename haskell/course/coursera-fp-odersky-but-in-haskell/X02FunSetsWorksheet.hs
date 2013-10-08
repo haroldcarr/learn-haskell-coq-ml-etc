@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 03 (Thu) 15:48:46 by carr.
+Last Modified : 2013 Oct 07 (Mon) 19:20:56 by carr.
 -}
 
 module X02FunSetsWorksheet
@@ -57,12 +57,12 @@ sqrt' :: Double -> Double
 sqrt' x = fixedPoint (averageDamp (\y -> x / y)) 1.0
 
 higherOrderFunctionTests = TestList
-    [TestCase $ assertEqual "product"      6                  (product' (+ 1) 1 2)
-    ,TestCase $ assertEqual "fact 5"     120                  (fact 5)
-    ,TestCase $ assertEqual "sp+"          5                  (sp 0 (+) (+ 1) 1 2)
-    ,TestCase $ assertEqual "sp*"          6                  (sp 1 (*) (+ 1) 1 2)
-    ,TestCase $ assertEqual "fixedPoint"   1.999755859375     (fixedPoint (\x -> 1 + x/2) 1)
-    ,TestCase $ assertEqual "sqrt"         1.4142135623746899 (sqrt' 2)
+    [teq "product"    (product' (+ 1) 1 2)            6
+    ,teq "fact 5"     (fact 5)                      120
+    ,teq "sp+"        (sp 0 (+) (+ 1) 1 2)            5
+    ,teq "sp*"        (sp 1 (*) (+ 1) 1 2)            6
+    ,teq "fixedPoint" (fixedPoint (\x -> 1 + x/2) 1)  1.999755859375
+    ,teq "sqrt"       (sqrt' 2)                       1.4142135623746899
     ]
 
 -- Data
@@ -110,19 +110,18 @@ reduce (Rational' n d) = Rational' (n `quot` g) (d `quot` g)
     gcd a b = if b == 0 then a else gcd b $ a `mod` b
 
 dataTypeTests = TestList
-    [TestCase $ assertEqual "add rat"           "22/21"     (show $ add x y)
-    ,TestCase $ assertEqual "add rat infix"     "22/21"     (show $ x `add` y)
-    ,TestCase $ assertEqual "add rat operator"  "22/21"     (show $ x +:    y)
-    ,TestCase $ assertEqual "sub rat"          "-79/42"     (show   (sub (sub x y) z))
-    ,TestCase $ assertEqual "sub rat infix"    "-79/42"     (show $ x `sub` y `sub` z)
-    ,TestCase $ assertEqual "sub rat op"       "-79/42"     (show $ x -:    y -:    z)
-    ,TestCase $ assertEqual "add rat self"      "70/49"     (show $ add y y)
-    ,TestCase $ assertEqual "add rat self gcd"  "10/7"      (show $ reduce $ add y y)
-    ,TestCase $ assertError "rat zero denom" "Rational': zero denominator"
-                                                            (reduce (Rational' 1 0))
-    ,TestCase $ assertEqual "less rat"          True        (less x   y)
-    ,TestCase $ assertEqual "less rat infix"    True        (x `less` y)
-    ,TestCase $ assertEqual "less rat operator" True        (x <:     y)
+    [teq "add rat"           (show $ add x y)           "22/21"
+    ,teq "add rat infix"     (show $ x `add` y)         "22/21"
+    ,teq "add rat operator"  (show $ x +:    y)         "22/21"
+    ,teq "sub rat"           (show   (sub (sub x y) z)) "-79/42"
+    ,teq "sub rat infix"     (show $ x `sub` y `sub` z) "-79/42"
+    ,teq "sub rat op"        (show $ x -:    y -:    z) "-79/42"
+    ,teq "add rat self"      (show $ add y y)           "70/49"
+    ,teq "add rat self gcd"  (show $ reduce $ add y y)  "10/7"
+    ,ter "rat zero denom"    (reduce (Rational' 1 0))   "Rational': zero denominator"
+    ,teq "less rat"          (less x   y)               True
+    ,teq "less rat infix"    (x `less` y)               True
+    ,teq "less rat operator" (x <:     y)               True
     ]
 
 main = do

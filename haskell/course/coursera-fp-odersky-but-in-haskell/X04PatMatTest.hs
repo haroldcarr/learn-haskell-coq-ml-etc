@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:42:02 by carr.
-Last Modified : 2013 Oct 07 (Mon) 18:43:47 by carr.
+Last Modified : 2013 Oct 07 (Mon) 19:30:44 by carr.
 -}
 
 module X04PatMatTest where
@@ -51,38 +51,39 @@ decodedSecret = decode frenchCode secret
 ds  = ['h', 'u', 'f', 'f', 'm', 'a', 'n', 'e', 's', 't', 'c', 'o', 'o', 'l']
 
 baseTests = TestList
-    [TestCase $ assertEqual "weight of a larger tree" 5    (weight t1)
-    ,TestCase $ assertEqual "chars of a larger tree" "abd" (chars t2)
-    ,TestCase $ assertEqual "times(\"hello, world\")" [('h',1), ('e',1), ('l',3), ('o',2), (',',1), (' ',1), ('w',1), ('r',1), ('d',1) , ('!',3)]
-                                                           (times hwBangsChars)
-    ,TestCase $ assertEqual "makeOrderedLeafList for some frequency table"
-                                                 [Leaf 'e' 1, Leaf 't' 2, Leaf 'x' 3]
+    [teq "weight of a larger tree" (weight t1)  5
+    ,teq "chars of a larger tree"  (chars t2) "abd"
+    ,teq "times(\"hello, world\")" (times hwBangsChars)
+                                   [('h',1), ('e',1), ('l',3), ('o',2), (',',1), (' ',1), ('w',1), ('r',1), ('d',1) , ('!',3)]
+    ,teq "makeOrderedLeafList for some frequency table"
                                                  (makeOrderedLeafList [('t', 2), ('e', 1), ('x', 3)])
-    ,TestCase $ assertEqual "makeOrderedLeafList hwBangs"
-                                                 [Leaf 'h' 1, Leaf 'e' 1, Leaf ',' 1, Leaf ' ' 1, Leaf 'w' 1, Leaf 'r' 1, Leaf 'd' 1, Leaf 'o' 2, Leaf 'l' 3, Leaf '!' 3]
+                                                 [Leaf 'e' 1, Leaf 't' 2, Leaf 'x' 3]
+    ,teq "makeOrderedLeafList hwBangs"
                                                  (makeOrderedLeafList $ times hwBangsChars)
-    ,TestCase $ assertEqual "combine of some leaf list"
+                                                 [Leaf 'h' 1, Leaf 'e' 1, Leaf ',' 1, Leaf ' ' 1, Leaf 'w' 1, Leaf 'r' 1, Leaf 'd' 1, Leaf 'o' 2, Leaf 'l' 3, Leaf '!' 3]
+    ,teq "combine of some leaf list"
+                            (combine leaflist1)
                             [Fork (Leaf 'e' 1)
                                   (Leaf 't' 2)
                                   ['e', 't']
                                   3,
                              Leaf 'x' 4]
-                            (combine leaflist1)
-    ,TestCase $ assertEqual "combine 2"
+    ,teq "combine 2"
+                            (combine leaflist2)
                             [Leaf 'x' 4,
                              Fork (Leaf 'e' 1)
                                   (Leaf 't' 4)
                                   ['e', 't']
                                   5]
-                            (combine leaflist2)
-    ,TestCase $ assertEqual "combine 3"
+    ,teq "combine 3"
+                            (combine leaflist3)
                             [Fork (Leaf 'e' 1)
                                   (Leaf 't' 3)
                                   ['e', 't']
                                   4,
                              Leaf 'x' 4]
-                            (combine leaflist3)
-    ,TestCase $ assertEqual "createCodeTree"
+    ,teq "createCodeTree"
+                            hwTree
                             (Fork (Fork (Leaf 'l' 3)
                                         (Leaf '!' 3)
                                         ['l', '!']
@@ -111,8 +112,8 @@ baseTests = TestList
                                         9)
                                    ['l', '!', ',', ' ', 'h', 'e', 'o', 'd', 'w', 'r']
                                    15)
-                            hwTree
-    ,TestCase $ assertEqual "encode hwBangsChars"
+    ,teq "encode hwBangsChars"
+                            (encode hwTree hwBangsChars)
                             [1, 0, 1, 0,    -- h
                              1, 0, 1, 1,    -- e
                              0, 0,          -- l
@@ -128,13 +129,12 @@ baseTests = TestList
                              0, 1,          -- !
                              0, 1,          -- !
                              0, 1]          -- !
-                             (encode hwTree hwBangsChars)
-     ,TestCase $ assertEqual "decodedSecret 1" ds decodedSecret
-     ,TestCase $ assertEqual "decodedSecret 2" secret (encode frenchCode ds)
-     ,TestCase $ assertEqual "decodedSecret 3" ['l'] (decode frenchCode [0, 1, 0, 1])
+     ,teq "decodedSecret 1" decodedSecret                    ds
+     ,teq "decodedSecret 2" (encode frenchCode ds)           secret
+     ,teq "decodedSecret 3" (decode frenchCode [0, 1, 0, 1]) ['l']
 
-     ,TestCase $ assertEqual "decode and encode a very short text should be identity"
-                                               "ab"  (decode t1 (encode t1 "ab"))
+     ,teq "decode and encode a very short text should be identity"
+                            (decode t1 (encode t1 "ab"))     "ab"
     ]
 
 
@@ -143,22 +143,23 @@ pairs = makeOrderedLeafList $ times text
 wTree  = createCodeTree text
 
 wikiTests = TestList
-    [TestCase $ assertEqual "http://en.wikipedia.org/wiki/Huffman_coding 1"
+    [teq "http://en.wikipedia.org/wiki/Huffman_coding 1"
+                            pairs
                             [Leaf 'x' 1, Leaf 'p' 1, Leaf 'l' 1, Leaf 'o' 1, Leaf 'u' 1, Leaf 'r' 1,
                              Leaf 't' 2, Leaf 'h' 2, Leaf 'i' 2, Leaf 's' 2, Leaf 'n' 2, Leaf 'm' 2,
                              Leaf 'f' 3,
                              Leaf 'a' 4, Leaf 'e' 4,
                              Leaf ' ' 7]
-                            pairs
-    ,TestCase $ assertEqual "http://en.wikipedia.org/wiki/Huffman_coding 2"
-                            text
+    ,teq "http://en.wikipedia.org/wiki/Huffman_coding 2"
                             (decode wTree (encode wTree text))
+                            text
     ]
 
 qTable = convert $ createCodeTree hwBangsChars
 
 quickTests = TestList
-    [TestCase $ assertEqual "quick"
+    [teq "quick qTable"
+                            qTable
                             [('l', [0, 0]),
                              ('!', [0, 1]),
                              (',', [1, 0, 0, 0]),
@@ -169,10 +170,9 @@ quickTests = TestList
                              ('d', [1, 1, 1, 0]),
                              ('w', [1, 1, 1, 1, 0]),
                              ('r', [1, 1, 1, 1, 1])]
-                            qTable
-    ,TestCase $ assertEqual "quick 2"
-                            (encode      hwTree hwBangsChars)
+    ,teq "quick quickEncode/encode"
                             (quickEncode hwTree hwBangsChars)
+                            (encode      hwTree hwBangsChars)
     ]
 
 main = do

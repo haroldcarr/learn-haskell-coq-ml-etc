@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Oct 02 (Wed) 22:13:22 by carr.
+Last Modified : 2013 Oct 07 (Mon) 19:24:42 by carr.
 -}
 
 module X03ObjSetsTweetSetTest where
@@ -33,14 +33,14 @@ getUser     (Tweet user _ _       ) = user
 getRetweets (Tweet _    _ retweets) = retweets
 
 tests = TestList
-    [TestCase $ assertEqual "filter': on empty set"     0     (size (filter' (\x -> getUser     x == "a") set1))
-    ,TestCase $ assertEqual "filter': a on set5"        1     (size (filter' (\x -> getUser     x == "a") set5))
-    ,TestCase $ assertEqual "filter': 20 on set5"       2     (size (filter' (\x -> getRetweets x ==  20) set5))
-    ,TestCase $ assertEqual "union: set4c and set4d"    4     (size (set4c `union` set4d))
-    ,TestCase $ assertEqual "union: with empty set (1)" 4     (size (set5  `union` set1))
-    ,TestCase $ assertEqual "union: with empty set (2)" 4     (size (set1  `union` set5))
-    ,TestCase $ assertEqual "descending: set5"          False (null trends)
-    ,TestCase $ assertEqual "descending: ..."           True  ((getUser (head trends) == "a") || (getUser (head trends) == "b"))
+    [teq "filter': on empty set"     (size (filter' (\x -> getUser     x == "a") set1))                 0
+    ,teq "filter': a on set5"        (size (filter' (\x -> getUser     x == "a") set5))                 1
+    ,teq "filter': 20 on set5"       (size (filter' (\x -> getRetweets x ==  20) set5))                 2
+    ,teq "union: set4c and set4d"    (size (set4c `union` set4d))                                       4
+    ,teq "union: with empty set (1)" (size (set5  `union` set1))                                        4
+    ,teq "union: with empty set (2)" (size (set1  `union` set5))                                        4
+    ,teq "descending: set5"          (null trends)                                                      False
+    ,teq "descending: ..."           ((getUser (head trends) == "a") || (getUser (head trends) == "b")) True
     ]
 
 ------------------------------------------------------------------------------
@@ -60,17 +60,17 @@ main = do
     mashableTweets    <- parseTweets mashableJSON
 
     let all = allTweets [gizmodoTweets, techcrunchTweets, engadgetTweets, amazondealsTweets, cnetTweets, gadgetlabTweets,  mashableTweets]
-    runTestTT $ TestList[TestCase $ assertEqual "size all"         695 (size all)]
+    runTestTT $ TestList[teq "size all"          (size all)          695]
     -- foreach all  (\x -> putStrLn (show x))
 
     let googleTweets = collectByKeywords all googleKeywords
-    runTestTT $ TestList[TestCase $ assertEqual "size googleTweets" 38 (size googleTweets)]
+    runTestTT $ TestList[teq "size googleTweets" (size googleTweets)  38]
 
     let appleTweets  = collectByKeywords all appleKeywords
-    runTestTT $ TestList[TestCase $ assertEqual "size appleTweets" 150 (size appleTweets)]
+    runTestTT $ TestList[teq "size appleTweets"  (size appleTweets)  150]
 
     let trending = descendingByRetweet $ googleTweets `union ` appleTweets
-    runTestTT $ TestList[TestCase $ assertEqual "size trending"    179 (length trending)] -- TODO : why is this not 150 + 38 (maybe because of identical text but different users)
+    runTestTT $ TestList[teq "size trending"     (length trending)   179] -- TODO : why is this not 150 + 38 (maybe because of identical text but different users)
 
     -- TODO : ensure that selected Tweets in trending are as expected
 
