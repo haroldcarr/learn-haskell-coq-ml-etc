@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Oct 07 (Mon) 19:24:42 by carr.
+Last Modified : 2013 Oct 07 (Mon) 22:40:47 by carr.
 -}
 
 module X03ObjSetsTweetSetTest where
@@ -74,6 +74,6 @@ main = do
 
     -- TODO : ensure that selected Tweets in trending are as expected
 
-    forM_ trending print
+    -- forM_ trending print
 
 -- End of file.

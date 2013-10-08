@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:42:02 by carr.
-Last Modified : 2013 Oct 07 (Mon) 19:30:44 by carr.
+Last Modified : 2013 Oct 07 (Mon) 22:43:36 by carr.
 -}
 
 module X04PatMatTest where
@@ -8,6 +8,8 @@ module X04PatMatTest where
 import AssertError
 import Test.HUnit
 import X04PatMat
+
+{-# ANN module "HLint: ignore Use string literal" #-}
 
 t1 = Fork (Leaf 'a' 2) (Leaf 'b' 3) ['a','b'] 5
 t2 = Fork (Fork (Leaf 'a' 2) (Leaf 'b' 3) ['a','b'] 5) (Leaf 'd' 4) ['a','b','d'] 9
@@ -158,18 +160,17 @@ wikiTests = TestList
 qTable = convert $ createCodeTree hwBangsChars
 
 quickTests = TestList
-    [teq "quick qTable"
-                            qTable
-                            [('l', [0, 0]),
-                             ('!', [0, 1]),
-                             (',', [1, 0, 0, 0]),
-                             (' ', [1, 0, 0, 1]),
-                             ('h', [1, 0, 1, 0]),
-                             ('e', [1, 0, 1, 1]),
-                             ('o', [1, 1, 0]),
-                             ('d', [1, 1, 1, 0]),
-                             ('w', [1, 1, 1, 1, 0]),
-                             ('r', [1, 1, 1, 1, 1])]
+    [teq "quick qTable"     qTable
+                            [('h', [1,0,1,0]),
+                             ('e', [1,0,1,1]),
+                             (',', [1,0,0,0]),
+                             (' ', [1,0,0,1]),
+                             ('d', [1,1,1,0]),
+                             ('r', [1,1,1,1,1]),
+                             ('w', [1,1,1,1,0]),
+                             ('o', [1,1,0]),
+                             ('l', [0,0]),
+                             ('!', [0,1])]
     ,teq "quick quickEncode/encode"
                             (quickEncode hwTree hwBangsChars)
                             (encode      hwTree hwBangsChars)
