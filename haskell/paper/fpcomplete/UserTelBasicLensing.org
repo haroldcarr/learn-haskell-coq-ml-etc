@@ -7,7 +7,7 @@
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
 # Created       : 2013 Oct 03 (Thu) 17:24:45 by carr.
-Last Modified : 2013 Oct 05 (Sat) 15:49:16 by carr.
+Last Modified : 2013 Oct 09 (Wed) 10:54:27 by carr.
 
 # https://www.fpcomplete.com/tutorial-preview/2290/VSoplsjSiJ
 
@@ -24,6 +24,7 @@ This is a digest of [[http://jspha.com/][Joseph Abrahamson]]'s [[https://www.fpc
 see also:
 - [[http://www.cis.upenn.edu/~bcpierce/][Benjamin C. Pierce]] et. al. "Quotient Lenses" ([[http://www.cis.upenn.edu/~bcpierce/papers/quotient-lenses.pdf][pdf]])
 - [[https://plus.google.com/u/0/113063331545548237308/about][Edward Kmett]]'s [[http://hackage.haskell.org/package/lens][=Control.Lens=]]
+- Simon Peyton Jones [[http://skillsmatter.com/podcast/scala/lenses-compositional-data-access-and-manipulation][video]] on Lens at Skills Matter Oct 2013
 - [[http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html]]
 - [[http://www.haskellforall.com/2012/01/haskell-for-mainstream-programmers_28.html]]
 

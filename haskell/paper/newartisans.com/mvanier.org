@@ -1,0 +1,488 @@
+#+TITLE:       monads : from concrete to abstract
+#+AUTHOR:      Harold Carr
+#+DESCRIPTION: monads : from concrete to abstract
+#+PROPERTY:    tangle mvanier.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+#+BEGIN_HTML
+---
+title: monads : from concrete to abstract
+tags: haskell, monads
+---
+#+END_HTML
+
+# Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
+Last Modified : 2013 Oct 13 (Sun) 10:51:27 by carr.
+
+------------------------------------------------------------------------------
+* definition
+
+- [[http://mvanier.livejournal.com/3917.html]]
+- [[http://www.haskellforall.com/2013/07/statements-vs-expressions.html]]
+
+Monads:
+
+- Tool for structuring computations.
+
+- Generalization of functions, function application, and function -- TODO functions/application/composition
+  composition to extend pure functions with other types of computation.
+  Each "extension" corresponds to a particular monad:
+  - =Monad Maybe= : failure to produce a result
+  - =Monad (Either e)= : errors
+  - =Monad []= : multiple results (i.e., "list")
+  - =State=
+  - =Monad IO=
+  - =Monad ((->) r)=
+  - ...
+
+- Use the type system to partition side-effecting computations from
+  pure functions so they do not interfere with each other.
+
+[[http://www.haskell.org/ghc/docs/7.4.2/html/libraries/base/src/GHC-Base.html]] :
+
+#+BEGIN_EXAMPLE
+class  Monad m  where
+    -- | Sequentially compose two actions, passing any value produced
+    -- by the first as an argument to the second.
+    (>>=)       :: forall a b. m a -> (a -> m b) -> m b
+    -- | Sequentially compose two actions, discarding any value produced
+    -- by the first, like sequencing operators (such as the semicolon)
+    -- in imperative languages.
+    (>>)        :: forall a b. m a -> m b -> m b
+        -- Explicit for-alls so that we know what order to
+        -- give type arguments when desugaring
+
+    -- | Inject a value into the monadic type.
+    return      :: a -> m a
+    -- | Fail with a message.  This operation is not part of the
+    -- mathematical definition of a monad, but is invoked on pattern-match
+    -- failure in a @do@ expression.
+    fail        :: String -> m a
+
+    {-# INLINE (>>) #-}
+    m >> k      = m >>= \_ -> k
+    fail s      = error s
+#+END_EXAMPLE
+
+** setup
+
+#+BEGIN_SRC haskell
+import Control.Monad.State
+import Data.Either
+import Test.HUnit hiding (State) -- for unit testing examples
+#+END_SRC
+
+------------------------------------------------------------------------------
+* function application
+
+** pure
+
+#+BEGIN_EXAMPLE
+:t ($)
+-- ($) :: (a -> b) -> a -> b
+
+:t show
+-- show :: Show a => a -> String
+
+($) (show) 2
+-- "2"
+
+show 2
+-- "2"
+#+END_EXAMPLE
+
+** monadic
+
+TODO
+
+------------------------------------------------------------------------------
+* function composition
+
+** pure
+
+#+BEGIN_EXAMPLE
+:t (.)
+-- (.) :: (b -> c) -> (a -> b) -> a -> c
+
+:t (* 2.3)
+-- (* 2.3) :: Fractional a => a -> a
+
+:t (show) . (* 2.3)
+-- (show) . (* 2.3) :: (Fractional b, Show b) => b -> String
+
+(show) . (* 2.3) $ 2
+-- "4.6"
+
+show ((* 2.3) 2)
+-- "4.6"
+#+END_EXAMPLE
+
+** monadic
+
+# --------------------------------------------------
+*** =Maybe=
+
+The =Monad= aspects of =Maybe= are a tool for structuring the flow of
+computations that may return no results (i.e., =Nothing=), for
+example, a hash table.
+
+#+BEGIN_EXAMPLE
+:i Maybe
+-- data Maybe a = Nothing | Just a
+#+END_EXAMPLE
+
+- [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Maybe.html#Maybe]] :
+
+#+BEGIN_EXAMPLE
+instance  Monad Maybe  where
+    (Just x) >>= k      = k x
+    Nothing  >>= _      = Nothing
+
+    (Just _) >>  k      = k
+    Nothing  >>  _      = Nothing
+
+    return              = Just
+    fail _              = Nothing
+#+END_EXAMPLE
+
+#+BEGIN_SRC haskell
+maybeExampleNonMonadic i f1 f2 =
+    case i of
+        Nothing -> Nothing
+        Just x  -> case f1 x of
+                       Nothing -> Nothing
+                       Just y  -> Just $ f2 y
+
+exampleMonadic i f1 f2 =
+     i >>= (\x -> f1 x) >>= (\y -> return $ f2 y)
+
+exampleMonadicDo i f1 f2 = do
+    x <- i
+    y <- f1 x
+    return $ f2 y
+
+intToNothing     x = Nothing
+intToJust        x = Just x
+nonMonadicDouble x = x + x
+#+END_SRC
+
+** TODO: TEST
+
+#+BEGIN_SRC haskell
+t :: (Eq a) => (Show a) => String -> [a] -> a -> [Test]
+t testName actuals expected  = map (\actual -> TestCase $ assertEqual testName expected actual) actuals
+#+END_SRC
+
+#+BEGIN_SRC haskell
+t1 = t "m1"
+     [maybeExampleNonMonadic Nothing  intToJust    nonMonadicDouble
+     ,exampleMonadic         Nothing  intToJust    nonMonadicDouble
+     ,exampleMonadicDo       Nothing  intToJust    nonMonadicDouble
+     ]
+     Nothing
+
+t2 = t "m2"
+     [maybeExampleNonMonadic (Just 3) intToNothing nonMonadicDouble
+     ,exampleMonadic         (Just 3) intToNothing nonMonadicDouble
+     ,exampleMonadicDo       (Just 3) intToNothing nonMonadicDouble
+     ]
+     Nothing
+
+t3 = t "m3"
+     [maybeExampleNonMonadic (Just 3) intToJust    nonMonadicDouble
+     ,exampleMonadic         (Just 3) intToJust    nonMonadicDouble
+     ,exampleMonadicDo       (Just 3) intToJust    nonMonadicDouble
+     ]
+     (Just 6)
+
+t4 = t "m4"
+     [exampleMonadic         (Just "a") (\x -> Just x) (\y -> y)
+     ]
+     (Just "a")
+#+END_SRC
+
+** TODO
+- =Just 1= value constructor creates a =Maybe Int= =Monad= instance
+- =>>== given two arguments
+  - =Just 1=
+  - =(\x -> ... )=
+- =>>== applies =(\x -> ... ) 1=
+- =\x= function creates a =Nothing= value
+- =>>== given two arguments
+  - =Nothing=
+  - =(\y -> ... )=
+- =>>== ignores =\y= function and returns =Nothing=
+- =\x= function "unwinds" with that =Nothing= which "unwinds" as the return value of =example=
+
+To see how this is useful in long compositions of =Maybe=, see Real
+World Haskell [[http://book.realworldhaskell.org/read/code-case-study-parsing-a-binary-data-format.html][chapter 10]].  Search for =parseP5= (version without
+monadic function composition) and =parseP5_take2= (version with
+monadic composition --- but using =>>?= instead of =>>==).
+
+Note: in the above, =Just $ f2 y= could have been used in place of
+=return $ f2 y= --- they are the same thing in this context.
+However, using =return= makes the function generic, as will be seen in
+the following examples (which is why =exampleMonadic= is not named
+=maybeExampleMonadic=).
+
+# --------------------------------------------------
+*** =Either=
+
+The =Monad= aspects of =Either= are a tool for structuring the flow of
+computations like =Maybe=, but where additional information is given
+instead of =Nothing=.  =Left= corresponds to =Nothing=.  =Right=
+corresponds to =Just=.
+
+#+BEGIN_EXAMPLE
+:i Either
+-- data Either a b = Left a | Right b
+#+END_EXAMPLE
+
+- [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Either.html#Either]]
+
+#+BEGIN_EXAMPLE
+instance Monad (Either e) where
+    return = Right
+    Left  l >>= _ = Left l
+    Right r >>= k = k r
+#+END_EXAMPLE
+
+#+BEGIN_SRC haskell
+eitherExampleNonMonadic i f1 f2 =
+    case i of
+        Left  l -> Left l
+        Right x -> case f1 x of
+                       Left  l -> Left l
+                       Right y -> return $ f2 y
+
+intToLeft  :: Int -> Either Int Int
+intToLeft   x = Left x
+
+intToRight :: Int -> Either Int Int
+intToRight  x = Right x
+#+END_SRC
+
+#+BEGIN_SRC haskell
+t5 = t "e1"
+     [eitherExampleNonMonadic (Left (-1)) intToRight nonMonadicDouble
+     ,exampleMonadic          (Left (-1)) intToRight nonMonadicDouble
+     ,exampleMonadicDo        (Left (-1)) intToRight nonMonadicDouble
+     ]
+     (Left (-1))
+
+t6 = t "e2"
+     [eitherExampleNonMonadic (Right 3)   intToLeft  nonMonadicDouble
+     ,exampleMonadic          (Right 3)   intToLeft  nonMonadicDouble
+     ,exampleMonadicDo        (Right 3)   intToLeft  nonMonadicDouble
+     ]
+     (Left 3)
+
+t7 = t "e3"
+     [eitherExampleNonMonadic (Right 3)   intToRight nonMonadicDouble
+     ,exampleMonadic          (Right 3)   intToRight nonMonadicDouble
+     ,exampleMonadicDo        (Right 3)   intToRight nonMonadicDouble
+     ]
+     (Right 6)
+#+END_SRC
+
+** TODO : note generic use of =maybe=*
+
+** TODO
+- =Just 1= value constructor creates a =Either Int= =Monad= instance
+- =>>== given two arguments
+  - =Just 1=
+  - =(\x -> ... )=
+- =>>== applies =(\x -> ... ) 1=
+- =\x= function creates a =Nothing= value
+- =>>== given two arguments
+  - =Nothing=
+  - =(\y -> ... )=
+- =>>== ignores =\y= function and returns =Nothing=
+- =\x= function "unwinds" with that =Nothing= which "unwinds" as the return value of =example=
+
+# --------------------------------------------------
+*** =[]=
+
+The =Monad= aspects of =[]= (list) are a tool for structuring the flow
+of computations that may return zero or more results, similar to
+=Maybe= and =Either= return none or one results.
+
+#+BEGIN_EXAMPLE
+:i []
+-- data [] a = [] | a : [a]
+#+END_EXAMPLE
+
+-- [[http://www.haskell.org/ghc/docs/7.4.2/html/libraries/base/src/GHC-Base.html]]
+
+#+BEGIN_EXAMPLE
+instance  Monad []  where
+    m >>= k             = foldr ((++) . k) [] m
+    m >> k              = foldr ((++) . (\ _ -> k)) [] m
+    return x            = [x]
+    fail _              = []
+#+END_EXAMPLE
+
+#+BEGIN_SRC haskell
+listExampleNonMonadic i f1 f2 =
+    case i of
+        [] -> []
+        xs -> case f1 xs of
+                  [] -> []
+                  ys -> f2 ys
+#+END_SRC
+
+** TODO define following functions instead of inline anon
+
+#+BEGIN_SRC haskell
+t8 = t "l1"
+     [listExampleNonMonadic [ ]     ((\x -> [x])::[Int]->[[Int]])  ((\y -> y)::[[Int]]->[[Int]])
+     ,exampleMonadic        [ ]      (\x -> [x])                    (\y -> y)
+     ,exampleMonadicDo      [ ]      (\x -> [x])                    (\y -> y)
+     ]
+     []
+
+t9 = t "l2"
+     [listExampleNonMonadic [1,2,3] ((\x -> [ ])::[Int]->[[Int]])  ((\y -> y)::[[Int]]->[[Int]])
+     ,exampleMonadic        [1,2,3]  (\x -> [ ])                    (\y -> y)
+     ,exampleMonadicDo      [1,2,3]  (\x -> [ ])                    (\y -> y)
+     ]
+     []
+
+t10 = t "l3"
+     [listExampleNonMonadic [1,2,3] (\x ->  x)                      (\y -> y)
+     ,exampleMonadic        [1,2,3] (\x -> [x])                     (\y -> y)
+     ,exampleMonadicDo      [1,2,3] (\x -> [x])                     (\y -> y)
+     ]
+     [1,2,3]
+#+END_SRC
+
+** TODO example =x= without brackets in =l3= above
+
+See also:
+- [[http://en.wikibooks.org/wiki/Haskell/Understanding_monads/List]]
+
+# --------------------------------------------------
+*** =State=
+
+
+- [[http://hackage.haskell.org/package/transformers-0.3.0.0/docs/src/Control-Monad-Trans-State-Lazy.html#State]]
+
+#+BEGIN_EXAMPLE
+:i State
+-- type State s = StateT s Data.Functor.Identity.Identity
+
+:i runState
+-- runState :: State s a -> s -> (a, s)
+
+:i StateT
+-- newtype StateT s m a = StateT {runStateT :: s -> m (a, s)}
+-- instance Monad m => Monad (StateT s m)
+#+END_EXAMPLE
+
+- [[http://hackage.haskell.org/package/mtl-2.1.1/docs/src/Control-Monad-State-Class.html#MonadState]]
+
+#+BEGIN_EXAMPLE
+class Monad m => MonadState s m | m -> s where
+    -- | Return the state from the internals of the monad.
+    get :: m s
+    get = state (\s -> (s, s))
+
+    -- | Replace the state inside the monad.
+    put :: s -> m ()
+    put s = state (\_ -> ((), s))
+
+    -- | Embed a simple state action into the monad.
+    state :: (s -> (a, s)) -> m a
+    state f = do
+      s <- get
+      let ~(a, s') = f s
+      put s'
+      return a
+#+END_EXAMPLE
+
+- [[http://embedntks.com/haskells-state-monad/]]  :
+
+#+BEGIN_SRC haskell
+type HashTable = [(String, Int)]
+
+gt :: String -> State HashTable Int
+gt key0 = do
+    mem <- get
+    return $ gt' key0 mem
+  where
+    gt' :: String -> HashTable -> Int
+    gt' key        []  = (-1)
+    gt' key ((k,v):xs) = if key == k
+                         then v
+                         else gt' key xs
+
+pt :: String -> Int-> State HashTable Int
+pt key0 val0 = do
+    mem <- get
+    put( pt' key0 val0 mem)
+    return val0
+  where
+    pt' :: String -> Int -> HashTable -> HashTable
+    pt' key val           []  = [(key,val)]
+    pt' key val (kv@(k,v):xs) = if key == k
+                                then (k,val):xs
+                                else kv:(pt' key val xs)
+
+run :: HashTable -> HashTable
+run hashTable =
+    let (val, mem) = runState( do
+        pt "key1" 1
+        pt "key2" 7
+        x <- gt "key2"
+        pt "key1" (x * 2)
+                             ) hashTable
+    in mem
+
+-- main =  print $ run []
+#+END_SRC
+
+SEE?
+- [[http://brandon.si/code/the-state-monad-a-tutorial-for-the-confused/]]
+
+# --------------------------------------------------
+*** =IO=
+
+#+BEGIN_EXAMPLE
+TODO
+#+END_EXAMPLE
+
+#+BEGIN_SRC haskell
+example2 =
+    putStrLn "Enter a number:" >>= (\_ -> getLine >>= (\str -> putStrLn ("You entered: " ++ str)))
+
+example2WithDo = do
+    putStrLn "Enter a number:"
+    str <- getLine
+    putStrLn ("You entered: " ++ str)
+#+END_SRC
+
+- =Just 1= value constructor creates a =Maybe Int= =Monad= instance
+- =>>== given two arguments
+  - =Just 1=
+  - =(\x -> ... )=
+- =>>== applies =(\x -> ... ) 1=
+- =\x= function creates a =Nothing= value
+- =>>== given two arguments
+  - =Nothing=
+  - =(\y -> ... )=
+- =>>== ignores =\y= function and returns =Nothing=
+- =\x= function "unwinds" with that =Nothing= which "unwinds" as the return value of =example=
+
+
+http://stackoverflow.com/questions/5310203/how-to-use-instances-of-monad-and-confusion-about
+
+------------------------------------------------------------------------------
+* example accuracy
+
+#+BEGIN_SRC haskell
+main = do
+    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10
+    print $ run []
+#+END_SRC

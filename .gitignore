@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Oct 07 (Mon) 08:59:17 by carr.
+# Last Modified : 2013 Oct 13 (Sun) 11:22:59 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -96,6 +96,7 @@ haskell/paper/haskell-distributed/
 haskell/paper/monad-reader/issue22/gadt.hs-save
 haskell/paper/monad-reader/issue22/issue22.pdf
 haskell/paper/monad-reader/issue22/r.hs
+haskell/paper/newartisans.com/RCS/
 haskell/paper/twoDznA.pdf
 haskell/paper/twoDznQ.pdf
 
