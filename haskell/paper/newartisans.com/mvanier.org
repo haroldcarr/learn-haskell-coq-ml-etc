@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 17 (Thu) 08:37:56 by carr.
+Last Modified : 2013 Oct 17 (Thu) 08:45:27 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -497,23 +497,15 @@ runState getRandom sg :: (Int,StdGen)
 #+END_EXAMPLE
 
 #+BEGIN_SRC haskell
-data ParseState = ParseState {
-      string :: L.ByteString
-    , offset :: Int64           -- imported from Data.Int
-    } deriving (Show)
-
-newtype Parse a = Parse {
-      runParse :: ParseState -> Either String (a, ParseState)
-    }
+type Parse a = String -> (a, String)
 
 identity :: a -> Parse a
-identity a = Parse (\s -> Right (a, s))
+identity a = (\s -> (a, s))
 
-parse :: Parse a -> L.ByteString -> Either String a
+parse :: Parse a -> String -> a
 parse parser initState
-    = case runParse parser (ParseState initState 0) of
-        Left err          -> Left err
-        Right (result, _) -> Right result
+    = case parser initState of
+        (result, _) -> result
 #+END_SRC
 
 #+BEGIN_EXAMPLE
