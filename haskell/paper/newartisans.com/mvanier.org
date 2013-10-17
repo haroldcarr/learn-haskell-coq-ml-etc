@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 16 (Wed) 09:46:23 by carr.
+Last Modified : 2013 Oct 16 (Wed) 20:10:42 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -404,120 +404,94 @@ class Monad m => MonadState s m | m -> s where
       return a
 #+END_EXAMPLE
 
-- [[http://embedntks.com/haskells-state-monad/]]  :
-
 #+BEGIN_SRC haskell
-type HashTable = [(String, Int)]
-
-gt :: String -> State HashTable Int
-gt key0 = do
-    mem <- get
-    return $ gt' key0 mem
-  where
-    gt' :: String -> HashTable -> Int
-    gt' key        []  = -1
-    gt' key ((k,v):xs) = if key == k
-                         then v
-                         else gt' key xs
-
-pt :: String -> Int-> State HashTable Int
-pt key0 val0 = do
-    mem <- get
-    put( pt' key0 val0 mem)
-    return val0
-  where
-    pt' :: String -> Int -> HashTable -> HashTable
-    pt' key val           []  = [(key,val)]
-    pt' key val (kv@(k,v):xs) = if key == k
-                                then (k,val):xs
-                                else kv:(pt' key val xs)
-
-run :: HashTable -> HashTable
-run hashTable =
-    let (val, mem) = runState( do
-        pt "key1" 1
-        pt "key2" 7
-        x <- gt "key2"
-        pt "key1" (x * 2)
-                             ) hashTable
-    in mem
-
--- main =  print $ run []
-#+END_SRC
-
-#+BEGIN_SRC haskell
-stateExampleNonMonadic i f1 f2 =
+stateExampleNonMonadicNoState i f1 f2 =
     case i of
-        (c,s:ss,r) -> case f1 (s,ss,c:r) of
-                          (c,s:ss,r) -> f2 (s,ss,c:r)
+        (s:ss, r) -> case f1 (ss, s:r) of
+                         (s:ss ,r) -> f2 (ss, s:r)
 
-upper (c,s:ss,r) = (s, ss,        toUpper c:r)
-shift (c,s:ss,r) = (s, ss, chr (ord c + 10):r)
+upper (s:ss, r) = (ss,  toUpper s       : r)
+shift (s:ss, r) = (ss, chr (ord s + 10) : r)
 
 t11 = t "s1"
-      [stateExampleNonMonadic ('h',"ello world", "") upper shift
+      [stateExampleNonMonadicNoState ("hello world", "") upper shift
       ]
-      ('o'," world","vlEh")
+      ("o world","vlEh")
+
+--------------------------------------------------
+
+type SimpleState s a = s -> (a, s)
+
+returnSt :: a -> SimpleState s a
+returnSt a = \s -> (a, s)
+
+returnAlt :: a -> SimpleState s a
+returnAlt a s = (a, s)
+
+bindSt :: (SimpleState s a) -> (a -> SimpleState s b) -> SimpleState s b
+bindSt m k = \s -> let (a, s') = m s
+                   in (k a) s'
+
+bindAlt :: (s -> (a, s))        -- step
+        -> (a -> s -> (b, s))   -- makeStep
+        -> (s -> (b, s))        -- (makeStep result) newState
+bindAlt step makeStep oldState =
+    let (result, newState) = step oldState
+    in  (makeStep result) newState
+
+getSt :: SimpleState s s
+getSt = \s -> (s, s)
+
+putSt :: s -> SimpleState s ()
+putSt s = \_ -> ((), s)
 #+END_SRC
 
+#+BEGIN_EXAMPLE
+getRandom'' :: Random a => SimpleState StdGen a
+getRandom'' =
+    getSt `bindAlt` \gen -> let (val, gen') = random gen
+                            in putSt gen' `bindAlt` \_ -> return val
 
-#+BEGIN_SRC
--- I have no idea what this means.
-stateExampleNonMonadic' :: State (Char, String, String) String -> State (Char, String, String) String
-stateExampleNonMonadic' i = i
--- stateExampleNonMonadic' $ return "STRING"
-#+END_SRC
+sg <- getStdGen
+getRandom'' sg :: (Int,StdGen)
 
-http://acm.wustl.edu/functional/state-monad.php
+let init = returnAlt 1 "o"
+let g    = getSt init
+let p    = putSt  "t"
+let p'   = p "three"
+
+let gg = bindSt (returnAlt 1) (return . getSt)
+let hh = bindSt hh (return . putSt ())
+let ii = bindSt hh (putSt)
+#+END_EXAMPLE
 
 #+BEGIN_SRC haskell
--- newtype State s a = State { runState :: (s -> (a,s)) }
+getRandom :: Random a => State StdGen a
+getRandom =
+    get >>= \gen -> let (val, gen') = random gen
+                    in put gen' >>= \_ -> return val
 
-data ProgramState = PS [Int]
-foo :: Int -> String -> State (Int, ProgramState)
-foo int string = return (int, PS [int])
-{-
--- State (Int, ProgramState) means " -> s -> (a,s) " to end of type declaration:
-foo' :: Int -> String -> ProgramState -> (Int, ProgramState)
--}
-
--- Returning State means returning a function.
-
--- The partial function will get applied when foo called with third parameter (state).
--- Foo is function that takes an int, a string, a previous state; returns a tuple of (return value, new state).
--- Use runState to extract the inner function.
-
-initialState = PS []
-doSomething = runState (foo 2 "blah") initialState
-
-doSomethingCooler = runState (do (PS currentStack) <- get
-                                 let top = head currentStack
-                                 returnedFromFoo <- foo top "myString"
-                                 put (returnedFromFoo : currentStack)
-                                 return top
-                             ) initialState
-
--- functions chained via >>=
--- each line where we call a function "in the state monad" behaves as follows:
-   -- arguments we give it on that line are applied, yielding a partially applied function.
-   -- because each state monad functions yields a State function (that needs an argument of type s before it can yields it's result tuple).
--- >>= : all functions in do loop are passed the current state as final parameter, execute, and then, once they return,
-   -- the next function in the chain gets called using the previously return state.
-
-bar :: State ((), s)
-bar = do a <- get
-         c <- someOtherFunctionWeCouldWrite
-         put c
-         return ()
-
-someOtherFunctionWeCouldWrite x = x
-
--- do loop collapsed into one function, of type State (e.g. of type s -> (a,s).
--- it takes an initial state, and returns a tuple.
--- To run it, we extract the "inner function" from it's State wrapping using runState, and call it on some initial state.
-
--- runState bar initialState
+getRandomDo :: Random a => State StdGen a
+getRandomDo = do
+    gen <- get
+    let (val, gen') = random gen
+    put gen'
+    return val
 #+END_SRC
+
+#+BEGIN_EXAMPLE
+sg <- getStdGen
+:t sg
+-- sg :: StdGen
+:t getRandom
+-- getRandom :: Random a => State StdGen a
+:t runState getRandom
+-- runState getRandom :: Random a => StdGen -> (a, StdGen)
+:t runState getRandom sg
+-- runState getRandom sg :: Random a => (a, StdGen)
+runState getRandom sg :: (Int,StdGen)
+-- (-8057504721392404675,734004948 2103410263)
+#+END_EXAMPLE
 
 diagram:
 http://stackoverflow.com/questions/10230562/confusion-over-the-state-monad-code-on-learn-you-a-haskell
@@ -527,71 +501,12 @@ http://www.engr.mun.ca/~theo/Misc/haskell_and_monads.htm
 
 SEE:?
 - [[http://brandon.si/code/the-state-monad-a-tutorial-for-the-confused/]]
+- http://stackoverflow.com/questions/5310203/how-to-use-instances-of-monad-and-confusion-about
+- [[http://embedntks.com/haskells-state-monad/]]
 
 # --------------------------------------------------
 *** =IO=
 
-#+BEGIN_EXAMPLE
-TODO
-#+END_EXAMPLE
-
-#+BEGIN_SRC haskell
-example2 =
-    putStrLn "Enter a number:" >>= (\_ -> getLine >>= (\str -> putStrLn ("You entered: " ++ str)))
-
-example2WithDo = do
-    putStrLn "Enter a number:"
-    str <- getLine
-    putStrLn ("You entered: " ++ str)
-
-clumsyRollDice :: (Int, Int)
-clumsyRollDice = (n, m)
-  where
-    (n, g) = randomR (1,100) (mkStdGen 0)
-    (m, _) = randomR (1,100) g
-
-rollDice :: StdGen -> (Int, StdGen)
-rollDice g = (i, g')
-  where
-    (i, g') = randomR (1,100) g
-
-(r1,g1) = rollDice $ mkStdGen 0
-(r2,g2) = rollDice g1
-(r3,g3) = rollDice g2
-
-rollDie :: State StdGen Int
-rollDie = do
-    generator <- get
-    let (value, newGenerator) = randomR (1,100) generator
-    put newGenerator
-    return value
-{-
-rollDie' s =
-    get s >>= (\generator ->
-        let (value, newGenerator) = randomR (1,100) generator
-        in put s newGenerator >>= (\_ -> return value))
--}
-es      = evalState rollDie (mkStdGen 0)
-rs      = runState  rollDie (mkStdGen 0)
-(r4,g4) = runState  rollDie (mkStdGen 0)
-(r5,g5) = runState  rollDie g4
-(r6,g6) = runState  rollDie g5
-#+END_SRC
-
-- =Just 1= value constructor creates a =Maybe Int= =Monad= instance
-- =>>== given two arguments
-  - =Just 1=
-  - =(\x -> ... )=
-- =>>== applies =(\x -> ... ) 1=
-- =\x= function creates a =Nothing= value
-- =>>== given two arguments
-  - =Nothing=
-  - =(\y -> ... )=
-- =>>== ignores =\y= function and returns =Nothing=
-- =\x= function "unwinds" with that =Nothing= which "unwinds" as the return value of =example=
-
-
-http://stackoverflow.com/questions/5310203/how-to-use-instances-of-monad-and-confusion-about
 
 ------------------------------------------------------------------------------
 * example accuracy
@@ -599,5 +514,4 @@ http://stackoverflow.com/questions/5310203/how-to-use-instances-of-monad-and-con
 #+BEGIN_SRC haskell
 main = do
     runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10 ++ t11
-    print $ run []
 #+END_SRC
