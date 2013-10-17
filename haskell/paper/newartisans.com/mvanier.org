@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 16 (Wed) 22:56:17 by carr.
+Last Modified : 2013 Oct 17 (Thu) 08:37:56 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -74,6 +74,12 @@ import Data.Char
 import Data.Either
 import System.Random
 import Test.HUnit hiding (State) -- for unit testing examples
+
+-- TODO DELETE LATER
+import qualified Data.ByteString.Lazy.Char8 as L8
+import qualified Data.ByteString.Lazy as L
+import Data.Char (isSpace)
+import Data.Int
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -436,6 +442,8 @@ get''          =  \s -> ( s, s)
 put''    ::  s ->  s -> ((), s)
 put''        s =  \_ -> ((), s)
 
+-------------------------
+
 stateExample' f1 =
     get'' `bind''` \s0 -> f1 s0 `bind''`
                    \s1 -> return'' s1
@@ -450,6 +458,8 @@ upper'' (s:ss) = return'' $ toUpper s
 
 -- stateExample'  shift''         "hello world"
 -- stateExample'' shift'' upper'' "hello world"
+
+-------------------------
 
 getRandom'' :: Random a => StdGen -> (a, StdGen)
 getRandom'' =
@@ -484,6 +494,32 @@ random sg :: (Int,StdGen)
 getRandom'' sg :: (Int,StdGen)
 runState getRandom sg :: (Int,StdGen)
 -- (-8057504721392404675,734004948 2103410263)
+#+END_EXAMPLE
+
+#+BEGIN_SRC haskell
+data ParseState = ParseState {
+      string :: L.ByteString
+    , offset :: Int64           -- imported from Data.Int
+    } deriving (Show)
+
+newtype Parse a = Parse {
+      runParse :: ParseState -> Either String (a, ParseState)
+    }
+
+identity :: a -> Parse a
+identity a = Parse (\s -> Right (a, s))
+
+parse :: Parse a -> L.ByteString -> Either String a
+parse parser initState
+    = case runParse parser (ParseState initState 0) of
+        Left err          -> Left err
+        Right (result, _) -> Right result
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+:type parse (identity 1) undefined
+parse (identity 1) undefined
+parse (identity "foo") undefined
 #+END_EXAMPLE
 
 diagram:
