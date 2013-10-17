@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 17 (Thu) 08:45:27 by carr.
+Last Modified : 2013 Oct 17 (Thu) 09:09:05 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -80,6 +80,7 @@ import qualified Data.ByteString.Lazy.Char8 as L8
 import qualified Data.ByteString.Lazy as L
 import Data.Char (isSpace)
 import Data.Int
+import Data.Word
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -510,6 +511,59 @@ parse parser initState
 
 #+BEGIN_EXAMPLE
 :type parse (identity 1) undefined
+parse (identity 1) undefined
+parse (identity "foo") undefined
+#+END_EXAMPLE
+
+#+BEGIN_SRC haskell
+data ParseState' = ParseState' {
+      string :: L.ByteString
+    , offset :: Int64           -- imported from Data.Int
+    } deriving (Show)
+
+newtype Parse' a = Parse' {
+      runParse :: ParseState' -> Either String (a, ParseState')
+    }
+
+bail :: String -> Parse' a
+bail err = Parse' $ \s -> Left $
+           "byte offset " ++ show (offset s) ++ ": " ++ err
+
+(==>) :: Parse' a -> (a -> Parse' b) -> Parse' b
+firstParser ==> secondParser  =  Parse' chainedParser
+  where chainedParser initState   =
+          case runParse firstParser initState of
+            Left errMessage ->
+                Left errMessage
+            Right (firstResult, newState) ->
+                runParse (secondParser firstResult) newState
+
+getState :: Parse' ParseState'
+getState = Parse' (\s -> Right (s, s))
+
+putState :: ParseState' -> Parse' ()
+putState s = Parse' (\_ -> Right ((), s))
+
+identity' :: a -> Parse' a
+identity' a = Parse' (\s -> Right (a, s))
+
+-- import the Word8 type from Data.Word
+parseByte :: Parse' Word8
+parseByte =
+    getState ==> \initState ->
+    case L.uncons (string initState) of
+      Nothing ->
+          bail "no more input"
+      Just (byte,remainder) ->
+          putState newState ==> \_ ->
+          identity' byte
+        where newState = initState { string = remainder,
+                                     offset = newOffset }
+              newOffset = offset initState + 1
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+:type parseByte (L8.pack "P5") undefined
 parse (identity 1) undefined
 parse (identity "foo") undefined
 #+END_EXAMPLE
