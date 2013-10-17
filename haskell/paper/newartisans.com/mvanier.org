@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 17 (Thu) 09:17:57 by carr.
+Last Modified : 2013 Oct 17 (Thu) 09:31:22 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -424,9 +424,11 @@ t11 = t "s1"
       [stateExampleNonMonadicNoState "hello world" shift upper
       ]
       ('L',"lo worldhz")
+#+END_SRC
 
---------------------------------------------------
+# --------------------------------------------------
 
+#+BEGIN_SRC haskell
 bind'' ::         (s -> (a, s))   -- step
          -> (a -> (s -> (b, s)))  -- makeStep
          ->       (s -> (b, s))   -- (makeStep result) newState
@@ -442,26 +444,32 @@ get''          =  \s -> ( s, s)
 
 put''    ::  s ->  s -> ((), s)
 put''        s =  \_ -> ((), s)
+#+END_SRC
 
--------------------------
+# -------------------------
 
+#+BEGIN_SRC haskell
 stateExample' f1 =
     get'' `bind''` \s0 -> f1 s0 `bind''`
-                   \s1 -> return'' s1
+                   \r1 -> return'' r1
 
 stateExample'' f1 f2 =
     get'' `bind''` \s0 -> f1 s0 `bind''`
-                   \s1 -> get'' `bind''` \s1' -> f2 s1' `bind''`
-                   \s2 -> get'' `bind''` \s2' -> return'' (s1:s2:[])
+                   \r1 -> get'' `bind''` \s1 -> f2 s1 `bind''`
+                   \r2 -> get'' `bind''` \s2 -> return'' (r1:r2:[])
 
 shift'' (s:ss) = put'' ss `bind''` \x -> return'' $ chr (ord s - 71)
 upper'' (s:ss) = put'' ss `bind''` \x -> return'' $ toUpper s
+#+END_SRC
 
--- stateExample'  shift''         "hello world"
--- stateExample'' shift'' upper'' "hello world"
+#+BEGIN_EXAMPLE
+stateExample'  shift''         "hello world"
+stateExample'' shift'' upper'' "hello world"
+#+END_EXAMPLE
 
--------------------------
+# -------------------------
 
+#+BEGIN_SRC haskell
 getRandom'' :: Random a => StdGen -> (a, StdGen)
 getRandom'' =
     get'' `bind''` \gen -> let (val, gen') = random gen
@@ -495,77 +503,6 @@ random sg :: (Int,StdGen)
 getRandom'' sg :: (Int,StdGen)
 runState getRandom sg :: (Int,StdGen)
 -- (-8057504721392404675,734004948 2103410263)
-#+END_EXAMPLE
-
-#+BEGIN_SRC haskell
-type Parse a = String -> (a, String)
-
-identity :: a -> Parse a
-identity a = (\s -> (a, s))
-
-parse :: Parse a -> String -> a
-parse parser initState
-    = case parser initState of
-        (result, _) -> result
-#+END_SRC
-
-#+BEGIN_EXAMPLE
-:type parse (identity 1) undefined
-parse (identity 1) undefined
-parse (identity "foo") undefined
-#+END_EXAMPLE
-
-#+BEGIN_SRC haskell
-data ParseState' = ParseState' {
-      string :: L.ByteString
-    , offset :: Int64           -- imported from Data.Int
-    } deriving (Show)
-
-newtype Parse' a = Parse' {
-      runParse :: ParseState' -> Either String (a, ParseState')
-    }
-
-bail :: String -> Parse' a
-bail err = Parse' $ \s -> Left $
-           "byte offset " ++ show (offset s) ++ ": " ++ err
-
-(==>) :: Parse' a -> (a -> Parse' b) -> Parse' b
-firstParser ==> secondParser  =  Parse' chainedParser
-  where chainedParser initState   =
-          case runParse firstParser initState of
-            Left errMessage ->
-                Left errMessage
-            Right (firstResult, newState) ->
-                runParse (secondParser firstResult) newState
-
-getState :: Parse' ParseState'
-getState = Parse' (\s -> Right (s, s))
-
-putState :: ParseState' -> Parse' ()
-putState s = Parse' (\_ -> Right ((), s))
-
-identity' :: a -> Parse' a
-identity' a = Parse' (\s -> Right (a, s))
-
--- import the Word8 type from Data.Word
-parseByte :: Parse' Word8
-parseByte =
-    getState ==> \initState ->
-    case L.uncons (string initState) of
-      Nothing ->
-          bail "no more input"
-      Just (byte,remainder) ->
-          putState newState ==> \_ ->
-          identity' byte
-        where newState = initState { string = remainder,
-                                     offset = newOffset }
-              newOffset = offset initState + 1
-#+END_SRC
-
-#+BEGIN_EXAMPLE
-:type parseByte (L8.pack "P5") undefined
-parse (identity 1) undefined
-parse (identity "foo") undefined
 #+END_EXAMPLE
 
 diagram:
