@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 16 (Wed) 20:36:08 by carr.
+Last Modified : 2013 Oct 16 (Wed) 22:56:17 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -406,40 +406,55 @@ class Monad m => MonadState s m | m -> s where
 
 #+BEGIN_SRC haskell
 stateExampleNonMonadicNoState i f1 f2 =
-    case i of
-        (s:ss, r) -> case f1 (ss, s:r) of
-                         (s:ss ,r) -> f2 (ss, s:r)
+    case f1 i of
+        (c1 ,s1) -> case f2 s1 of
+                        (c2, s2) -> (c2, s2 ++ [c1])
 
-upper (s:ss, r) = (ss,  toUpper s       : r)
-shift (s:ss, r) = (ss, chr (ord s + 10) : r)
+shift (s:ss) = (chr (ord s - 71), ss)
+upper (s:ss) = ( toUpper s      , ss)
 
 t11 = t "s1"
-      [stateExampleNonMonadicNoState ("hello world", "") upper shift
+      [stateExampleNonMonadicNoState "hello world" shift upper
       ]
-      ("o world","vlEh")
+      ('L',"lo worldhz")
 
 --------------------------------------------------
 
-returnSt :: a -> (s -> (a, s))
-returnSt    a =  \s -> (a, s)
-
-bindSt ::      (s -> (a, s))   -- step
-       -> (a -> s -> (b, s))   -- makeStep
-       ->      (s -> (b, s))   -- (makeStep result) newState
-bindSt step makeStep oldState =
+bind'' ::         (s -> (a, s))   -- step
+         -> (a -> (s -> (b, s)))  -- makeStep
+         ->       (s -> (b, s))   -- (makeStep result) newState
+bind'' step makeStep oldState =
     let (result, newState) = step oldState
     in  (makeStep result) newState
 
-getSt :: s -> (s, s)
-getSt = \s -> (s, s)
+return'' ::  a -> (s -> ( a, s))
+return''     a =  \s -> ( a, s)
 
-putSt :: s -> s -> ((), s)
-putSt    s = \_ -> ((), s)
+get''    ::        s -> ( s, s)
+get''          =  \s -> ( s, s)
+
+put''    ::  s ->  s -> ((), s)
+put''        s =  \_ -> ((), s)
+
+stateExample' f1 =
+    get'' `bind''` \s0 -> f1 s0 `bind''`
+                   \s1 -> return'' s1
+
+stateExample'' f1 f2 =
+    get'' `bind''` \s0 -> f1 s0 `bind''`
+                   \s1 -> get'' `bind''` \s1' -> f2 s1' `bind''`
+                   \s2 -> get'' `bind''` \s2' -> return'' (s1:s2:[])
+
+shift'' (s:ss) = return'' $ chr (ord s - 71)
+upper'' (s:ss) = return'' $ toUpper s
+
+-- stateExample'  shift''         "hello world"
+-- stateExample'' shift'' upper'' "hello world"
 
 getRandom'' :: Random a => StdGen -> (a, StdGen)
 getRandom'' =
-    getSt `bindSt` \gen -> let (val, gen') = random gen
-                           in putSt gen' `bindSt` \_ -> returnSt val
+    get'' `bind''` \gen -> let (val, gen') = random gen
+                           in put'' gen' `bind''` \_ -> return'' val
 
 getRandom :: Random a => State StdGen a
 getRandom =
@@ -456,6 +471,7 @@ getRandomDo = do
 
 #+BEGIN_EXAMPLE
 sg <- getStdGen
+random sg :: (Int,StdGen)
 
 :t sg
 -- sg :: StdGen
