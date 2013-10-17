@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 16 (Wed) 20:10:42 by carr.
+Last Modified : 2013 Oct 16 (Wed) 20:36:08 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -420,52 +420,27 @@ t11 = t "s1"
 
 --------------------------------------------------
 
-type SimpleState s a = s -> (a, s)
+returnSt :: a -> (s -> (a, s))
+returnSt    a =  \s -> (a, s)
 
-returnSt :: a -> SimpleState s a
-returnSt a = \s -> (a, s)
-
-returnAlt :: a -> SimpleState s a
-returnAlt a s = (a, s)
-
-bindSt :: (SimpleState s a) -> (a -> SimpleState s b) -> SimpleState s b
-bindSt m k = \s -> let (a, s') = m s
-                   in (k a) s'
-
-bindAlt :: (s -> (a, s))        -- step
-        -> (a -> s -> (b, s))   -- makeStep
-        -> (s -> (b, s))        -- (makeStep result) newState
-bindAlt step makeStep oldState =
+bindSt ::      (s -> (a, s))   -- step
+       -> (a -> s -> (b, s))   -- makeStep
+       ->      (s -> (b, s))   -- (makeStep result) newState
+bindSt step makeStep oldState =
     let (result, newState) = step oldState
     in  (makeStep result) newState
 
-getSt :: SimpleState s s
+getSt :: s -> (s, s)
 getSt = \s -> (s, s)
 
-putSt :: s -> SimpleState s ()
-putSt s = \_ -> ((), s)
-#+END_SRC
+putSt :: s -> s -> ((), s)
+putSt    s = \_ -> ((), s)
 
-#+BEGIN_EXAMPLE
-getRandom'' :: Random a => SimpleState StdGen a
+getRandom'' :: Random a => StdGen -> (a, StdGen)
 getRandom'' =
-    getSt `bindAlt` \gen -> let (val, gen') = random gen
-                            in putSt gen' `bindAlt` \_ -> return val
+    getSt `bindSt` \gen -> let (val, gen') = random gen
+                           in putSt gen' `bindSt` \_ -> returnSt val
 
-sg <- getStdGen
-getRandom'' sg :: (Int,StdGen)
-
-let init = returnAlt 1 "o"
-let g    = getSt init
-let p    = putSt  "t"
-let p'   = p "three"
-
-let gg = bindSt (returnAlt 1) (return . getSt)
-let hh = bindSt hh (return . putSt ())
-let ii = bindSt hh (putSt)
-#+END_EXAMPLE
-
-#+BEGIN_SRC haskell
 getRandom :: Random a => State StdGen a
 getRandom =
     get >>= \gen -> let (val, gen') = random gen
@@ -481,6 +456,7 @@ getRandomDo = do
 
 #+BEGIN_EXAMPLE
 sg <- getStdGen
+
 :t sg
 -- sg :: StdGen
 :t getRandom
@@ -489,6 +465,7 @@ sg <- getStdGen
 -- runState getRandom :: Random a => StdGen -> (a, StdGen)
 :t runState getRandom sg
 -- runState getRandom sg :: Random a => (a, StdGen)
+getRandom'' sg :: (Int,StdGen)
 runState getRandom sg :: (Int,StdGen)
 -- (-8057504721392404675,734004948 2103410263)
 #+END_EXAMPLE
