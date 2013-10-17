@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 17 (Thu) 09:09:05 by carr.
+Last Modified : 2013 Oct 17 (Thu) 09:17:57 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -454,8 +454,8 @@ stateExample'' f1 f2 =
                    \s1 -> get'' `bind''` \s1' -> f2 s1' `bind''`
                    \s2 -> get'' `bind''` \s2' -> return'' (s1:s2:[])
 
-shift'' (s:ss) = return'' $ chr (ord s - 71)
-upper'' (s:ss) = return'' $ toUpper s
+shift'' (s:ss) = put'' ss `bind''` \x -> return'' $ chr (ord s - 71)
+upper'' (s:ss) = put'' ss `bind''` \x -> return'' $ toUpper s
 
 -- stateExample'  shift''         "hello world"
 -- stateExample'' shift'' upper'' "hello world"
