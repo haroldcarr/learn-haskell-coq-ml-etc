@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 18 (Fri) 18:48:28 by carr.
+Last Modified : 2013 Oct 18 (Fri) 19:28:28 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -429,43 +429,48 @@ t11 = t "s1"
 # --------------------------------------------------
 
 #+BEGIN_SRC haskell
-bind'' ::         (s -> (a, s))   -- leftFun
-         -> (a -> (s -> (b, s)))  -- rightFun
-         ->       (s -> (b, s))   -- result
-bind'' leftFun rightFun startState =
+bind' ::         (s -> (a, s))   -- leftFun
+        -> (a -> (s -> (b, s)))  -- rightFun
+        ->       (s -> (b, s))   -- result
+bind' leftFun rightFun startState =
     let (result, endState) = leftFun startState
     in  (rightFun result) endState
 
-return'' ::  a -> (s -> ( a, s))
-return''     a =  \s -> ( a, s)
+return' :: a -> (s -> ( a, s))
+return'    a =  \s -> ( a, s)
 
-get''    ::        s -> ( s, s)
-get''          =  \s -> ( s, s)
+get'    ::       s -> ( s, s)
+get'         =  \s -> ( s, s)
 
-put''    ::  s ->  s -> ((), s)
-put''        s =  \_ -> ((), s)
+put'    :: s ->  s -> ((), s)
+put'       s =  \_ -> ((), s)
 #+END_SRC
 
 # -------------------------
 
 #+BEGIN_SRC haskell
-stateExample'' f1 f2 =
-    get''        `bind''`
-    \s0 -> f1 s0 `bind''`
-    \r1 -> get'' `bind''`
-    \s1 -> f2 s1 `bind''`
-    \r2 -> get'' `bind''`
-    \s2 -> return'' (r1:r2:[])
+stateExample' :: (a -> a -> (a1, a)) -> (a -> a -> (a1, a)) -> a -> ([a1], a)
+stateExample' f1 f2 x =
+   (get'         `bind'`
+    \s0 -> f1 s0 `bind'`
+    \r1 -> get'  `bind'`
+    \s1 -> f2 s1 `bind'`
+    \r2 -> get'  `bind'`
+    \s2 -> return' (r1:r2:[]) ) x
 
-shift'' (s:ss) = put'' ss `bind''` \_ -> return'' $ chr (ord s - 71)
-upper'' (s:ss) = put'' ss `bind''` \_ -> return'' $ toUpper s
+shift' :: [Char] -> ([Char] -> (Char, [Char]))
+shift' (s:ss) = put' ss `bind'` \_ -> return' $ chr (ord s - 71)
+
+upper' :: [Char] -> ([Char] -> (Char, [Char]))
+upper' (s:ss) = put' ss `bind'` \_ -> return' $ toUpper s
 
 t12 = t "s1"
-      [stateExample'' shift'' upper'' "hello world"
+      [stateExample' shift' upper' "hello world"
       ]
       ("!E","llo world")
 
-stateExampleMonadic f1 f2 =
+stateExampleMonadic :: (String -> State String Char) -> (String -> State String Char) -> String -> State String [Char]
+stateExampleMonadic f1 f2 x =
     get          >>=
     \s0 -> f1 s0 >>=
     \r1 -> get   >>=
@@ -473,32 +478,30 @@ stateExampleMonadic f1 f2 =
     \r2 -> get   >>=
     \s2 -> return (r1:r2:[])
 
+shiftM :: String -> State String Char
 shiftM (s:ss) = put ss >>= \x -> return $ chr (ord s - 71)
+
+upperM :: String -> State String Char
 upperM (s:ss) = put ss >>= \x -> return $ toUpper s
-{-
+
 t13 = t "s1"
-      [stateExampleMonadic shiftM upperM (return "hello world")
+      [(runState (stateExampleMonadic shiftM upperM (return 'c'))) "hello world"
       ]
       ("!E","llo world")
-
-:t stateExampleMonadic
-:t stateExampleMonadic shiftM
-:t stateExampleMonadic shiftM upperM
--}
 #+END_SRC
 
 # -------------------------
 
 #+BEGIN_SRC haskell
-getRandom'' :: Random a => StdGen -> (a, StdGen)
-getRandom'' =
-    get'' `bind''` \gen -> let (val, gen') = random gen
-                           in put'' gen' `bind''` \_ -> return'' val
+getRandom'  :: Random a => StdGen -> (a, StdGen)
+getRandom' =
+    get' `bind'` \gen -> let (val, gen') = random gen
+                         in put' gen' `bind'` \_ -> return' val
 
-getRandom :: Random a => State StdGen a
+getRandom   :: Random a => State StdGen a
 getRandom =
-    get >>= \gen -> let (val, gen') = random gen
-                    in put gen' >>= \_ -> return val
+    get   >>=    \gen -> let (val, gen') = random gen
+                         in put  gen'  >>=    \_ -> return val
 
 getRandomDo :: Random a => State StdGen a
 getRandomDo = do
@@ -515,9 +518,9 @@ random sg :: (Int,StdGen)
 :t sg
 -- sg :: StdGen
 
-:t getRandom'' sg
--- getRandom'' sg :: Random a => (a, StdGen)
-getRandom'' sg :: (Int,StdGen)
+:t getRandom' sg
+-- getRandom' sg :: Random a => (a, StdGen)
+getRandom' sg :: (Int,StdGen)
 
 :t getRandom
 -- getRandom :: Random a => State StdGen a
@@ -557,5 +560,5 @@ SEE:?
 
 #+BEGIN_SRC haskell
 main = do
-    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10 ++ t11 ++ t12
+    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10 ++ t11 ++ t12 ++ t13
 #+END_SRC
