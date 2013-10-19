@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 18 (Fri) 19:28:28 by carr.
+Last Modified : 2013 Oct 18 (Fri) 19:33:44 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -468,9 +468,11 @@ t12 = t "s1"
       [stateExample' shift' upper' "hello world"
       ]
       ("!E","llo world")
+#+END_SRC
 
-stateExampleMonadic :: (String -> State String Char) -> (String -> State String Char) -> String -> State String [Char]
-stateExampleMonadic f1 f2 x =
+#+BEGIN_SRC haskell
+stateExampleMonadic :: (String -> State String Char) -> (String -> State String Char) -> State String [Char]
+stateExampleMonadic f1 f2 =
     get          >>=
     \s0 -> f1 s0 >>=
     \r1 -> get   >>=
@@ -485,7 +487,7 @@ upperM :: String -> State String Char
 upperM (s:ss) = put ss >>= \x -> return $ toUpper s
 
 t13 = t "s1"
-      [(runState (stateExampleMonadic shiftM upperM (return 'c'))) "hello world"
+      [runState (stateExampleMonadic shiftM upperM) "hello world"
       ]
       ("!E","llo world")
 #+END_SRC
