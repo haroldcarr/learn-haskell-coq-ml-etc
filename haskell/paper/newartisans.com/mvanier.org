@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 18 (Fri) 20:52:24 by carr.
+Last Modified : 2013 Oct 18 (Fri) 22:18:43 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -29,11 +29,11 @@ Monads:
 - Generalization of functions, function application, and function -- TODO functions/application/composition
   composition to extend pure functions with other types of computation.
   Each "extension" corresponds to a particular monad:
-  - =Monad Maybe= : failure to produce a result
+  - =Monad Maybe=      : failure to produce a result
   - =Monad (Either e)= : errors
-  - =Monad []= : multiple results (i.e., "list")
-  - =State=
-  - =Monad IO=
+  - =Monad []=         : multiple results (i.e., "list")
+  - =Monad IO=         : TODO
+  - =State=            : TODO
   - =Monad ((->) r)=
   - ...
 
@@ -70,18 +70,20 @@ class  Monad m  where
 * setup
 
 #+BEGIN_SRC haskell
+{-# LANGUAGE FlexibleInstances #-}
+
 import Control.Monad.State
 import Data.Char
 import Data.Either
-import System.Random
+import System.IO
 import Test.HUnit hiding (State) -- for unit testing examples
+#+END_SRC
 
--- TODO DELETE LATER
-import qualified Data.ByteString.Lazy.Char8 as L8
-import qualified Data.ByteString.Lazy as L
-import Data.Char (isSpace)
-import Data.Int
-import Data.Word
+** unit test
+
+#+BEGIN_SRC haskell
+t :: (Eq a) => (Show a) => String -> [a] -> a -> [Test]
+t testName actuals expected = map (\actual -> TestCase $ assertEqual testName expected actual) actuals
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -129,13 +131,6 @@ exampleMonadicDo i f1 f2 = do
 intToNothing     x = Nothing
 intToJust        x = Just x
 nonMonadicDouble x = x + x
-#+END_SRC
-
-** TODO: TEST
-
-#+BEGIN_SRC haskell
-t :: (Eq a) => (Show a) => String -> [a] -> a -> [Test]
-t testName actuals expected  = map (\actual -> TestCase $ assertEqual testName expected actual) actuals
 #+END_SRC
 
 #+BEGIN_SRC haskell
@@ -327,11 +322,6 @@ See also:
 - [[http://en.wikibooks.org/wiki/Haskell/Understanding_monads/List]]
 
 ------------------------------------------------------------------------------
-* =IO=
-
-** TODO
-
-------------------------------------------------------------------------------
 * =State=
 
 - [[http://hackage.haskell.org/package/transformers-0.3.0.0/docs/src/Control-Monad-Trans-State-Lazy.html#State]]
@@ -422,7 +412,7 @@ shift' (s:ss) = put' ss `bind'` \_ -> return' $ chr (ord s - 71)
 upper' :: [Char] -> ([Char] -> (Char, [Char]))
 upper' (s:ss) = put' ss `bind'` \_ -> return' $ toUpper s
 
-t12 = t "s1"
+t12 = t "s2"
       [stateExample' shift' upper' "hello world"
       ]
       ("!E","llo world")
@@ -444,7 +434,7 @@ shiftM (s:ss) = put ss >>= \x -> return $ chr (ord s - 71)
 upperM :: String -> State String Char
 upperM (s:ss) = put ss >>= \x -> return $ toUpper s
 
-t13 = t "s1"
+t13 = t "s3"
       [runState (stateExampleMonadic shiftM upperM) "hello world"
       ]
       ("!E","llo world")
@@ -459,7 +449,7 @@ stateExampleMonadicDo f1 f2 = do
     s2 <- get
     return (r1:r2:[])
 
-t14 = t "s1"
+t14 = t "s4"
       [runState (stateExampleMonadicDo shiftM upperM) "hello world"
       ]
       ("!E","llo world")
@@ -485,9 +475,51 @@ SEE:?
 - [[http://embedntks.com/haskells-state-monad/]]
 
 ------------------------------------------------------------------------------
+* =IO=
+
+** TODO
+
+#+BEGIN_SRC haskell
+filename = "/tmp/BAR.txt"
+output = "BAR"
+
+ioExampleMonadic :: IO Bool
+ioExampleMonadic =
+    openFile filename WriteMode          >>=
+    \o     -> hPutStrLn o output         >>=
+    \_     -> hClose o                   >>=
+    \_     -> openFile filename ReadMode >>=
+    \i     -> hGetLine i                 >>=
+    \input -> hClose i                   >>=
+    \_     -> return (input == output)
+
+ioExampleMonadicDo :: IO Bool
+ioExampleMonadicDo = do
+    o <- openFile filename WriteMode
+    hPutStrLn o output
+    hClose o
+    i <- openFile filename ReadMode
+    input <- hGetLine i
+    hClose i
+    return (input == output)
+
+instance Show (IO Bool) where
+    show x = "IO True"
+
+instance Eq (IO Bool) where
+     (==) x y = True  -- whatever value this is set to becomes the result of the test
+
+t15 = t "io1"
+      [ioExampleMonadic
+      ,ioExampleMonadicDo
+      ]
+      (return True :: IO Bool)
+#+END_SRC
+
+------------------------------------------------------------------------------
 * example accuracy
 
 #+BEGIN_SRC haskell
 main = do
-    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10 ++ t11 ++ t12 ++ t13 ++ t14
+    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10 ++ t11 ++ t12 ++ t13 ++ t14 ++ t15
 #+END_SRC
