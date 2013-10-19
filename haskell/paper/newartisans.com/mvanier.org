@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 18 (Fri) 22:18:43 by carr.
+Last Modified : 2013 Oct 18 (Fri) 22:33:16 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -75,6 +75,7 @@ class  Monad m  where
 import Control.Monad.State
 import Data.Char
 import Data.Either
+import System.IO.Unsafe -- for one unit test
 import System.IO
 import Test.HUnit hiding (State) -- for unit testing examples
 #+END_SRC
@@ -503,17 +504,11 @@ ioExampleMonadicDo = do
     hClose i
     return (input == output)
 
-instance Show (IO Bool) where
-    show x = "IO True"
-
-instance Eq (IO Bool) where
-     (==) x y = True  -- whatever value this is set to becomes the result of the test
-
 t15 = t "io1"
-      [ioExampleMonadic
-      ,ioExampleMonadicDo
+      [unsafePerformIO ioExampleMonadic
+      ,unsafePerformIO ioExampleMonadicDo
       ]
-      (return True :: IO Bool)
+      True
 #+END_SRC
 
 ------------------------------------------------------------------------------
