@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 18 (Fri) 16:41:47 by carr.
+Last Modified : 2013 Oct 18 (Fri) 18:48:28 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -429,12 +429,12 @@ t11 = t "s1"
 # --------------------------------------------------
 
 #+BEGIN_SRC haskell
-bind'' ::         (s -> (a, s))   -- step
-         -> (a -> (s -> (b, s)))  -- makeStep
-         ->       (s -> (b, s))   -- (makeStep result) newState
-bind'' step makeStep oldState =
-    let (result, newState) = step oldState
-    in  (makeStep result) newState
+bind'' ::         (s -> (a, s))   -- leftFun
+         -> (a -> (s -> (b, s)))  -- rightFun
+         ->       (s -> (b, s))   -- result
+bind'' leftFun rightFun startState =
+    let (result, endState) = leftFun startState
+    in  (rightFun result) endState
 
 return'' ::  a -> (s -> ( a, s))
 return''     a =  \s -> ( a, s)
@@ -457,8 +457,8 @@ stateExample'' f1 f2 =
     \r2 -> get'' `bind''`
     \s2 -> return'' (r1:r2:[])
 
-shift'' (s:ss) = put'' ss `bind''` \x -> return'' $ chr (ord s - 71)
-upper'' (s:ss) = put'' ss `bind''` \x -> return'' $ toUpper s
+shift'' (s:ss) = put'' ss `bind''` \_ -> return'' $ chr (ord s - 71)
+upper'' (s:ss) = put'' ss `bind''` \_ -> return'' $ toUpper s
 
 t12 = t "s1"
       [stateExample'' shift'' upper'' "hello world"
@@ -543,6 +543,7 @@ useful:
 
 
 SEE:?
+- http://www.haskell.org/haskellwiki/State_Monad
 - [[http://brandon.si/code/the-state-monad-a-tutorial-for-the-confused/]]
 - http://stackoverflow.com/questions/5310203/how-to-use-instances-of-monad-and-confusion-about
 - [[http://embedntks.com/haskells-state-monad/]]
