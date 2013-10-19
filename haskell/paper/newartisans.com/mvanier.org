@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 17 (Thu) 09:31:22 by carr.
+Last Modified : 2013 Oct 18 (Fri) 16:41:47 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -382,12 +382,12 @@ See also:
 :i State
 -- type State s = StateT s Data.Functor.Identity.Identity
 
-:i runState
--- runState :: State s a -> s -> (a, s)
-
 :i StateT
 -- newtype StateT s m a = StateT {runStateT :: s -> m (a, s)}
 -- instance Monad m => Monad (StateT s m)
+
+:i runState
+-- runState :: State s a -> s -> (a, s)
 #+END_EXAMPLE
 
 - [[http://hackage.haskell.org/package/mtl-2.1.1/docs/src/Control-Monad-State-Class.html#MonadState]]
@@ -415,7 +415,7 @@ class Monad m => MonadState s m | m -> s where
 stateExampleNonMonadicNoState i f1 f2 =
     case f1 i of
         (c1 ,s1) -> case f2 s1 of
-                        (c2, s2) -> (c2, s2 ++ [c1])
+                        (c2, s2) -> (c1:c2:[], s2)
 
 shift (s:ss) = (chr (ord s - 71), ss)
 upper (s:ss) = ( toUpper s      , ss)
@@ -423,7 +423,7 @@ upper (s:ss) = ( toUpper s      , ss)
 t11 = t "s1"
       [stateExampleNonMonadicNoState "hello world" shift upper
       ]
-      ('L',"lo worldhz")
+      ("!E","llo world")
 #+END_SRC
 
 # --------------------------------------------------
@@ -449,23 +449,43 @@ put''        s =  \_ -> ((), s)
 # -------------------------
 
 #+BEGIN_SRC haskell
-stateExample' f1 =
-    get'' `bind''` \s0 -> f1 s0 `bind''`
-                   \r1 -> return'' r1
-
 stateExample'' f1 f2 =
-    get'' `bind''` \s0 -> f1 s0 `bind''`
-                   \r1 -> get'' `bind''` \s1 -> f2 s1 `bind''`
-                   \r2 -> get'' `bind''` \s2 -> return'' (r1:r2:[])
+    get''        `bind''`
+    \s0 -> f1 s0 `bind''`
+    \r1 -> get'' `bind''`
+    \s1 -> f2 s1 `bind''`
+    \r2 -> get'' `bind''`
+    \s2 -> return'' (r1:r2:[])
 
 shift'' (s:ss) = put'' ss `bind''` \x -> return'' $ chr (ord s - 71)
 upper'' (s:ss) = put'' ss `bind''` \x -> return'' $ toUpper s
-#+END_SRC
 
-#+BEGIN_EXAMPLE
-stateExample'  shift''         "hello world"
-stateExample'' shift'' upper'' "hello world"
-#+END_EXAMPLE
+t12 = t "s1"
+      [stateExample'' shift'' upper'' "hello world"
+      ]
+      ("!E","llo world")
+
+stateExampleMonadic f1 f2 =
+    get          >>=
+    \s0 -> f1 s0 >>=
+    \r1 -> get   >>=
+    \s1 -> f2 s1 >>=
+    \r2 -> get   >>=
+    \s2 -> return (r1:r2:[])
+
+shiftM (s:ss) = put ss >>= \x -> return $ chr (ord s - 71)
+upperM (s:ss) = put ss >>= \x -> return $ toUpper s
+{-
+t13 = t "s1"
+      [stateExampleMonadic shiftM upperM (return "hello world")
+      ]
+      ("!E","llo world")
+
+:t stateExampleMonadic
+:t stateExampleMonadic shiftM
+:t stateExampleMonadic shiftM upperM
+-}
+#+END_SRC
 
 # -------------------------
 
@@ -494,22 +514,33 @@ random sg :: (Int,StdGen)
 
 :t sg
 -- sg :: StdGen
+
+:t getRandom'' sg
+-- getRandom'' sg :: Random a => (a, StdGen)
+getRandom'' sg :: (Int,StdGen)
+
 :t getRandom
 -- getRandom :: Random a => State StdGen a
 :t runState getRandom
 -- runState getRandom :: Random a => StdGen -> (a, StdGen)
 :t runState getRandom sg
 -- runState getRandom sg :: Random a => (a, StdGen)
-getRandom'' sg :: (Int,StdGen)
 runState getRandom sg :: (Int,StdGen)
 -- (-8057504721392404675,734004948 2103410263)
 #+END_EXAMPLE
 
 diagram:
-http://stackoverflow.com/questions/10230562/confusion-over-the-state-monad-code-on-learn-you-a-haskell
+- http://stackoverflow.com/questions/10230562/confusion-over-the-state-monad-code-on-learn-you-a-haskell
 
 shows >>=
-http://www.engr.mun.ca/~theo/Misc/haskell_and_monads.htm
+- http://www.engr.mun.ca/~theo/Misc/haskell_and_monads.htm
+
+expansion of haskell's wikibook state monad page:
+- http://xyne.archlinux.ca/notes/haskell/the_state_monad.html
+
+useful:
+- http://www.codejury.com/handling-state-with-monads/
+
 
 SEE:?
 - [[http://brandon.si/code/the-state-monad-a-tutorial-for-the-confused/]]
@@ -525,5 +556,5 @@ SEE:?
 
 #+BEGIN_SRC haskell
 main = do
-    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10 ++ t11
+    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10 ++ t11 ++ t12
 #+END_SRC
