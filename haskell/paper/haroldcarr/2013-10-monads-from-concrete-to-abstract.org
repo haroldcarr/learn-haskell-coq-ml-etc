@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Oct 19 (Sat) 15:13:34 by carr.
+Last Modified : 2013 Oct 19 (Sat) 20:45:59 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -398,14 +398,14 @@ put'       s =  \_ -> ((), s)
 # -------------------------
 
 #+BEGIN_SRC haskell
-stateExample' :: (a -> a -> (a1, a)) -> (a -> a -> (a1, a)) -> a -> ([a1], a)
-stateExample' f1 f2 x =
+stateExample' :: a -> (a -> a -> (a1, a)) -> (a -> a -> (a1, a)) -> ([a1], a)
+stateExample' i f1 f2 =
    (get'         `bind'`
     \s0 -> f1 s0 `bind'`
     \r1 -> get'  `bind'`
     \s1 -> f2 s1 `bind'`
     \r2 -> get'  `bind'`
-    \s2 -> return' (r1:r2:[]) ) x
+    \s2 -> return' (r1:r2:[]) ) i
 
 shift' :: [Char] -> ([Char] -> (Char, [Char]))
 shift' (s:ss) = put' ss `bind'` \_ -> return' $ chr (ord s - 71)
@@ -414,20 +414,21 @@ upper' :: [Char] -> ([Char] -> (Char, [Char]))
 upper' (s:ss) = put' ss `bind'` \_ -> return' $ toUpper s
 
 t12 = t "s2"
-      [stateExample' shift' upper' "hello world"
+      [stateExample' "hello world" shift' upper'
       ]
       ("!E","llo world")
 #+END_SRC
 
 #+BEGIN_SRC haskell
-stateExampleMonadic :: (String -> State String Char) -> (String -> State String Char) -> State String [Char]
-stateExampleMonadic f1 f2 =
-    get          >>=
+stateExampleMonadic   :: String -> (String -> State String Char) -> (String -> State String Char) -> (String, String)
+stateExampleMonadic i f1 f2 =
+  runState
+   (get          >>=
     \s0 -> f1 s0 >>=
     \r1 -> get   >>=
     \s1 -> f2 s1 >>=
     \r2 -> get   >>=
-    \s2 -> return (r1:r2:[])
+    \s2 -> return (r1:r2:[]) ) i
 
 shiftM :: String -> State String Char
 shiftM (s:ss) = put ss >>= \x -> return $ chr (ord s - 71)
@@ -436,22 +437,23 @@ upperM :: String -> State String Char
 upperM (s:ss) = put ss >>= \x -> return $ toUpper s
 
 t13 = t "s3"
-      [runState (stateExampleMonadic shiftM upperM) "hello world"
+      [stateExampleMonadic "hello world" shiftM upperM
       ]
       ("!E","llo world")
 
-stateExampleMonadicDo    :: MonadState t m => (t      -> m            a   ) -> (t      -> m            a   ) -> m            [a   ]
--- stateExampleMonadicDo ::                   (String -> State String Char) -> (String -> State String Char) -> State String [Char]
-stateExampleMonadicDo f1 f2 = do
+stateExampleMonadicDo :: String -> (String -> State String Char) -> (String -> State String Char) -> (String, String)
+stateExampleMonadicDo i f1 f2 =
+ runState
+  (do
     s0 <- get
     r1 <- f1 s0
     s1 <- get
     r2 <- f2 s1
     s2 <- get
-    return (r1:r2:[])
+    return (r1:r2:[]) ) i
 
 t14 = t "s4"
-      [runState (stateExampleMonadicDo shiftM upperM) "hello world"
+      [stateExampleMonadicDo "hello world" shiftM upperM
       ]
       ("!E","llo world")
 #+END_SRC
@@ -481,11 +483,8 @@ SEE:?
 ** TODO
 
 #+BEGIN_SRC haskell
-filename = "/tmp/BAR.txt"
-output = "BAR"
-
-ioExampleMonadic :: IO Bool
-ioExampleMonadic =
+ioExampleMonadic   :: FilePath -> String -> IO Bool
+ioExampleMonadic filename output =
     openFile filename WriteMode          >>=
     \o     -> hPutStrLn o output         >>=
     \_     -> hClose o                   >>=
@@ -494,8 +493,8 @@ ioExampleMonadic =
     \input -> hClose i                   >>=
     \_     -> return (input == output)
 
-ioExampleMonadicDo :: IO Bool
-ioExampleMonadicDo = do
+ioExampleMonadicDo :: FilePath -> String -> IO Bool
+ioExampleMonadicDo filename output = do
     o <- openFile filename WriteMode
     hPutStrLn o output
     hClose o
@@ -505,8 +504,8 @@ ioExampleMonadicDo = do
     return (input == output)
 
 t15 = t "io1"
-      [unsafePerformIO ioExampleMonadic
-      ,unsafePerformIO ioExampleMonadicDo
+      [unsafePerformIO $ ioExampleMonadic   "/tmp/BAR.txt"  "BAR"
+      ,unsafePerformIO $ ioExampleMonadicDo "/tmp/BAR.txt"  "BAR"
       ]
       True
 #+END_SRC
