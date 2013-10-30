@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 29 (Tue) 23:45:05 by carr.
+Last Modified : 2013 Oct 30 (Wed) 12:39:35 by carr.
 -}
 
 module X07Solver where
@@ -25,13 +25,15 @@ from level ((b,h):t) explored =
     in (b,h) : (from level (t ++ nn) (explored ++ [b]))
 from _ _ _ = []
 
-pathsFromStart level startBlock = from level [(startBlock, [])] []
+pathsFromStart level = from level [(startBlock level, [])] []
 
-pathsToGoal level startBlock = filter (\(b,m) -> done level b) (pathsFromStart level startBlock)
+pathsToGoal level = filter (\(b,m) -> done level b) (pathsFromStart level)
 
-solution level startBlock =
-    case pathsToGoal level startBlock of
+solution level =
+    case pathsToGoal level of
         (_,x):t -> reverse x
         _       -> []
+
+startBlock level = Block (startPos level) (startPos level)
 
 -- End of file
