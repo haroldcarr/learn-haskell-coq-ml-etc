@@ -1,11 +1,12 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 13:27:35 by carr.
+Last Modified : 2013 Oct 30 (Wed) 13:32:54 by carr.
 -}
 
 module X07StringParserTerrain where
 
 import Data.Vector as V
+import SplitLines
 import X07GameDef
 
 {-# ANN terrainFunction "HLint: ignore Redundant if" #-}
@@ -27,20 +28,7 @@ findChar c levelVector = checkRow 0
                  Nothing -> checkRow $ x + 1
 
 vector :: String -> Vector (Vector Char)
-vector level =
-    V.fromList $ Prelude.map V.fromList (splitLines level)
-  -- from Real World Haskell
-  where
-    splitLines :: String -> [String]
-    splitLines [] = []
-    splitLines cs =
-        let (pre, suf) = Prelude.break isLineTerminator cs
-        in pre : case suf of
-                     ('\r':'\n':rest) -> splitLines rest
-                     ('\r':rest)      -> splitLines rest
-                     ('\n':rest)      -> splitLines rest
-                     _                -> []
-    isLineTerminator c = c == '\r' || c == '\n'
+vector level = V.fromList $ Prelude.map V.fromList (splitLines level)
 
 terrain  level = terrainFunction $ vector level
 startPos level = findChar 'S' $ vector level

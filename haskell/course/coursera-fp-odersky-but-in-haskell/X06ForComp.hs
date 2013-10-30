@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:41:15 by carr.
-Last Modified : 2013 Oct 25 (Fri) 15:05:45 by carr.
+Last Modified : 2013 Oct 30 (Wed) 13:32:18 by carr.
 -}
 
 module X06ForComp where
@@ -10,6 +10,7 @@ import           Data.Function (on)
 import           Data.List (groupBy, sort, sortBy)
 import qualified Data.Map.Strict as M
 import           Data.Ord (comparing)
+import           SplitLines
 
 type Word        = String
 type Sentence    = [Word]
@@ -19,18 +20,6 @@ readDictionary :: IO [Word]
 readDictionary = do
     x <- readFile "X06ForCompTestWords.txt"
     return $ splitLines x
-  -- from Real World Haskell
-  where
-    splitLines :: String -> [String]
-    splitLines [] = []
-    splitLines cs =
-        let (pre, suf) = break isLineTerminator cs
-        in pre : case suf of
-                     ('\r':'\n':rest) -> splitLines rest
-                     ('\r':rest)      -> splitLines rest
-                     ('\n':rest)      -> splitLines rest
-                     _                -> []
-    isLineTerminator c = c == '\r' || c == '\n'
 
 -- http://stackoverflow.com/questions/15412027/haskell-equivalent-to-scalas-groupby
 xGroupBy :: Ord a1 => (a -> a1) -> [a] -> [[a]]

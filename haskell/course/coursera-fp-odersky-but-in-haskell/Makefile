@@ -1,5 +1,5 @@
 # Created       : 2013 Oct 03 (Thu) 15:02:11 by carr.
-# Last Modified : 2013 Oct 07 (Mon) 22:41:49 by carr.
+# Last Modified : 2013 Oct 30 (Wed) 13:35:30 by carr.
 
 H_FILES = \
 	X00ListsTest.o \
@@ -7,7 +7,9 @@ H_FILES = \
 	X02FunSetsTest.o \
 	X02FunSetsWorksheet.o \
 	X03ObjSetsTweetSetTest.o \
-	X04PatMatTest.o
+	X04PatMatTest.o \
+	X06ForCompTest.o \
+	X07BloxorzTest.o
 
 test : $(H_FILES)
 
