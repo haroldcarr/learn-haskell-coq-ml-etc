@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 29 (Tue) 21:58:56 by carr.
+Last Modified : 2013 Oct 30 (Wed) 13:27:35 by carr.
 -}
 
 module X07StringParserTerrain where
@@ -8,12 +8,13 @@ module X07StringParserTerrain where
 import Data.Vector as V
 import X07GameDef
 
-terrainFunction :: Vector (Vector Char) -> (Pos -> Bool)
-terrainFunction levelVector =
-    \p -> if x p >= V.length levelVector || y p >= V.length (levelVector ! 0)
-          || x p < 0                     || y p < 0
-          then False
-          else '-' /= (levelVector ! (x p)) ! (y p)
+{-# ANN terrainFunction "HLint: ignore Redundant if" #-}
+terrainFunction :: Vector (Vector Char) -> Pos -> Bool
+terrainFunction levelVector pos =
+    if x pos >= V.length levelVector || y pos >= V.length (levelVector ! 0)
+    || x pos <  0                    || y pos <  0
+    then False
+    else '-' /= (levelVector ! x pos) ! y pos
 
 findChar :: Char -> Vector (Vector Char) -> Pos
 findChar c levelVector = checkRow 0
@@ -27,7 +28,7 @@ findChar c levelVector = checkRow 0
 
 vector :: String -> Vector (Vector Char)
 vector level =
-    V.fromList $ Prelude.map (\str -> V.fromList str) (splitLines level)
+    V.fromList $ Prelude.map V.fromList (splitLines level)
   -- from Real World Haskell
   where
     splitLines :: String -> [String]

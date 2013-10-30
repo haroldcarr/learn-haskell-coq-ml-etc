@@ -1,12 +1,13 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 12:42:15 by carr.
+Last Modified : 2013 Oct 30 (Wed) 13:25:32 by carr.
 -}
 
 module X07GameDef where
 
 data Pos = Pos { x :: Int, y :: Int } deriving (Eq, Read, Show)
 
+{-# ANN dyp "HLint: ignore Redundant bracket" #-}
 dxp p d = Pos (x p + d)  (y p)
 dyp p d = Pos (x p)     ((y p) + d)
 

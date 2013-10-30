@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 13:05:19 by carr.
+Last Modified : 2013 Oct 30 (Wed) 13:11:25 by carr.
 -}
 
 module X07BloxorzTest where
@@ -13,7 +13,7 @@ import X07Solver
 import X07StringParserTerrain
 
 solve :: String -> [Move] -> Block
-solve level ls = Prelude.foldl step (startBlock level) ls
+solve level = Prelude.foldl step (startBlock level)
   where
     step blockAcc move =
         (case move of
@@ -33,12 +33,12 @@ level =
 optsolution = [MRight, MRight, MDown, MRight, MRight, MRight, MDown]
 
 tests = TestList
-    [teq "vector" (vector level) (V.fromList [V.fromList ['o', 'o', 'o', '-', '-', '-', '-', '-', '-', '-']
-                                             ,V.fromList ['o', 'S', 'o', 'o', 'o', 'o', '-', '-', '-', '-']
-                                             ,V.fromList ['o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', '-']
-                                             ,V.fromList ['-', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o']
-                                             ,V.fromList ['-', '-', '-', '-', '-', 'o', 'o', 'T', 'o', 'o']
-                                             ,V.fromList ['-', '-', '-', '-', '-', '-', 'o', 'o', 'o', '-']
+    [teq "vector" (vector level) (V.fromList [V.fromList "ooo-------"
+                                             ,V.fromList "oSoooo----"
+                                             ,V.fromList "ooooooooo-"
+                                             ,V.fromList "-ooooooooo"
+                                             ,V.fromList "-----ooToo"
+                                             ,V.fromList "------ooo-"
                                              ])
     ,teq "terrain function level 1 - 0, 0" (terrain level (Pos 0  0))                  True
     ,teq "terrain function level 1 - 4,11" (terrain level (Pos 4 11))                  False

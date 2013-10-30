@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 12:39:35 by carr.
+Last Modified : 2013 Oct 30 (Wed) 13:18:10 by carr.
 -}
 
 module X07Solver where
@@ -17,12 +17,12 @@ neighborsWithHistory level b history =
 -- TODO (Set Block)
 newNeighborsOnly :: [(Block, [Move])] -> [Block] -> [(Block, [Move])]
 newNeighborsOnly neighbors explored =
-      filter (\(b,_) -> not (b `elem` explored)) neighbors
+      filter (\(b,_) -> (b `notElem` explored)) neighbors
 
 from :: String -> [(Block, [Move])] -> [Block] -> [(Block, [Move])]
-from level ((b,h):t) explored =
+from level (p@(b,h):t) explored =
     let nn = newNeighborsOnly (neighborsWithHistory level b h) explored
-    in (b,h) : (from level (t ++ nn) (explored ++ [b]))
+    in p : from level (t ++ nn) (explored ++ [b])
 from _ _ _ = []
 
 pathsFromStart level = from level [(startBlock level, [])] []
