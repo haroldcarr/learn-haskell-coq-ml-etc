@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 13:32:54 by carr.
+Last Modified : 2013 Oct 30 (Wed) 17:36:20 by carr.
 -}
 
 module X07StringParserTerrain where
@@ -30,14 +30,11 @@ findChar c levelVector = checkRow 0
 vector :: String -> Vector (Vector Char)
 vector level = V.fromList $ Prelude.map V.fromList (splitLines level)
 
-terrain  level = terrainFunction $ vector level
-startPos level = findChar 'S' $ vector level
-goal     level = findChar 'T' $ vector level
-
--- from GameDef
-isLegal level b = terrain level (b1 b) && terrain level (b2 b)
-
--- from GameDef
-legalNeighbors level b = Prelude.filter (\(n,_) -> isLegal level n) (neighbors b)
+mkGame level = Game terrain startPos goal
+  where
+    vlevel   = vector level
+    terrain  = terrainFunction vlevel
+    startPos = findChar 'S'    vlevel
+    goal     = findChar 'T'    vlevel
 
 -- End of file.

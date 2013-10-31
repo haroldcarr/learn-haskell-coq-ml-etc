@@ -1,17 +1,20 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 13:25:32 by carr.
+Last Modified : 2013 Oct 30 (Wed) 17:54:36 by carr.
 -}
 
 module X07GameDef where
+
+data Game = Game { terrain  :: Pos -> Bool
+                 , startPos :: Pos
+                 , goal     :: Pos
+                 }
 
 data Pos = Pos { x :: Int, y :: Int } deriving (Eq, Read, Show)
 
 {-# ANN dyp "HLint: ignore Redundant bracket" #-}
 dxp p d = Pos (x p + d)  (y p)
 dyp p d = Pos (x p)     ((y p) + d)
-
-type Terrain = Pos -> Bool
 
 data Move = MLeft | MRight | MUp | MDown deriving (Eq, Read, Show)
 
@@ -47,10 +50,10 @@ down  b | isStanding b         = dxb b 1 2
 
 neighbors b = [(left b, MLeft), (right b, MRight), (up b, MUp), (down b, MDown)]
 
--- legalNeighbors : moved to StringParserTerrain
+legalNeighbors game b = Prelude.filter (\(n,_) -> isLegal game n) (neighbors b)
 
 isStanding b = b1 b == b2 b
 
--- isLegal : moved to StringParserTerrain
+isLegal game b = terrain game (b1 b) && terrain game (b2 b)
 
 -- End of file.
