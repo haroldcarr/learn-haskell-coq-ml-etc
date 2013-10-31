@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 17:45:33 by carr.
+Last Modified : 2013 Oct 30 (Wed) 21:40:40 by carr.
 -}
 
 module X07Solver where
@@ -25,15 +25,19 @@ from game (p@(b,h):t) explored =
     in p : from game (t ++ nn) (explored ++ [b])
 from _ _ _ = []
 
+pathsFromStart :: Game -> [(Block, [Move])]
 pathsFromStart game = from game [(startBlock game, [])] []
 
+pathsToGoal :: Game -> [(Block, [Move])]
 pathsToGoal game = filter (\(b,m) -> done game b) (pathsFromStart game)
 
+solution :: Game -> [Move]
 solution game =
     case pathsToGoal game of
         (_,x):t -> reverse x
         _       -> []
 
+startBlock :: Game -> Block
 startBlock game = Block (startPos game) (startPos game)
 
 -- End of file

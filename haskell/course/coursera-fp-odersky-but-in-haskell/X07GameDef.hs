@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 17:54:36 by carr.
+Last Modified : 2013 Oct 30 (Wed) 21:36:59 by carr.
 -}
 
 module X07GameDef where
@@ -27,26 +27,18 @@ newBlock b1 b2 =
     else Block b1 b2
 -}
 
-dxb :: Block -> Int -> Int -> Block
 dxb b d1 d2 = Block (dxp (b1 b) d1) (dxp (b2 b) d2)
-dyb :: Block -> Int -> Int -> Block
 dyb b d1 d2 = Block (dyp (b1 b) d1) (dyp (b2 b) d2)
 
-left  b | isStanding b         = dyb b (-2) (-1)
-        | x (b1 b) == x (b2 b) = dyb b (-1) (-2)
-        | otherwise            = dyb b (-1) (-1)
+move dxyb s1 s2 e1 e2 o1 o2 b
+    | isStanding b         = dxyb b s1 s2
+    | x (b1 b) == x (b2 b) = dxyb b e1 e2
+    | otherwise            = dxyb b o1 o2
 
-right b | isStanding b         = dyb b 1 2
-        | x (b1 b) == x (b2 b) = dyb b 2 1
-        | otherwise            = dyb b 1 1
-
-up    b | isStanding b         = dxb b (-2) (-1)
-        | x (b1 b) == x (b2 b) = dxb b (-1) (-1)
-        | otherwise            = dxb b (-1) (-2)
-
-down  b | isStanding b         = dxb b 1 2
-        | x (b1 b) == x (b2 b) = dxb b 1 1
-        | otherwise            = dxb b 2 1
+left  = move dyb (-2) (-1)  (-1) (-2)  (-1) (-1)
+right = move dyb   1    2     2    1     1    1
+up    = move dxb (-2) (-1)  (-1) (-1)  (-1) (-2)
+down  = move dxb   1    2     1    1     2    1
 
 neighbors b = [(left b, MLeft), (right b, MRight), (up b, MUp), (down b, MDown)]
 
