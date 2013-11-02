@@ -1,0 +1,630 @@
+#+TITLE:       Learn Haskell via Writing Scheme Interpreter
+#+AUTHOR:      Harold Carr
+#+DESCRIPTION: Learn Haskell via Writing Scheme Interpreter
+#+PROPERTY:    tangle listing10.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+#+BEGIN_HTML
+---
+title: Learn Haskell via Writing Scheme Interpreter
+tags: haskell, scheme
+---
+#+END_HTML
+
+# Created       : 2013 Nov 01 (Fri) 14:33:34 by carr.
+Last Modified : 2013 Nov 02 (Sat) 10:13:18 by carr.
+
+- [[http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours]]
+
+#+BEGIN_SRC haskell
+{-# LANGUAGE ExistentialQuantification, DataKinds #-}
+
+-- DataKinds for test
+
+module Main where
+-- import Monad
+import System.Environment
+import Control.Monad.Error
+import Data.IORef
+import Text.ParserCombinators.Parsec hiding (spaces)
+-- import IO hiding (try)
+import System.IO
+#+END_SRC
+
+Imports for unit testing:
+
+#+BEGIN_SRC haskell
+import Test.HUnit
+import HCHUnit
+import System.IO.Unsafe (unsafePerformIO)
+#+END_SRC
+
+------------------------------------------------------------------------------
+* internal representation
+
+** [[http://en.wikipedia.org/wiki/Algebraic_data_type][algebraic data type]]
+** [[http://en.wikibooks.org/wiki/Haskell/More_on_datatypes#Named_Fields_.28Record_Syntax.29][record syntax]]
+** [[http://book.realworldhaskell.org/read/error-handling.html][=Maybe=]]
+
+#+BEGIN_SRC haskell
+data LispVal = Atom          String
+             | Number        Integer
+             | String        String
+             | Bool          Bool
+             | List          [LispVal]
+             | DottedList    [LispVal] LispVal
+             | Port          Handle
+             | PrimitiveFunc ([LispVal] ->   ThrowsError LispVal)
+             | IOFunc        ([LispVal] -> IOThrowsError LispVal)
+             | Func          {params :: [String],   vararg :: (Maybe String),
+                              body   :: [LispVal], closure :: Env}
+
+data LispError = NumArgs        Integer    [LispVal]
+               | TypeMismatch   String     LispVal
+               | Parser         ParseError
+               | BadSpecialForm String     LispVal
+               | NotFunction    String     String
+               | UnboundVar     String     String
+               | Default        String
+#+END_SRC
+
+** custom printing of user types (i.e., the =[[http://hackage.haskell.org/package/base-4.6.0.1/docs/Text-Show.html][Show=]] [[http://book.realworldhaskell.org/read/using-typeclasses.html][typeclass]])
+** [[http://en.wikibooks.org/wiki/Haskell/Pattern_matching][pattern matching]]
+** [[http://en.wikibooks.org/wiki/Haskell/Control_structures#case_expressions][=case=]]
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Prelude.html#v:unwords][=unwords=]]
+
+#+BEGIN_SRC haskell
+showVal :: LispVal -> String
+showVal (Atom          name)           = name
+showVal (Number        contents)       = show contents
+showVal (String        contents)       = "\"" ++ contents ++ "\""
+showVal (Bool          True)           = "#t"
+showVal (Bool          False)          = "#f"
+showVal (List          contents)       = "(" ++ unwordsList contents ++ ")"
+showVal (DottedList    head      tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
+showVal (Port          _)              = "<IO port>"
+showVal (PrimitiveFunc _)              = "<primitive>"
+showVal (IOFunc        _)              = "<IO primitive>"
+showVal (Func {params = args, vararg = varargs, body = body, closure = env}) =
+  "(lambda (" ++ unwords (map show args) ++
+     (case varargs of
+        Nothing  -> ""
+        Just arg -> " . " ++ arg) ++ ") ...)"
+
+unwordsList :: [LispVal] -> String
+unwordsList = unwords . map showVal
+
+instance Show LispVal where show = showVal
+#+END_SRC
+
+#+BEGIN_SRC haskell
+testRepresentation = TestList
+    [teq "unword"      (unwords ["foo","bar"])
+                       "foo bar"
+
+    ,teq "atom"        (show (Atom "foo"))
+                       "foo"
+
+    ,teq "list"        (show (List [Atom "foo", Number 3, String "bar", Bool True]))
+                       "(foo 3 \"bar\" #t)"
+
+    ,teq "dotted list" (show (DottedList [Number 2] (Atom "foo")))
+                       "(2 . foo)"
+
+    ,teq "func"        (show (Func ["a1","a2"] (Just "va") [Number 2] (unsafePerformIO nullEnv)))
+                       "(lambda (\"a1\" \"a2\" . va) ...)"
+    ]
+#+END_SRC
+
+** [[http://en.wikibooks.org/wiki/Haskell/Type_declarations#type_for_making_type_synonyms][type synonym]]
+** [[http://book.realworldhaskell.org/read/error-handling.html][=Either=]]
+** [[http://hackage.haskell.org/package/transformers-0.3.0.0/docs/Control-Monad-Trans-Error.html][=Error= and =ErrorT=]]
+
+#+BEGIN_SRC haskell
+type   ThrowsError = Either LispError
+type IOThrowsError = ErrorT LispError IO
+
+showError :: LispError -> String
+showError (NumArgs        expected found)   = "Expected " ++ show expected ++ " args; found values " ++ unwordsList found
+showError (TypeMismatch   expected found)   = "Invalid type: expected " ++ expected ++ ", found " ++ show found
+showError (Parser         parseErr)         = "Parse error at " ++ show parseErr
+showError (BadSpecialForm message  form)    = message ++ ": " ++ show form
+showError (NotFunction    message  func)    = message ++ ": " ++ show func
+showError (UnboundVar     message  varname) = message ++ ": " ++ varname
+
+instance Show LispError where show = showError
+
+instance Error LispError where
+     noMsg  = Default "An error has occurred"
+     strMsg = Default
+#+END_SRC
+
+#+BEGIN_SRC haskell
+-- non exhaustive Eq for test cases only
+instance Eq LispError where
+     (NumArgs nl ll) == (NumArgs nr lr) = nl == nr && ll == lr
+
+testMonadicError :: Monad m => m a1 -> (a1 -> m a) -> (a -> m b) -> m b
+testMonadicError i f1 f2 =
+     i >>= (\x -> f1 x) >>= (\y -> f2 y)
+
+intToError :: LispVal -> ThrowsError LispVal
+intToError (Number x) = throwError $ NumArgs x [Atom "dont-care"]
+
+intToRight :: LispVal -> ThrowsError LispVal
+intToRight (Number x) = Right (Number x)
+
+intTwice   :: LispVal -> ThrowsError LispVal
+intTwice   (Number x) = Right (Number (x + x))
+
+testErrorHandling = TestList
+    [teq "1" (intToError (Number 1))
+             (Left $ NumArgs 1 [Atom "dont-care"])
+
+    ,teq "n" (testMonadicError  (intToError (Number 2))  intToError   intTwice)
+             (Left $ NumArgs 2 [Atom "dont-care"])
+
+    ,teq "n" (testMonadicError  (Right (Number 3))       intToError   intTwice)
+             (Left $ NumArgs 3 [Atom "dont-care"])
+
+    ,teq "n" (testMonadicError  (Right (Number 3))       intToRight   intTwice)
+             (Right (Number 6))
+    ]
+#+END_SRC
+
+------------------------------------------------------------------------------
+* parsing
+
+** [[http://www.haskell.org/haskellwiki/Parsec][Parsec]]
+** [[http://en.wikibooks.org/wiki/Haskell/do_Notation][=do= notation]]
+** [[http://en.wikibooks.org/wiki/Haskell/Understanding_monads][monads]]
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Control-Monad.html#v:liftM][=liftM=]]
+
+#+BEGIN_SRC haskell
+symbol :: Parser Char
+symbol = oneOf "!$%&|*+-/:<=>?@^_~#"
+
+spaces :: Parser ()
+spaces = skipMany1 space
+
+parseString :: Parser LispVal
+parseString = do char '"'
+                 x <- many (noneOf "\"")
+                 char '"'
+                 return $ String x
+
+parseAtom :: Parser LispVal
+parseAtom = do first <- letter <|> symbol
+               rest <- many (letter <|> digit <|> symbol)
+               let atom = [first] ++ rest
+               return $ case atom of
+                          "#t" -> Bool True
+                          "#f" -> Bool False
+                          otherwise -> Atom atom
+
+parseNumber :: Parser LispVal
+parseNumber = liftM (Number . read) $ many1 digit
+
+parseList :: Parser LispVal
+parseList = liftM List $ sepBy parseExpr spaces
+
+parseDottedList :: Parser LispVal
+parseDottedList = do
+    head <- endBy parseExpr spaces
+    tail <- char '.' >> spaces >> parseExpr
+    return $ DottedList head tail
+
+parseQuoted :: Parser LispVal
+parseQuoted = do
+    char '\''
+    x <- parseExpr
+    return $ List [Atom "quote", x]
+
+parseExpr :: Parser LispVal
+parseExpr = parseAtom
+        <|> parseString
+        <|> parseNumber
+        <|> parseQuoted
+        <|> do char '('
+               x <- (try parseList) <|> parseDottedList
+               char ')'
+               return x
+#+END_SRC
+
+#+BEGIN_SRC haskell
+tp input = case parse parseExpr "lisp" input of
+    Left  err -> Left  (show err)
+    Right val -> Right val
+
+-- non exhaustive Eq for test cases only
+instance Eq LispVal where
+     (Atom   x) == (Atom   y) = x == y
+     (Number x) == (Number y) = x == y
+     (String x) == (String y) = x == y
+     (Bool   x) == (Bool   y) = x == y
+     (List   x) == (List   y) = x == y
+     (DottedList hl tl) == (DottedList hr tr) = hl == hl && tl == tr
+
+testParsing = TestList
+    [teq "atom"   (tp "+")
+                  (Right $ Atom "+")
+
+    ,teq "atom"   (tp "foo")
+                  (Right $ Atom "foo")
+
+    ,teq "error"  (tp ")")
+                  (Left "\"lisp\" (line 1, column 1):\nunexpected \")\"\nexpecting letter, \"\\\"\", digit, \"'\" or \"(\"")
+
+    ,teq "number" (tp "3")
+                  (Right $ Number 3)
+
+    ,teq "string" (tp "\"foo\"")
+                  (Right $ String "foo")
+
+    ,teq "bool"   (tp "#t")
+                  (Right $ Bool True)
+
+    ,teq "list"   (tp "(a 3)")
+                  (Right $ List [Atom "a", Number 3])
+
+    ,teq "dlist"  (tp "(a . 3)")
+                  (Right $ DottedList [Atom "a"] $ Number 3)
+    ]
+#+END_SRC
+
+------------------------------------------------------------------------------
+* variables
+
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Data-IORef.html][IORef]]
+** [[http://book.realworldhaskell.org/read/error-handling.html][=catchError=]]
+
+#+BEGIN_SRC haskell
+type Env = IORef [(String, IORef LispVal)]
+
+nullEnv :: IO Env
+nullEnv = newIORef []
+
+primitiveBindings :: IO Env
+primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives
+                                              ++ map (makeFunc PrimitiveFunc) primitives)
+    where makeFunc constructor (var, func) = (var, constructor func)
+
+extractValue :: ThrowsError a -> a
+extractValue (Right val) = val
+
+trapError action = catchError action (return . show)
+
+runIOThrows :: IOThrowsError String -> IO String
+runIOThrows action = runErrorT (trapError action) >>= return . extractValue
+
+isBound :: Env -> String -> IO Bool
+isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
+
+getVar :: Env -> String -> IOThrowsError LispVal
+getVar envRef var  =  do env <- liftIO $ readIORef envRef
+                         maybe (throwError $ UnboundVar "Getting an unbound variable" var)
+                               (liftIO . readIORef)
+                               (lookup var env)
+
+setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+setVar envRef var value = do env <- liftIO $ readIORef envRef
+                             maybe (throwError $ UnboundVar "Setting an unbound variable" var)
+                                   (liftIO . (flip writeIORef value))
+                                   (lookup var env)
+                             return value
+
+defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+defineVar envRef var value = do
+    alreadyDefined <- liftIO $ isBound envRef var
+    if alreadyDefined
+       then setVar envRef var value >> return value
+       else liftIO $ do
+          valueRef <- newIORef value
+          env <- readIORef envRef
+          writeIORef envRef ((var, valueRef) : env)
+          return value
+
+bindVars :: Env -> [(String, LispVal)] -> IO Env
+bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
+    where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
+          addBinding (var, value) = do ref <- newIORef value
+                                       return (var, ref)
+
+makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
+makeNormalFunc = makeFunc Nothing
+makeVarargs = makeFunc . Just . showVal
+#+END_SRC
+
+------------------------------------------------------------------------------
+* I/O
+
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/System-IO.html][=System.IO=]]
+
+#+BEGIN_SRC haskell
+ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal)]
+ioPrimitives = [("apply",             applyProc),
+                ("open-input-file",   makePort ReadMode),
+                ("open-output-file",  makePort WriteMode),
+                ("close-input-port",  closePort),
+                ("close-output-port", closePort),
+                ("read",              readProc),
+                ("write",             writeProc),
+                ("read-contents",     readContents),
+                ("read-all",          readAll)]
+
+applyProc :: [LispVal] -> IOThrowsError LispVal
+applyProc [func, List args] = apply func args
+applyProc (func : args) = apply func args
+
+makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
+makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode
+
+closePort :: [LispVal] -> IOThrowsError LispVal
+closePort [Port port] = liftIO $ hClose port >> (return $ Bool True)
+closePort _ = return $ Bool False
+
+readProc :: [LispVal] -> IOThrowsError LispVal
+readProc [] = readProc [Port stdin]
+readProc [Port port] = (liftIO $ hGetLine stdin) >>= liftThrows . readExpr
+
+writeProc :: [LispVal] -> IOThrowsError LispVal
+writeProc [obj] = writeProc [obj, Port stdout]
+writeProc [obj, Port port] = liftIO $ hPrint port obj >> (return $ Bool True)
+
+readContents :: [LispVal] -> IOThrowsError LispVal
+readContents [String filename] = liftM String $ liftIO $ readFile filename
+
+readOrThrow :: Parser a -> String -> ThrowsError a
+readOrThrow parser input = case parse parser "lisp" input of
+    Left err  -> throwError $ Parser err
+    Right val -> return val
+
+readExpr = readOrThrow parseExpr
+readExprList = readOrThrow (endBy parseExpr spaces)
+
+load :: String -> IOThrowsError [LispVal]
+load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
+
+readAll :: [LispVal] -> IOThrowsError LispVal
+readAll [String filename] = liftM List $ load filename
+#+END_SRC
+
+------------------------------------------------------------------------------
+* evaluation
+
+** [[http://en.wikibooks.org/wiki/Haskell/Pattern_matching#As-patterns][as patterns]]
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Prelude.html#v:mapM][=mapM=]]
+** [[http://book.realworldhaskell.org/read/error-handling.html][=throwError=]]
+** [[http://hackage.haskell.org/package/cgi-3001.1.8.4/docs/Network-CGI.html#v:liftIO][=liftIO]]
+
+#+BEGIN_SRC haskell
+eval :: Env -> LispVal -> IOThrowsError LispVal
+eval env val@(String _) = return val
+eval env val@(Number _) = return val
+eval env val@(Bool _) = return val
+eval env (Atom id) = getVar env id
+eval env (List [Atom "quote", val]) = return val
+eval env (List [Atom "if", pred, conseq, alt]) =
+    do result <- eval env pred
+       case result of
+         Bool False -> eval env alt
+         otherwise -> eval env conseq
+eval env (List [Atom "set!", Atom var, form]) =
+    eval env form >>= setVar env var
+eval env (List [Atom "define", Atom var, form]) =
+    eval env form >>= defineVar env var
+eval env (List (Atom "define" : List (Atom var : params) : body)) =
+    makeNormalFunc env params body >>= defineVar env var
+eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
+    makeVarargs varargs env params body >>= defineVar env var
+eval env (List (Atom "lambda" : List params : body)) =
+    makeNormalFunc env params body
+eval env (List (Atom "lambda" : DottedList params varargs : body)) =
+    makeVarargs varargs env params body
+eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
+    makeVarargs varargs env [] body
+eval env (List [Atom "load", String filename]) =
+    load filename >>= liftM last . mapM (eval env)
+eval env (List (function : args)) = do
+    func <- eval env function
+    argVals <- mapM (eval env) args
+    apply func argVals
+eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+
+apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (Func params varargs body closure) args =
+    if num params /= num args && varargs == Nothing
+       then throwError $ NumArgs (num params) args
+       else (liftIO $ bindVars closure $ zip params args) >>= bindVarArgs varargs >>= evalBody
+    where remainingArgs = drop (length params) args
+          num = toInteger . length
+          evalBody env = liftM last $ mapM (eval env) body
+          bindVarArgs arg env = case arg of
+              Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
+              Nothing -> return env
+
+liftThrows :: ThrowsError a -> IOThrowsError a
+liftThrows (Left err) = throwError err
+liftThrows (Right val) = return val
+#+END_SRC
+
+------------------------------------------------------------------------------
+* REPL
+
+#+BEGIN_SRC haskell
+{-
+main :: IO ()
+main = do args <- getArgs
+          if null args then runRepl else runOne $ args
+-}
+
+-- main :: IO ()
+main = do
+    runTestTT testRepresentation
+    runTestTT testErrorHandling
+    runTestTT testParsing
+
+flushStr :: String -> IO ()
+flushStr str = putStr str >> hFlush stdout
+
+readPrompt :: String -> IO String
+readPrompt prompt = flushStr prompt >> getLine
+
+evalAndPrint :: Env -> String -> IO ()
+evalAndPrint env expr =  evalString env expr >>= putStrLn
+
+evalString :: Env -> String -> IO String
+evalString env expr = runIOThrows $ liftM show $ (liftThrows $ readExpr expr) >>= eval env
+
+until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
+until_ pred prompt action = do
+  result <- prompt
+  if pred result
+     then return ()
+     else action result >> until_ pred prompt action
+
+runOne :: [String] -> IO ()
+runOne args = do
+    env <- primitiveBindings >>= flip bindVars [("args", List $ map String $ drop 1 args)]
+    (runIOThrows $ liftM show $ eval env (List [Atom "load", String (args !! 0)]))
+         >>= hPutStrLn stderr
+
+runRepl :: IO ()
+runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "Lisp>>> ") . evalAndPrint
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+runghc listing10.hs
+(load "stdlib.scm")
+(cdr '("a" b 2))
+(define (foo x) x)
+foo
+(foo 3)
+(define bar 4)
+(set! bar 5)
+(define (fact n) (if (= n 1) n (* n (fact (- n 1)))))
+(fact 5)
+(fact 0)
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* built-in functions
+
+#+BEGIN_SRC haskell
+primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
+primitives = [("+", numericBinop (+)),
+              ("-", numericBinop (-)),
+              ("*", numericBinop (*)),
+              ("/", numericBinop div),
+              ("mod", numericBinop mod),
+              ("quotient", numericBinop quot),
+              ("remainder", numericBinop rem),
+              ("=", numBoolBinop (==)),
+              ("<", numBoolBinop (<)),
+              (">", numBoolBinop (>)),
+              ("/=", numBoolBinop (/=)),
+              (">=", numBoolBinop (>=)),
+              ("<=", numBoolBinop (<=)),
+              ("&&", boolBoolBinop (&&)),
+              ("||", boolBoolBinop (||)),
+              ("string=?", strBoolBinop (==)),
+              ("string?", strBoolBinop (>)),
+              ("string<=?", strBoolBinop (<=)),
+              ("string>=?", strBoolBinop (>=)),
+              ("car", car),
+              ("cdr", cdr),
+              ("cons", cons),
+              ("eq?", eqv),
+              ("eqv?", eqv),
+              ("equal?", equal)]
+
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
+numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
+numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
+
+boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
+boolBinop unpacker op args = if length args /= 2
+                             then throwError $ NumArgs 2 args
+                             else do left <- unpacker $ args !! 0
+                                     right <- unpacker $ args !! 1
+                                     return $ Bool $ left `op` right
+
+numBoolBinop = boolBinop unpackNum
+strBoolBinop = boolBinop unpackStr
+boolBoolBinop = boolBinop unpackBool
+
+unpackNum :: LispVal -> ThrowsError Integer
+unpackNum (Number n) = return n
+unpackNum (String n) = let parsed = reads n in
+                          if null parsed
+                            then throwError $ TypeMismatch "number" $ String n
+                            else return $ fst $ parsed !! 0
+unpackNum (List [n]) = unpackNum n
+unpackNum notNum = throwError $ TypeMismatch "number" notNum
+
+unpackStr :: LispVal -> ThrowsError String
+unpackStr (String s) = return s
+unpackStr (Number s) = return $ show s
+unpackStr (Bool s) = return $ show s
+unpackStr notString = throwError $ TypeMismatch "string" notString
+
+unpackBool :: LispVal -> ThrowsError Bool
+unpackBool (Bool b) = return b
+unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
+
+car :: [LispVal] -> ThrowsError LispVal
+car [List (x : xs)] = return x
+car [DottedList (x : xs) _] = return x
+car [badArg] = throwError $ TypeMismatch "pair" badArg
+car badArgList = throwError $ NumArgs 1 badArgList
+
+cdr :: [LispVal] -> ThrowsError LispVal
+cdr [List (x : xs)] = return $ List xs
+cdr [DottedList (_ : xs) x] = return $ DottedList xs x
+cdr [DottedList [xs] x] = return x
+cdr [badArg] = throwError $ TypeMismatch "pair" badArg
+cdr badArgList = throwError $ NumArgs 1 badArgList
+
+cons :: [LispVal] -> ThrowsError LispVal
+cons [x1, List []] = return $ List [x1]
+cons [x, List xs] = return $ List $ [x] ++ xs
+cons [x, DottedList xs xlast] = return $ DottedList ([x] ++ xs) xlast
+cons [x1, x2] = return $ DottedList [x1] x2
+cons badArgList = throwError $ NumArgs 2 badArgList
+
+eqv :: [LispVal] -> ThrowsError LispVal
+eqv [(Bool arg1), (Bool arg2)] = return $ Bool $ arg1 == arg2
+eqv [(Number arg1), (Number arg2)] = return $ Bool $ arg1 == arg2
+eqv [(String arg1), (String arg2)] = return $ Bool $ arg1 == arg2
+eqv [(Atom arg1), (Atom arg2)] = return $ Bool $ arg1 == arg2
+eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
+eqv [(List arg1), (List arg2)] = return $ Bool $ (length arg1 == length arg2) &&
+                                                    (and $ map eqvPair $ zip arg1 arg2)
+    where eqvPair (x1, x2) = case eqv [x1, x2] of
+                               Left err -> False
+                               Right (Bool val) -> val
+eqv [_, _] = return $ Bool False
+eqv badArgList = throwError $ NumArgs 2 badArgList
+
+data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
+
+unpackEquals :: LispVal -> LispVal -> Unpacker -> ThrowsError Bool
+unpackEquals arg1 arg2 (AnyUnpacker unpacker) =
+             do unpacked1 <- unpacker arg1
+                unpacked2 <- unpacker arg2
+                return $ unpacked1 == unpacked2
+        `catchError` (const $ return False)
+
+equal :: [LispVal] -> ThrowsError LispVal
+equal [arg1, arg2] = do
+    primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2)
+                      [AnyUnpacker unpackNum, AnyUnpacker unpackStr, AnyUnpacker unpackBool]
+    eqvEquals <- eqv [arg1, arg2]
+    return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
+equal badArgList = throwError $ NumArgs 2 badArgList
+
+-- End of file.
+#+END_SRC
