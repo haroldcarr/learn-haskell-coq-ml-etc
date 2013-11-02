@@ -14,7 +14,7 @@ tags: haskell, scheme
 #+END_HTML
 
 # Created       : 2013 Nov 01 (Fri) 14:33:34 by carr.
-Last Modified : 2013 Nov 02 (Sat) 13:00:00 by carr.
+Last Modified : 2013 Nov 02 (Sat) 15:08:10 by carr.
 
 - [[http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours]]
 
@@ -23,24 +23,23 @@ Last Modified : 2013 Nov 02 (Sat) 13:00:00 by carr.
 
 -- DataKinds for test
 
-module Main where
--- import Monad
-import System.Environment
+module SchemeIn48Hours where
+
 import Control.Monad (unless)
 import Control.Monad.Error
 import Data.IORef
 import Data.Maybe (isJust, isNothing)
 import Text.ParserCombinators.Parsec hiding (spaces)
--- import IO hiding (try)
+import System.Environment (getArgs)
 import System.IO
 #+END_SRC
 
 Imports for unit testing:
 
 #+BEGIN_SRC haskell
-import Test.HUnit
 import HCHUnit
 import System.IO.Unsafe (unsafePerformIO)
+import Test.HUnit
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -115,6 +114,9 @@ testRepresentation = TestList
     ,teq "dotted list" (show (DottedList [Number 2] (Atom "foo")))
                        "(2 . foo)"
 
+    ,teq "func"        (show (Func ["a1","a2"] Nothing     [Number 2] (unsafePerformIO nullEnv)))
+                       "(lambda (\"a1\" \"a2\") ...)"
+
     ,teq "func"        (show (Func ["a1","a2"] (Just "va") [Number 2] (unsafePerformIO nullEnv)))
                        "(lambda (\"a1\" \"a2\" . va) ...)"
     ]
@@ -175,6 +177,8 @@ testErrorHandling = TestList
              (Right (Number 6))
     ]
 #+END_SRC
+
+See [[VARIABLES][variables]] section for discussion of =IOThrowsError=.
 
 ------------------------------------------------------------------------------
 * parsing
@@ -277,10 +281,12 @@ testParsing = TestList
 #+END_SRC
 
 ------------------------------------------------------------------------------
+<<VARIABLES>>
 * variables
 
 ** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Data-IORef.html][IORef]]
 ** [[http://book.realworldhaskell.org/read/error-handling.html][=catchError=]]
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Data-Maybe.html#v:maybe][=maybe=]]
 
 #+BEGIN_SRC haskell
 type Env = IORef [(String, IORef LispVal)]
@@ -337,6 +343,41 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
 makeNormalFunc = makeFunc Nothing
 makeVarargs = makeFunc . Just . showVal
+#+END_SRC
+
+#+BEGIN_SRC haskell
+{-
+let eee = (unsafePerformIO nullEnv)
+let ddd = defineVar eee "x" (Number 1)
+:t  ddd
+ddd :: IOThrowsError LispVal
+let dd' = runErrorT ddd
+:t  dd'
+--  dd' :: IO (Either LispError LispVal)
+let ud' = unsafePerformIO dd'
+:t  ud'
+--  ud' :: Either LispError LispVal
+show ud'
+-- "Right 1"
+
+runErrorT $    setVar eee "x" (Number 2)
+runErrorT $    getVar eee "x"
+runErrorT $    setVar eee "x" (Number 3)
+runErrorT $    getVar eee "x"
+
+let bd = runErrorT $    getVar eee "bad"
+:t  bd
+--  bd :: IO (Either LispError LispVal)
+let bd' = unsafePerformIO bd
+:t  bd'
+(show bd')
+-- "Left Getting an unbound variable: bad"
+
+let dg = (defineVar eee "x" (Number 1)) >>= return (getVar eee "x")
+(unsafePerformIO $ runErrorT dg)
+let dg' = (defineVar eee "x" (Number 1)) >>= return (getVar eee "YY")
+(unsafePerformIO $ runErrorT dg')
+-}
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -569,28 +610,28 @@ unpackStr (Bool s) = return $ show s
 unpackStr notString = throwError $ TypeMismatch "string" notString
 
 unpackBool :: LispVal -> ThrowsError Bool
-unpackBool (Bool b) = return b
-unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
+unpackBool (Bool b)           = return b
+unpackBool notBool            = throwError $ TypeMismatch "boolean" notBool
 
 car :: [LispVal] -> ThrowsError LispVal
-car [List (x : xs)] = return x
-car [DottedList (x : xs) _] = return x
-car [badArg] = throwError $ TypeMismatch "pair" badArg
-car badArgList = throwError $ NumArgs 1 badArgList
+car [List (x : xs)]           = return x
+car [DottedList (x : xs) _]   = return x
+car [badArg]                  = throwError $ TypeMismatch "pair" badArg
+car badArgList                = throwError $ NumArgs 1 badArgList
 
 cdr :: [LispVal] -> ThrowsError LispVal
-cdr [List (x : xs)] = return $ List xs
-cdr [DottedList (_ : xs) x] = return $ DottedList xs x
-cdr [DottedList [xs] x] = return x
-cdr [badArg] = throwError $ TypeMismatch "pair" badArg
-cdr badArgList = throwError $ NumArgs 1 badArgList
+cdr [List (x : xs)]           = return $ List xs
+cdr [DottedList (x1:x2:xs) d] = return $ DottedList (x2:xs) d
+cdr [DottedList (x:[])     d] = return d
+cdr [badArg]                  = throwError $ TypeMismatch "pair" badArg
+cdr badArgList                = throwError $ NumArgs 1 badArgList
 
 cons :: [LispVal] -> ThrowsError LispVal
-cons [x1, List []] = return $ List [x1]
-cons [x, List xs] = return $ List $ x : xs
+cons [x1, List []]            = return $ List [x1]
+cons [x, List xs]             = return $ List $ x : xs
 cons [x, DottedList xs xlast] = return $ DottedList (x : xs) xlast
-cons [x1, x2] = return $ DottedList [x1] x2
-cons badArgList = throwError $ NumArgs 2 badArgList
+cons [x1, x2]                 = return $ DottedList [x1] x2
+cons badArgList               = throwError $ NumArgs 2 badArgList
 
 eqv :: [LispVal] -> ThrowsError LispVal
 eqv [Bool       arg1, Bool       arg2] = return $ Bool $ arg1 == arg2
