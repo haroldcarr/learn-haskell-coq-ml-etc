@@ -14,7 +14,7 @@ tags: haskell, scheme
 #+END_HTML
 
 # Created       : 2013 Nov 01 (Fri) 14:33:34 by carr.
-Last Modified : 2013 Nov 02 (Sat) 21:22:05 by carr.
+Last Modified : 2013 Nov 02 (Sat) 21:31:24 by carr.
 
 - [[http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours]]
 
@@ -330,6 +330,17 @@ makeVarargs = makeFunc . Just . showVal
 isBound :: Env -> String -> IO Bool
 isBound envRef var = readIORef envRef >>= return . isJust . lookup var
 
+defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+defineVar envRef var value = do
+    alreadyDefined <- liftIO $ isBound envRef var
+    if alreadyDefined
+       then setVar envRef var value >> return value
+       else liftIO $ do
+          valueRef <- newIORef value
+          env <- readIORef envRef
+          writeIORef envRef ((var, valueRef) : env)
+          return value
+
 unboundVarErrorMsg    = " an unbound variable"
 getUnboundVarErrorMsg = "Getting" ++ unboundVarErrorMsg
 getVar :: Env -> String -> IOThrowsError LispVal
@@ -345,17 +356,6 @@ setVar envRef var value = do env <- liftIO $ readIORef envRef
                                    (liftIO . (`writeIORef` value))
                                    (lookup var env)
                              return value
-
-defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
-defineVar envRef var value = do
-    alreadyDefined <- liftIO $ isBound envRef var
-    if alreadyDefined
-       then setVar envRef var value >> return value
-       else liftIO $ do
-          valueRef <- newIORef value
-          env <- readIORef envRef
-          writeIORef envRef ((var, valueRef) : env)
-          return value
 #+END_SRC
 
 #+BEGIN_SRC haskell
@@ -464,10 +464,10 @@ readContents [String filename] = liftM String $ liftIO $ readFile filename
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser "lisp" input of
-    Left err  -> throwError $ Parser err
+    Left  err -> throwError $ Parser err
     Right val -> return val
 
-readExpr = readOrThrow parseExpr
+readExpr     = readOrThrow        parseExpr
 readExprList = readOrThrow (endBy parseExpr spaces)
 
 load :: String -> IOThrowsError [LispVal]
@@ -725,8 +725,9 @@ equal badArgList = throwError $ NumArgs 2 badArgList
 * example accuracy
 
 #+BEGIN_SRC haskell
-rt = runTests
-runTests = do
+runTests = rt
+
+rt = do
     mapM_ runTestTT [testRepresentation
                     ,testErrorHandling
                     ,testParsing
