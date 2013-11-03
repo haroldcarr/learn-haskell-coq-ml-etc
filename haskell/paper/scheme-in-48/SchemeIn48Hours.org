@@ -14,7 +14,7 @@ tags: haskell, scheme
 #+END_HTML
 
 # Created       : 2013 Nov 01 (Fri) 14:33:34 by carr.
-Last Modified : 2013 Nov 02 (Sat) 15:08:10 by carr.
+Last Modified : 2013 Nov 02 (Sat) 21:22:05 by carr.
 
 - [[http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours]]
 
@@ -28,7 +28,8 @@ module SchemeIn48Hours where
 import Control.Monad (unless)
 import Control.Monad.Error
 import Data.IORef
-import Data.Maybe (isJust, isNothing)
+-- fromJust for test
+import Data.Maybe (fromJust, isJust, isNothing)
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment (getArgs)
 import System.IO
@@ -75,6 +76,7 @@ data LispError = NumArgs        Integer    [LispVal]
 ** [[http://en.wikibooks.org/wiki/Haskell/Pattern_matching][pattern matching]]
 ** [[http://en.wikibooks.org/wiki/Haskell/Control_structures#case_expressions][=case=]]
 ** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Prelude.html#v:unwords][=unwords=]]
+** function composition (i.e., the [[http://www.haskell.org/haskellwiki/Function_composition][=.=]] operator)
 
 #+BEGIN_SRC haskell
 showVal :: LispVal -> String
@@ -102,8 +104,14 @@ instance Show LispVal where show = showVal
 
 #+BEGIN_SRC haskell
 testRepresentation = TestList
-    [teq "unword"      (unwords ["foo","bar"])
+    [teq "unwords"     (unwords ["foo","bar"])
                        "foo bar"
+
+    ,teq "unwords map" ((\x -> unwords  (map show x)) [1,2,3])
+                       "1 2 3"
+
+    ,teq "unwords.map" (      (unwords . map show)    [1,2,3])
+                       "1 2 3"
 
     ,teq "atom"        (show (Atom "foo"))
                        "foo"
@@ -148,10 +156,11 @@ instance Error LispError where
 #+BEGIN_SRC haskell
 -- non exhaustive Eq for test cases only
 instance Eq LispError where
-     (NumArgs nl ll) == (NumArgs nr lr) = nl == nr && ll == lr
+     (NumArgs    nl ll) == (NumArgs    nr lr) = nl == nr && ll == lr
+     (UnboundVar ml vl) == (UnboundVar mr vr) = ml == mr && vl == vr
 
-testMonadicError :: Monad m => m a1 -> (a1 -> m a) -> (a -> m b) -> m b
-testMonadicError i f1 f2 =
+testMonadicSequence :: Monad m => m a1 -> (a1 -> m a) -> (a -> m b) -> m b
+testMonadicSequence i f1 f2 =
      i >>= f1 >>= f2
 
 intToError :: LispVal -> ThrowsError LispVal
@@ -167,13 +176,13 @@ testErrorHandling = TestList
     [teq "1" (intToError (Number 1))
              (Left $ NumArgs 1 [Atom "dont-care"])
 
-    ,teq "n" (testMonadicError  (intToError (Number 2))  intToError   intTwice)
+    ,teq "n" (testMonadicSequence  (intToError (Number 2))  intToError   intTwice)
              (Left $ NumArgs 2 [Atom "dont-care"])
 
-    ,teq "n" (testMonadicError  (Right (Number 3))       intToError   intTwice)
+    ,teq "n" (testMonadicSequence  (Right (Number 3))       intToError   intTwice)
              (Left $ NumArgs 3 [Atom "dont-care"])
 
-    ,teq "n" (testMonadicError  (Right (Number 3))       intToRight   intTwice)
+    ,teq "n" (testMonadicSequence  (Right (Number 3))       intToRight   intTwice)
              (Right (Number 6))
     ]
 #+END_SRC
@@ -254,7 +263,15 @@ instance Eq LispVal where
      (DottedList hl tl) == (DottedList hr tr) = hl == hl && tl == tr
 
 testParsing = TestList
-    [teq "atom"   (tp "+")
+    [teq "Number.read"
+                  ((Number . read) "4")
+                  (Number 4)
+
+    ,teq "liftM Number.read"
+                  (liftM (Number . read) (Just "4"))
+                  (Just (Number 4))
+
+    ,teq "atom"   (tp "+")
                   (Right $ Atom "+")
 
     ,teq "atom"   (tp "foo")
@@ -284,9 +301,11 @@ testParsing = TestList
 <<VARIABLES>>
 * variables
 
-** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Data-IORef.html][IORef]]
-** [[http://book.realworldhaskell.org/read/error-handling.html][=catchError=]]
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Data-IORef.html][=IORef=]]
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Prelude.html#v:lookup][=lookup=]]
 ** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Data-Maybe.html#v:maybe][=maybe=]]
+** [[http://hackage.haskell.org/package/cgi-3001.1.8.4/docs/Network-CGI.html#v:liftIO][=liftIO=]]
+** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Prelude.html#v:mapM][=mapM=]]
 
 #+BEGIN_SRC haskell
 type Env = IORef [(String, IORef LispVal)]
@@ -295,30 +314,34 @@ nullEnv :: IO Env
 nullEnv = newIORef []
 
 primitiveBindings :: IO Env
-primitiveBindings = nullEnv >>= flip bindVars (map (makeFunc IOFunc) ioPrimitives
-                                                ++ map (makeFunc PrimitiveFunc) primitives)
+primitiveBindings = nullEnv >>= flip bindVars (map (makeFunc IOFunc)        ioPrimitives ++
+                                               map (makeFunc PrimitiveFunc)   primitives)
     where makeFunc constructor (var, func) = (var, constructor func)
 
-extractValue :: ThrowsError a -> a
-extractValue (Right val) = val
-
-trapError action = catchError action (return . show)
-
-runIOThrows :: IOThrowsError String -> IO String
-runIOThrows action = runErrorT (trapError action) >>= return . extractValue
+bindVars :: Env -> [(String, LispVal)] -> IO Env
+bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
+    where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
+          addBinding (var, value) = do ref <- newIORef value
+                                       return (var, ref)
+makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
+makeNormalFunc = makeFunc Nothing
+makeVarargs = makeFunc . Just . showVal
 
 isBound :: Env -> String -> IO Bool
 isBound envRef var = readIORef envRef >>= return . isJust . lookup var
 
+unboundVarErrorMsg    = " an unbound variable"
+getUnboundVarErrorMsg = "Getting" ++ unboundVarErrorMsg
 getVar :: Env -> String -> IOThrowsError LispVal
 getVar envRef var  =  do env <- liftIO $ readIORef envRef
-                         maybe (throwError $ UnboundVar "Getting an unbound variable" var)
+                         maybe (throwError $ UnboundVar getUnboundVarErrorMsg var)
                                (liftIO . readIORef)
                                (lookup var env)
 
+setUnboundVarErrorMsg = "Setting" ++ unboundVarErrorMsg
 setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
 setVar envRef var value = do env <- liftIO $ readIORef envRef
-                             maybe (throwError $ UnboundVar "Setting an unbound variable" var)
+                             maybe (throwError $ UnboundVar setUnboundVarErrorMsg var)
                                    (liftIO . (`writeIORef` value))
                                    (lookup var env)
                              return value
@@ -333,58 +356,77 @@ defineVar envRef var value = do
           env <- readIORef envRef
           writeIORef envRef ((var, valueRef) : env)
           return value
-
-bindVars :: Env -> [(String, LispVal)] -> IO Env
-bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
-    where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
-          addBinding (var, value) = do ref <- newIORef value
-                                       return (var, ref)
-
-makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
-makeNormalFunc = makeFunc Nothing
-makeVarargs = makeFunc . Just . showVal
 #+END_SRC
 
 #+BEGIN_SRC haskell
-{-
-let eee = (unsafePerformIO nullEnv)
-let ddd = defineVar eee "x" (Number 1)
-:t  ddd
-ddd :: IOThrowsError LispVal
-let dd' = runErrorT ddd
-:t  dd'
---  dd' :: IO (Either LispError LispVal)
-let ud' = unsafePerformIO dd'
-:t  ud'
---  ud' :: Either LispError LispVal
-show ud'
--- "Right 1"
+eee = unsafePerformIO nullEnv
 
-runErrorT $    setVar eee "x" (Number 2)
-runErrorT $    getVar eee "x"
-runErrorT $    setVar eee "x" (Number 3)
-runErrorT $    getVar eee "x"
+testVariables = TestList
+    [teq "maybe N"    (maybe "default" (show :: Maybe Int -> String) Nothing)
+                      "default"
 
-let bd = runErrorT $    getVar eee "bad"
-:t  bd
---  bd :: IO (Either LispError LispVal)
-let bd' = unsafePerformIO bd
-:t  bd'
-(show bd')
--- "Left Getting an unbound variable: bad"
+    ,teq "maybe J"    (maybe "default"  show                        (Just 3))
+                      "3"
 
-let dg = (defineVar eee "x" (Number 1)) >>= return (getVar eee "x")
-(unsafePerformIO $ runErrorT dg)
-let dg' = (defineVar eee "x" (Number 1)) >>= return (getVar eee "YY")
-(unsafePerformIO $ runErrorT dg')
--}
+    ,teq "lookup N"   (lookup "a" [("b", 2)])
+                      Nothing
+
+    ,teq "lookup J"   (lookup "b" [("b", 2)])
+                      (Just 2)
+
+    ,teq "mapM"       (mapM (\b -> Just (b * 2)) [1,2,3])
+                      (Just [2,4,6])
+
+    ,teq "getUnbound" (unsafePerformIO (runErrorT (getVar    eee "x")))
+                      (Left (UnboundVar getUnboundVarErrorMsg "x"))
+
+    ,teq "setUnbound" (unsafePerformIO (runErrorT (setVar    eee "x" (Number 2))))
+                      (Left (UnboundVar setUnboundVarErrorMsg "x"))
+
+    ,teq "define"     (unsafePerformIO (runErrorT (defineVar eee "x" (Number 1))))
+                      (Right (Number 1))
+
+    ,teq "get"        (unsafePerformIO (runErrorT (getVar    eee "x")))
+                      (Right (Number 1))
+
+    ,teq "set"        (unsafePerformIO (runErrorT (setVar    eee "x" (Number 2))))
+                      (Right (Number 2))
+
+    ,teq "get'"       (unsafePerformIO (runErrorT (getVar    eee "x")))
+                      (Right (Number 2))
+
+    ,teq "monad"      (unsafePerformIO (runErrorT (defineVar eee "x" (Number 10) >>= return  (getVar eee "x"))))
+                      (Right (Number 10))
+    ]
 #+END_SRC
+
+#+BEGIN_EXAMPLE
+:t                                                            readIORef eee
+--                                                            readIORef eee       ::      IO    [(String, IORef LispVal)]
+:t                                           unsafePerformIO (readIORef eee)
+--                                           unsafePerformIO (readIORef eee)      ::            [(String, IORef LispVal)]
+:t                               lookup "x" (unsafePerformIO (readIORef eee))
+--                               lookup "x" (unsafePerformIO (readIORef eee))     ::               Maybe (IORef LispVal)
+:t          readIORef (fromJust (lookup "x" (unsafePerformIO (readIORef eee))))
+--          readIORef (fromJust (lookup "x" (unsafePerformIO (readIORef eee))))   ::      IO                    LispVal
+:t  liftIO (readIORef (fromJust (lookup "x" (unsafePerformIO (readIORef eee)))))
+--  liftIO (readIORef (fromJust (lookup "x" (unsafePerformIO (readIORef eee)))))  :: MonadIO m => m             LispVal
+:t (liftIO (readIORef (fromJust (lookup "x" (unsafePerformIO (readIORef eee)))))) ::              IOThrowsError LispVal
+-- (liftIO (readIORef (fromJust (lookup "x" (unsafePerformIO (readIORef eee)))))) ::              IOThrowsError LispVal
+
+
+:t                             getVar    eee "z"
+--                             getVar    eee "z"   ::        IOThrowsError LispVal
+:t                  runErrorT (getVar    eee "z")
+--                  runErrorT (getVar    eee "z")  :: IO (Either LispError LispVal)
+:t unsafePerformIO (runErrorT (getVar    eee "z"))
+-- unsafePerformIO (runErrorT (getVar    eee "z")) ::     Either LispError LispVal
+#+END_EXAMPLE
 
 ------------------------------------------------------------------------------
 * I/O
 
 ** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/System-IO.html][=System.IO=]]
-** [[http://hackage.haskell.org/package/cgi-3001.1.8.4/docs/Network-CGI.html#v:liftIO][=liftIO=]]
 
 #+BEGIN_SRC haskell
 ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal)]
@@ -400,7 +442,7 @@ ioPrimitives = [("apply",             applyProc),
 
 applyProc :: [LispVal] -> IOThrowsError LispVal
 applyProc [func, List args] = apply func args
-applyProc (func : args) = apply func args
+applyProc (func :     args) = apply func args
 
 makePort :: IOMode -> [LispVal] -> IOThrowsError LispVal
 makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode
@@ -433,27 +475,32 @@ load filename = liftIO (readFile filename) >>= liftThrows . readExprList
 
 readAll :: [LispVal] -> IOThrowsError LispVal
 readAll [String filename] = liftM List $ load filename
+
+liftThrows :: ThrowsError a -> IOThrowsError a
+liftThrows (Left  err) = throwError err
+liftThrows (Right val) = return val
 #+END_SRC
 
 ------------------------------------------------------------------------------
 * evaluation
 
 ** [[http://en.wikibooks.org/wiki/Haskell/Pattern_matching#As-patterns][as patterns]]
-** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Prelude.html#v:mapM][=mapM=]]
 ** [[http://book.realworldhaskell.org/read/error-handling.html][=throwError=]]
 
 #+BEGIN_SRC haskell
 eval :: Env -> LispVal -> IOThrowsError LispVal
 eval env val@(String _) = return val
 eval env val@(Number _) = return val
-eval env val@(Bool _) = return val
-eval env (Atom id) = getVar env id
+eval env val@(Bool   _) = return val
+eval env     (Atom  id) = getVar env id
+
 eval env (List [Atom "quote", val]) = return val
 eval env (List [Atom "if", pred, conseq, alt]) =
     do result <- eval env pred
        case result of
          Bool False -> eval env alt
          otherwise -> eval env conseq
+
 eval env (List [Atom "set!", Atom var, form]) =
     eval env form >>= setVar env var
 eval env (List [Atom "define", Atom var, form]) =
@@ -474,6 +521,7 @@ eval env (List (function : args)) = do
     func <- eval env function
     argVals <- mapM (eval env) args
     apply func argVals
+
 eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
@@ -488,14 +536,12 @@ apply (Func params varargs body closure) args =
           bindVarArgs arg env = case arg of
               Just argName -> liftIO $ bindVars env [(argName, List remainingArgs)]
               Nothing -> return env
-
-liftThrows :: ThrowsError a -> IOThrowsError a
-liftThrows (Left err) = throwError err
-liftThrows (Right val) = return val
 #+END_SRC
 
 ------------------------------------------------------------------------------
 * REPL
+
+** [[http://book.realworldhaskell.org/read/error-handling.html][=catchError=]]
 
 #+BEGIN_SRC haskell
 main :: IO ()
@@ -514,6 +560,14 @@ readPrompt prompt = flushStr prompt >> getLine
 
 evalAndPrint :: Env -> String -> IO ()
 evalAndPrint env expr =  evalString env expr >>= putStrLn
+
+trapError action = catchError action (return . show)
+
+extractValue :: ThrowsError a -> a
+extractValue (Right val) = val
+
+runIOThrows :: IOThrowsError String -> IO String
+runIOThrows action = runErrorT (trapError action) >>= return . extractValue
 
 evalString :: Env -> String -> IO String
 evalString env expr = runIOThrows $ liftM show $ liftThrows (readExpr expr) >>= eval env
@@ -551,6 +605,8 @@ foo
 ------------------------------------------------------------------------------
 * built-in functions
 
+** const
+
 #+BEGIN_SRC haskell
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
@@ -586,7 +642,7 @@ numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBinop unpacker op args = if length args /= 2
                              then throwError $ NumArgs 2 args
-                             else do left <- unpacker $ args !! 0
+                             else do left  <- unpacker $ args !! 0
                                      right <- unpacker $ args !! 1
                                      return $ Bool $ left `op` right
 
@@ -671,9 +727,11 @@ equal badArgList = throwError $ NumArgs 2 badArgList
 #+BEGIN_SRC haskell
 rt = runTests
 runTests = do
-    runTestTT testRepresentation
-    runTestTT testErrorHandling
-    runTestTT testParsing
+    mapM_ runTestTT [testRepresentation
+                    ,testErrorHandling
+                    ,testParsing
+                    ,testVariables
+                    ]
     return ()
 #+END_SRC
 
