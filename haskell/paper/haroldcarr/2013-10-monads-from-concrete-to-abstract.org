@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 03 (Sun) 16:17:47 by carr.
+Last Modified : 2013 Nov 03 (Sun) 21:56:36 by carr.
 
 ------------------------------------------------------------------------------
 * definition one : sequencing/piping
@@ -206,7 +206,7 @@ class  Monad m  where
     return      :: a -> m a
 #+END_EXAMPLE
 
-In the case of =Maybe=, that means =return x= is the same as =Just x=:
+In the case of =Maybe=, =return x= is =Just x=:
 
 #+BEGIN_EXAMPLE
 instance  Monad Maybe  where
@@ -386,7 +386,7 @@ a list:
 -- data [] a = [] | a : [a]
 #+END_EXAMPLE
 
-can be used to represent none (=[]=) or one or more (=[x, ...]=) results (i.e., non-deterministic).
+can be used to represent none (=[]=) or one or more (=[x, ...]=) results.
 
 The list =Monad= typeclass instance:
 
@@ -419,10 +419,11 @@ listExampleNonMonadic i f1 f2 =
 
 Note: =listExampleNonMonadic= is a bit contrived (as are the examples
 in the tests below).  The idea is to keep the examples consistent
-between the different =Monad= class instances.  It is really not
-necessary to check for =[]= to "short-circuit" further evaluation,
-since any function returning =[]= will effectively "stop" the
-pipeline:
+between the different =Monad= class instances.
+
+Although the above function checks for =[]= to "short-circuit" further
+evaluation, it is not really necessary since any function returning
+=[]= will operarate the same:
 
 #+BEGIN_SRC haskell
 listExampleNonMonadic' :: [a] -> (a -> [a1]) -> (a1 -> b) -> [b]
@@ -548,7 +549,67 @@ ti1 = t "ti1"
       True
 #+END_SRC
 
-** TODO
+** TODO - no way to pass a value outside of a monad (except unsafe)
+
+------------------------------------------------------------------------------
+* =Monad= laws
+
+- [[http://www.haskell.org/haskellwiki/Monad_laws]]
+
+#+BEGIN_SRC haskell
+leftIdentity :: (Eq (m b), Monad m) => a -> (a -> m b) -> Bool
+leftIdentity a f = (return a >>= f) == f a
+
+tw1 = t "tw1"
+      [leftIdentity  3  ((\x -> Nothing) :: Int -> Maybe Int)
+      ,leftIdentity  3   (Just   . (+2))
+
+      ,leftIdentity  3  ((Left   . (+2)) :: Int -> Either Int Int)
+      ,leftIdentity  3  ((Right  . (+2)) :: Int -> Either Int Int)
+
+      ,leftIdentity  3   (\x   -> [x*2])
+      ,leftIdentity  3  ((\x   -> [   ]) :: Int -> [Int])
+      ]
+      True
+
+rightIdentity :: (Eq (m b), Monad m) => m b -> Bool
+rightIdentity m = (m >>= return) == m
+
+tw2 = t "tw2"
+      [rightIdentity   (Just  3)
+      ,rightIdentity   (Nothing  :: Maybe Int)
+
+      ,rightIdentity  ((Left  3) :: Either Int Int)
+      ,rightIdentity  ((Right 3) :: Either Int Int)
+
+      ,rightIdentity   [3]
+      ,rightIdentity  ([]        :: [Int])
+      ]
+      True
+
+associativity :: (Eq (m b), Monad m) => m a -> (a -> m a1) -> (a1 -> m b) -> Bool
+associativity m f g = ((m >>= f) >>= g) == (m >>= (\x -> f x >>= g))
+
+tw3 = t "tw3"
+      [associativity (Just 3)  (\x -> Nothing)  (Just . (*2))
+      ,associativity (Just 3)  (Just  . (+2))   ((\x -> Nothing) :: Int -> Maybe Int)
+      ,associativity (Just 3)  (Just  . (+2))    (Just . (*2))
+
+      ,associativity (Left 3) ((Left  . (+2)) :: Int -> Either Int Int)
+                              ((Left  . (*2)) :: Int -> Either Int Int)
+
+      ,associativity (Left 3) ((Right . (+2)) :: Int -> Either Int Int)
+                              ((Left  . (*2)) :: Int -> Either Int Int)
+
+      ,associativity [3]       (\x  -> [   ])    (\x -> [x*2])
+      ,associativity [3]       (\x  -> [x+2])   ((\x -> [   ])   :: Int -> [Int])
+      ,associativity [3]       (\x  -> [x+2])    (\x -> [x*2])
+      ]
+      True
+#+END_SRC
+
+#+results:
+: True
 
 ------------------------------------------------------------------------------
 * =Monad= class
@@ -607,7 +668,8 @@ main =
     runTestTT $ TestList $ tm1 ++ tm2 ++ tm3 ++ tm4 ++ tm5 ++
                            te1 ++ te2 ++ te3 ++
                            tl1 ++ tl2 ++ tl3 ++
-                           ti1
+                           ti1 ++
+                           tw1 ++ tw2 ++ tw3
 #+END_SRC
 
 # End of file.

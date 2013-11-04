@@ -14,7 +14,7 @@ tags: haskell, scheme
 #+END_HTML
 
 # Created       : 2013 Nov 01 (Fri) 14:33:34 by carr.
-Last Modified : 2013 Nov 02 (Sat) 21:31:24 by carr.
+Last Modified : 2013 Nov 03 (Sun) 19:51:12 by carr.
 
 - [[http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours]]
 
@@ -720,6 +720,11 @@ equal [arg1, arg2] = do
     return $ Bool (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList
 #+END_SRC
+
+------------------------------------------------------------------------------
+* see also
+
+- [[https://github.com/walpurgisriot/wisp]]
 
 ------------------------------------------------------------------------------
 * example accuracy
