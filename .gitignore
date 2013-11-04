@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Nov 02 (Sat) 10:20:50 by carr.
+# Last Modified : 2013 Nov 04 (Mon) 07:44:59 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -67,6 +67,7 @@ haskell/.Notes-xmonad.org
 haskell/.Notes.org
 
 haskell/book/Discrete_Mathematics_Using_a_Computer
+haskell/book/Haskell_Financial_Data_Modeling/
 haskell/book/Haskell_Road_to_Logic_Maths_and_Programming
 
 haskell/book/Learn_You_a_Haskell/helloworld
