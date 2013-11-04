@@ -1,0 +1,239 @@
+#+TITLE:       the state monad
+#+AUTHOR:      Harold Carr
+#+DESCRIPTION: the state monad
+#+PROPERTY:    tangle 2013-10-state-monad.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+#+BEGIN_HTML
+---
+title: the state monad
+tags: haskell, monad, state
+---
+#+END_HTML
+
+# Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
+Last Modified : 2013 Nov 03 (Sun) 16:14:33 by carr.
+
+------------------------------------------------------------------------------
+* setup
+
+#+BEGIN_SRC haskell
+{-# LANGUAGE FlexibleInstances #-}
+
+import Control.Monad.State
+import Data.Char
+import Data.Either
+import System.IO.Unsafe -- for one unit test
+import System.IO
+import Test.HUnit hiding (State) -- for unit testing examples
+#+END_SRC
+
+** unit test
+
+Rather than showing GHCI input/output this article show test input/expected results.
+
+#+BEGIN_SRC haskell
+t :: (Eq a) => (Show a) => String -> [a] -> a -> [Test]
+t testName actuals expected = map (TestCase . assertEqual testName expected) actuals
+#+END_SRC
+
+------------------------------------------------------------------------------
+* =State=
+
+State can be represented as =(a, s)=, where =a= is result of a
+function on a given state and =s= is the new state that results from
+evaluating that function.  To maintain state along a pipeline of
+functions, the state pair resulting at each step is pass to the next
+step:
+
+#+BEGIN_SRC haskell
+stateExampleNonMonadicExplicitState i f1 f2 =
+    case f1 i of
+        (c1 ,s1) -> case f2 s1 of
+                        (c2, s2) -> (c1:c2:[], s2)
+
+shift (s:ss) = (chr (ord s - 71), ss)
+upper (s:ss) = ( toUpper s      , ss)
+
+ts1 = t "ts1"
+      [stateExampleNonMonadicExplicitState "hello world" shift upper
+      ]
+      ("!E","llo world")
+#+END_SRC
+
+(Note: in the above example, the type of the result of
+=stateExampleNonMonadicExplicitState= is not a state pair like the
+state pair used in the rest of the function.  It is a pair that allows
+us to see the result of the intermediate evaluations.  Also note that
+the structure of this example is similar but not identical to the
+previous examples.)
+
+Threading the state through the various stages can be avoided using
+monads.  The =State= =Monad= type and typeclass instance has many
+layers of abstraction.  Rather than showing it now, it is built up
+from scratch.
+
+** TODO cite RWH
+
+# --------------------------------------------------
+
+A state-specific version of =>>== is defined as:
+
+#+BEGIN_SRC haskell
+bind' ::         (s -> (a, s))   -- leftFun
+        -> (a -> (s -> (b, s)))  -- rightFun
+        ->       (s -> (b, s))   -- result
+bind' leftFun rightFun startState =
+    let (leftResult, leftState) = leftFun startState
+    in  (rightFun leftResult) leftState
+#+END_SRC
+
+(Note: It is called =bind=' because =>>== is called "bind".)
+
+- The =startState= is given to =leftFun=.
+  - =leftFun= returns its result and the new state as =(leftResult, leftState)=.
+- =rightFun= is given =leftResult= and =leftState=.
+  - =rightFun= returns ...
+
+
+#+BEGIN_SRC haskell
+return' :: a -> (s -> ( a, s))
+return'    a =  \s -> ( a, s)
+
+get'    ::       s -> ( s, s)
+get'         =  \s -> ( s, s)
+
+put'    :: s ->  s -> ((), s)
+put'       s =  \_ -> ((), s)
+#+END_SRC
+
+# -------------------------
+
+#+BEGIN_SRC haskell
+stateExample' :: a -> (a -> a -> (a1, a)) -> (a -> a -> (a1, a)) -> ([a1], a)
+stateExample' i f1 f2 =
+   (get'         `bind'`
+    \s0 -> f1 s0 `bind'`
+    \r1 -> get'  `bind'`
+    \s1 -> f2 s1 `bind'`
+    \r2 -> get'  `bind'`
+    \s2 -> return' (r1:r2:[]) ) i
+
+shift' :: [Char] -> ([Char] -> (Char, [Char]))
+shift' (s:ss) = put' ss `bind'` \_ -> return' $ chr (ord s - 71)
+
+upper' :: [Char] -> ([Char] -> (Char, [Char]))
+upper' (s:ss) = put' ss `bind'` \_ -> return' $ toUpper s
+
+ts2 = t "ts2"
+      [stateExample' "hello world" shift' upper'
+      ]
+      ("!E","llo world")
+#+END_SRC
+
+- [[http://hackage.haskell.org/package/transformers-0.3.0.0/docs/src/Control-Monad-Trans-State-Lazy.html#State]]
+
+#+BEGIN_EXAMPLE
+:i State
+-- type State s = StateT s Data.Functor.Identity.Identity
+
+:i StateT
+-- newtype StateT s m a = StateT {runStateT :: s -> m (a, s)}
+-- instance Monad m => Monad (StateT s m)
+
+:i runState
+-- runState :: State s a -> s -> (a, s)
+#+END_EXAMPLE
+
+- [[http://hackage.haskell.org/package/mtl-2.1.1/docs/src/Control-Monad-State-Class.html#MonadState]]
+
+#+BEGIN_EXAMPLE
+class Monad m => MonadState s m | m -> s where
+    -- | Return the state from the internals of the monad.
+    get :: m s
+    get = state (\s -> (s, s))
+
+    -- | Replace the state inside the monad.
+    put :: s -> m ()
+    put s = state (\_ -> ((), s))
+
+    -- | Embed a simple state action into the monad.
+    state :: (s -> (a, s)) -> m a
+    state f = do
+      s <- get
+      let ~(a, s') = f s
+      put s'
+      return a
+#+END_EXAMPLE
+
+#+BEGIN_SRC haskell
+stateExampleMonadic   :: String -> (String -> State String Char) -> (String -> State String Char) -> (String, String)
+stateExampleMonadic i f1 f2 =
+  runState
+   (get          >>=
+    \s0 -> f1 s0 >>=
+    \r1 -> get   >>=
+    \s1 -> f2 s1 >>=
+    \r2 -> get   >>=
+    \s2 -> return (r1:r2:[]) ) i
+
+shiftM :: String -> State String Char
+shiftM (s:ss) = put ss >>= \x -> return $ chr (ord s - 71)
+
+upperM :: String -> State String Char
+upperM (s:ss) = put ss >>= \x -> return $ toUpper s
+
+ts3 = t "ts3"
+      [stateExampleMonadic "hello world" shiftM upperM
+      ]
+      ("!E","llo world")
+
+stateExampleMonadicDo :: String -> (String -> State String Char) -> (String -> State String Char) -> (String, String)
+stateExampleMonadicDo i f1 f2 =
+ runState
+  (do
+    s0 <- get
+    r1 <- f1 s0
+    s1 <- get
+    r2 <- f2 s1
+    s2 <- get
+    return (r1:r2:[]) ) i
+
+ts4 = t "ts4"
+      [stateExampleMonadicDo "hello world" shiftM upperM
+      ]
+      ("!E","llo world")
+#+END_SRC
+
+diagram:
+- http://stackoverflow.com/questions/10230562/confusion-over-the-state-monad-code-on-learn-you-a-haskell
+
+shows >>=
+- http://www.engr.mun.ca/~theo/Misc/haskell_and_monads.htm
+
+expansion of haskell's wikibook state monad page:
+- http://xyne.archlinux.ca/notes/haskell/the_state_monad.html
+
+useful:
+- http://www.codejury.com/handling-state-with-monads/
+
+
+SEE:?
+- http://www.haskell.org/haskellwiki/State_Monad
+- [[http://brandon.si/code/the-state-monad-a-tutorial-for-the-confused/]]
+- http://stackoverflow.com/questions/5310203/how-to-use-instances-of-monad-and-confusion-about
+- [[http://embedntks.com/haskells-state-monad/]]
+
+------------------------------------------------------------------------------
+* example accuracy
+
+#+BEGIN_SRC haskell
+main = do
+    runTestTT $ TestList $ ts1 ++ ts2 ++ ts3 ++ ts4
+#+END_SRC
+
+# End of file.
+
+
