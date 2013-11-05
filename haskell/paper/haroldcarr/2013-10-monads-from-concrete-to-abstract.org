@@ -14,14 +14,16 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:16:07 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:56:31 by carr.
 
 ------------------------------------------------------------------------------
-* definition one : sequencing/piping
+* definition
 
 A =Monad= is used to pipe the output of one function into another.
 
 A =Monad= causes the first function to be evaluated before the second function (important in a lazy language).
+
+A =Monad= places values into monads and extracts values from monads at appropriate moments.
 
 Note: a =Monad= has nothing to do with side-effects.
 
@@ -64,7 +66,7 @@ The =Just= and =Nothing= parts of =Maybe= type definition have nothing to do wit
 A common pattern is to check =Maybe= results:
 
 #+BEGIN_SRC haskell
-maybeExampleNonMonadic :: Maybe t -> (t -> Maybe t1) -> (t1 -> a) -> Maybe a
+maybeExampleNonMonadic :: Maybe t -> (t -> Maybe a) -> (a -> b) -> Maybe b
 maybeExampleNonMonadic i f1 f2 =
     case i of
         Nothing -> Nothing
@@ -97,7 +99,7 @@ tm1 = tt "tm1"
 
 In =tm1= the result is =Nothing= immediately if the input is
 =Nothing=.  Or, if the input is =(Just 3)= but =f1= (here =toNothing=)
-returns =Nothing= then =Nothing= is return at that step (and
+returns =Nothing= then =Nothing= is returned at that step (and
 =nonMonadicDouble= is never called).
 
 #+BEGIN_SRC haskell
@@ -112,7 +114,7 @@ Since the pattern in =maybeExampleNonMonadic= is common, it is abstracted into t
 aspects of =Maybe= such that it can be rewritten as:
 
 #+BEGIN_SRC haskell
-exampleMonadic :: Monad m => m a1 -> (a1 -> m a) -> (a -> b) -> m b
+exampleMonadic :: Monad m => m t -> (t -> m a) -> (a -> b) -> m b
 exampleMonadic i f1 f2 =
      i >>= f1 >>= return . f2
 #+END_SRC
@@ -123,11 +125,10 @@ the short-circuiting of =Nothing= and the sequencing of values is factored
 into the =Maybe= =Monad= instance (shown below).
 
 Note: =do= notation can be used instead of =>>== (note: the type
-signatures of =exampleMonadic= and =exampleMonadicDo= are identical,
-modulo type variable alpha-conversion):
+signatures of =exampleMonadic= and =exampleMonadicDo= are identical).
 
 #+BEGIN_SRC haskell
-exampleMonadicDo :: Monad m => m t -> (t -> m t1) -> (t1 -> b) -> m b
+exampleMonadicDo :: Monad m => m t -> (t -> m a) -> (a -> b) -> m b
 exampleMonadicDo i f1 f2 = do
     x <- i
     y <- f1 x
@@ -211,7 +212,7 @@ instance  Monad Maybe  where
     return              = Just
 #+END_EXAMPLE
 
-Type-inferencing in the compiler decides with =instance= or =return= to use.
+Type-inferencing in the compiler decides which =instance= of =return= to use.
 
 Note: in =exampleMonadic=, =Just . f2= could have been used in place
 of =return . f2= --- they are the same thing in this context.
@@ -225,7 +226,7 @@ is not named =maybeExampleMonadic=).
 Given the definition:
 
 #+BEGIN_EXAMPLE
-exampleMonadic :: Monad m => m a1 -> (a1 -> m a) -> (a -> b) -> m b
+exampleMonadic :: Monad m => m t -> (t -> m a) -> (a -> b) -> m b
 exampleMonadic i f1 f2 =
      i >>= f1 >>= return . f2
 #+END_EXAMPLE
@@ -236,7 +237,7 @@ and the application:
 exampleMonadic         Nothing  Just      nonMonadicDouble
 #+END_EXAMPLE
 
-- =Nothing= value constructor creates a =Maybe a1= =Monad= instance
+- =Nothing= value constructor creates a =Maybe t= =Monad= instance
 - =Nothing= is value of =i=
 - =i= is the left argument of the first =>>==
 - Since the value is =Nothing=, =f1= is never called and the first =>>== returns =Nothing=
@@ -314,7 +315,7 @@ short-circuiting on =Left=, the =Left= information is retained and
 returned:
 
 #+BEGIN_SRC haskell
-eitherExampleNonMonadic :: Either a t -> (t -> Either a t1) -> (t1 -> b) -> Either a b
+eitherExampleNonMonadic :: Either l t -> (t -> Either l a) -> (a -> b) -> Either l b
 eitherExampleNonMonadic i f1 f2 =
     case i of
         Left  l -> Left l
@@ -371,7 +372,7 @@ te3 = tt "te3"
 Notice how =exampleMonadic= was able to be used with both =Either= and =Maybe=.
 That is because the appropriate instance of =>>== and =return= are used based on the type.
 
-** TODO : =Monad= instance definition of =Either= is partically applied type constructor.
+** TODO : =Monad= instance definition of =Either= is partially applied type constructor.
 
 ------------------------------------------------------------------------------
 * =[]=
@@ -402,10 +403,10 @@ shows that the function =k= is applied to each element of the list
 list.  The results of all the calls to =k= are appended into a single
 list.
 
-Therefore the non-monadic version of pipelining function might be:
+A non-monadic version of pipelining function might be:
 
 #+BEGIN_SRC haskell
-listExampleNonMonadic :: [a1] -> (a1 -> [a2]) -> (a2 -> a) -> [a]
+listExampleNonMonadic :: [t] -> (t -> [a]) -> (a -> b) -> [b]
 listExampleNonMonadic i f1 f2 =
     case i of
         [] -> []
@@ -415,22 +416,22 @@ listExampleNonMonadic i f1 f2 =
 #+END_SRC
 
 
-Note: =listExampleNonMonadic= is a bit contrived (as are the examples
-in the tests below).  The idea is to keep the examples consistent
-between the different =Monad= class instances.
+(Note: =listExampleNonMonadic= is a bit contrived, as are the examples
+in the tests below.  The idea is to keep the examples consistent
+between the different =Monad= class instances.)
 
 Although the above function checks for =[]= to "short-circuit" further
 evaluation, it is not really necessary since any function returning
-=[]= will operarate the same:
+=[]= will operate the same:
 
 #+BEGIN_SRC haskell
-listExampleNonMonadic' :: [a] -> (a -> [a1]) -> (a1 -> b) -> [b]
+listExampleNonMonadic' :: [t] -> (t -> [a]) -> (a -> b) -> [b]
 listExampleNonMonadic' i f1 f2 =
     let xs = i
         ys = concatMap f1 xs
     in map f2 ys
 
-listExampleNonMonadic'' :: [a1] -> (a1 -> [a]) -> (a -> b) -> [b]
+listExampleNonMonadic'' :: [t] -> (t -> [a]) -> (a -> b) -> [b]
 listExampleNonMonadic'' i f1 f2 =
     map f2 $ concatMap f1 i
 #+END_SRC
@@ -492,17 +493,17 @@ empty list.
 Notice that the type signatures of all the examples so far are isomorphic:
 
 #+BEGIN_EXAMPLE
-maybeExampleNonMonadic  ::             Maybe  t   -> (t  -> Maybe    t1)  -> (t1 -> a) -> Maybe    a
-exampleMonadic          ::  Monad m => m     a1   -> (a1 -> m         a)  -> (a  -> b) -> m        b
-exampleMonadicDo        ::  Monad m => m      t   -> (t  -> m        t1)  -> (t1 -> b) -> m        b
-eitherExampleNonMonadic ::             Either a t -> (t  -> Either a t1)  -> (t1 -> b) -> Either a b
-listExampleNonMonadic   ::             [a1]       -> (a1 -> [        a2]) -> (a2 -> a) -> [        a]
+maybeExampleNonMonadic  ::             Maybe    t  -> (t  -> Maybe     a)  -> (a  -> b) -> Maybe    b
+exampleMonadic          ::  Monad m => m        t  -> (t ->  m         a)  -> (a  -> b) -> m        b
+exampleMonadicDo        ::  Monad m => m        t  -> (t ->  m         a)  -> (a  -> b) -> m        b
+eitherExampleNonMonadic ::             Either l t  -> (t ->  Either l  a)  -> (a  -> b) -> Either l b
+listExampleNonMonadic   ::             [        t] -> (t ->  [         a]) -> (a  -> b) -> [        b]
 #+END_EXAMPLE
 
 and follow the shape of =>>== :
 
 #+BEGIN_EXAMPLE
-(>>=)                   :: forall a b. m      a   -> (a  -> m         b)               -> m        b
+(>>=)                   :: forall a b. m        a  -> (a  -> m         b)               -> m        b
 #+END_EXAMPLE
 
 ------------------------------------------------------------------------------
