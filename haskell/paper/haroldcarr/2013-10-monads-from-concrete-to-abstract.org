@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:56:31 by carr.
+Last Modified : 2013 Nov 05 (Tue) 09:40:52 by carr.
 
 ------------------------------------------------------------------------------
 * definition
@@ -61,7 +61,7 @@ import System.IO.Unsafe -- for one unit test
 
 For example, a hash table would return =Just <something>= if the key is found, otherwise =Nothing=.
 
-The =Just= and =Nothing= parts of =Maybe= type definition have nothing to do with monads.
+The =Nothing= and =Just= parts of the =Maybe= type definition have nothing to do with monads.
 
 A common pattern is to check =Maybe= results:
 
@@ -256,7 +256,7 @@ exampleMonadic         (Just 3) toNothing nonMonadicDouble
   - extracts =3= from =Just=
   - calls =f1 3=
     - =f1=, in this case, is =toNothing=, so the result of =f1 3= is =Nothing=
-- =Nothing= is the result of the first =>>-==
+- =Nothing= is the result of the first =>>==
 - This =Nothing= result is the input to the left side of the second =>>==
 - Since the value is =Nothing=, =return . f2= is never called and the second =>>== returns =Nothing=
 - =Nothing= is the result of =exampleMonadic=
@@ -308,7 +308,7 @@ instead of =Nothing=:
 evaluation, whereas =(Left x)= signals an error, with =x= containing
 information about the error.
 
-The =Left= and =Right= parts of =Either= type definition have nothing to do with monads.
+The =Left= and =Right= parts of the =Either= type definition have nothing to do with monads.
 
 The pattern of using =Either= is identical to =Maybe= except, when
 short-circuiting on =Left=, the =Left= information is retained and
@@ -387,6 +387,8 @@ a list:
 
 can be used to represent none (=[]=) or one or more (=[x, ...]=) results.
 
+The =[]= and =a : [a]= parts of the =[]= type definition have nothing to do with monads.
+
 The list =Monad= typeclass instance:
 
 - [[http://www.haskell.org/ghc/docs/7.4.2/html/libraries/base/src/GHC-Base.html]] (search for =Monad []=)
@@ -403,7 +405,7 @@ shows that the function =k= is applied to each element of the list
 list.  The results of all the calls to =k= are appended into a single
 list.
 
-A non-monadic version of pipelining function might be:
+A non-monadic list version of the example pipelining function might be:
 
 #+BEGIN_SRC haskell
 listExampleNonMonadic :: [t] -> (t -> [a]) -> (a -> b) -> [b]
@@ -427,12 +429,6 @@ evaluation, it is not really necessary since any function returning
 #+BEGIN_SRC haskell
 listExampleNonMonadic' :: [t] -> (t -> [a]) -> (a -> b) -> [b]
 listExampleNonMonadic' i f1 f2 =
-    let xs = i
-        ys = concatMap f1 xs
-    in map f2 ys
-
-listExampleNonMonadic'' :: [t] -> (t -> [a]) -> (a -> b) -> [b]
-listExampleNonMonadic'' i f1 f2 =
     map f2 $ concatMap f1 i
 #+END_SRC
 
@@ -452,7 +448,6 @@ toList  x = [x]
 tl1 = tt "tl1"
      [listExampleNonMonadic   [ ]      toList   id
      ,listExampleNonMonadic'  [ ]      toList   id
-     ,listExampleNonMonadic'' [ ]      toList   id
      ,exampleMonadic          [ ]      toList   id
      ,exampleMonadicDo        [ ]      toList   id
      ]
@@ -461,7 +456,6 @@ tl1 = tt "tl1"
 tl2 = tt "tl2"
      [listExampleNonMonadic   [1,2,3]  toEmpty  id
      ,listExampleNonMonadic'  [1,2,3]  toEmpty  id
-     ,listExampleNonMonadic'' [1,2,3]  toEmpty  id
      ,exampleMonadic          [1,2,3]  toEmpty  id
      ,exampleMonadicDo        [1,2,3]  toEmpty  id
      ]
@@ -470,7 +464,6 @@ tl2 = tt "tl2"
 tl3 = tt "tl3"
      [listExampleNonMonadic   [1,2,3]  toList   id
      ,listExampleNonMonadic'  [1,2,3]  toList   id
-     ,listExampleNonMonadic'' [1,2,3]  toList   id
      ,exampleMonadic          [1,2,3]  toList   id
      ,exampleMonadicDo        [1,2,3]  toList   id
      ]
@@ -483,12 +476,13 @@ See also:
 ------------------------------------------------------------------------------
 * recap
 
-The monads above did not involve side effects.  They were used for
-sequencing and for "wrapping"/"unwrapping" values to/from monads, and,
-in the explicit case of =Maybe= and =Either=, to short-circuit further
-evaluation on =Nothing= or =Left=.  Explicit short-circuiting was not
-necessary in the list =Monad= because there is "nothing to do" on an
-empty list.
+The monads above were used for
+- sequencing
+- "wrapping"/"unwrapping" values to/from monads
+- in the explicit case of =Maybe= and =Either=, to short-circuit further evaluation on =Nothing= or =Left=.
+  - Explicit short-circuiting was not necessary in the list =Monad= because there is "nothing to do" on an empty list.
+
+Note: the monads above did not involve side effects.
 
 Notice that the type signatures of all the examples so far are isomorphic:
 
@@ -513,12 +507,6 @@ and follow the shape of =>>== :
 in a certain order (e.g., writes happen before reads when prompting
 for user input).  Those operations also perform side-effects.  The
 side-effects are part of =IO=, not part of =Monad=.
-
-There is no way to write a non-monadic =IO= example as was done for
-other =Monad= instances above.  The type system partitions
-side-effecting =IO= computation types from pure functions.  Pure
-functions guarantee the same results for the same inputs.  =IO= does
-not.
 
 #+BEGIN_SRC haskell
 ioExampleMonadic   :: FilePath -> String -> IO Bool
@@ -548,12 +536,21 @@ ti1 = tt "ti1"
       True
 #+END_SRC
 
+There is no way to write a non-monadic =IO= example as was done for
+other =Monad= instances above.  The type system partitions
+side-effecting =IO= computation types from pure functions.  Pure
+functions guarantee the same results for the same inputs.  =IO= does
+not.
+
+
 ** TODO - no way to pass a value outside of a monad (except unsafe)
 
 ------------------------------------------------------------------------------
 * =Monad= laws
 
 - [[http://www.haskell.org/haskellwiki/Monad_laws]]
+
+** TODO - WHY LAWS
 
 #+BEGIN_SRC haskell
 leftIdentity :: (Eq (m b), Monad m) => a -> (a -> m b) -> Bool
@@ -578,8 +575,8 @@ tw2 = tt "tw2"
       [rightIdentity   (Just  3)
       ,rightIdentity   (Nothing  :: Maybe Int)
 
-      ,rightIdentity  ((Left  3) :: Either Int Int)
-      ,rightIdentity  ((Right 3) :: Either Int Int)
+      ,rightIdentity   (Left  3  :: Either Int Int)
+      ,rightIdentity   (Right 3  :: Either Int Int)
 
       ,rightIdentity   [3]
       ,rightIdentity  ([]        :: [Int])
