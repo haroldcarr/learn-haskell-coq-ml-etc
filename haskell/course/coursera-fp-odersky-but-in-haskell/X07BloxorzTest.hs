@@ -1,12 +1,12 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 21:53:58 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:15:32 by carr.
 -}
 
 module X07BloxorzTest where
 
 import Test.HUnit
-import AssertError
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import Data.Vector as V
 import X07GameDef
 import X07Solver

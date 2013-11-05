@@ -1,12 +1,12 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:42:02 by carr.
-Last Modified : 2013 Oct 07 (Mon) 22:43:36 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:15:11 by carr.
 -}
 
 module X04PatMatTest where
 
-import AssertError
 import Test.HUnit
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import X04PatMat
 
 {-# ANN module "HLint: ignore Use string literal" #-}

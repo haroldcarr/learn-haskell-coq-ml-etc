@@ -1,13 +1,13 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Oct 07 (Mon) 22:40:47 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:15:03 by carr.
 -}
 
 module X03ObjSetsTweetSetTest where
 
-import AssertError
 import Control.Monad
 import Test.HUnit
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import X03ObjSetsTweetData
 import X03ObjSetsTweetReader
 import X03ObjSetsTweetSet

@@ -14,7 +14,7 @@ tags: haskell, monad, state
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 03 (Sun) 16:14:33 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:16:18 by carr.
 
 ------------------------------------------------------------------------------
 * setup
@@ -35,8 +35,9 @@ import Test.HUnit hiding (State) -- for unit testing examples
 Rather than showing GHCI input/output this article show test input/expected results.
 
 #+BEGIN_SRC haskell
-t :: (Eq a) => (Show a) => String -> [a] -> a -> [Test]
-t testName actuals expected = map (TestCase . assertEqual testName expected) actuals
+import Test.HUnit hiding (State)
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
+import System.IO.Unsafe -- for one unit test
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -58,8 +59,7 @@ shift (s:ss) = (chr (ord s - 71), ss)
 upper (s:ss) = ( toUpper s      , ss)
 
 ts1 = t "ts1"
-      [stateExampleNonMonadicExplicitState "hello world" shift upper
-      ]
+      (stateExampleNonMonadicExplicitState "hello world" shift upper)
       ("!E","llo world")
 #+END_SRC
 
@@ -128,8 +128,7 @@ upper' :: [Char] -> ([Char] -> (Char, [Char]))
 upper' (s:ss) = put' ss `bind'` \_ -> return' $ toUpper s
 
 ts2 = t "ts2"
-      [stateExample' "hello world" shift' upper'
-      ]
+      (stateExample' "hello world" shift' upper')
       ("!E","llo world")
 #+END_SRC
 
@@ -186,8 +185,7 @@ upperM :: String -> State String Char
 upperM (s:ss) = put ss >>= \x -> return $ toUpper s
 
 ts3 = t "ts3"
-      [stateExampleMonadic "hello world" shiftM upperM
-      ]
+      (stateExampleMonadic "hello world" shiftM upperM)
       ("!E","llo world")
 
 stateExampleMonadicDo :: String -> (String -> State String Char) -> (String -> State String Char) -> (String, String)
@@ -202,8 +200,7 @@ stateExampleMonadicDo i f1 f2 =
     return (r1:r2:[]) ) i
 
 ts4 = t "ts4"
-      [stateExampleMonadicDo "hello world" shiftM upperM
-      ]
+      (stateExampleMonadicDo "hello world" shiftM upperM)
       ("!E","llo world")
 #+END_SRC
 

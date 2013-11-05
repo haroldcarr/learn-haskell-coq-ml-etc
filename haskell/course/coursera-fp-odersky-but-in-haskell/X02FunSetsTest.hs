@@ -1,12 +1,12 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 07 (Mon) 19:16:18 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:14:32 by carr.
 -}
 
 module X02FunSetsTest where
 
 import Test.HUnit
-import AssertError
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import X02FunSets
 
 s1     = singletonSet 1

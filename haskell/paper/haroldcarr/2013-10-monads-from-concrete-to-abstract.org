@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 03 (Sun) 21:56:36 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:16:07 by carr.
 
 ------------------------------------------------------------------------------
 * definition one : sequencing/piping
@@ -34,9 +34,7 @@ Note: a =Monad= has nothing to do with side-effects.
 import Control.Monad.State
 import Data.Char
 import Data.Either
-import System.IO.Unsafe -- for one unit test
 import System.IO
-import Test.HUnit hiding (State) -- for unit testing examples
 #+END_SRC
 
 ** unit test
@@ -44,8 +42,9 @@ import Test.HUnit hiding (State) -- for unit testing examples
 Rather than showing GHCI input/output this article show test input/expected results.
 
 #+BEGIN_SRC haskell
-t :: (Eq a) => (Show a) => String -> [a] -> a -> [Test]
-t testName actuals expected = map (TestCase . assertEqual testName expected) actuals
+import Test.HUnit hiding (State)
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
+import System.IO.Unsafe -- for one unit test
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -89,7 +88,7 @@ toNothing    x =  Nothing
 nonMonadicDouble :: Num a => a -> a
 nonMonadicDouble x = x + x
 
-tm1 = t "tm1"
+tm1 = tt "tm1"
      [maybeExampleNonMonadic Nothing  Just      nonMonadicDouble
      ,maybeExampleNonMonadic (Just 3) toNothing nonMonadicDouble
      ]
@@ -103,8 +102,7 @@ returns =Nothing= then =Nothing= is return at that step (and
 
 #+BEGIN_SRC haskell
 tm2 = t "tm2"
-     [maybeExampleNonMonadic (Just 3) Just      nonMonadicDouble
-     ]
+     (maybeExampleNonMonadic (Just 3) Just      nonMonadicDouble)
      (Just 6)
 #+END_SRC
 
@@ -141,21 +139,21 @@ In the above, =return= can be thought of as an alias (in this context) for =Just
 All three version of the example function return equivalent results:
 
 #+BEGIN_SRC haskell
-tm3 = t "tm3"
+tm3 = tt "tm3"
      [maybeExampleNonMonadic Nothing  Just      nonMonadicDouble
      ,exampleMonadic         Nothing  Just      nonMonadicDouble
      ,exampleMonadicDo       Nothing  Just      nonMonadicDouble
      ]
      Nothing
 
-tm4 = t "tm4"
+tm4 = tt "tm4"
      [maybeExampleNonMonadic (Just 3) toNothing nonMonadicDouble
      ,exampleMonadic         (Just 3) toNothing nonMonadicDouble
      ,exampleMonadicDo       (Just 3) toNothing nonMonadicDouble
      ]
      Nothing
 
-tm5 = t "tm5"
+tm5 = tt "tm5"
      [maybeExampleNonMonadic (Just 3) Just      nonMonadicDouble
      ,exampleMonadic         (Just 3) Just      nonMonadicDouble
      ,exampleMonadicDo       (Just 3) Just      nonMonadicDouble
@@ -348,21 +346,21 @@ toRight = Right
 toLeft :: Int -> Either Int Int
 toLeft  = Left
 
-te1 = t "te1"
+te1 = tt "te1"
      [eitherExampleNonMonadic (Left (-1)) toRight nonMonadicDouble
      ,exampleMonadic          (Left (-1)) toRight nonMonadicDouble
      ,exampleMonadicDo        (Left (-1)) toRight nonMonadicDouble
      ]
      (Left (-1))
 
-te2 = t "te2"
+te2 = tt "te2"
      [eitherExampleNonMonadic (Right 3)   toLeft  nonMonadicDouble
      ,exampleMonadic          (Right 3)   toLeft  nonMonadicDouble
      ,exampleMonadicDo        (Right 3)   toLeft  nonMonadicDouble
      ]
      (Left 3)
 
-te3 = t "te3"
+te3 = tt "te3"
      [eitherExampleNonMonadic (Right 3)   toRight nonMonadicDouble
      ,exampleMonadic          (Right 3)   toRight nonMonadicDouble
      ,exampleMonadicDo        (Right 3)   toRight nonMonadicDouble
@@ -450,7 +448,7 @@ toEmpty x = [ ]
 toList  :: Int -> [Int]
 toList  x = [x]
 
-tl1 = t "tl1"
+tl1 = tt "tl1"
      [listExampleNonMonadic   [ ]      toList   id
      ,listExampleNonMonadic'  [ ]      toList   id
      ,listExampleNonMonadic'' [ ]      toList   id
@@ -459,7 +457,7 @@ tl1 = t "tl1"
      ]
      []
 
-tl2 = t "tl2"
+tl2 = tt "tl2"
      [listExampleNonMonadic   [1,2,3]  toEmpty  id
      ,listExampleNonMonadic'  [1,2,3]  toEmpty  id
      ,listExampleNonMonadic'' [1,2,3]  toEmpty  id
@@ -468,7 +466,7 @@ tl2 = t "tl2"
      ]
      []
 
-tl3 = t "tl3"
+tl3 = tt "tl3"
      [listExampleNonMonadic   [1,2,3]  toList   id
      ,listExampleNonMonadic'  [1,2,3]  toList   id
      ,listExampleNonMonadic'' [1,2,3]  toList   id
@@ -542,7 +540,7 @@ ioExampleMonadicDo filename output = do
     hClose i
     return (input == output)
 
-ti1 = t "ti1"
+ti1 = tt "ti1"
       [unsafePerformIO $ ioExampleMonadic   "/tmp/BAR.txt"  "BAR"
       ,unsafePerformIO $ ioExampleMonadicDo "/tmp/BAR.txt"  "BAR"
       ]
@@ -560,7 +558,7 @@ ti1 = t "ti1"
 leftIdentity :: (Eq (m b), Monad m) => a -> (a -> m b) -> Bool
 leftIdentity a f = (return a >>= f) == f a
 
-tw1 = t "tw1"
+tw1 = tt "tw1"
       [leftIdentity  3  ((\x -> Nothing) :: Int -> Maybe Int)
       ,leftIdentity  3   (Just   . (+2))
 
@@ -575,7 +573,7 @@ tw1 = t "tw1"
 rightIdentity :: (Eq (m b), Monad m) => m b -> Bool
 rightIdentity m = (m >>= return) == m
 
-tw2 = t "tw2"
+tw2 = tt "tw2"
       [rightIdentity   (Just  3)
       ,rightIdentity   (Nothing  :: Maybe Int)
 
@@ -590,7 +588,7 @@ tw2 = t "tw2"
 associativity :: (Eq (m b), Monad m) => m a -> (a -> m a1) -> (a1 -> m b) -> Bool
 associativity m f g = ((m >>= f) >>= g) == (m >>= (\x -> f x >>= g))
 
-tw3 = t "tw3"
+tw3 = tt "tw3"
       [associativity (Just 3)  (\x -> Nothing)  (Just . (*2))
       ,associativity (Just 3)  (Just  . (+2))   ((\x -> Nothing) :: Int -> Maybe Int)
       ,associativity (Just 3)  (Just  . (+2))    (Just . (*2))

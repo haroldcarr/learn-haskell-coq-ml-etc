@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 07 (Mon) 19:20:56 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:14:39 by carr.
 -}
 
 module X02FunSetsWorksheet
@@ -11,7 +11,7 @@ module X02FunSetsWorksheet
 ) where
 
 import Test.HUnit
-import AssertError
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 
 -- currying
 sum' :: (Int -> Int) -> Int -> Int -> Int

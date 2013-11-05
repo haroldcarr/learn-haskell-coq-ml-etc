@@ -1,12 +1,12 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:41:15 by carr.
-Last Modified : 2013 Oct 25 (Fri) 15:06:32 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:15:22 by carr.
 -}
 
 module X06ForCompTest where
 
 import Test.HUnit
-import AssertError
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import qualified Data.Map.Strict as M
 import System.IO.Unsafe
 import X06ForComp

@@ -1,10 +1,10 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 07 (Mon) 19:33:02 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:14:08 by carr.
 -}
 
 import Test.HUnit
-import AssertError
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import X00Lists
 
 tests = TestList

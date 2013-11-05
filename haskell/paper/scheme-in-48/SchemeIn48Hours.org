@@ -14,7 +14,7 @@ tags: haskell, scheme
 #+END_HTML
 
 # Created       : 2013 Nov 01 (Fri) 14:33:34 by carr.
-Last Modified : 2013 Nov 03 (Sun) 19:51:12 by carr.
+Last Modified : 2013 Nov 04 (Mon) 21:16:34 by carr.
 
 - [[http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours]]
 
@@ -38,9 +38,9 @@ import System.IO
 Imports for unit testing:
 
 #+BEGIN_SRC haskell
-import HCHUnit
-import System.IO.Unsafe (unsafePerformIO)
 import Test.HUnit
+import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
+import System.IO.Unsafe (unsafePerformIO)
 #+END_SRC
 
 ------------------------------------------------------------------------------
