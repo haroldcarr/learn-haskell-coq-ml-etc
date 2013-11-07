@@ -1,15 +1,15 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:41:15 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:15:22 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:24:42 by carr.
 -}
 
-module X06ForCompTest where
+module FP06ForCompTest where
 
 import Test.HUnit
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import qualified Data.Map.Strict as M
 import System.IO.Unsafe
-import X06ForComp
+import FP06ForComp
 
 dictionaryByOccurrences' = unsafePerformIO dictionaryByOccurrences
 

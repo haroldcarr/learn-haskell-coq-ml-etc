@@ -1,12 +1,12 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 21:40:40 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:25:10 by carr.
 -}
 
-module X07Solver where
+module FP07Solver where
 
-import X07GameDef
-import X07StringParserTerrain
+import FP07GameDef
+import FP07StringParserTerrain
 
 done game b = b == Block (goal game) (goal game)
 

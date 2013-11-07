@@ -14,7 +14,28 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 05 (Tue) 09:40:52 by carr.
+Last Modified : 2013 Nov 05 (Tue) 20:17:18 by carr.
+
+#+BEGIN_COMMENT
+http://stackoverflow.com/questions/44965/what-is-a-monad A BUNCH OF
+STUFF Search for:
+If each step returns a success/failure indicator, you can have bind
+execute the next step only if the previous one succeeded. In this way,
+a failing step aborts the whole sequence "automatically", without any
+conditional testing from you. (The Failure Monad.)
+
+
+
+http://stackoverflow.com/questions/3433608/explanation-of-monad-laws
+For the most part, you can think of the extra monadic structure as a
+sequence of extra behaviors associated with a monadic value;
+e.g. Maybe being "give up" for Nothing and "keep going" for
+Just. Combining two monadic actions then essentially concatenates the
+sequences of behaviors they held.
+
+ME: the examples are designed to be extremely simple (and contrived)
+so what stands out is the mechanics of monad operation.
+#+END_COMMENT
 
 ------------------------------------------------------------------------------
 * definition
@@ -544,6 +565,11 @@ not.
 
 
 ** TODO - no way to pass a value outside of a monad (except unsafe)
+
+#+BEGIN_COMMENT
+https://www.destroyallsoftware.com/talks/boundaries
+IO Monda: value representation of an action that should be taken
+#+END_COMMENT
 
 ------------------------------------------------------------------------------
 * =Monad= laws

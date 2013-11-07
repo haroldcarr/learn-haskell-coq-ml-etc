@@ -1,16 +1,16 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:15:32 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:24:54 by carr.
 -}
 
-module X07BloxorzTest where
+module FP07BloxorzTest where
 
 import Test.HUnit
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import Data.Vector as V
-import X07GameDef
-import X07Solver
-import X07StringParserTerrain
+import FP07GameDef
+import FP07Solver
+import FP07StringParserTerrain
 
 solve :: Game -> [Move] -> Block
 solve game = Prelude.foldl step (startBlock game)

@@ -2,7 +2,7 @@
 
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 03 (Thu) 15:47:50 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:23:12 by carr.
 
 See my question and answers on Set representation:
     http://stackoverflow.com/questions/19086408/haskell-how-to-define-instance-show-set-for-type-set-int-bool
@@ -13,7 +13,7 @@ Also:
 NOTE: LANGUAGE above only needed for Set' representation below.
 -}
 
-module X02FunSets where
+module FP02FunSets where
 
 import Data.List (intercalate)
 

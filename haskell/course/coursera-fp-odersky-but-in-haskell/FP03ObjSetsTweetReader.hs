@@ -1,11 +1,11 @@
 {-
 Created       : 2013 Oct 01 (Tue) 21:00:47 by carr.
-Last Modified : 2013 Oct 03 (Thu) 15:46:39 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:23:47 by carr.
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module X03ObjSetsTweetReader where
+module FP03ObjSetsTweetReader where
 
 import           Control.Applicative
 import           Control.Monad
@@ -13,7 +13,7 @@ import           Data.Aeson
 import qualified Data.ByteString.Lazy       as BL
 import qualified Data.ByteString.Lazy.Char8 as C8
 import           Data.Monoid
-import           X03ObjSetsTweetSet
+import           FP03ObjSetsTweetSet
 
 data Tweets = Tweets
     { tweets :: [Tweet]

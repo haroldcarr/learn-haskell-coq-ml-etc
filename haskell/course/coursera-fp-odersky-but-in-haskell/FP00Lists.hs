@@ -1,9 +1,9 @@
 {-
 Created       : 2013 Sep 27 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 03 (Thu) 15:46:54 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:22:40 by carr.
 -}
 
-module X00Lists where
+module FP00Lists where
 
 {-# ANN sum' "HLint: ignore Use sum" #-}
 sum' :: [Int] -> Int

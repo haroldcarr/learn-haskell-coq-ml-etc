@@ -1,9 +1,9 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 21:36:59 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:25:01 by carr.
 -}
 
-module X07GameDef where
+module FP07GameDef where
 
 data Game = Game { terrain  :: Pos -> Bool
                  , startPos :: Pos

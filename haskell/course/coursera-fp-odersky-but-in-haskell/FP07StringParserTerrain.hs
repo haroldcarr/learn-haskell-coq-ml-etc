@@ -1,13 +1,13 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Oct 30 (Wed) 17:36:20 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:25:20 by carr.
 -}
 
-module X07StringParserTerrain where
+module FP07StringParserTerrain where
 
 import Data.Vector as V
 import SplitLines
-import X07GameDef
+import FP07GameDef
 
 {-# ANN terrainFunction "HLint: ignore Redundant if" #-}
 terrainFunction :: Vector (Vector Char) -> Pos -> Bool

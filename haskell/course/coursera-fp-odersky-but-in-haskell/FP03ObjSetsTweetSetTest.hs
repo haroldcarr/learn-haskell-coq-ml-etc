@@ -1,16 +1,16 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:15:03 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:24:05 by carr.
 -}
 
-module X03ObjSetsTweetSetTest where
+module FP03ObjSetsTweetSetTest where
 
 import Control.Monad
 import Test.HUnit
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import X03ObjSetsTweetData
-import X03ObjSetsTweetReader
-import X03ObjSetsTweetSet
+import FP03ObjSetsTweetData
+import FP03ObjSetsTweetReader
+import FP03ObjSetsTweetSet
 
 set1  = Empty
 set2  = incl set1  (Tweet "a" "a body" 20)

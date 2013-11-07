@@ -1,9 +1,9 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:41:15 by carr.
-Last Modified : 2013 Oct 07 (Mon) 22:38:54 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:24:14 by carr.
 -}
 
-module X04PatMat where
+module FP04PatMat where
 
 import Data.List (find)
 

@@ -1,9 +1,9 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Oct 02 (Wed) 22:10:26 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:22:58 by carr.
 -}
 
-module X01RecFun where
+module FP01RecFun where
 
 import Control.Applicative
 import Text.Printf

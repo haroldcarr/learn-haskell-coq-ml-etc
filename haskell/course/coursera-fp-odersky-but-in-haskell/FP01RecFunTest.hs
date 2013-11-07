@@ -1,11 +1,11 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:14:23 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:23:05 by carr.
 -}
 
 import Test.HUnit
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import X01RecFun
+import FP01RecFun
 
 tests = TestList
     [

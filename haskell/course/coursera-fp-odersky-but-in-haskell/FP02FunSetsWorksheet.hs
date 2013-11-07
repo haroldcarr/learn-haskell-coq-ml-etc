@@ -1,9 +1,9 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:14:39 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:23:26 by carr.
 -}
 
-module X02FunSetsWorksheet
+module FP02FunSetsWorksheet
 ( sum'
 , product'
 -- ...

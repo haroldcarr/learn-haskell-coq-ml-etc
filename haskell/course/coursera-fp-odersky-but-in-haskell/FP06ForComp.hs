@@ -1,9 +1,9 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:41:15 by carr.
-Last Modified : 2013 Oct 30 (Wed) 13:32:18 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:24:31 by carr.
 -}
 
-module X06ForComp where
+module FP06ForComp where
 
 import           Data.Char (toLower)
 import           Data.Function (on)
@@ -18,7 +18,7 @@ type Occurrences = [(Char, Int)]
 
 readDictionary :: IO [Word]
 readDictionary = do
-    x <- readFile "X06ForCompTestWords.txt"
+    x <- readFile "FP06ForCompTestWords.txt"
     return $ splitLines x
 
 -- http://stackoverflow.com/questions/15412027/haskell-equivalent-to-scalas-groupby

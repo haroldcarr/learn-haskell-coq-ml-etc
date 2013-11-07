@@ -1,13 +1,13 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:42:02 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:15:11 by carr.
+Last Modified : 2013 Nov 06 (Wed) 18:24:23 by carr.
 -}
 
-module X04PatMatTest where
+module FP04PatMatTest where
 
 import Test.HUnit
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import X04PatMat
+import FP04PatMat
 
 {-# ANN module "HLint: ignore Use string literal" #-}
 
