@@ -1,0 +1,101 @@
+#+TITLE:       verified articles
+#+AUTHOR:      Harold Carr
+#+DESCRIPTION: verified articles
+#+PROPERTY:    tangle 2013-11-07-verified-articles.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+#+BEGIN_HTML
+---
+title: verified articles
+tags: haskell, hunit
+---
+#+END_HTML
+
+# Created       : 2013 Nov 07 (Thu) 08:32:48 by carr.
+# Last Modified : 2013 Nov 07 (Thu) 09:29:55 by carr.
+
+For writing articles on Haskell, rather than showing =ghci= input/output like:
+
+#+BEGIN_EXAMPLE
+Prelude> map (*2) [1..10]
+[2,4,6,8,10,12,14,16,18,20]
+#+END_EXAMPLE
+
+I do the following:
+
+#+BEGIN_HTML
+<!-- MORE -->
+#+END_HTML
+
+------------------------------------------------------------------------------
+* setup
+
+#+BEGIN_SRC haskell
+import Test.HUnit
+import Test.HUnit.Util  -- https://github.com/haroldcarr/test-hunit-util
+#+END_SRC
+
+------------------------------------------------------------------------------
+* article main body
+
+...
+
+#+BEGIN_SRC haskell
+t1 = t "t1"
+     (map (*2) [1..10])           -- "input"
+     [2,4,6,8,10,12,14,16,18,20]  -- "output"
+#+END_SRC
+
+... or, if many examples evaluate to same value:
+
+#+BEGIN_SRC haskell
+t2 = tt "t2"
+     [(map (*2)          [1..10]) -- "input1"
+     ,(map (\x -> x * 2) [1..10]) -- "input2"
+     ]
+     [2,4,6,8,10,12,14,16,18,20]  -- "output"
+#+END_SRC
+
+------------------------------------------------------------------------------
+* example accuracy
+
+Then, in this section at the end of the article, I show the test setup:
+
+#+BEGIN_SRC haskell
+main = do
+    runTestTT $ TestList $ t1 ++ t2
+#+END_SRC
+
+and its evaluation:
+
+#+BEGIN_EXAMPLE
+main
+=> Counts {cases = 3, tried = 3, errors = 0, failures = 0}
+#+END_EXAMPLE
+
+** input/output format
+
+Also note, that when I do actually show =ghci= input/output, rather than do:
+
+#+BEGIN_EXAMPLE
+*Main> :t t1
+t1 :: [Test]
+#+END_EXAMPLE
+
+I do:
+
+#+BEGIN_EXAMPLE
+:t t1
+=> t1 :: [Test]
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* code
+
+The code for =t=, =tt= and a couple of other short aliases is at
+
+- [[https://github.com/haroldcarr/test-hunit-util]]
+
+# End of file.
