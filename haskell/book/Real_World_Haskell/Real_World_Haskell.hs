@@ -8,6 +8,10 @@ import Data.Maybe (fromJust)
 import Debug.Trace
 import System.FilePath
 
+import Test.QuickCheck
+import Test.QuickCheck.Arbitrary
+import Test.QuickCheck.Gen
+
 debug = flip trace
 
 -- 2 and 3
@@ -744,6 +748,64 @@ parse (chr <$> fromIntegral <$> parseByte) input
 
 -- RIGHT HERE
 -}
+
+qsortRW :: Ord a => [a] -> [a]
+qsortRW []     = []
+qsortRW (x:xs) = qsortRW lhs ++ [x] ++ qsortRW rhs
+    where lhs = filter  (< x) xs
+          rhs = filter (>= x) xs
+
+-- prop_ is convention
+prop_idempotent xs = qsortRW (qsortRW xs) == qsortRW xs
+
+-- bad:
+prop_minimum  xs =                   head (qsortRW xs) == minimum xs
+
+-- good:
+prop_minimum' xs = not (null xs) ==> head (qsortRW xs) == minimum xs
+
+prop_ordered xs = ordered (qsortRW xs)
+    where ordered []       = True
+          ordered [x]      = True
+          ordered (x:y:xs) = x <= y && ordered (y:xs)
+
+prop_permutation xs = permutation xs (qsortRW xs)
+    where permutation xs ys = null (xs \\ ys) && null (ys \\ xs)
+
+prop_maximum xs         =
+    not (null xs) ==>
+        last (qsortRW xs) == maximum xs
+
+prop_append xs ys       =
+    not (null xs) ==>
+    not (null ys) ==>
+        head (qsortRW (xs ++ ys)) == min (minimum xs) (minimum ys)
+
+prop_sort_model xs      = sort xs == qsortRW xs
+
+data Ternary = Yes | No | Unknown deriving (Eq, Show)
+
+instance Arbitrary Ternary where
+    arbitrary     = elements [Yes, No, Unknown]
+
+
+{- in the lib
+instance (Arbitrary a, Arbitrary b) => Arbitrary (a, b) where
+  arbitrary = do
+      x <- arbitrary
+      y <- arbitrary
+      return (x, y)
+-}
+
+data Ternary' = Yes' | No' | Unknown' deriving (Eq, Show)
+
+instance Arbitrary Ternary' where
+  arbitrary     = do
+      n <- choose (0, 2) :: Gen Int
+      return $ case n of
+                    0 -> Yes'
+                    1 -> No'
+                    _ -> Unknown'
 
 {-
 cabal --dry-run install HDBC

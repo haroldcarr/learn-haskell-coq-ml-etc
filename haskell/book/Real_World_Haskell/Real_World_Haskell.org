@@ -7,7 +7,7 @@
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
 # Created       : 2011 Dec 31 (Sat) 19:56:38 by carr.
-Last Modified : 2013 Sep 09 (Mon) 17:38:18 by carr.
+Last Modified : 2013 Nov 07 (Thu) 08:30:20 by carr.
 
 ------------------------------------------------------------------------------
 * Intro
@@ -31,6 +31,10 @@ import Data.Ord
 import Data.Maybe (fromJust)
 import Debug.Trace
 import System.FilePath
+
+import Test.QuickCheck
+import Test.QuickCheck.Arbitrary
+import Test.QuickCheck.Gen
 
 debug = flip trace
 #+END_SRC
@@ -1707,6 +1711,103 @@ parse (chr <$> fromIntegral <$> parseByte) input
 -- RIGHT HERE
 -}
 #+END_SRC
+
+------------------------------------------------------------------------------
+* 11 Testing and quality assurance
+
+- [[http://book.realworldhaskell.org/read/testing-and-quality-assurance.html]]
+
+#+BEGIN_SRC haskell
+qsortRW :: Ord a => [a] -> [a]
+qsortRW []     = []
+qsortRW (x:xs) = qsortRW lhs ++ [x] ++ qsortRW rhs
+    where lhs = filter  (< x) xs
+          rhs = filter (>= x) xs
+
+-- prop_ is convention
+prop_idempotent xs = qsortRW (qsortRW xs) == qsortRW xs
+
+-- bad:
+prop_minimum  xs =                   head (qsortRW xs) == minimum xs
+
+-- good:
+prop_minimum' xs = not (null xs) ==> head (qsortRW xs) == minimum xs
+
+prop_ordered xs = ordered (qsortRW xs)
+    where ordered []       = True
+          ordered [x]      = True
+          ordered (x:y:xs) = x <= y && ordered (y:xs)
+
+prop_permutation xs = permutation xs (qsortRW xs)
+    where permutation xs ys = null (xs \\ ys) && null (ys \\ xs)
+
+prop_maximum xs         =
+    not (null xs) ==>
+        last (qsortRW xs) == maximum xs
+
+prop_append xs ys       =
+    not (null xs) ==>
+    not (null ys) ==>
+        head (qsortRW (xs ++ ys)) == min (minimum xs) (minimum ys)
+
+prop_sort_model xs      = sort xs == qsortRW xs
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+prop_idempotent []
+prop_idempotent [1,1,1,1]
+prop_idempotent [1..100]
+prop_idempotent [1,5,2,1,2,0,9]
+
+sample' arbitrary :: IO [Bool]
+
+quickCheck   (prop_idempotent :: [Integer] -> Bool)
+verboseCheck (prop_idempotent :: [Integer] -> Bool)
+
+-- EXPECTED: *** Failed! Exception: 'Prelude.head: empty list' (after 1 test):
+quickCheck (prop_minimum :: [Integer] -> Bool)
+-- good:
+quickCheck (prop_minimum' :: [Integer] -> Property)
+
+quickCheck (prop_ordered     :: [Integer] -> Bool)
+quickCheck (prop_permutation :: [Integer] -> Bool)
+quickCheck (prop_maximum     :: [Integer] -> Property)
+quickCheck (prop_append      :: [Integer] -> [Integer] -> Property)
+quickCheck (prop_sort_model  :: [Integer] -> Bool)
+#+END_EXAMPLE
+
+*generators*
+
+#+BEGIN_SRC haskell
+data Ternary = Yes | No | Unknown deriving (Eq, Show)
+
+instance Arbitrary Ternary where
+    arbitrary     = elements [Yes, No, Unknown]
+
+
+{- in the lib
+instance (Arbitrary a, Arbitrary b) => Arbitrary (a, b) where
+  arbitrary = do
+      x <- arbitrary
+      y <- arbitrary
+      return (x, y)
+-}
+
+data Ternary' = Yes' | No' | Unknown' deriving (Eq, Show)
+
+instance Arbitrary Ternary' where
+  arbitrary     = do
+      n <- choose (0, 2) :: Gen Int
+      return $ case n of
+                    0 -> Yes'
+                    1 -> No'
+                    _ -> Unknown'
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+sample (arbitrary :: Gen Char)
+sample' (arbitrary :: Gen Char)
+#+END_EXAMPLE
 
 ------------------------------------------------------------------------------
 * 20 Systems Programming in Haskell p. 467/507
