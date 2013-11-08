@@ -1,5 +1,5 @@
 # Created       : 2013 Oct 03 (Thu) 15:02:11 by carr.
-# Last Modified : 2013 Nov 06 (Wed) 18:22:28 by carr.
+# Last Modified : 2013 Nov 07 (Thu) 18:24:01 by carr.
 
 H_FILES = \
 	FP00ListsTest.o \
@@ -9,7 +9,8 @@ H_FILES = \
 	FP03ObjSetsTweetSetTest.o \
 	FP04PatMatTest.o \
 	FP06ForCompTest.o \
-	FP07BloxorzTest.o
+	FP07BloxorzTest.o \
+        FRP01QuickCheck.hs
 
 test : $(H_FILES)
 
