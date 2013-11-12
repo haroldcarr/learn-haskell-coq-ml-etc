@@ -1,5 +1,5 @@
 # Created       : 2013 Nov 06 (Wed) 18:33:56 by carr.
-Last Modified : 2013 Nov 07 (Thu) 18:24:30 by carr.
+Last Modified : 2013 Nov 07 (Thu) 18:29:08 by carr.
 
 Priority Queue:
 - [[http://www.brics.dk/RS/96/37/BRICS-RS-96-37.pdf]]
@@ -11,6 +11,7 @@ Priority Queue:
       - [[http://hackage.haskell.org/package/pqueue]]
 
 QuickCheck
+- [[http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html]]
 - [[http://www.haskell.org/haskellwiki/Introduction_to_QuickCheck2]]
 - [[https://github.com/nick8325/quickcheck]] - QuickCheck2 source
 
