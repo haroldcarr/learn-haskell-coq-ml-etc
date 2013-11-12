@@ -1,8 +1,9 @@
 {-
 Created       : 2013 Nov 11 (Mon) 20:51:18 by carr.
-Last Modified : 2013 Nov 11 (Mon) 22:55:20 by carr.
+Last Modified : 2013 Nov 11 (Mon) 23:08:22 by carr.
 -}
 
+import Control.Arrow -- for "&&&"
 import Test.HUnit
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 
@@ -11,8 +12,8 @@ myLast [] = error "myLast of empty"
 myLast [z] = z
 myLast (h:h2:t) = myLast (h2:t)
 
-t1 = t "t1" (myLast         ['z']) 'z'
-t2 = t "t2" (myLast ['x','y','z']) 'z'
+t1 = t "t1" (myLast          "z")  'z'
+t2 = t "t2" (myLast        "xyz")  'z'
 t3 = t "t3" (myLast ['a' ..  'z']) 'z'
 
 myButLast :: [a] -> a
@@ -21,8 +22,8 @@ myButLast [z] = error "myButLast of single element list"
 myButLast [y,z] = y
 myButLast (h:h2:t) = myButLast (h2:t)
 
-t4 = t "t4" (myButLast     ['y','z']) 'y'
-t5 = t "t5" (myButLast ['x','y','z']) 'y'
+t4 = t "t4" (myButLast         "yz")  'y'
+t5 = t "t5" (myButLast        "xyz")  'y'
 t6 = t "t6" (myButLast ['a' ..  'z']) 'y'
 
 elementAt :: [a] -> Int -> a
@@ -34,17 +35,13 @@ t7 = t "t7" (elementAt   [1,2,3] 2) 2
 t8 = t "t8" (elementAt "haskell" 5) 'e'
 
 myLength :: [a] -> Int
-myLength l = myLength' l 0
-    where myLength' []    n = n
-          myLength' (h:t) n = myLength' t (n + 1)
+myLength = foldl (\n _ -> n + 1) 0
 
 t9  = t  "t9" (myLength [123, 456, 789]) 3
 t10 = t "t10" (myLength "Hello, world!") 13
 
 myReverse :: [a] -> [a]
-myReverse l = myReverse' l []
-    where myReverse' []    r = r
-          myReverse' (h:t) r = myReverse' t (h:r)
+myReverse = foldl (flip (:)) []
 
 t11 = t "t11" (myReverse "A man, a plan, a canal, panama!") "!amanap ,lanac a ,nalp a ,nam A"
 t12 = t "t12" (myReverse [1,2,3,4]) [4,3,2,1]
@@ -82,13 +79,12 @@ pack (h:t) = pack' [[h]] t
           pack' acc@(cx@(c:_):t) (x:xs) = if c == x then pack' ((x:cx):t) xs
                                                     else pack'  ([x]:acc) xs
 
-t20 = t "t20" (pack ['a', 'a', 'a', 'a', 'b', 'c', 'c', 'a', 'a', 'd', 'e', 'e', 'e', 'e']) ["aaaa","b","cc","aa","d","eeee"]
+t20 = t "t20" (pack "aaaabccaadeeee") ["aaaa","b","cc","aa","d","eeee"]
 
 encode :: Eq a => [a] -> [(Int, a)]
-encode [] = error "encode empty list"
-encode xs = map (\x -> (length x, head x)) (pack xs)
+encode xs = map (length &&& head) (pack xs)
 
-t21 = t "t21" (encode "aaaabccaadeeee") [(4,'a'),(1,'b'),(2,'c'),(2,'a'),(1,'d'),(4,'e')]
+t21 = t "t21" (encode  "aaaabccaadeeee") [(4,'a'),(1,'b'),(2,'c'),(2,'a'),(1,'d'),(4,'e')]
 
 main = runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10 ++
                               t11 ++ t12 ++ t13 ++ t14 ++ t15 ++ t16 ++ t17 ++ t18 ++ t19 ++ t20 ++
