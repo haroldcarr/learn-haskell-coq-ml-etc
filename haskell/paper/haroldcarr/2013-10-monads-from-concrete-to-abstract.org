@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 05 (Tue) 20:17:18 by carr.
+Last Modified : 2013 Nov 22 (Fri) 14:37:52 by carr.
 
 #+BEGIN_COMMENT
 http://stackoverflow.com/questions/44965/what-is-a-monad A BUNCH OF
@@ -23,8 +23,6 @@ If each step returns a success/failure indicator, you can have bind
 execute the next step only if the previous one succeeded. In this way,
 a failing step aborts the whole sequence "automatically", without any
 conditional testing from you. (The Failure Monad.)
-
-
 
 http://stackoverflow.com/questions/3433608/explanation-of-monad-laws
 For the most part, you can think of the extra monadic structure as a
@@ -40,11 +38,13 @@ so what stands out is the mechanics of monad operation.
 ------------------------------------------------------------------------------
 * definition
 
-A =Monad= is used to pipe the output of one function into another.
-
-A =Monad= causes the first function to be evaluated before the second function (important in a lazy language).
-
-A =Monad= places values into monads and extracts values from monads at appropriate moments.
+- A =Monad= is used to pipe the output of one function into another.
+- A =Monad= causes the first function to be evaluated before the second function (important in a lazy language).
+- A =Monad= places values into monads and extracts values from monads at appropriate moments.
+  - This "extra" monadic structure has code that executes "behind the
+    scenes" in a =Monad= typeclass rather than being embedded in the
+    main lines of a program.  This "extra" code is variously referred
+    to as "computations", "actions" and "behaviors".
 
 Note: a =Monad= has nothing to do with side-effects.
 
@@ -54,18 +54,19 @@ Note: a =Monad= has nothing to do with side-effects.
 #+BEGIN_SRC haskell
 {-# LANGUAGE FlexibleInstances #-}
 
-import Control.Monad.State
 import Data.Char
 import Data.Either
+import Data.Maybe (fromJust)
 import System.IO
 #+END_SRC
 
 ** unit test
 
-Rather than showing GHCI input/output this article show test input/expected results.
+Rather than showing GHCI input/output this article shows test
+input/expected results (see [[http://haroldcarr.com/posts/2013-11-07-verified-articles.html][verified articles]]):
 
 #+BEGIN_SRC haskell
-import Test.HUnit hiding (State)
+import Test.HUnit
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 import System.IO.Unsafe -- for one unit test
 #+END_SRC
@@ -73,11 +74,11 @@ import System.IO.Unsafe -- for one unit test
 ------------------------------------------------------------------------------
 * =Maybe=
 
-=Maybe= is used for functions that might return no results.
+=Maybe= is used for functions that might return no results (i.e., to turn partial functions into total functions):
 
 #+BEGIN_EXAMPLE
 :i Maybe
--- data Maybe a = Nothing | Just a
+=> data Maybe a = Nothing | Just a
 #+END_EXAMPLE
 
 For example, a hash table would return =Just <something>= if the key is found, otherwise =Nothing=.
@@ -100,20 +101,20 @@ If any result in the pipeline is =Nothing= then stop at that point and
 return =Nothing=.  Otherwise, extract the value from =Just= and pass
 it to the next function.
 
-In this example, the last function does not return =Maybe= but the
-the result of =maybeExampleNonMonadic= is =Maybe=, so the
-result of =f2= is "wrapped" with =Just=.
+In this example, the last function (=f2=) does not return =Maybe=. But
+the the result of =maybeExampleNonMonadic= is =Maybe=, so the result
+of =f2= is "wrapped" with =Just=.
 
 #+BEGIN_SRC haskell
 toNothing :: t -> Maybe a
-toNothing    x =  Nothing
+toNothing    _ =  Nothing
 
 nonMonadicDouble :: Num a => a -> a
 nonMonadicDouble x = x + x
 
 tm1 = tt "tm1"
-     [maybeExampleNonMonadic Nothing  Just      nonMonadicDouble
-     ,maybeExampleNonMonadic (Just 3) toNothing nonMonadicDouble
+     [ maybeExampleNonMonadic Nothing  Just      nonMonadicDouble
+     , maybeExampleNonMonadic (Just 3) toNothing nonMonadicDouble
      ]
      Nothing
 #+END_SRC
@@ -129,7 +130,7 @@ tm2 = t "tm2"
      (Just 6)
 #+END_SRC
 
-In =tm2= the result is =(Just 6)= since both the input and =f1= return =Just= results.
+In =tm2= the result is =(Just 6)= since both the input and the result of =f1= are =Just= values.
 
 Since the pattern in =maybeExampleNonMonadic= is common, it is abstracted into the monadic
 aspects of =Maybe= such that it can be rewritten as:
@@ -162,26 +163,28 @@ All three version of the example function return equivalent results:
 
 #+BEGIN_SRC haskell
 tm3 = tt "tm3"
-     [maybeExampleNonMonadic Nothing  Just      nonMonadicDouble
-     ,exampleMonadic         Nothing  Just      nonMonadicDouble
-     ,exampleMonadicDo       Nothing  Just      nonMonadicDouble
+     [ maybeExampleNonMonadic Nothing  Just      nonMonadicDouble
+     , exampleMonadic         Nothing  Just      nonMonadicDouble
+     , exampleMonadicDo       Nothing  Just      nonMonadicDouble
      ]
      Nothing
 
 tm4 = tt "tm4"
-     [maybeExampleNonMonadic (Just 3) toNothing nonMonadicDouble
-     ,exampleMonadic         (Just 3) toNothing nonMonadicDouble
-     ,exampleMonadicDo       (Just 3) toNothing nonMonadicDouble
+     [ maybeExampleNonMonadic (Just 3) toNothing nonMonadicDouble
+     , exampleMonadic         (Just 3) toNothing nonMonadicDouble
+     , exampleMonadicDo       (Just 3) toNothing nonMonadicDouble
      ]
      Nothing
 
 tm5 = tt "tm5"
-     [maybeExampleNonMonadic (Just 3) Just      nonMonadicDouble
-     ,exampleMonadic         (Just 3) Just      nonMonadicDouble
-     ,exampleMonadicDo       (Just 3) Just      nonMonadicDouble
+     [ maybeExampleNonMonadic (Just 3) Just      nonMonadicDouble
+     , exampleMonadic         (Just 3) Just      nonMonadicDouble
+     , exampleMonadicDo       (Just 3) Just      nonMonadicDouble
      ]
      (Just 6)
 #+END_SRC
+
+See [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Maybe.html#Maybe]]
 
 ------------------------------------------------------------------------------
 * =>>==
@@ -197,8 +200,10 @@ class  Monad m  where
     (>>=)       :: forall a b. m a -> (a -> m b) -> m b
 #+END_EXAMPLE
 
-The short-circuiting of the pipeline on =Nothing= values is done via the =>>== definition
-of the =Maybe= =Monad= typeclass instance:
+The short-circuiting of the pipeline on =Nothing= values and the
+extract of values from =Just= and applying a function to those values
+is done via the =>>== definition of the =Maybe= =Monad= typeclass
+instance:
 
 - [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Maybe.html#Maybe]]
 
@@ -241,7 +246,7 @@ However, using =return= makes the function generic, as will be seen in
 the following examples of other monads (which is why =exampleMonadic=
 is not named =maybeExampleMonadic=).
 
---------------------------------------------------
+# --------------------------------------------------
 ** example =Maybe= evaluations
 
 Given the definition:
@@ -306,7 +311,6 @@ exampleMonadic         (Just 3) Just      nonMonadicDouble
 - =Just 6= is the result of the second =>>==
 - =Just 6= is the result of =exampleMonadic=
 
-
 To see how monadic chaining is useful in long compositions of =Maybe=, see Real
 World Haskell [[http://book.realworldhaskell.org/read/code-case-study-parsing-a-binary-data-format.html][chapter 10]].  Search for =parseP5= (version without
 monadic function composition) and =parseP5_take2= (version with
@@ -315,12 +319,12 @@ monadic composition --- but using =>>?= instead of =>>==).
 ------------------------------------------------------------------------------
 * =Either=
 
-=Either= is like =Maybe=, but where additional information is given
-instead of =Nothing=:
+=Either= is like =Maybe=, but additional information is given instead
+of =Nothing=:
 
 #+BEGIN_EXAMPLE
 :i Either
--- data Either a b = Left a | Right b
+=> data Either a b = Left a | Right b
 #+END_EXAMPLE
 
 =Left= corresponds to =Nothing=.  =Right= corresponds to =Just=.
@@ -369,23 +373,23 @@ toLeft :: Int -> Either Int Int
 toLeft  = Left
 
 te1 = tt "te1"
-     [eitherExampleNonMonadic (Left (-1)) toRight nonMonadicDouble
-     ,exampleMonadic          (Left (-1)) toRight nonMonadicDouble
-     ,exampleMonadicDo        (Left (-1)) toRight nonMonadicDouble
+     [ eitherExampleNonMonadic (Left (-1)) toRight nonMonadicDouble
+     , exampleMonadic          (Left (-1)) toRight nonMonadicDouble
+     , exampleMonadicDo        (Left (-1)) toRight nonMonadicDouble
      ]
      (Left (-1))
 
 te2 = tt "te2"
-     [eitherExampleNonMonadic (Right 3)   toLeft  nonMonadicDouble
-     ,exampleMonadic          (Right 3)   toLeft  nonMonadicDouble
-     ,exampleMonadicDo        (Right 3)   toLeft  nonMonadicDouble
+     [ eitherExampleNonMonadic (Right 3)   toLeft  nonMonadicDouble
+     , exampleMonadic          (Right 3)   toLeft  nonMonadicDouble
+     , exampleMonadicDo        (Right 3)   toLeft  nonMonadicDouble
      ]
      (Left 3)
 
 te3 = tt "te3"
-     [eitherExampleNonMonadic (Right 3)   toRight nonMonadicDouble
-     ,exampleMonadic          (Right 3)   toRight nonMonadicDouble
-     ,exampleMonadicDo        (Right 3)   toRight nonMonadicDouble
+     [ eitherExampleNonMonadic (Right 3)   toRight nonMonadicDouble
+     , exampleMonadic          (Right 3)   toRight nonMonadicDouble
+     , exampleMonadicDo        (Right 3)   toRight nonMonadicDouble
      ]
      (Right 6)
 #+END_SRC
@@ -393,17 +397,20 @@ te3 = tt "te3"
 Notice how =exampleMonadic= was able to be used with both =Either= and =Maybe=.
 That is because the appropriate instance of =>>== and =return= are used based on the type.
 
-** TODO : =Monad= instance definition of =Either= is partially applied type constructor.
+(Note: the =Either e= in the =Monad= instance definition is a
+partially applied type constructor --- see
+[[http://mvanier.livejournal.com/5103.html]] for more info --- search for
+"Making an error-handling monad".)
 
 ------------------------------------------------------------------------------
 * =[]=
 
-Just as =Maybe= and =Either= may represent none (=Nothing=, =Left=) or one (=Just=, =Right=) results,
+Just as =Maybe= and =Either= may represent none/error (=Nothing=, =Left=) or one (=Just=, =Right=) results,
 a list:
 
 #+BEGIN_EXAMPLE
 :i []
--- data [] a = [] | a : [a]
+=> data [] a = [] | a : [a]
 #+END_EXAMPLE
 
 can be used to represent none (=[]=) or one or more (=[x, ...]=) results.
@@ -453,11 +460,9 @@ listExampleNonMonadic' i f1 f2 =
     map f2 $ concatMap f1 i
 #+END_SRC
 
-
 Given the above non-monadic list functions and the existing
 =exampleMonadic= functions it can be seen that the list =Monad=
 typeclass instance operates like the =Maybe= and =Either= instances:
-
 
 #+BEGIN_SRC haskell
 toEmpty :: Int -> [Int]
@@ -467,26 +472,26 @@ toList  :: Int -> [Int]
 toList  x = [x]
 
 tl1 = tt "tl1"
-     [listExampleNonMonadic   [ ]      toList   id
-     ,listExampleNonMonadic'  [ ]      toList   id
-     ,exampleMonadic          [ ]      toList   id
-     ,exampleMonadicDo        [ ]      toList   id
+     [ listExampleNonMonadic   [ ]      toList   id
+     , listExampleNonMonadic'  [ ]      toList   id
+     , exampleMonadic          [ ]      toList   id
+     , exampleMonadicDo        [ ]      toList   id
      ]
      []
 
 tl2 = tt "tl2"
-     [listExampleNonMonadic   [1,2,3]  toEmpty  id
-     ,listExampleNonMonadic'  [1,2,3]  toEmpty  id
-     ,exampleMonadic          [1,2,3]  toEmpty  id
-     ,exampleMonadicDo        [1,2,3]  toEmpty  id
+     [ listExampleNonMonadic   [1,2,3]  toEmpty  id
+     , listExampleNonMonadic'  [1,2,3]  toEmpty  id
+     , exampleMonadic          [1,2,3]  toEmpty  id
+     , exampleMonadicDo        [1,2,3]  toEmpty  id
      ]
      []
 
 tl3 = tt "tl3"
-     [listExampleNonMonadic   [1,2,3]  toList   id
-     ,listExampleNonMonadic'  [1,2,3]  toList   id
-     ,exampleMonadic          [1,2,3]  toList   id
-     ,exampleMonadicDo        [1,2,3]  toList   id
+     [ listExampleNonMonadic   [1,2,3]  toList   id
+     , listExampleNonMonadic'  [1,2,3]  toList   id
+     , exampleMonadic          [1,2,3]  toList   id
+     , exampleMonadicDo        [1,2,3]  toList   id
      ]
      [1,2,3]
 #+END_SRC
@@ -551,130 +556,177 @@ ioExampleMonadicDo filename output = do
     return (input == output)
 
 ti1 = tt "ti1"
-      [unsafePerformIO $ ioExampleMonadic   "/tmp/BAR.txt"  "BAR"
-      ,unsafePerformIO $ ioExampleMonadicDo "/tmp/BAR.txt"  "BAR"
+      [ unsafePerformIO $ ioExampleMonadic   "/tmp/BAR.txt"  "BAR"
+      , unsafePerformIO $ ioExampleMonadicDo "/tmp/BAR.txt"  "BAR"
       ]
       True
 #+END_SRC
 
+# --------------------------------------------------
+** non-monadic tangent: =IO= is partitioned from pure functions
+
 There is no way to write a non-monadic =IO= example as was done for
 other =Monad= instances above.  The type system partitions
-side-effecting =IO= computation types from pure functions.  Pure
+side-effecting =IO= computations types from pure functions.  Pure
 functions guarantee the same results for the same inputs.  =IO= does
 not.
 
+The =Maybe=, =Either= and =[]= monads have functions that allow one to
+extract values from the monads and pass them out, independent of their
+=Monad=:
 
-** TODO - no way to pass a value outside of a monad (except unsafe)
+#+BEGIN_SRC haskell
+tx1 = t "tx1"
+     ((\x (Right y) -> x + y) (fromJust (Just 3)) (Right 4)) -- passed down/in
+     7
+#+END_SRC
+
+=tx1= uses =fromJust= and pattern matching (to extract from =Right=)
+to extract values from =Maybe= and =Either= monadic values and pass
+them down into =+=.  That is fine, even with =IO=, since it doesn't
+matter where values given to =+= come from since =+= will always
+return the same results for same values:
+
+#+BEGIN_SRC haskell
+txiodown :: IO Int
+txiodown = do
+    putStrLn ""
+    putStrLn "Enter the number '3':"
+    x <- getLine
+    putStrLn "Enter the number '4':"
+    y <- getLine
+    return ((read x :: Int) + (read y :: Int))
+#+END_SRC
+
+=txiodown= uses side-effects (=getLine=) to supply values to the pure
+function =+=.  But the result of this use of =+= cannot be returned
+directly since each time =txiodown= is called it might return
+different results.  Therefore the type system requires that the result
+be wrapped via =return=.
+
+It is possible to extract values from =IO= via:
+
+#+BEGIN_EXAMPLE
+:t unsafePerformIO
+=> unsafePerformIO :: IO a -> a
+#+END_EXAMPLE
+
+and it has been used in the unit tests:
+
+#+BEGIN_SRC haskell
+tx2 = t "tx2"
+     (unsafePerformIO txiodown)
+     7
+#+END_SRC
+
+See Simon Peyton Jones [[http://research.microsoft.com/en-us/um/people/simonpj/papers/marktoberdorf/][Tackling the awkward squad]] for why =unsafePerformIO= should rarely be used.
+
+The next example:
+
+#+BEGIN_SRC haskell
+tx3 = t "tx1"
+     (fromJust (Just 7))                                     -- passed up/out
+     7
+#+END_SRC
+
+uses =fromJust= to extract a value from a =Maybe=
+monad and lets that value pass up/out to the unit test framework for
+comparison with the expected response.  This type of "up/out"
+extraction is not possible with =IO= (except for =unsafePerformIO=).
 
 #+BEGIN_COMMENT
 https://www.destroyallsoftware.com/talks/boundaries
-IO Monda: value representation of an action that should be taken
+IO Monad: value representation of an action that should be taken
 #+END_COMMENT
 
 ------------------------------------------------------------------------------
 * =Monad= laws
 
-- [[http://www.haskell.org/haskellwiki/Monad_laws]]
+For a typeclass =instance= to be a =Monad= it must satisfy the
+following laws:
 
-** TODO - WHY LAWS
+# --------------------------------------------------
+** left identity
+
+- Returning only wraps a value.  It does does not change the value and
+  does not do anything else in the =Monad=.
 
 #+BEGIN_SRC haskell
 leftIdentity :: (Eq (m b), Monad m) => a -> (a -> m b) -> Bool
 leftIdentity a f = (return a >>= f) == f a
 
-tw1 = tt "tw1"
-      [leftIdentity  3  ((\x -> Nothing) :: Int -> Maybe Int)
-      ,leftIdentity  3   (Just   . (+2))
+tli = tt "tli"
+      [ leftIdentity  3  ((\x -> Nothing) :: Int -> Maybe Int)
+      , leftIdentity  3   (Just   . (+2))
 
-      ,leftIdentity  3  ((Left   . (+2)) :: Int -> Either Int Int)
-      ,leftIdentity  3  ((Right  . (+2)) :: Int -> Either Int Int)
+      , leftIdentity  3  ((Left   . (+2)) :: Int -> Either Int Int)
+      , leftIdentity  3  ((Right  . (+2)) :: Int -> Either Int Int)
 
-      ,leftIdentity  3   (\x   -> [x*2])
-      ,leftIdentity  3  ((\x   -> [   ]) :: Int -> [Int])
-      ]
-      True
-
-rightIdentity :: (Eq (m b), Monad m) => m b -> Bool
-rightIdentity m = (m >>= return) == m
-
-tw2 = tt "tw2"
-      [rightIdentity   (Just  3)
-      ,rightIdentity   (Nothing  :: Maybe Int)
-
-      ,rightIdentity   (Left  3  :: Either Int Int)
-      ,rightIdentity   (Right 3  :: Either Int Int)
-
-      ,rightIdentity   [3]
-      ,rightIdentity  ([]        :: [Int])
-      ]
-      True
-
-associativity :: (Eq (m b), Monad m) => m a -> (a -> m a1) -> (a1 -> m b) -> Bool
-associativity m f g = ((m >>= f) >>= g) == (m >>= (\x -> f x >>= g))
-
-tw3 = tt "tw3"
-      [associativity (Just 3)  (\x -> Nothing)  (Just . (*2))
-      ,associativity (Just 3)  (Just  . (+2))   ((\x -> Nothing) :: Int -> Maybe Int)
-      ,associativity (Just 3)  (Just  . (+2))    (Just . (*2))
-
-      ,associativity (Left 3) ((Left  . (+2)) :: Int -> Either Int Int)
-                              ((Left  . (*2)) :: Int -> Either Int Int)
-
-      ,associativity (Left 3) ((Right . (+2)) :: Int -> Either Int Int)
-                              ((Left  . (*2)) :: Int -> Either Int Int)
-
-      ,associativity [3]       (\x  -> [   ])    (\x -> [x*2])
-      ,associativity [3]       (\x  -> [x+2])   ((\x -> [   ])   :: Int -> [Int])
-      ,associativity [3]       (\x  -> [x+2])    (\x -> [x*2])
+      , leftIdentity  3   (\x   -> [x*2])
+      , leftIdentity  3  ((\x   -> [   ]) :: Int -> [Int])
       ]
       True
 #+END_SRC
 
-#+results:
-: True
+# --------------------------------------------------
+** right identity
 
-------------------------------------------------------------------------------
-* =Monad= class
+- Returning only wraps a value.  It does does not change the value and
+  does not do anything else in the =Monad= (both left/right identity
+  enable the compiler to eliminate =return= calls without changing
+  semantics).
 
-[[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/GHC-Base.html#Monad]]
+#+BEGIN_SRC haskell
+rightIdentity :: (Eq (m b), Monad m) => m b -> Bool
+rightIdentity m = (m >>= return) == m
 
-#+BEGIN_EXAMPLE
-class  Monad m  where
-    -- | Sequentially compose two actions, passing any value produced
-    -- by the first as an argument to the second.
-    (>>=)       :: forall a b. m a -> (a -> m b) -> m b
-    -- | Sequentially compose two actions, discarding any value produced
-    -- by the first, like sequencing operators (such as the semicolon)
-    -- in imperative languages.
-    (>>)        :: forall a b. m a -> m b -> m b
-        -- Explicit for-alls so that we know what order to
-        -- give type arguments when desugaring
+tri = tt "tri"
+      [ rightIdentity   (Just  3)
+      , rightIdentity   (Nothing  :: Maybe Int)
 
-    -- | Inject a value into the monadic type.
-    return      :: a -> m a
-    -- | Fail with a message.  This operation is not part of the
-    -- mathematical definition of a monad, but is invoked on pattern-match
-    -- failure in a @do@ expression.
-    fail        :: String -> m a
+      , rightIdentity   (Left  3  :: Either Int Int)
+      , rightIdentity   (Right 3  :: Either Int Int)
 
-    {-# INLINE (>>) #-}
-    m >> k      = m >>= \_ -> k
-    fail s      = error s
-#+END_EXAMPLE
+      , rightIdentity   [3]
+      , rightIdentity  ([]        :: [Int])
+      ]
+      True
+#+END_SRC
 
-- [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Maybe.html#Maybe]] :
+# --------------------------------------------------
+** associativity
 
-#+BEGIN_EXAMPLE
-instance  Monad Maybe  where
-    (Just x) >>= k      = k x
-    Nothing  >>= _      = Nothing
+- Monadic composition is associative.  This allows an extra =do= block
+  to group a sequence of monadic operations.  This allows functions
+  that return monadic values to work properly.
 
-    (Just _) >>  k      = k
-    Nothing  >>  _      = Nothing
+#+BEGIN_SRC haskell
+associativity :: (Eq (m b), Monad m) => m a -> (a -> m a1) -> (a1 -> m b) -> Bool
+associativity m f g = ((m >>= f) >>= g) == (m >>= (\x -> f x >>= g))
 
-    return              = Just
-    fail _              = Nothing
-#+END_EXAMPLE
+tas = tt "tas"
+      [ associativity (Just 3)  (\x -> Nothing)  (Just . (*2))
+      , associativity (Just 3)  (Just  . (+2))   ((\x -> Nothing) :: Int -> Maybe Int)
+      , associativity (Just 3)  (Just  . (+2))    (Just . (*2))
+
+      , associativity (Left 3) ((Left  . (+2)) :: Int -> Either Int Int)
+                               ((Left  . (*2)) :: Int -> Either Int Int)
+
+      , associativity (Left 3) ((Right . (+2)) :: Int -> Either Int Int)
+                               ((Left  . (*2)) :: Int -> Either Int Int)
+
+      , associativity [3]       (\x  -> [   ])    (\x -> [x*2])
+      , associativity [3]       (\x  -> [x+2])   ((\x -> [   ])   :: Int -> [Int])
+      , associativity [3]       (\x  -> [x+2])    (\x -> [x*2])
+      ]
+      True
+#+END_SRC
+
+See:
+
+- [[http://www.haskell.org/haskellwiki/Monad_laws]]
+- [[http://stackoverflow.com/questions/3433608/explanation-of-monad-laws]]
+- [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/GHC-Base.html#Monad]]
 
 ------------------------------------------------------------------------------
 * see also
@@ -691,7 +743,8 @@ main =
                            te1 ++ te2 ++ te3 ++
                            tl1 ++ tl2 ++ tl3 ++
                            ti1 ++
-                           tw1 ++ tw2 ++ tw3
+                           tx1 ++ tx2 ++ tx3 ++
+                           tli ++ tri ++ tas
 #+END_SRC
 
 # End of file.

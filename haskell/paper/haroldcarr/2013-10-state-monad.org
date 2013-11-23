@@ -14,7 +14,7 @@ tags: haskell, monad, state
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:16:18 by carr.
+Last Modified : 2013 Nov 22 (Fri) 16:05:38 by carr.
 
 ------------------------------------------------------------------------------
 * setup
@@ -22,22 +22,68 @@ Last Modified : 2013 Nov 04 (Mon) 21:16:18 by carr.
 #+BEGIN_SRC haskell
 {-# LANGUAGE FlexibleInstances #-}
 
+import Control.Monad.Reader
 import Control.Monad.State
 import Data.Char
 import Data.Either
-import System.IO.Unsafe -- for one unit test
+import Data.Map as Map
+import Data.Maybe (fromJust)
 import System.IO
-import Test.HUnit hiding (State) -- for unit testing examples
 #+END_SRC
 
 ** unit test
 
-Rather than showing GHCI input/output this article show test input/expected results.
+Rather than showing GHCI input/output this article shows test
+input/expected results (see [[http://haroldcarr.com/posts/2013-11-07-verified-articles.html][verified articles]]):
 
 #+BEGIN_SRC haskell
 import Test.HUnit hiding (State)
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import System.IO.Unsafe -- for one unit test
+#+END_SRC
+
+------------------------------------------------------------------------------
+* =Writer=
+
+- [[http://hackage.haskell.org/package/mtl-2.1.2/docs/Control-Monad-Writer.html]]
+
+------------------------------------------------------------------------------
+* =Reader=
+
+- [[http://hackage.haskell.org/package/mtl-2.1.2/docs/Control-Monad-Reader.html]]
+
+#+BEGIN_SRC haskell
+type ExampleConfigInfo = Map String Int;
+
+lookupVar :: String -> ExampleConfigInfo -> Int
+lookupVar name bindings = fromJust (Map.lookup name bindings)
+
+exampleConfig :: String -> Reader ExampleConfigInfo String
+exampleConfig x =
+    asks (lookupVar x) >>= \ val ->
+    return (x ++ " set to: " ++ (show val))
+
+exampleConfigDo :: String -> Reader ExampleConfigInfo String
+exampleConfigDo x = do
+    val <- asks (lookupVar x)
+    return (x ++ " set to: " ++ (show val))
+
+exampleSetup :: Reader ExampleConfigInfo String
+exampleSetup =
+    exampleConfigDo "mouse"    >>= \c1 ->
+    exampleConfigDo "keyboard" >>= \c2 ->
+    exampleConfigDo "screen"   >>= \c3 ->
+    return $ c1 ++ "; " ++ c2 ++ "; " ++ c3
+
+exampleSetupDo :: Reader ExampleConfigInfo String
+exampleSetupDo = do
+    c1 <- exampleConfigDo "mouse"
+    c2 <- exampleConfigDo "keyboard"
+    c3 <- exampleConfigDo "screen"
+    return $ c1 ++ "; " ++ c2 ++ "; " ++ c3
+
+exampleConfigInfo = Map.fromList [("mouse",1), ("keyboard",2), ("screen",3)]
+x  = print . runReader exampleSetup   $ exampleConfigInfo
+x' = print . runReader exampleSetupDo $ exampleConfigInfo
 #+END_SRC
 
 ------------------------------------------------------------------------------
@@ -146,7 +192,7 @@ ts2 = t "ts2"
 -- runState :: State s a -> s -> (a, s)
 #+END_EXAMPLE
 
-- [[http://hackage.haskell.org/package/mtl-2.1.1/docs/src/Control-Monad-State-Class.html#MonadState]]
+- [[http://hackage.haskell.org/package/mtl-2.1.2/docs/src/Control-Monad-State-Class.html#MonadState]]
 
 #+BEGIN_EXAMPLE
 class Monad m => MonadState s m | m -> s where
