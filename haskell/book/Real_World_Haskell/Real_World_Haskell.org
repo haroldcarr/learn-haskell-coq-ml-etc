@@ -7,7 +7,7 @@
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
 # Created       : 2011 Dec 31 (Sat) 19:56:38 by carr.
-Last Modified : 2013 Nov 07 (Thu) 08:30:20 by carr.
+Last Modified : 2013 Nov 22 (Fri) 20:26:23 by carr.
 
 ------------------------------------------------------------------------------
 * Intro
@@ -1808,6 +1808,11 @@ instance Arbitrary Ternary' where
 sample (arbitrary :: Gen Char)
 sample' (arbitrary :: Gen Char)
 #+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* 14 Monads
+
+[[file:Logger.hs]]
 
 ------------------------------------------------------------------------------
 * 20 Systems Programming in Haskell p. 467/507
