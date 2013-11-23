@@ -14,7 +14,7 @@ tags: haskell, monad, state
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 22 (Fri) 16:05:38 by carr.
+Last Modified : 2013 Nov 22 (Fri) 19:59:33 by carr.
 
 ------------------------------------------------------------------------------
 * setup
@@ -24,6 +24,7 @@ Last Modified : 2013 Nov 22 (Fri) 16:05:38 by carr.
 
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad.Writer
 import Data.Char
 import Data.Either
 import Data.Map as Map
@@ -44,27 +45,144 @@ import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 ------------------------------------------------------------------------------
 * =Writer=
 
+The =Writer= =Monad= is useful to enable a function to produce both a regular return value
+and auxiliary output which can be "accumulated" function-by-function.   It is
+often used for logging.  In the examples below, the auxiliary output is =String=.
+
 - [[http://hackage.haskell.org/package/mtl-2.1.2/docs/Control-Monad-Writer.html]]
 
+A logging function:
+
+#+BEGIN_SRC haskell
+logger fname i o = (fname ++ " " ++ (show i) ++ " = " ++ (show o) ++ "; ")
+#+END_SRC
+
+can be used to enable functions to return their normal value and a log of them being called:
+
+#+BEGIN_SRC haskell
+half' :: (Integral a, Show a) => a -> (a, String)
+half' x = let result = x `div` 2
+         in (result, logger "half'" x result)
+
+tw1 = t "tw1"
+      (half' 10)
+      (5,"half' 10 = 5; ")
+#+END_SRC
+
+To make the logs accumulate all calls would have to be changed to something like:
+
+#+BEGIN_SRC haskell
+finalValue = (val2, log1 ++ log2)
+    where (val1, log1) = half' 10
+          (val2, log2) = half' val1
+
+tw2 = t "tw2"
+      finalValue
+      (2,"half' 10 = 5; half' 5 = 2; ")
+#+END_SRC
+
+These kinds of "actions" or "behaviors" are exactly what monads excel at, in this case, the =Writer= =Monad=:
+
+#+BEGIN_EXAMPLE
+:i Writer
+=> type Writer w = WriterT w Data.Functor.Identity.Identity
+
+:i WriterT
+=> newtype WriterT w m a = WriterT {runWriterT :: m (a, w)}
+
+:t runWriter
+=> runWriter :: Writer w a -> (a, w)
+
+:t tell
+=> tell :: MonadWriter w m => w -> m ()
+#+END_EXAMPLE
+
+- [[http://hackage.haskell.org/package/transformers-0.3.0.0/docs/src/Control-Monad-Trans-Writer-Lazy.html#line-124]]
+
+#+BEGIN_EXAMPLE
+instance (Monoid w, Monad m) => Monad (WriterT w m) where
+    return a = writer (a, mempty)
+    m >>= k  = WriterT $ do
+        ~(a, w)  <- runWriterT m
+        ~(b, w') <- runWriterT (k a)
+        return (b, w `mappend` w')
+#+END_EXAMPLE
+
+Using the above, the code can be written to have the monad instance
+handle the accumulating log and to not have to explicitly pass the
+=Writer= around (except in the type signature):
+
+#+BEGIN_SRC haskell
+half :: (Integral a, Show a) => a -> Writer String a
+half x =
+    let result = x `div` 2
+    in (tell $ logger "half" x result) >> return result
+
+halfDo :: (Integral a, Show a) => a -> Writer String a
+halfDo x = do
+    let result = x `div` 2
+    tell $ logger "halfDo" x result
+    return result
+
+tw3 = t "tw3"
+      (runWriter $ half 10)
+      (5,"half 10 = 5; ")
+
+tw4 = t "tw4"
+      (runWriter $ halfDo 10)
+      (5,"halfDo 10 = 5; ")
+
+tw5 = t "tw5"
+      (runWriter (halfDo 10 >>= half))
+      (2,"halfDo 10 = 5; half 5 = 2; ")
+#+END_SRC
 ------------------------------------------------------------------------------
 * =Reader=
 
+The =Reader= =Monad= is useful to enable functions to access the values
+held in some enclosing environment without needing to explicitly pass
+that environment around.
+
 - [[http://hackage.haskell.org/package/mtl-2.1.2/docs/Control-Monad-Reader.html]]
+
+#+BEGIN_EXAMPLE
+:i Reader
+=> type Reader r = ReaderT r Data.Functor.Identity.Identity
+
+:i ReaderT
+=> newtype ReaderT r m a = ReaderT {runReaderT :: r -> m a}
+
+:t runReader
+=> runReader :: Reader r a -> r -> a
+
+:t asks
+=> asks :: MonadReader r m => (r -> a) -> m a
+#+END_EXAMPLE
+
+- [[http://hackage.haskell.org/package/transformers-0.3.0.0/docs/src/Control-Monad-Trans-Reader.html#line-120]]
+
+#+BEGIN_EXAMPLE
+instance (Monad m) => Monad (ReaderT r m) where
+    return   = lift . return
+    m >>= k  = ReaderT $ \ r -> do
+        a <- runReaderT m r
+        runReaderT (k a) r
+#+END_EXAMPLE
 
 #+BEGIN_SRC haskell
 type ExampleConfigInfo = Map String Int;
 
-lookupVar :: String -> ExampleConfigInfo -> Int
-lookupVar name bindings = fromJust (Map.lookup name bindings)
+lookup' :: String -> ExampleConfigInfo -> Int
+lookup' name bindings = fromJust (Map.lookup name bindings)
 
 exampleConfig :: String -> Reader ExampleConfigInfo String
 exampleConfig x =
-    asks (lookupVar x) >>= \ val ->
+    asks (lookup' x) >>= \val ->
     return (x ++ " set to: " ++ (show val))
 
 exampleConfigDo :: String -> Reader ExampleConfigInfo String
 exampleConfigDo x = do
-    val <- asks (lookupVar x)
+    val <- asks (lookup' x)
     return (x ++ " set to: " ++ (show val))
 
 exampleSetup :: Reader ExampleConfigInfo String
@@ -82,17 +200,28 @@ exampleSetupDo = do
     return $ c1 ++ "; " ++ c2 ++ "; " ++ c3
 
 exampleConfigInfo = Map.fromList [("mouse",1), ("keyboard",2), ("screen",3)]
-x  = print . runReader exampleSetup   $ exampleConfigInfo
-x' = print . runReader exampleSetupDo $ exampleConfigInfo
+
+tr1 = tt "tr1"
+      [ (runReader exampleSetup   $ exampleConfigInfo)
+      , (runReader exampleSetupDo $ exampleConfigInfo)
+      ]
+      "mouse set to: 1; keyboard set to: 2; screen set to: 3"
 #+END_SRC
+
+Aside: since this example is returning a =String= that is being used
+like a log, it would be useful to combine this use of =Reader= with
+=Writer= to handle the logging.
 
 ------------------------------------------------------------------------------
 * =State=
 
+The =State= =Monad= is like the =Reader= =Monad= except you can write
+as well as read.
+
 State can be represented as =(a, s)=, where =a= is result of a
 function on a given state and =s= is the new state that results from
 evaluating that function.  To maintain state along a pipeline of
-functions, the state pair resulting at each step is pass to the next
+functions, the pair resulting at each step is pass to the next
 step:
 
 #+BEGIN_SRC haskell
@@ -114,10 +243,10 @@ ts1 = t "ts1"
 state pair used in the rest of the function.  It is a pair that allows
 us to see the result of the intermediate evaluations.  Also note that
 the structure of this example is similar but not identical to the
-previous examples.)
+examples in ***** TODO ***** .)
 
 Threading the state through the various stages can be avoided using
-monads.  The =State= =Monad= type and typeclass instance has many
+monads.  The =State= =Monad= type and typeclass instance has several
 layers of abstraction.  Rather than showing it now, it is built up
 from scratch.
 
@@ -141,7 +270,7 @@ bind' leftFun rightFun startState =
 - The =startState= is given to =leftFun=.
   - =leftFun= returns its result and the new state as =(leftResult, leftState)=.
 - =rightFun= is given =leftResult= and =leftState=.
-  - =rightFun= returns ...
+  - =rightFun= returns a function from a state to a pair.
 
 
 #+BEGIN_SRC haskell
@@ -250,6 +379,10 @@ ts4 = t "ts4"
       ("!E","llo world")
 #+END_SRC
 
+see:
+- [[http://adit.io/posts/2013-06-10-three-useful-monads.html]]
+- [[http://monads.haskell.cz/html/index.html]]
+
 diagram:
 - http://stackoverflow.com/questions/10230562/confusion-over-the-state-monad-code-on-learn-you-a-haskell
 
@@ -274,7 +407,9 @@ SEE:?
 
 #+BEGIN_SRC haskell
 main = do
-    runTestTT $ TestList $ ts1 ++ ts2 ++ ts3 ++ ts4
+    runTestTT $ TestList $ tw1 ++ tw2 ++ tw3 ++ tw4 ++ tw5 ++
+                           tr1 ++
+                           ts1 ++ ts2 ++ ts3 ++ ts4
 #+END_SRC
 
 # End of file.
