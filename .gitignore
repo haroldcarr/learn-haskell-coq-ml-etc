@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Nov 04 (Mon) 07:44:59 by carr.
+# Last Modified : 2013 Nov 24 (Sun) 22:00:23 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -11,6 +11,14 @@
 
 *.pdf
 **/dist
+
+# ------------------------------------------------------------------------------
+# ECLIPSE
+
+.dist-buildwrapper
+.metadata
+.project
+.settings
 
 # ------------------------------------------------------------------------------
 # COQ
@@ -66,7 +74,12 @@ haskell/.Notes-platform.org
 haskell/.Notes-xmonad.org
 haskell/.Notes.org
 
+haskell/book/Beginning_Haskell/.Notes.org
+haskell/book/Beginning_Haskell/Beginning_Haskell.mobi
+haskell/book/Beginning_Haskell/Beginning_Haskell.pdf
+
 haskell/book/Discrete_Mathematics_Using_a_Computer
+
 haskell/book/Haskell_Financial_Data_Modeling/
 haskell/book/Haskell_Road_to_Logic_Maths_and_Programming
 
