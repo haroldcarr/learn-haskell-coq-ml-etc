@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 22 (Fri) 14:37:52 by carr.
+Last Modified : 2013 Nov 23 (Sat) 09:34:51 by carr.
 
 #+BEGIN_COMMENT
 http://stackoverflow.com/questions/44965/what-is-a-monad A BUNCH OF
@@ -267,6 +267,8 @@ exampleMonadic         Nothing  Just      nonMonadicDouble
 - =Nothing= is value of =i=
 - =i= is the left argument of the first =>>==
 - Since the value is =Nothing=, =f1= is never called and the first =>>== returns =Nothing=
+- =Nothing= is then the input to the left side of the second =>==
+- Since the value is =Nothing=, =return . f2= is never called and the second =>>== returns =Nothing=
 - =Nothing= is the result of =exampleMonadic=
 
 For the application:
@@ -396,6 +398,12 @@ te3 = tt "te3"
 
 Notice how =exampleMonadic= was able to be used with both =Either= and =Maybe=.
 That is because the appropriate instance of =>>== and =return= are used based on the type.
+
+Note that for a long chain of =Either=, say the very first value in
+the chaing is =Left <something>=.  In this case, the entire chain of
+=>>== calls would still be evaluated.  Each one would extract
+=<something>= and then just wrap it back up in a new =Left=.  In other
+words, there is a slight cost, even in the failure case.
 
 (Note: the =Either e= in the =Monad= instance definition is a
 partially applied type constructor --- see
