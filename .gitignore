@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Dec 01 (Sun) 08:32:14 by carr.
+# Last Modified : 2013 Dec 01 (Sun) 08:51:39 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -115,9 +115,9 @@ haskell/paper/monad-reader/issue22/gadt.hs-save
 haskell/paper/monad-reader/issue22/issue22.pdf
 haskell/paper/monad-reader/issue22/r.hs
 haskell/paper/newartisans.com/RCS/
-haskell/paper/scheme-in-48/stdlib.scm
 haskell/paper/twoDznA.pdf
 haskell/paper/twoDznQ.pdf
+haskell/paper/wikibooks-haskell/scheme-in-48/stdlib.scm
 
 # ------------------------------------------------------------------------------
 
