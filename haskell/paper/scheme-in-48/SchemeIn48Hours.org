@@ -14,7 +14,7 @@ tags: haskell, scheme
 #+END_HTML
 
 # Created       : 2013 Nov 01 (Fri) 14:33:34 by carr.
-Last Modified : 2013 Nov 04 (Mon) 21:16:34 by carr.
+Last Modified : 2013 Dec 01 (Sun) 08:28:35 by carr.
 
 - [[http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours]]
 
@@ -72,7 +72,8 @@ data LispError = NumArgs        Integer    [LispVal]
                | Default        String
 #+END_SRC
 
-** custom printing of user types (i.e., the =[[http://hackage.haskell.org/package/base-4.6.0.1/docs/Text-Show.html][Show=]] [[http://book.realworldhaskell.org/read/using-typeclasses.html][typeclass]])
+** custom printing of user types (i.e., the [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Text-Show.html][=Show=]] type class)
+
 ** [[http://en.wikibooks.org/wiki/Haskell/Pattern_matching][pattern matching]]
 ** [[http://en.wikibooks.org/wiki/Haskell/Control_structures#case_expressions][=case=]]
 ** [[http://hackage.haskell.org/package/base-4.6.0.1/docs/Prelude.html#v:unwords][=unwords=]]
@@ -103,7 +104,7 @@ instance Show LispVal where show = showVal
 #+END_SRC
 
 #+BEGIN_SRC haskell
-testRepresentation = TestList
+testRepresentation =
     [teq "unwords"     (unwords ["foo","bar"])
                        "foo bar"
 
@@ -172,7 +173,7 @@ intToRight (Number x) = Right (Number x)
 intTwice   :: LispVal -> ThrowsError LispVal
 intTwice   (Number x) = Right (Number (x + x))
 
-testErrorHandling = TestList
+testErrorHandling =
     [teq "1" (intToError (Number 1))
              (Left $ NumArgs 1 [Atom "dont-care"])
 
@@ -262,7 +263,7 @@ instance Eq LispVal where
      (List   x) == (List   y) = x == y
      (DottedList hl tl) == (DottedList hr tr) = hl == hl && tl == tr
 
-testParsing = TestList
+testParsing =
     [teq "Number.read"
                   ((Number . read) "4")
                   (Number 4)
@@ -361,7 +362,7 @@ setVar envRef var value = do env <- liftIO $ readIORef envRef
 #+BEGIN_SRC haskell
 eee = unsafePerformIO nullEnv
 
-testVariables = TestList
+testVariables =
     [teq "maybe N"    (maybe "default" (show :: Maybe Int -> String) Nothing)
                       "default"
 
@@ -549,7 +550,7 @@ main = do
     args <- getArgs
     case args of
         []         -> runRepl
-        ("test":t) -> runTests
+        ("test":t) -> seq runTests $ return ()
         _          -> runOne args
 
 flushStr :: String -> IO ()
@@ -732,13 +733,16 @@ equal badArgList = throwError $ NumArgs 2 badArgList
 #+BEGIN_SRC haskell
 runTests = rt
 
-rt = do
-    mapM_ runTestTT [testRepresentation
-                    ,testErrorHandling
-                    ,testParsing
-                    ,testVariables
-                    ]
-    return ()
+rt =
+    runTestTT $ TestList $ testRepresentation ++
+                           testErrorHandling ++
+                           testParsing ++
+                           testVariables
 #+END_SRC
+
+#+BEGIN_EXAMPLE
+rt
+=> Counts {cases = 34, tried = 34, errors = 0, failures = 0}
+#+END_EXAMPLE
 
 -- End of file.

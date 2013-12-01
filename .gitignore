@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Nov 24 (Sun) 22:00:23 by carr.
+# Last Modified : 2013 Dec 01 (Sun) 08:32:14 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -92,6 +92,8 @@ haskell/book/Pearls_of_Functional_Algorithm_Design-Richard_Bird.pdf
 haskell/book/Real_World_Haskell/InteractWith
 haskell/book/Real_World_Haskell/r.hs
 haskell/book/Real_World_Haskell/Real_World_Haskell.html
+
+haskell/book/The_Fun_of_Programming
 
 haskell/book/Yesod
 
