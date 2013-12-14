@@ -14,7 +14,7 @@ tags: haskell, monad, state
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 22 (Fri) 19:59:33 by carr.
+Last Modified : 2013 Dec 13 (Fri) 08:48:23 by carr.
 
 ------------------------------------------------------------------------------
 * setup
@@ -394,6 +394,9 @@ expansion of haskell's wikibook state monad page:
 
 useful:
 - http://www.codejury.com/handling-state-with-monads/
+
+monad transformers:
+- [[http://blog.sigfpe.com/2006/05/grok-haskell-monad-transformers.html]]
 
 
 SEE:?

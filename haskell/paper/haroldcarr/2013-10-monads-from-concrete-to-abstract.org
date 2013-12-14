@@ -14,7 +14,7 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Nov 23 (Sat) 09:34:51 by carr.
+Last Modified : 2013 Dec 14 (Sat) 13:31:34 by carr.
 
 #+BEGIN_COMMENT
 http://stackoverflow.com/questions/44965/what-is-a-monad A BUNCH OF
@@ -39,14 +39,23 @@ so what stands out is the mechanics of monad operation.
 * definition
 
 - A =Monad= is used to pipe the output of one function into another.
-- A =Monad= causes the first function to be evaluated before the second function (important in a lazy language).
-- A =Monad= places values into monads and extracts values from monads at appropriate moments.
-  - This "extra" monadic structure has code that executes "behind the
-    scenes" in a =Monad= typeclass rather than being embedded in the
-    main lines of a program.  This "extra" code is variously referred
-    to as "computations", "actions" and "behaviors".
+- A =Monad= causes the first function in a pipe to be evaluated before
+  the second function (important in a lazy language).
+- A monadic "pipe" has code that executes "behind the scenes" in a
+  =Monad= typeclass rather than being embedded in the main lines of a
+  program.  This "extra" code is variously referred to as
+  "computations", "actions" and "behaviors".
+- Sometimes a =Monad= can be viewed as a "container" (e.g., =Maybe=, =Either=, a list).
+  - A =Monad= inserts/extracts values into/out of containers at appropriate moments.
 
-Note: a =Monad= has nothing to do with side-effects.
+** monads and side-effects
+
+- A =Monad= has nothing to do with side-effects.
+- A monadic type is often used to simulate side-effects in a purely functional way, aka "effectful".
+  - TODO: not used in part 1 - shown in part 2
+- Particular monads, =IO= and some others, do "real" side-effects.
+  The monadic part of =IO= is used for ordering, not the side-effects
+  themselves.
 
 ------------------------------------------------------------------------------
 * setup
@@ -113,16 +122,17 @@ nonMonadicDouble :: Num a => a -> a
 nonMonadicDouble x = x + x
 
 tm1 = tt "tm1"
-     [ maybeExampleNonMonadic Nothing  Just      nonMonadicDouble
-     , maybeExampleNonMonadic (Just 3) toNothing nonMonadicDouble
+     [ maybeExampleNonMonadic Nothing  Just      nonMonadicDouble -- 1
+     , maybeExampleNonMonadic (Just 3) toNothing nonMonadicDouble -- 2
      ]
      Nothing
 #+END_SRC
 
-In =tm1= the result is =Nothing= immediately if the input is
-=Nothing=.  Or, if the input is =(Just 3)= but =f1= (here =toNothing=)
-returns =Nothing= then =Nothing= is returned at that step (and
-=nonMonadicDouble= is never called).
+In =tm1=
+- 1: the result is =Nothing= immediately if the input is =Nothing=.  Or,
+- 2: if the input is =(Just 3)= but =f1= (here =toNothing=) returns
+     =Nothing= then =Nothing= is returned at that step (and
+     =nonMonadicDouble= is never called).
 
 #+BEGIN_SRC haskell
 tm2 = t "tm2"
@@ -144,7 +154,7 @@ exampleMonadic i f1 f2 =
 What remains is the "important" part: piping "successful" computations
 from one function to another.  The extraction of values from =Just=,
 the short-circuiting of =Nothing= and the sequencing of values is factored
-into the =Maybe= =Monad= instance (shown below).
+into the =Maybe= =Monad= instance (shown below). TODO: ANCHOR/LINK
 
 Note: =do= notation can be used instead of =>>== (note: the type
 signatures of =exampleMonadic= and =exampleMonadicDo= are identical).
@@ -187,7 +197,7 @@ tm5 = tt "tm5"
 See [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Maybe.html#Maybe]]
 
 ------------------------------------------------------------------------------
-* =>>==
+* =>>== (aka "=bind=")
 
 The infix =Monad= =>>== function handles sequencing and extraction:
 
@@ -241,7 +251,7 @@ instance  Monad Maybe  where
 Type-inferencing in the compiler decides which =instance= of =return= to use.
 
 Note: in =exampleMonadic=, =Just . f2= could have been used in place
-of =return . f2= --- they are the same thing in this context.
+of =return . f2= --- they are the same thing in the =Maybe= context.
 However, using =return= makes the function generic, as will be seen in
 the following examples of other monads (which is why =exampleMonadic=
 is not named =maybeExampleMonadic=).
@@ -321,7 +331,7 @@ monadic composition --- but using =>>?= instead of =>>==).
 ------------------------------------------------------------------------------
 * =Either=
 
-=Either= is like =Maybe=, but additional information is given instead
+=Either= is like =Maybe=, but additional information is given on "failure" instead
 of =Nothing=:
 
 #+BEGIN_EXAMPLE
@@ -400,7 +410,7 @@ Notice how =exampleMonadic= was able to be used with both =Either= and =Maybe=.
 That is because the appropriate instance of =>>== and =return= are used based on the type.
 
 Note that for a long chain of =Either=, say the very first value in
-the chaing is =Left <something>=.  In this case, the entire chain of
+the chain is =Left <something>=.  In this case, the entire chain of
 =>>== calls would still be evaluated.  Each one would extract
 =<something>= and then just wrap it back up in a new =Left=.  In other
 words, there is a slight cost, even in the failure case.
@@ -545,13 +555,13 @@ side-effects are part of =IO=, not part of =Monad=.
 #+BEGIN_SRC haskell
 ioExampleMonadic   :: FilePath -> String -> IO Bool
 ioExampleMonadic filename output =
-    openFile filename WriteMode          >>=
-    \o     -> hPutStrLn o output         >>=
-    \_     -> hClose o                   >>=
-    \_     -> openFile filename ReadMode >>=
-    \i     -> hGetLine i                 >>=
-    \input -> hClose i                   >>=
-    \_     -> return (input == output)
+    openFile filename WriteMode >>= \o     ->
+    hPutStrLn o output          >>= \_     ->
+    hClose o                    >>= \_     ->
+    openFile filename ReadMode  >>= \i     ->
+    hGetLine i                  >>= \input ->
+    hClose i                    >>= \_     ->
+    return (input == output)
 
 ioExampleMonadicDo :: FilePath -> String -> IO Bool
 ioExampleMonadicDo filename output = do
@@ -580,7 +590,7 @@ functions guarantee the same results for the same inputs.  =IO= does
 not.
 
 The =Maybe=, =Either= and =[]= monads have functions that allow one to
-extract values from the monads and pass them out, independent of their
+extract values from the monads and pass them down, independent of their
 =Monad=:
 
 #+BEGIN_SRC haskell
@@ -592,7 +602,7 @@ tx1 = t "tx1"
 =tx1= uses =fromJust= and pattern matching (to extract from =Right=)
 to extract values from =Maybe= and =Either= monadic values and pass
 them down into =+=.  That is fine, even with =IO=, since it doesn't
-matter where values given to =+= come from since =+= will always
+matter where values given to =+= come from, since =+= will always
 return the same results for same values:
 
 #+BEGIN_SRC haskell
@@ -603,16 +613,39 @@ txiodown = do
     x <- getLine
     putStrLn "Enter the number '4':"
     y <- getLine
-    return ((read x :: Int) + (read y :: Int))
+    let result = ((read x :: Int) + (read y :: Int))
+    putStrLn $ "Result: " ++ (show result)
+    return result
 #+END_SRC
 
-=txiodown= uses side-effects (=getLine=) to supply values to the pure
-function =+=.  But the result of this use of =+= cannot be returned
-directly since each time =txiodown= is called it might return
-different results.  Therefore the type system requires that the result
-be wrapped via =return=.
+=txiodown= uses side-effects (=getLine=) to get values.  Those values
+are then extracted from the =IO= =Monad= and given to =+=.  After
+printing the result _must_ be "wrapped" in the =IO= monad via
+=return=.  That is because the result of evaluating =txiodown=
+involved real side-effects and any values obtained via real
+side-effects must always carry that fact with them in their type.
+This makes it easy to determine which parts of a program are purely
+fuctional and which involve side-effects.  This is important since it
+can be argued that most bugs arise from entanglements with state and
+time.  The pure part of the code are free from such issues.
 
-It is possible to extract values from =IO= via:
+It is possible, in general, to extract values from monads:
+
+#+BEGIN_SRC haskell
+tx2 = t "tx1"
+     (fromJust (Just 7))                                     -- passed up/out
+     7
+#+END_SRC
+
+=tx2= uses =fromJust= to extract a value from a =Maybe=
+monad and lets that value pass up/out to the unit test framework for
+comparison with the expected response.
+
+This type of "up/out" extraction is not possible with =IO= because
+doing so would break the partitioning of values obtained via
+side-effects from pure values mentioned above.
+
+Note: It is possible to extract values from =IO= via:
 
 #+BEGIN_EXAMPLE
 :t unsafePerformIO
@@ -622,25 +655,12 @@ It is possible to extract values from =IO= via:
 and it has been used in the unit tests:
 
 #+BEGIN_SRC haskell
-tx2 = t "tx2"
+tx3 = t "tx2"
      (unsafePerformIO txiodown)
      7
 #+END_SRC
 
 See Simon Peyton Jones [[http://research.microsoft.com/en-us/um/people/simonpj/papers/marktoberdorf/][Tackling the awkward squad]] for why =unsafePerformIO= should rarely be used.
-
-The next example:
-
-#+BEGIN_SRC haskell
-tx3 = t "tx1"
-     (fromJust (Just 7))                                     -- passed up/out
-     7
-#+END_SRC
-
-uses =fromJust= to extract a value from a =Maybe=
-monad and lets that value pass up/out to the unit test framework for
-comparison with the expected response.  This type of "up/out"
-extraction is not possible with =IO= (except for =unsafePerformIO=).
 
 #+BEGIN_COMMENT
 https://www.destroyallsoftware.com/talks/boundaries
@@ -739,6 +759,7 @@ See:
 ------------------------------------------------------------------------------
 * see also
 
+- [[http://monads.haskell.cz/html/index.html]]
 - [[http://mvanier.livejournal.com/3917.html]]
 - [[http://www.haskellforall.com/2013/07/statements-vs-expressions.html]]
 

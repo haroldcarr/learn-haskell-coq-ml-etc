@@ -1,30 +1,44 @@
 {-
 Created       : 2013 Nov 11 (Mon) 20:51:18 by carr.
-Last Modified : 2013 Nov 12 (Tue) 22:13:42 by carr.
+Last Modified : 2013 Dec 10 (Tue) 22:46:43 by carr.
 -}
 
-import Control.Arrow -- for "&&&"
+import Control.Applicative ((<*>))
+import Control.Arrow ((&&&))
+import Control.Monad (liftM2)
+
 import Test.HUnit
 import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
 
 -- Problem 1
 
-myLast :: [a] -> a
-myLast [] = error "myLast of empty"
-myLast [z] = z
-myLast (h:h2:t) = myLast (h2:t)
+myLast, myLast', myLast'' :: [a] -> a
+myLast     [] = error "myLast of empty"
+myLast    [z] = z
+myLast (_:xs) = myLast xs
+myLast'       = foldr1 (const id)
+myLast''      = foldr1 (flip const)
 
-t1 = t "t1" (myLast          "z")  'z'
-t2 = t "t2" (myLast        "xyz")  'z'
-t3 = t "t3" (myLast ['a' ..  'z']) 'z'
+t1 = tt "t1" [ (myLast            "z")
+             , (myLast'           "z")
+             , (myLast''          "z")
+             ]
+             'z'
+t2 = t  "t2"   (myLast          "xyz")  'z'
+t3 = tt "t3" [ (myLast   ['a' ..  'z'])
+             , (myLast'  ['a' ..  'z'])
+             , (myLast'' ['a' ..  'z'])
+             ]
+             'z'
 
 -- Problem 2
 
-myButLast :: [a] -> a
-myButLast [] = error "myButLast of empty"
-myButLast [z] = error "myButLast of single element list"
-myButLast [y,z] = y
-myButLast (h:h2:t) = myButLast (h2:t)
+myButLast, myButLast' :: [a] -> a
+myButLast    []  = error "myButLast of empty"
+myButLast   [_]  = error "myButLast of single element list"
+myButLast [y,_]  = y
+myButLast (_:xs) = myButLast xs
+myButLast' = last . init
 
 t4 = t "t4" (myButLast         "yz")  'y'
 t5 = t "t5" (myButLast        "xyz")  'y'
@@ -32,18 +46,31 @@ t6 = t "t6" (myButLast ['a' ..  'z']) 'y'
 
 -- Problem 3
 
-elementAt :: [a] -> Int -> a
-elementAt [] _ = error "elementAt of emptyList"
+-- first element is number 1.
+elementAt, elementAt', elementAt'' :: [a] -> Int -> a
+elementAt    [] _ = error "out of bounds"
 elementAt (h:_) 1 = h
-elementAt (_:t) n = elementAt t (n - 1)
+elementAt (_:t) n
+    | n < 1       = error "out of bounds"
+    | otherwise   = elementAt t (n - 1)
+elementAt'   xs i = xs !! (i-i)
+elementAt''       = flip $ (last .) . take
 
-t7 = t "t7" (elementAt   [1,2,3] 2) 2
-t8 = t "t8" (elementAt "haskell" 5) 'e'
+t7 = tt "t7" [ (elementAt   [1,2,3] 2)
+             , (elementAt'' [1,2,3] 2)
+             ]
+             2
+t8 = tt "t8" [ (elementAt   "haskell" 5)
+             , (elementAt'' "haskell" 5)
+             ]
+             'e'
 
 -- Problem 4
 
-myLength :: [a] -> Int
-myLength = foldl (\n _ -> n + 1) 0
+myLength, myLength', myLength'' :: [a] -> Int
+myLength   = foldl (\n _ -> n + 1) 0
+myLength'  = fst . last . zip [1..]
+myLength'' = sum . map (\_->1)
 
 t9  = t  "t9" (myLength [123, 456, 789]) 3
 t10 = t "t10" (myLength "Hello, world!") 13
@@ -58,8 +85,12 @@ t12 = t "t12" (myReverse [1,2,3,4]) [4,3,2,1]
 
 -- Problem 6
 
-isPalindrome :: Eq a => [a] -> Bool
-isPalindrome xs = xs == myReverse xs
+isPalindrome, isPalindrome', isPalindrome'', isPalindrome''' :: Eq a => [a] -> Bool
+isPalindrome   xs = xs == myReverse xs
+isPalindrome'     = liftM2 (==) id reverse
+isPalindrome''    = (==) <*> reverse
+isPalindrome'''   = uncurry (==) . (id &&& reverse)
+
 
 t13 = t "t13" (isPalindrome [1,2,3]) False
 t14 = t "t14" (isPalindrome "madamimadam") True
@@ -203,7 +234,7 @@ removeAt n xs = removeAt' n [] xs
 
 
 t33 = t "t33" (removeAt  2 "abcd") ('b',"acd")
-t34 = t "t34" (removeAt 10 "abcd") ('b',"acd")
+t34 = [ter "t34" (removeAt 10 "abcd") "n too big"] -- list brackets just to satisfy types
 
 
 -- ------------------------------------------------------------------------------
