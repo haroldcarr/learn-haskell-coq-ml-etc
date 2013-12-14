@@ -1,7 +1,7 @@
 #+TITLE:       concrete monads 2 : Writer, Reader, State
 #+AUTHOR:      Harold Carr
 #+DESCRIPTION: concrete monads 2 : Writer, Reader, State
-#+PROPERTY:    tangle 2013-concrete-monads-2-state.hs
+#+PROPERTY:    tangle 2013-concrete-monads-2-writer-reader-state.hs
 #+OPTIONS:     num:nil toc:t
 #+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
@@ -14,7 +14,7 @@ tags: haskell, monad, state
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Dec 14 (Sat) 14:20:26 by carr.
+Last Modified : 2013 Dec 14 (Sat) 14:22:20 by carr.
 
 ------------------------------------------------------------------------------
 * setup
