@@ -1,7 +1,7 @@
 #+TITLE:       concrete monads 1 : Maybe, Either, list, IO
 #+AUTHOR:      Harold Carr
 #+DESCRIPTION: concrete monads 1 : Maybe, Either, list, IO
-#+PROPERTY:    tangle 2013-concrete-monads-1-maybe-either-list-io.hs
+#+PROPERTY:    tangle 2013-12-15-concrete-monads-1-maybe-either-list-io.hs
 #+OPTIONS:     num:nil toc:t
 #+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
@@ -9,12 +9,12 @@
 #+BEGIN_HTML
 ---
 title: concrete monads 1 : Maybe, Either, list, IO
-tags: haskell, monads
+tags: haskell, monad
 ---
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Dec 15 (Sun) 12:17:40 by carr.
+Last Modified : 2013 Dec 15 (Sun) 13:18:47 by carr.
 
 ------------------------------------------------------------------------------
 <<SERIES-OVERVIEW>>
@@ -600,8 +600,8 @@ txiodown = do
     x <- getLine
     putStrLn "Enter the number '4':"
     y <- getLine
-    let result = ((read x :: Int) + (read y :: Int))
-    putStrLn $ "Result: " ++ (show result)
+    let result = (read x :: Int) + (read y :: Int)
+    putStrLn $ "Result: " ++ show result
     return result
 #+END_SRC
 
@@ -786,8 +786,6 @@ The 3rd article (TBD) will show how to combine 2 or more transformers.
 
 The emacs org-mode literate source code of this article is available at:
 
-- 
-
-
+- [[https://github.com/haroldcarr/learn-haskell-coq-ml-etc/blob/master/haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.org]]
 
 # End of file.
