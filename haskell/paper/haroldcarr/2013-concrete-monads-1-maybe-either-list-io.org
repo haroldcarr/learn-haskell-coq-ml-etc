@@ -14,26 +14,15 @@ tags: haskell, monads
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Dec 14 (Sat) 14:18:47 by carr.
+Last Modified : 2013 Dec 15 (Sun) 12:17:40 by carr.
 
-#+BEGIN_COMMENT
-http://stackoverflow.com/questions/44965/what-is-a-monad A BUNCH OF
-STUFF Search for:
-If each step returns a success/failure indicator, you can have bind
-execute the next step only if the previous one succeeded. In this way,
-a failing step aborts the whole sequence "automatically", without any
-conditional testing from you. (The Failure Monad.)
+------------------------------------------------------------------------------
+<<SERIES-OVERVIEW>>
+* series overview
 
-http://stackoverflow.com/questions/3433608/explanation-of-monad-laws
-For the most part, you can think of the extra monadic structure as a
-sequence of extra behaviors associated with a monadic value;
-e.g. Maybe being "give up" for Nothing and "keep going" for
-Just. Combining two monadic actions then essentially concatenates the
-sequences of behaviors they held.
-
-ME: the examples are designed to be extremely simple (and contrived)
-so what stands out is the mechanics of monad operation.
-#+END_COMMENT
+- concrete monads 1 : Maybe, Either, list, IO (this article)
+- concrete monads 2 : Writer, Reader, State (TBD)
+- concrete monads 3 : transformers (TBD)
 
 ------------------------------------------------------------------------------
 * definition
@@ -41,8 +30,8 @@ so what stands out is the mechanics of monad operation.
 - A =Monad= is used to pipe the output of one function into another.
 - A =Monad= causes the first function in a pipe to be evaluated before
   the second function (important in a lazy language).
-- A monadic "pipe" has code that executes "behind the scenes" in a
-  =Monad= typeclass rather than being embedded in the main lines of a
+- A monadic "pipe" has code that executes "behind the scenes" (in a
+  =Monad= typeclass) rather than being embedded in the main lines of a
   program.  This "extra" code is variously referred to as
   "computations", "actions" and "behaviors".
 - Sometimes a =Monad= can be viewed as a "container" (e.g., =Maybe=, =Either=, a list).
@@ -50,9 +39,9 @@ so what stands out is the mechanics of monad operation.
 
 ** monads and side-effects
 
-- A =Monad= has nothing to do with side-effects.
+- A =Monad= has /nothing/ to do with side-effects.
 - A monadic type is often used to simulate side-effects in a purely functional way, aka "effectful".
-  - TODO: not used in part 1 - shown in part 2
+  - This "effectful" aspect is not shown here in part 1.  It is discussed in part 2.
 - Particular monads, =IO= and some others, do "real" side-effects.
   The monadic part of =IO= is used for ordering, not the side-effects
   themselves.
@@ -61,8 +50,6 @@ so what stands out is the mechanics of monad operation.
 * setup
 
 #+BEGIN_SRC haskell
-{-# LANGUAGE FlexibleInstances #-}
-
 import Data.Char
 import Data.Either
 import Data.Maybe (fromJust)
@@ -129,8 +116,8 @@ tm1 = tt "tm1"
 #+END_SRC
 
 In =tm1=
-- 1: the result is =Nothing= immediately if the input is =Nothing=.  Or,
-- 2: if the input is =(Just 3)= but =f1= (here =toNothing=) returns
+- 1: the result is immediately =Nothing= if the first argument is =Nothing=.  Or,
+- 2: if the first argument is =(Just 3)= but =f1= (here =toNothing=) returns
      =Nothing= then =Nothing= is returned at that step (and
      =nonMonadicDouble= is never called).
 
@@ -140,7 +127,7 @@ tm2 = t "tm2"
      (Just 6)
 #+END_SRC
 
-In =tm2= the result is =(Just 6)= since both the input and the result of =f1= are =Just= values.
+In =tm2= the result is =(Just 6)= since both the the first argument and the result of =f1= are =Just= values.
 
 Since the pattern in =maybeExampleNonMonadic= is common, it is abstracted into the monadic
 aspects of =Maybe= such that it can be rewritten as:
@@ -154,7 +141,7 @@ exampleMonadic i f1 f2 =
 What remains is the "important" part: piping "successful" computations
 from one function to another.  The extraction of values from =Just=,
 the short-circuiting of =Nothing= and the sequencing of values is factored
-into the =Maybe= =Monad= instance (shown below). TODO: ANCHOR/LINK
+into the =Maybe= =Monad= instance (shown [[INSTANCE-MONAD-MAYBE][below]]).
 
 Note: =do= notation can be used instead of =>>== (note: the type
 signatures of =exampleMonadic= and =exampleMonadicDo= are identical).
@@ -167,7 +154,7 @@ exampleMonadicDo i f1 f2 = do
     return $ f2 y
 #+END_SRC
 
-In the above, =return= can be thought of as an alias (in this context) for =Just= (more on =return= below).
+In the above, =return= can be thought of as an alias (in this context) for =Just= (more on =return= [[RETURN][below]]).
 
 All three version of the example function return equivalent results:
 
@@ -194,8 +181,6 @@ tm5 = tt "tm5"
      (Just 6)
 #+END_SRC
 
-See [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Maybe.html#Maybe]]
-
 ------------------------------------------------------------------------------
 * =>>== (aka "=bind=")
 
@@ -210,8 +195,9 @@ class  Monad m  where
     (>>=)       :: forall a b. m a -> (a -> m b) -> m b
 #+END_EXAMPLE
 
+<<INSTANCE-MONAD-MAYBE>>
 The short-circuiting of the pipeline on =Nothing= values and the
-extract of values from =Just= and applying a function to those values
+extraction of values from =Just= and applying a function to those values
 is done via the =>>== definition of the =Maybe= =Monad= typeclass
 instance:
 
@@ -231,6 +217,7 @@ instance  Monad Maybe  where
   - The return value of =>>== is =Nothing=.
 
 ------------------------------------------------------------------------------
+<<RETURN>>
 * =return=
 
 The =Monad= =return= function "wraps" a value with an appropriate =Monad=:
@@ -256,8 +243,8 @@ However, using =return= makes the function generic, as will be seen in
 the following examples of other monads (which is why =exampleMonadic=
 is not named =maybeExampleMonadic=).
 
-# --------------------------------------------------
-** example =Maybe= evaluations
+------------------------------------------------------------------------------
+* example =Maybe= evaluations
 
 Given the definition:
 
@@ -277,7 +264,7 @@ exampleMonadic         Nothing  Just      nonMonadicDouble
 - =Nothing= is value of =i=
 - =i= is the left argument of the first =>>==
 - Since the value is =Nothing=, =f1= is never called and the first =>>== returns =Nothing=
-- =Nothing= is then the input to the left side of the second =>==
+- =Nothing= is then the input to the left side of the second =>>==
 - Since the value is =Nothing=, =return . f2= is never called and the second =>>== returns =Nothing=
 - =Nothing= is the result of =exampleMonadic=
 
@@ -314,7 +301,7 @@ exampleMonadic         (Just 3) Just      nonMonadicDouble
     - =f1=, in this case, is =Just=, so the result of =f1 3= is =Just 3=
 - =Just 3= is the result of the first =>>==
 - This =Just 3= result is the input to the left side of the second =>>==
-- second =>>==
+- the second =>>==
   - extracts =3= from =Just=
   - calls =(return . f2) 3=
     - =f2=, in this case, is =nonMonadicDouble=, so the result of =f2 3= is =6=
@@ -376,8 +363,8 @@ instance  Monad (Either e)  where
 The evaluation of =Either= is also identical to =Maybe= exception for retaining/returning =Left= information:
 
 #+BEGIN_SRC haskell
--- These are used instead of Left/Right in the tests
--- so as not to have to repeatedly specify types at point of use.
+-- Note: these are used instead of directly using Left/Right in the
+-- tests so as not to have to repeatedly specify types at point of use.
 toRight :: Int -> Either Int Int
 toRight = Right
 
@@ -407,9 +394,9 @@ te3 = tt "te3"
 #+END_SRC
 
 Notice how =exampleMonadic= was able to be used with both =Either= and =Maybe=.
-That is because the appropriate instance of =>>== and =return= are used based on the type.
+That is because the appropriate instances of =>>== and =return= are used based on the type.
 
-Note that for a long chain of =Either=, say the very first value in
+Note that in a long chain of =Either=, say the very first value in
 the chain is =Left <something>=.  In this case, the entire chain of
 =>>== calls would still be evaluated.  Each one would extract
 =<something>= and then just wrap it back up in a new =Left=.  In other
@@ -441,9 +428,9 @@ The list =Monad= typeclass instance:
 
 #+BEGIN_EXAMPLE
 instance  Monad []  where
-    m >>= k             = foldr ((++) .         k)  [] m
+    m >>= k  = foldr ((++) . k)  [] m
 
-    return x            = [x]
+    return x = [x]
 #+END_EXAMPLE
 
 shows that the function =k= is applied to each element of the list
@@ -468,7 +455,7 @@ listExampleNonMonadic i f1 f2 =
 in the tests below.  The idea is to keep the examples consistent
 between the different =Monad= class instances.)
 
-Although the above function checks for =[]= to "short-circuit" further
+Note: Although the above function checks for =[]= to "short-circuit" further
 evaluation, it is not really necessary since any function returning
 =[]= will operate the same:
 
@@ -595,14 +582,14 @@ extract values from the monads and pass them down, independent of their
 
 #+BEGIN_SRC haskell
 tx1 = t "tx1"
-     ((\x (Right y) -> x + y) (fromJust (Just 3)) (Right 4)) -- passed down/in
+     ((\x (Right y) -> x + y) (fromJust (Just 3)) (Right 4)) -- passed down, into +
      7
 #+END_SRC
 
 =tx1= uses =fromJust= and pattern matching (to extract from =Right=)
 to extract values from =Maybe= and =Either= monadic values and pass
 them down into =+=.  That is fine, even with =IO=, since it doesn't
-matter where values given to =+= come from, since =+= will always
+matter where values given to =+= come from, =+= will always
 return the same results for same values:
 
 #+BEGIN_SRC haskell
@@ -620,16 +607,21 @@ txiodown = do
 
 =txiodown= uses side-effects (=getLine=) to get values.  Those values
 are then extracted from the =IO= =Monad= and given to =+=.  After
-printing the result _must_ be "wrapped" in the =IO= monad via
+printing the result /must/ be "wrapped" in the =IO= monad via
 =return=.  That is because the result of evaluating =txiodown=
 involved real side-effects and any values obtained via real
 side-effects must always carry that fact with them in their type.
 This makes it easy to determine which parts of a program are purely
-fuctional and which involve side-effects.  This is important since it
+functional and which involve side-effects.  This is important since it
 can be argued that most bugs arise from entanglements with state and
 time.  The pure part of the code are free from such issues.
 
 It is possible, in general, to extract values from monads:
+
+#+BEGIN_EXAMPLE
+:t fromJust
+=> fromJust :: Maybe a -> a
+#+END_EXAMPLE
 
 #+BEGIN_SRC haskell
 tx2 = t "tx1"
@@ -662,11 +654,6 @@ tx3 = t "tx2"
 
 See Simon Peyton Jones [[http://research.microsoft.com/en-us/um/people/simonpj/papers/marktoberdorf/][Tackling the awkward squad]] for why =unsafePerformIO= should rarely be used.
 
-#+BEGIN_COMMENT
-https://www.destroyallsoftware.com/talks/boundaries
-IO Monad: value representation of an action that should be taken
-#+END_COMMENT
-
 ------------------------------------------------------------------------------
 * =Monad= laws
 
@@ -676,8 +663,10 @@ following laws:
 # --------------------------------------------------
 ** left identity
 
-- Returning only wraps a value.  It does does not change the value and
-  does not do anything else in the =Monad=.
+- =return= only wraps a value.  It does does not change the value and
+  does not do anything else in the =Monad=.  Both left and right (see
+  below) identity enable the compiler to eliminate =return= calls
+  without changing semantics).
 
 #+BEGIN_SRC haskell
 leftIdentity :: (Eq (m b), Monad m) => a -> (a -> m b) -> Bool
@@ -699,10 +688,8 @@ tli = tt "tli"
 # --------------------------------------------------
 ** right identity
 
-- Returning only wraps a value.  It does does not change the value and
-  does not do anything else in the =Monad= (both left/right identity
-  enable the compiler to eliminate =return= calls without changing
-  semantics).
+- =return= only wraps a value.  It does does not change the value and
+  does not do anything else in the =Monad=.
 
 #+BEGIN_SRC haskell
 rightIdentity :: (Eq (m b), Monad m) => m b -> Bool
@@ -754,20 +741,19 @@ See:
 
 - [[http://www.haskell.org/haskellwiki/Monad_laws]]
 - [[http://stackoverflow.com/questions/3433608/explanation-of-monad-laws]]
-- [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/GHC-Base.html#Monad]]
 
 ------------------------------------------------------------------------------
 * see also
 
 - [[http://monads.haskell.cz/html/index.html]]
 - [[http://mvanier.livejournal.com/3917.html]]
-- [[http://www.haskellforall.com/2013/07/statements-vs-expressions.html]]
 
 ------------------------------------------------------------------------------
 * example accuracy
 
 #+BEGIN_SRC haskell
-main =
+runTests :: IO Counts
+runTests =
     runTestTT $ TestList $ tm1 ++ tm2 ++ tm3 ++ tm4 ++ tm5 ++
                            te1 ++ te2 ++ te3 ++
                            tl1 ++ tl2 ++ tl3 ++
@@ -775,5 +761,33 @@ main =
                            tx1 ++ tx2 ++ tx3 ++
                            tli ++ tri ++ tas
 #+END_SRC
+
+#+BEGIN_EXAMPLE
+runTests
+=> Counts {cases = 58, tried = 58, errors = 0, failures = 0}
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* summary and next steps
+
+This article showed
+
+- the mechanics of several monads
+- pointed out that monads have nothing to do with side-effects (although monads are often used to simulate side-effects)
+- distinguished the "real" side-effects part of the =IO= monad from the monadic part (the part that does sequencing of operations)
+- mentioned the monad laws that a type must satisfy to correctly be a =Monad=
+
+The 2nd article (TBD) in this series will show monads being used to simulate side-effects in a purely functional way.
+
+The 3rd article (TBD) will show how to combine 2 or more transformers.
+
+# --------------------------------------------------
+** source code
+
+The emacs org-mode literate source code of this article is available at:
+
+- 
+
+
 
 # End of file.
