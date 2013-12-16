@@ -14,7 +14,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Dec 15 (Sun) 13:18:47 by carr.
+Last Modified : 2013 Dec 16 (Mon) 08:16:49 by carr.
 
 ------------------------------------------------------------------------------
 <<SERIES-OVERVIEW>>
@@ -25,21 +25,19 @@ Last Modified : 2013 Dec 15 (Sun) 13:18:47 by carr.
 - concrete monads 3 : transformers (TBD)
 
 ------------------------------------------------------------------------------
-* definition
+* initial intuition
 
-- A =Monad= is used to pipe the output of one function into another.
-- A =Monad= causes the first function in a pipe to be evaluated before
-  the second function (important in a lazy language).
+- A =Monad= is used to pipe the /output/ of one function into another.
 - A monadic "pipe" has code that executes "behind the scenes" (in a
   =Monad= typeclass) rather than being embedded in the main lines of a
-  program.  This "extra" code is variously referred to as
-  "computations", "actions" and "behaviors".
+  program.
+  - This "extra" code is sometimes called "monadic context".
+- Monadic values are sometimes referred to "computations" or  "actions".
 - Sometimes a =Monad= can be viewed as a "container" (e.g., =Maybe=, =Either=, a list).
-  - A =Monad= inserts/extracts values into/out of containers at appropriate moments.
 
 ** monads and side-effects
 
-- A =Monad= has /nothing/ to do with side-effects.
+- A =Monad= has /nothing/ to do with "real" side-effects (e.g., reading/writing a file).
 - A monadic type is often used to simulate side-effects in a purely functional way, aka "effectful".
   - This "effectful" aspect is not shown here in part 1.  It is discussed in part 2.
 - Particular monads, =IO= and some others, do "real" side-effects.
@@ -121,6 +119,7 @@ In =tm1=
      =Nothing= then =Nothing= is returned at that step (and
      =nonMonadicDouble= is never called).
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 tm2 = t "tm2"
      (maybeExampleNonMonadic (Just 3) Just      nonMonadicDouble)
@@ -182,12 +181,13 @@ tm5 = tt "tm5"
 #+END_SRC
 
 ------------------------------------------------------------------------------
-* =>>== (aka "=bind=")
+* =>>== (aka "bind")
 
 The infix =Monad= =>>== function handles sequencing and extraction:
 
 - [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/GHC-Base.html#Monad]]
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 class  Monad m  where
     -- | Sequentially compose two actions, passing any value produced
@@ -203,6 +203,7 @@ instance:
 
 - [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Maybe.html#Maybe]]
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 instance  Monad Maybe  where
     (Just x) >>= k      = k x
@@ -215,6 +216,10 @@ instance  Monad Maybe  where
   - The return value of =>>== is the return value of =k x=.
 - If the left is =Nothing= then the right function is never called.
   - The return value of =>>== is =Nothing=.
+
+For more on "bind" see:
+
+- [[http://blog.sigfpe.com/2006/08/you-could-have-invented-monads-and.html]]
 
 ------------------------------------------------------------------------------
 <<RETURN>>
@@ -352,6 +357,7 @@ The =Monad= instance of =Either= is also identical to =Maybe= except for retaini
 
 - [[http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Either.html#Either]]
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 instance  Monad (Either e)  where
     Left  l >>= _ = Left l
@@ -426,6 +432,7 @@ The list =Monad= typeclass instance:
 
 - [[http://www.haskell.org/ghc/docs/7.4.2/html/libraries/base/src/GHC-Base.html]] (search for =Monad []=)
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 instance  Monad []  where
     m >>= k  = foldr ((++) . k)  [] m
@@ -623,6 +630,7 @@ It is possible, in general, to extract values from monads:
 => fromJust :: Maybe a -> a
 #+END_EXAMPLE
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 tx2 = t "tx1"
      (fromJust (Just 7))                                     -- passed up/out
@@ -668,6 +676,7 @@ following laws:
   below) identity enable the compiler to eliminate =return= calls
   without changing semantics).
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 leftIdentity :: (Eq (m b), Monad m) => a -> (a -> m b) -> Bool
 leftIdentity a f = (return a >>= f) == f a
@@ -691,6 +700,7 @@ tli = tt "tli"
 - =return= only wraps a value.  It does does not change the value and
   does not do anything else in the =Monad=.
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 rightIdentity :: (Eq (m b), Monad m) => m b -> Bool
 rightIdentity m = (m >>= return) == m
@@ -715,6 +725,7 @@ tri = tt "tri"
   to group a sequence of monadic operations.  This allows functions
   that return monadic values to work properly.
 
+@@html:&nbsp;@@
 #+BEGIN_SRC haskell
 associativity :: (Eq (m b), Monad m) => m a -> (a -> m a1) -> (a1 -> m b) -> Bool
 associativity m f g = ((m >>= f) >>= g) == (m >>= (\x -> f x >>= g))
@@ -762,6 +773,7 @@ runTests =
                            tli ++ tri ++ tas
 #+END_SRC
 
+@@html:&nbsp;@@
 #+BEGIN_EXAMPLE
 runTests
 => Counts {cases = 58, tried = 58, errors = 0, failures = 0}
