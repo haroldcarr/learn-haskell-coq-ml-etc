@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Dec 15 (Sun) 21:08:32 by carr.
-Last Modified : 2013 Dec 16 (Mon) 12:02:53 by carr.
+Last Modified : 2013 Dec 16 (Mon) 18:31:38 by carr.
 -}
 
 import Control.Concurrent
@@ -14,17 +14,9 @@ import System.IO.Unsafe -- for unit tests
 default (Integer)
 
 ------------------------------------------------------------------------------
-numPrimesInRange :: Integral a => a -> a -> Int
-numPrimesInRange i block = numPrimesInRange' ((i * block) + 1) []
-  where
-    numPrimesInRange' j acc
-        | j <= (i + 1) * block = numPrimesInRange' (j + 1) (if isPrime j then j:acc else acc)
-        | otherwise            = length acc -- could calculate length at each step, but WANT to take the unnecessary time hit here
-
-
 listNumPrimesInRanges :: Integral a => a -> a -> IO [Int]
 listNumPrimesInRanges j block = do
-    numPrimesFoundInEachBlock <- newEmptyMVar ; putMVar numPrimesFoundInEachBlock []
+    numPrimesFoundInEachBlock <- newMVar []
     children                  <- newMVar []
     listNumPrimesInRanges' children 0 numPrimesFoundInEachBlock
     waitForChildren children
@@ -35,11 +27,12 @@ listNumPrimesInRanges j block = do
                                   | otherwise = return ()
 
 
-push :: Int -> MVar [Int] -> IO ()
-push x numPrimesFoundInEachBlock = do
-    v <- takeMVar numPrimesFoundInEachBlock
-    let v' = x:v
-    putMVar numPrimesFoundInEachBlock v'
+numPrimesInRange :: Integral a => a -> a -> Int
+numPrimesInRange i block = numPrimesInRange' ((i * block) + 1) []
+  where
+    numPrimesInRange' j acc
+        | j <= (i + 1) * block = numPrimesInRange' (j + 1) (if isPrime j then j:acc else acc)
+        | otherwise            = length acc -- could calculate length at each step, but WANT to take the unnecessary time hit here
 
 
 {-
@@ -87,59 +80,55 @@ tr = U.t "tr"
 
 ------------------------------------------------------------------------------
 
-inc :: MVar Int -> IO Int
-inc count = do { v <- takeMVar count; putMVar count (v+1); return v }
-
-findPrime :: Int -> MVar Int -> MVar Int -> IO ()
-findPrime limit ints primes = do
-    i <- inc ints
-    when (i < limit) $
-        if isPrime i
-        then do inc primes
-                findPrime limit ints primes
-        else findPrime limit ints primes
-
-fop :: Int -> IO (Int, Int)
-fop limit = do
-    intSupply      <- newEmptyMVar ; putMVar intSupply      2
-    numPrimesFound <- newEmptyMVar ; putMVar numPrimesFound 0
-    findPrime limit intSupply numPrimesFound
-    ri <- takeMVar intSupply
-    rp <- takeMVar numPrimesFound
-    return (ri, rp)
-
-fp :: (Num a, Ord a) => a -> Int -> IO (Int, Int)
-fp j limit = do
-    intSupply      <- newEmptyMVar ; putMVar intSupply      2
-    numPrimesFound <- newEmptyMVar ; putMVar numPrimesFound 0
+findPrimesTo :: (Num a, Ord a) => a -> Int -> IO (Int, Int)
+findPrimesTo numChildren limit = do
+    intSupply      <- newMVar 2
+    numPrimesFound <- newMVar 0
     children       <- newMVar []
-    fp' children 0 intSupply numPrimesFound
+    findPrimesTo' children 1 intSupply numPrimesFound
     waitForChildren children
     ri <- takeMVar intSupply
     rp <- takeMVar numPrimesFound
     return (ri, rp)
  where
-    fp' c i ints primes  | i <= j = do forkChild c (findPrime limit ints primes)
-                                       fp' c (i+1) ints primes
-                         | otherwise = return ()
+    findPrimesTo' c i ints primes  | i <= numChildren = do forkChild c (findPrime limit ints primes)
+                                                           findPrimesTo' c (i+1) ints primes
+                                   | otherwise = return ()
 
-tfop :: [T.Test]
-tfop = U.t "tfop"
-       (unsafePerformIO (fop (10^6)))
-       (1000001,78498)
+findPrime :: Int -> MVar Int -> MVar Int -> IO ()
+findPrime limit ints primes = do
+    i <- getAndInc ints
+    when (i < limit) $
+        if isPrime i
+        then do getAndInc primes
+                findPrime limit ints primes
+        else findPrime limit ints primes
 
-tfp :: [T.Test]
-tfp = U.t "tfp"
-      (unsafePerformIO (fp 6 (10^6)))
-      (1000007, sum trExpectedResult)
-{-
-expected: (1000007,49098)
- but got: (1000007,78498)
--}
+-- http://answers.yahoo.com/question/index?qid=1006050901081
+expectedTenToTheSixthResult :: Int
+expectedTenToTheSixthResult = 78498
+
+tfp0 :: [T.Test]
+tfp0 = U.t "tfp0"
+       (unsafePerformIO (findPrimesTo 1 (10^6)))
+       (1000001, expectedTenToTheSixthResult)
+
+tfp1 :: [T.Test]
+tfp1 = U.t "tfp1"
+      (unsafePerformIO (findPrimesTo 6 (10^6)))
+      (1000006, expectedTenToTheSixthResult)
 
 ------------------------------------------------------------------------------
--- from http://www.haskell.org/ghc/docs/7.6.2/html/libraries/base/Control-Concurrent.html
 
+push :: Int -> MVar [Int] -> IO ()
+push x numPrimesFoundInEachBlock = do
+    v <- takeMVar numPrimesFoundInEachBlock
+    putMVar numPrimesFoundInEachBlock (x:v)
+
+getAndInc :: MVar Int -> IO Int
+getAndInc count = do { v <- takeMVar count; putMVar count (v+1); return v }
+
+-- next two from http://www.haskell.org/ghc/docs/7.6.2/html/libraries/base/Control-Concurrent.html
 waitForChildren :: MVar [MVar a] -> IO ()
 waitForChildren children = do
     cs <- takeMVar children
@@ -162,6 +151,6 @@ forkChild children io = do
 runTests :: IO Counts
 runTests =
     T.runTestTT $ TestList $ tr0 ++ tr1 ++ tr2 ++ tr3 ++ tr4 ++ tr5 ++ tr ++
-                             tfop ++ tfp
+                             tfp0 ++ tfp1
 
 -- End of file.
