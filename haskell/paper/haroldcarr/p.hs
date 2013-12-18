@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Dec 15 (Sun) 21:08:32 by carr.
-Last Modified : 2013 Dec 16 (Mon) 21:49:41 by carr.
+Last Modified : 2013 Dec 17 (Tue) 18:53:24 by carr.
 -}
 
 import Control.Concurrent
@@ -185,5 +185,7 @@ runTests :: IO Counts
 runTests =
     T.runTestTT $ TestList $ tr0 ++ tr1 ++ tr2 ++ tr ++ trs ++
                              tfp0 ++ tfp1
+
+main = runTests
 
 -- End of file.

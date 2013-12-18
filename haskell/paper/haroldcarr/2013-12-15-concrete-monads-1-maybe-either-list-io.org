@@ -14,7 +14,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Dec 16 (Mon) 08:16:49 by carr.
+Last Modified : 2013 Dec 18 (Wed) 10:52:45 by carr.
 
 ------------------------------------------------------------------------------
 <<SERIES-OVERVIEW>>
@@ -66,7 +66,7 @@ import System.IO.Unsafe -- for one unit test
 #+END_SRC
 
 ------------------------------------------------------------------------------
-* =Maybe=
+* Maybe
 
 =Maybe= is used for functions that might return no results (i.e., to turn partial functions into total functions):
 
@@ -181,7 +181,7 @@ tm5 = tt "tm5"
 #+END_SRC
 
 ------------------------------------------------------------------------------
-* =>>== (aka "bind")
+* >>= (aka "bind")
 
 The infix =Monad= =>>== function handles sequencing and extraction:
 
@@ -223,7 +223,7 @@ For more on "bind" see:
 
 ------------------------------------------------------------------------------
 <<RETURN>>
-* =return=
+* return
 
 The =Monad= =return= function "wraps" a value with an appropriate =Monad=:
 
@@ -249,7 +249,7 @@ the following examples of other monads (which is why =exampleMonadic=
 is not named =maybeExampleMonadic=).
 
 ------------------------------------------------------------------------------
-* example =Maybe= evaluations
+* example Maybe evaluations
 
 Given the definition:
 
@@ -321,7 +321,7 @@ monadic function composition) and =parseP5_take2= (version with
 monadic composition --- but using =>>?= instead of =>>==).
 
 ------------------------------------------------------------------------------
-* =Either=
+* Either
 
 =Either= is like =Maybe=, but additional information is given on "failure" instead
 of =Nothing=:
@@ -414,7 +414,7 @@ partially applied type constructor --- see
 "Making an error-handling monad".)
 
 ------------------------------------------------------------------------------
-* =[]=
+* []
 
 Just as =Maybe= and =Either= may represent none/error (=Nothing=, =Left=) or one (=Just=, =Right=) results,
 a list:
@@ -539,7 +539,7 @@ and follow the shape of =>>== :
 #+END_EXAMPLE
 
 ------------------------------------------------------------------------------
-* =IO=
+* IO
 
 =IO= uses monadic sequencing (=>>==) to ensure that operations happen
 in a certain order (e.g., writes happen before reads when prompting
@@ -575,7 +575,7 @@ ti1 = tt "ti1"
 #+END_SRC
 
 # --------------------------------------------------
-** non-monadic tangent: =IO= is partitioned from pure functions
+** non-monadic tangent: IO is partitioned from pure functions
 
 There is no way to write a non-monadic =IO= example as was done for
 other =Monad= instances above.  The type system partitions
@@ -663,7 +663,7 @@ tx3 = t "tx2"
 See Simon Peyton Jones [[http://research.microsoft.com/en-us/um/people/simonpj/papers/marktoberdorf/][Tackling the awkward squad]] for why =unsafePerformIO= should rarely be used.
 
 ------------------------------------------------------------------------------
-* =Monad= laws
+* Monad laws
 
 For a typeclass =instance= to be a =Monad= it must satisfy the
 following laws:
