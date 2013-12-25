@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Dec 08 (Sun) 16:29:23 by carr.
+# Last Modified : 2013 Dec 24 (Tue) 22:38:50 by carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -71,10 +71,12 @@ haskell/.Notes-diagrams.org
 haskell/.Notes-distributed-haskell.org
 haskell/.Notes-hakyll.org
 haskell/.Notes-platform.org
+haskell/.Notes-threadscope.org
 haskell/.Notes-xmonad.org
 haskell/.Notes.org
 
 haskell/book/Beginning_Haskell/.Notes.org
+haskell/book/Beginning_Haskell/Beginning_Haskell.epub
 haskell/book/Beginning_Haskell/Beginning_Haskell.mobi
 haskell/book/Beginning_Haskell/Beginning_Haskell.pdf
 
@@ -97,6 +99,7 @@ haskell/book/The_Fun_of_Programming
 
 haskell/book/Yesod
 
+haskell/course/upenn/
 haskell/course/upenn/cis552/
 
 haskell/diagrams/
@@ -111,7 +114,16 @@ haskell/paper/SimonPJ-Tackling_the_Awkward_Squad.pdf
 haskell/paper/designing_typesafe_haskell_apis-Snoyman.pdf
 haskell/paper/fpcomplete/UserTelBasicLensing.h*
 haskell/paper/fpcomplete/UserTelBasicLensing.md
+
 haskell/paper/haroldcarr/RCS/
+haskell/paper/haroldcarr/.Notes.org
+haskell/paper/haroldcarr/.ghci
+haskell/paper/haroldcarr/2013-concrete-monads-0-notes.org
+haskell/paper/haroldcarr/Transformers-orig.lhs
+
+haskell/interview/target
+
+
 haskell/paper/haskell-distributed/
 haskell/paper/monad-reader/issue22/gadt.hs-save
 haskell/paper/monad-reader/issue22/issue22.pdf

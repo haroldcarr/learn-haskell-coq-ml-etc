@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Created       : 2013 Dec 24 (Tue) 12:15:18 by carr.
+Last Modified : 2013 Dec 24 (Tue) 21:56:16 by carr.
+-->
+
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+    >
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.openhc</groupId>
+    <version>0.0.1-SNAPSHOT</version>
+    <artifactId>X</artifactId>
+    <packaging>jar</packaging> <!-- jar so maven will download dependencies -->
+    <name>X</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-fuseki</artifactId>
+            <type>pom</type>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
+
+</project>

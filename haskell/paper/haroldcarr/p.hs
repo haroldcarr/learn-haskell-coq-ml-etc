@@ -1,15 +1,17 @@
 {-
 Created       : 2013 Dec 15 (Sun) 21:08:32 by carr.
-Last Modified : 2013 Dec 17 (Tue) 18:53:24 by carr.
+Last Modified : 2013 Dec 18 (Wed) 18:30:59 by carr.
 -}
 
 import Control.Concurrent
 import Control.Monad (when)
 import Data.Numbers.Primes (isPrime)
-
+import Data.Time.Clock
+import System.Environment
+import System.IO.Unsafe -- for unit tests
 import Test.HUnit       as T
 import Test.HUnit.Util  as U -- https://github.com/haroldcarr/test-hunit-util
-import System.IO.Unsafe -- for unit tests
+import Text.Printf
 
 default (Integer)
 
@@ -17,6 +19,9 @@ default (Integer)
 Example from
 _The Art of Multiprocessor Programming, Revised Reprint_, Maurice Herlihy, Nir Shavit
 Section 1.1
+
+-- Primes
+-- http://answers.yahoo.com/question/index?qid=1006050901081
 -}
 
 ------------------------------------------------------------------------------
@@ -104,14 +109,18 @@ tr2 = U.t "tr2"
 trExpectedResult :: [Int]
 trExpectedResult = [7224,7323,7408,7445,7560,7678,7863,8013,8392,9592]
 
-tr :: [T.Test]
-tr = U.t "tr"
-     (unsafePerformIO (listNumPrimesInRangesTo (10^5)))
-     trExpectedResult
-
+testSequential :: [Int]
+testSequential = listNumPrimesInRangesToSequential (10^5)
 trs :: [T.Test]
 trs = U.t "trs"
-     (listNumPrimesInRangesToSequential (10^5))
+     testSequential
+     trExpectedResult
+
+testParallelRange :: IO [Int]
+testParallelRange = listNumPrimesInRangesTo (10^5)
+tr :: [T.Test]
+tr = U.t "tr"
+     (unsafePerformIO testParallelRange)
      trExpectedResult
 
 ------------------------------------------------------------------------------
@@ -140,15 +149,18 @@ findPrime limit ints primes = do
             return ()
         findPrime limit ints primes
 
--- http://answers.yahoo.com/question/index?qid=1006050901081
+testFork0 :: IO (Int, Int)
+testFork0 = findPrimesTo 0 (10^6)
 tfp0 :: [T.Test]
 tfp0 = U.t "tfp0"
-       (unsafePerformIO (findPrimesTo 0 (10^6)))
+       (unsafePerformIO testFork0)
        (1000001, sum trExpectedResult)
 
+testFork4 :: IO (Int, Int)
+testFork4 = findPrimesTo 4 (10^6)
 tfp1 :: [T.Test]
 tfp1 = U.t "tfp1"
-       (unsafePerformIO (findPrimesTo 4 (10^6)))
+       (unsafePerformIO testFork4)
        (1000005, sum trExpectedResult)
 
 ------------------------------------------------------------------------------
@@ -186,6 +198,27 @@ runTests =
     T.runTestTT $ TestList $ tr0 ++ tr1 ++ tr2 ++ tr ++ trs ++
                              tfp0 ++ tfp1
 
-main = runTests
+main :: IO a
+main = do
+    [n] <- getArgs
+    t0 <- getCurrentTime
+    case n of
+        "1" -> let  result =  testSequential in   ptsr t0 (show result)
+        "2" -> do { result <- testParallelRange ; ptsr t0 (show result) }
+        "3" -> do { result <- testFork0         ; ptsr t0 (show result) }
+        "4" -> do { result <- testFork4         ; ptsr t0 (show result) }
+        "5" -> do { result <- runTests          ; ptsr t0 (show result) }
+        _   -> error "unknown"
+    printTimeSince t0
+
+ptsr :: UTCTime -> String -> IO ()
+ptsr t0 r = do
+    printTimeSince t0
+    putStrLn r
+
+printTimeSince :: UTCTime -> IO b
+printTimeSince t0 = do
+    t1 <- getCurrentTime
+    printf "time: %.2fs\n" (realToFrac (diffUTCTime t1 t0) :: Double)
 
 -- End of file.

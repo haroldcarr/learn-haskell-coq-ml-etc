@@ -1,0 +1,43 @@
+Created       : 2013 Dec 23 (Mon) 22:22:50 by carr.
+Last Modified : 2013 Dec 24 (Tue) 22:31:56 by carr.
+
+------------------------------------------------------------------------------
+* task
+
+https://github.com/projectdeltasea/projectdelta/blob/master/README.md
+
+------------------------------------------------------------------------------
+* Jena Fuseki
+
+http://jena.apache.org/documentation/serving_data/
+
+pushd /tmp
+unzip ~/ftptmp/jena-fuseki-1.0.0-distribution.zip
+cd jena-fuseki-1.0.0
+export f=`pwd`
+$f/fuseki-server --update --mem /ds &
+
+** load data
+
+cd ~/.sync/.esync/java/org/openhc/venuetime/metadata/
+$f/s-put http://localhost:3030/ds/data default events.n3
+$f/s-put http://localhost:3030/ds/data default participants.n3
+$f/s-put http://localhost:3030/ds/data default places.n3
+$f/s-put http://localhost:3030/ds/data default sponsors.n3
+
+** test data access
+
+$f/s-get http://localhost:3030/ds/data default
+$f/s-query --service http://localhost:3030/ds/query 'SELECT * {?s ?p ?o}'
+
+------------------------------------------------------------------------------
+* hsparql
+
+- =cabal install hsparql=
+- [[https://github.com/robstewart57/hsparql]]
+  - [[http://www.macs.hw.ac.uk/~rs46/interests.html]]
+  - [[http://www.macs.hw.ac.uk/~rs46/files/edlambda_talk/slides.pdf]]
+
+-- End of file.
+
+
