@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2013 Dec 24 (Tue) 22:38:50 by carr.
+# Last Modified : 2014 Jan 02 (Thu) 13:06:36 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -65,15 +65,6 @@ cabal-dev
 *.chi
 *.chs.h
 .virthualenv
-
-haskell/.Notes-cabal.org
-haskell/.Notes-diagrams.org
-haskell/.Notes-distributed-haskell.org
-haskell/.Notes-hakyll.org
-haskell/.Notes-platform.org
-haskell/.Notes-threadscope.org
-haskell/.Notes-xmonad.org
-haskell/.Notes.org
 
 haskell/book/Beginning_Haskell/.Notes.org
 haskell/book/Beginning_Haskell/Beginning_Haskell.epub

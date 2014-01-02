@@ -1,0 +1,20 @@
+Created       : 2013 Aug 21 (Wed) 14:54:35 by carr.
+Last Modified : 2013 Oct 25 (Fri) 09:57:40 by carr.
+
+
+2013 Aug 21 (Wed) :
+
+sudo cabal install lhs2tex
+
+
+------------------------------------------------------------------------------
+WHEN UPGRADE GHC
+
+install all previously installed packages
+some might not install, in which case delete from ~/.cabal/world and run again
+and install them again later when they are working again with that version of ghc.
+
+cabal install world
+
+-- End of file.
+
