@@ -1,10 +1,25 @@
 Created       : 2013 Aug 21 (Wed) 14:54:35 by carr.
-Last Modified : 2013 Oct 25 (Fri) 09:57:40 by carr.
+Last Modified : 2014 Jan 02 (Thu) 14:22:04 by Harold Carr.
 
 
-2013 Aug 21 (Wed) :
+cabal update
+cabal install cabal-install
+- [[https://groups.google.com/forum/#!topic/haskell-cafe/SFoNwaq8wdc]]
+cd /Library/Haskell/bin
+sudo mv cabal.real cabal.real-1.16
+sudo ln -s ~/Library/Haskell/bin/cabal cabal.real
+sudo chown carr cabal.real
 
-sudo cabal install lhs2tex
+cd ~/.sync/.esync/java/org/openhc/test-hunit-util
+make configure build install
+
+cabal install aeson
+cabal install hlint
+cabal install primes
+cabal install hsparql
+
+TODO
+cabal install lhs2tex
 
 
 ------------------------------------------------------------------------------

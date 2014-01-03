@@ -2,29 +2,35 @@ Haskell notes
 
 #+BEGIN_EXAMPLE
 Created       : 2011 Dec 29 (Thu) 19:40:46 by carr.
-Last Modified : 2013 Jun 01 (Sat) 12:38:48 by carr.
+Last Modified : 2014 Jan 02 (Thu) 13:59:23 by Harold Carr.
 #+END_EXAMPLE
 
 * install Haskell
 
 ** install via haskell.org
 
-- [[http://hackage.haskell.org/platform/mac.html]]
-- [[http://hackage.haskell.org/platform/contents.html]]
-
-Current installed 2013-05-31
-- 2012.4.0.0 (Mac 64 bit)
-- GHC   7.6.3
-- GHCi  7.6.3
-- Cabal 1.16.0
-
-puts symlinks in =/usr/bin=
-
 #+BEGIN_EXAMPLE
 apple -> about this mac -> more info -> system report -> software : 64-bit Kernel and Extensions [ Yes | No ]
 Download Haskell Platform ... 64 bit (10.6 or later)
 #+END_EXAMPLE
 
+- [[http://hackage.haskell.org/platform/mac.html]]
+- [[http://www.haskell.org/platform/download/2013.2.0.0/Haskell%20Platform%202013.2.0.0%2064bit.pkg]]
+
+puts symlinks in =/usr/bin=
+
+Installed 2014-01-02
+- 2012.4.0.0 (Mac 64 bit)
+- GHC   7.6.3
+- GHCi  7.6.3
+- Cabal 1.16.0
+  - THEN
+    cabal install cabal-install
+        Downloading Cabal-1.18.1.2...
+
+sudo chown -R carr /Library/Frameworks/GHC.framework
+
+- [[file:///Library/Haskell/doc/start.html]]
 - [[file:///Library/Haskell/current/doc/start.html]]
 
 - [[file:///Library/Frameworks/GHC.framework/Versions/Current/usr/bin]]
@@ -99,4 +105,6 @@ lhs2tex    : publication
 #+END_EXAMPLE
 
 [[http://en.wikibooks.org/wiki/Haskell]]
+
+# End of file.
 

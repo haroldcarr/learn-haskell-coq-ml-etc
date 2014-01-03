@@ -1,5 +1,5 @@
 Created       : 2013 Dec 23 (Mon) 22:22:50 by carr.
-Last Modified : 2013 Dec 24 (Tue) 22:31:56 by carr.
+Last Modified : 2014 Jan 02 (Thu) 14:32:02 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * task
@@ -11,9 +11,10 @@ https://github.com/projectdeltasea/projectdelta/blob/master/README.md
 
 http://jena.apache.org/documentation/serving_data/
 
-pushd /tmp
+cd /tmp
 unzip ~/ftptmp/jena-fuseki-1.0.0-distribution.zip
 cd jena-fuseki-1.0.0
+chmod +x s-*
 export f=`pwd`
 $f/fuseki-server --update --mem /ds &
 
@@ -37,6 +38,9 @@ $f/s-query --service http://localhost:3030/ds/query 'SELECT * {?s ?p ?o}'
 - [[https://github.com/robstewart57/hsparql]]
   - [[http://www.macs.hw.ac.uk/~rs46/interests.html]]
   - [[http://www.macs.hw.ac.uk/~rs46/files/edlambda_talk/slides.pdf]]
+
+cd ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/interview/
+
 
 -- End of file.
 
