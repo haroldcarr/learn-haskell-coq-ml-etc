@@ -1,0 +1,20 @@
+
+==============
+Listen Port: 3030
+Target Host: 127.0.0.1
+Target Port: 3029
+==== Request ====
+POST /ds/update HTTP/1.1
+User-Agent: SOH/Fuseki 0.0.0
+Content-Length: 134
+Host: 127.0.0.1:3030
+Content-Type: application/sparql-update
+
+PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT DATA {  <http://example/book1> dc:title "A new book" ; dc:creator "A.N.Other" . }==== Response ====
+HTTP/1.1 204 No Content
+Fuseki-Request-ID: 4
+Access-Control-Allow-Origin: *
+Server: Fuseki (1.0.0)
+
+
+==============

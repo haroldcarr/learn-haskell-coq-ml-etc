@@ -1,0 +1,354 @@
+
+==============
+Listen Port: 3030
+Target Host: 127.0.0.1
+Target Port: 3029
+==== Request ====
+PUT /ds/data?default HTTP/1.1
+Content-Length: 12362
+Host: 127.0.0.1:3030
+User-Agent: SOH/Fuseki 0.0.0
+Content-Type: text/n3; charset=utf-8
+
+
+@prefix :         <http://openhc.org/data/event/> .
+@prefix dc:       <http://purl.org/dc/elements/1.1/> .
+@prefix event:    <http://purl.org/NET/c4dm/event.owl#>.
+@prefix foaf:     <http://xmlns.com/foaf/0.1/> .
+@prefix hce:      <http://openhc.org/schemas/event-2009-10-14.owl#> .
+@prefix timeline: <http://purl.org/NET/c4dm/timeline.owl#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+
+:e2011-01-19T16-30_Denson_Angulo_Doctoral_Recital_#1_classical_bass_-University_of_Utah_Dumke_Recital_Hall_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-01-19T16:30:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-01-19T17:30:00"^^xsd:dateTime ;
+dc:title "Denson Angulo Doctoral Recital #1 (classical bass)"@en ;
+hce:comments "Bach cello suite #3, Hindemith, and Koussevitzky"@en ;
+hce:etype "music"@en ;
+hce:style "classical"@en ;
+event:place :University_of_Utah_Dumke_Recital_Hall_Salt_Lake_City_Utah ;
+hce:participant :Devin_Angulo ;
+hce:participant :Denson_Angulo ;
+.
+
+:e2011-01-21T18-00_White_Sale_-Ken_Sanders_Rare_Books_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-01-21T18:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-01-21T21:00:00"^^xsd:dateTime ;
+dc:title "White Sale"@en ;
+hce:comments "25-75 percent off art, posters, maps, etc"@en ;
+hce:etype "art"@en ;
+hce:style "rare"@en ;
+event:place :Ken_Sanders_Rare_Books_Salt_Lake_City_Utah ;
+.
+
+:e2011-01-21T20-30_Walt_Gregory_-Murray_Arts_Center_Murray_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-01-21T20:30:00"^^xsd:dateTime ;
+dc:title "Walt Gregory"@en ;
+hce:etype "music"@en ;
+hce:style "dance"@en ;
+event:place :Murray_Arts_Center_Murray_Utah ;
+hce:participant :Walt_Gregory ;
+foaf:homepage <http://www.facebook.com/photo.php?fbid=1380050839856&set=a.1294271095416.39276.1789470931&ref=nf> ;
+.
+
+:e2011-01-22T19-00_Moors_and_McCumber_Ellis_and_Mary_McAdams_-Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-01-22T19:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-01-22T22:00:00"^^xsd:dateTime ;
+dc:title "Moors and McCumber, Ellis and Mary McAdams"@en ;
+hce:etype "music"@en ;
+hce:style "folk"@en ;
+event:place :Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah ;
+hce:sponsor :Intermountain_Acoustic_Music_Association ;
+.
+
+:e2011-01-28T18-00_Final_Fridays_-_Pamela_Z_-Montalvo_Arts_Center_Saratoga_California
+a hce:Event ;
+timeline:beginsAtDateTime "2011-01-28T18:00:00"^^xsd:dateTime ;
+dc:title "Final Fridays - Pamela Z"@en ;
+hce:etype "performance art"@en ;
+hce:style "electronica"@en ;
+event:place :Montalvo_Arts_Center_Saratoga_California ;
+hce:participant :Pamela_Z ;
+foaf:homepage <http://montalvoarts.org/events/final_pamela_z/> ;
+.
+
+:e2011-01-29T19-30_Matt_Flinner_Trio_-Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-01-29T19:30:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-01-29T22:30:00"^^xsd:dateTime ;
+dc:title "Matt Flinner Trio"@en ;
+hce:etype "music"@en ;
+hce:style "newgrass"@en ;
+event:place :Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah ;
+hce:sponsor :Intermountain_Acoustic_Music_Association ;
+hce:participant :Matt_Flinner ;
+.
+
+:e2011-01-29T21-00_Joe_Chisholm_-The_Bayou_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-01-29T21:00:00"^^xsd:dateTime ;
+dc:title "Joe Chisholm"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :The_Bayou_Salt_Lake_City_Utah ;
+hce:participant :Joe_Chisholm ;
+.
+
+:e2011-02-04T19-30_Sons_of_Other_Mothers_original_folk_Honey_funk_blues_acoustic_-Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-04T19:30:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-04T22:30:00"^^xsd:dateTime ;
+dc:title "Sons of Other Mothers (original folk), Honey (funk, blues, acoustic)"@en ;
+hce:etype "music"@en ;
+hce:style "folk"@en ;
+event:place :Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah ;
+hce:sponsor :Intermountain_Acoustic_Music_Association ;
+.
+
+:e2011-02-04T20-30_Walt_Gregory_-Murray_Arts_Center_Murray_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-04T20:30:00"^^xsd:dateTime ;
+dc:title "Walt Gregory"@en ;
+hce:etype "music"@en ;
+hce:style "dance"@en ;
+event:place :Murray_Arts_Center_Murray_Utah ;
+hce:participant :Walt_Gregory ;
+foaf:homepage <http://www.facebook.com/photo.php?fbid=1380050839856&set=a.1294271095416.39276.1789470931&ref=nf> ;
+.
+
+:e2011-02-04T21-00_Dan_Day_Trio_-The_Bayou_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-04T21:00:00"^^xsd:dateTime ;
+dc:title "Dan Day Trio"@en ;
+hce:etype "music"@en ;
+hce:style "pop, jazz"@en ;
+event:place :The_Bayou_Salt_Lake_City_Utah ;
+hce:participant :Daniel_Day_Trio ;
+.
+
+:e2011-02-05T21-00_Latin_Jazz_Factory_-The_Bayou_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-05T21:00:00"^^xsd:dateTime ;
+dc:title "Latin Jazz Factory"@en ;
+hce:etype "music"@en ;
+hce:style "latin"@en ;
+event:place :The_Bayou_Salt_Lake_City_Utah ;
+hce:participant :Latin_Jazz_Factory ;
+.
+
+:e2011-02-11T21-00_Double_Helix_John_Flanders_-The_Bayou_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-11T21:00:00"^^xsd:dateTime ;
+dc:title "Double Helix (John Flanders)"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :The_Bayou_Salt_Lake_City_Utah ;
+hce:participant :John_Flanders ;
+.
+
+:e2011-02-12T20-00_Hal_Cannon_CD_Release_Concert_-The_State_Room_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-12T20:00:00"^^xsd:dateTime ;
+dc:title "Hal Cannon CD Release Concert"@en ;
+hce:etype "music"@en ;
+hce:style "folk"@en ;
+event:place :The_State_Room_Salt_Lake_City_Utah ;
+hce:participant :Tom_Carter ;
+hce:participant :Anke_Summerhill ;
+hce:participant :Rex_Flinner ;
+hce:participant :Harold_Carr ;
+hce:participant :Flavia_Cervino-Wood ;
+hce:participant :Kate_MacLeod ;
+hce:participant :Charlotte_Bell ;
+hce:participant :Phillip_Bimstein ;
+hce:participant :Hal_Cannon ;
+foaf:homepage <http://www.thestateroomslc.com/shows/item/167-hal-cannons-range-sat-feb-12> ;
+.
+
+:e2011-02-18T17-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-18T17:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-18T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-19T10-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-19T10:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-19T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-19T19-30_Charley_Jenkins_-Grand_Theater_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-19T19:30:00"^^xsd:dateTime ;
+dc:title "Charley Jenkins"@en ;
+hce:etype "music"@en ;
+hce:style "country"@en ;
+event:place :Grand_Theater_Salt_Lake_City_Utah ;
+hce:sponsor :Excellence_in_the_Community_Utah ;
+hce:participant :Charley_Jenkins ;
+foaf:homepage <http://excellenceconcerts.org/artistDetail.php?id=47> ;
+.
+
+:e2011-02-20T10-30_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-20T10:30:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-20T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-21T19-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-21T19:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-21T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-22T14-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-22T14:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-22T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-23T17-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-23T17:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-23T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-24T17-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-24T17:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-24T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-25T08-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-25T08:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-25T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-26T10-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-26T10:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-26T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-02-27T11-00_Portland_Jazz_Festival_-Portland_Jazz_Festival
+a hce:Event ;
+timeline:beginsAtDateTime "2011-02-27T11:00:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-02-27T11:59:00"^^xsd:dateTime ;
+dc:title "Portland Jazz Festival"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Portland_Jazz_Festival ;
+.
+
+:e2011-03-04T19-30_Sassafras_folk_Charlie_Simmons_Ballads_-Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-03-04T19:30:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-03-04T22:30:00"^^xsd:dateTime ;
+dc:title "Sassafras (folk), Charlie Simmons (Ballads)"@en ;
+hce:etype "music"@en ;
+hce:style "folk"@en ;
+event:place :Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah ;
+hce:sponsor :Intermountain_Acoustic_Music_Association ;
+.
+
+:e2011-03-05T19-30_Aaron_Ashton_Quintet_-Grand_Theater_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-03-05T19:30:00"^^xsd:dateTime ;
+dc:title "Aaron Ashton Quintet"@en ;
+hce:etype "music"@en ;
+hce:style "celtic fiddle"@en ;
+event:place :Grand_Theater_Salt_Lake_City_Utah ;
+hce:sponsor :Excellence_in_the_Community_Utah ;
+hce:participant :Aaron_Ashton ;
+foaf:homepage <http://excellenceconcerts.org/artistDetail.php?id=48> ;
+.
+
+:e2011-04-01T19-30_Backwoods_Cowgrass_Otter_Creek_folk_-Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-04-01T19:30:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-04-01T22:30:00"^^xsd:dateTime ;
+dc:title "Backwoods (Cowgrass), Otter Creek (folk)"@en ;
+hce:etype "music"@en ;
+hce:style "folk"@en ;
+event:place :Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah ;
+hce:sponsor :Intermountain_Acoustic_Music_Association ;
+.
+
+:e2011-04-23T19-30_Caleb_Chapman_and_Voodoo_Orchestra_-Grand_Theater_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-04-23T19:30:00"^^xsd:dateTime ;
+dc:title "Caleb Chapman and Voodoo Orchestra"@en ;
+hce:etype "music"@en ;
+hce:style "jazz"@en ;
+event:place :Grand_Theater_Salt_Lake_City_Utah ;
+hce:sponsor :Excellence_in_the_Community_Utah ;
+hce:participant :Caleb_Champan ;
+foaf:homepage <http://excellenceconcerts.org/artistDetail.php?id=46> ;
+.
+
+:e2011-05-06T19-30_Red_Desert_Ramblers_bluegrass_classic-country_swing_Wild_Coyotes_from_Pocatello_Idaho_Falls_old_time_-Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah
+a hce:Event ;
+timeline:beginsAtDateTime "2011-05-06T19:30:00"^^xsd:dateTime ;
+timeline:endsAtDateTime "2011-05-06T22:30:00"^^xsd:dateTime ;
+dc:title "Red Desert Ramblers (bluegrass, classic-country, swing), Wild Coyotes from Pocatello, Idaho Falls (old time)"@en ;
+hce:etype "music"@en ;
+hce:style "bluegrass"@en ;
+event:place :Southern_Valley_Unitarian_Church_Salt_Lake_City_Utah ;
+hce:sponsor :Intermountain_Acoustic_Music_Association ;
+.
+
+:e2011-05-06T__
+a hce:Event ;
+.
+
+# end of n3 file
+==== Response ====
+HTTP/1.1 204 No Content
+Fuseki-Request-ID: 1
+Access-Control-Allow-Origin: *
+Server: Fuseki (1.0.0)
+
+
+==============
