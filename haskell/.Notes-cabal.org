@@ -1,5 +1,5 @@
 Created       : 2013 Aug 21 (Wed) 14:54:35 by carr.
-Last Modified : 2014 Jan 08 (Wed) 21:20:34 by Harold Carr.
+Last Modified : 2014 Jan 08 (Wed) 21:48:23 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * CABAL INSTALLS
@@ -54,8 +54,6 @@ mv cabal.sandbox.config ~/CABAL-SANDBOXES/hsparql
 ln -s ~/CABAL-SANDBOXES/hsparql sandbox
 ln -s sandbox/.cabal-sandbox
 ln -s sandbox/cabal.sandbox.config
-# temporary measure : I did sandbox before HC
-ln -s /Volumes/HC /Volumes/untitled
 
 ln -s ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/interview/s.hs
 

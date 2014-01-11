@@ -1,5 +1,5 @@
 Created       : 2013 Dec 23 (Mon) 22:22:50 by carr.
-Last Modified : 2014 Jan 08 (Wed) 20:55:43 by Harold Carr.
+Last Modified : 2014 Jan 10 (Fri) 20:49:49 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * task
@@ -11,9 +11,9 @@ https://github.com/projectdeltasea/projectdelta/blob/master/README.md
 
 http://jena.apache.org/documentation/serving_data/
 
-cd /tmp
+pushd /tmp
 unzip ~/ftptmp/jena-fuseki-1.0.0-distribution.zip
-cd jena-fuseki-1.0.0
+pushd /tmp/jena-fuseki-1.0.0
 export f=`pwd`
 
 chmod +x s-*
@@ -54,6 +54,74 @@ pushd ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/interview/
 
 pushd ~/ftptmp/ebooks-music-pics/tech/hsparql/
 
+curl --request POST 'http://localhost:3030/ds/update' \
+     --header 'Content-Length:135' \
+     --header 'Content-Type: application/sparql-update' \
+     --header 'Host:127.0.0.1:3030' \
+     --data 'PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT DATA {  <http://example/book1> dc:title "A CURL book" ; dc:creator "A.N.Other" . }==== Res'
+
+--------------------------------------------------
+COMMIT
+
+Added support for SPARQL UPDATE.
+
+An example update:
+
+u :: Query UpdateQuery
+u = do
+    dc <- prefix "dc" (iriRef "http://purl.org/dc/elements/1.1/")
+    ex <- prefix "ex" (iriRef "http://example/")
+
+    ut1 <- updateTriple (ex .:. "book1")  (dc .:. "title") (T.pack "A HASKELL book")
+    ut2 <- updateTriple (ex .:. "book1")  (dc .:. "title") (T.pack "Another HASKELL book")
+    ut3 <- updateTriple (ex .:. "book1")  (dc .:. "title") (T.pack "Yet another HASKELL book")
+
+    return UpdateQuery { queryUpdate = [ut1,ut2,ut3] }
+
+du :: IO ()
+du = do
+    res <- updateQuery "http://localhost:3030/ds/update" u
+    putStrLn $ "result: " ++ show (res::Bool)
+
+On the wire this look like:
+
+POST /ds/update HTTP/1.1
+Connection: close
+Host: 127.0.0.1:3030
+Content-Length: 217
+Content-Type: application/sparql-update
+User-Agent: hsparql-client
+
+PREFIX ex: <http://example/> PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT DATA { ex:book1 dc:title "A HASKELL book" . ex:book1 dc:title "Another HASKELL book" . ex:book1 dc:title "Yet another HASKELL book" . }
+
+
+The response looks like (using Jena Fuseki):
+
+HTTP/1.1 204 No Content
+Fuseki-Request-ID: 27
+Access-Control-Allow-Origin: *
+Server: Fuseki (1.0.0)
+Connection: close
+
+
+Doing a query shows that all three triples have been added.
+
+TODO:
+- QueryGenerator.updateTriple : only allow Terms (right now accepts variables resulting in  request time errors
+- Support DELETE
+
+
+-----
+* Sync my local and githum copy with original
+
+- [[http://bassistance.de/2010/06/25/git-fu-updating-your-github-fork/]]
+
+git remote -v
+git remote add original git@github.com:robstewart57/hsparql.git
+git remote -v
+git fetch original
+git merge original/master
+git push
 
 
 -- End of file.
