@@ -1,13 +1,13 @@
 {-
 Created       : 2013 Dec 23 (Mon) 23:15:11 by carr.
-Last Modified : 2014 Jan 10 (Fri) 23:34:46 by Harold Carr.
+Last Modified : 2014 Jan 11 (Sat) 09:53:53 by Harold Carr.
 
 TODO:
 - Use Shelly to start up fuseki and then program that runs through it using below
 -}
 
 import Control.Monad (unless)
-import Data.List.Split (splitOn)
+import Data.String.Utils (replace)
 import Data.Text as T (pack, unpack)
 import Database.HSparql.Connection
 import Database.HSparql.QueryGenerator
@@ -18,6 +18,7 @@ dbQueryAddress    = dbAddress ++ "query"
 dbUpdateAddress   = dbAddress ++ "update"
 emailAddress      = mkX "emailAddress"
 group             = mkX "group"
+groupName         = mkX "groupName"
 hasPermissions    = mkX "hasPermissions"
 initialized       = mkX "initialized"
 isA               = mkX "isA"
@@ -35,33 +36,57 @@ main = do
     av <- getArgs
     act av
 
-act ("new-user"          : userEmail : [])           = newUser userEmail
-act ("add-user-to-group" : userEmail : groupName:[]) = do putStrLn "add-user-to-group"
-act ("list-user-groups"  : userEmail : [])           = do putStrLn "list-user-groups"
-act ("delete-user"       : userEmail : [])           = do putStrLn "delete-user"
-act ("list-users"        : [])                       = do putStrLn "list-users"
+act ("new-user"                : uEmail : [])                       = newUser uEmail
+act ("add-user-to-group"       : uEmail : gName      :[])           = addUserToGroup uEmail gName
+act ("list-user-groups"        : uEmail : [])                       = do putStrLn "list-user-groups"
+act ("delete-user"             : uEmail : [])                       = do putStrLn "delete-user"
+act ("list-users"              : [])                                = do putStrLn "list-users"
 
-act ("new-group"              : group : [])                       = do putStrLn "new-group"
-act ("new-group-permission"   : group : permission : resource:[]) = do putStrLn "new-group-permission"
-act ("list-group-permissions" : group : [])                       = do putStrLn "list-user-groups"
-act ("delete-group"           : group : [])                       = do putStrLn "delete-group"
-act ("list-groups"            : [])                               = do putStrLn "list-users"
+act ("new-group"               : gName  : [])                       = newGroup gName
+act ("add-permission-to-group" : gName  : permission : resource:[]) = addPermissionToGroup gName permission resource
+act ("list-group-permissions"  : gName  : [])                       = do putStrLn "list-user-groups"
+act ("delete-group"            : gName  : [])                       = do putStrLn "delete-group"
+act ("list-groups"             : [])                                = do putStrLn "list-users"
 
-act x  = do putStrLn $ "unknown: " ++ (show x)
+act x                                                               = do putStrLn $ "unknown: " ++ (show x)
 
-newUser userEmail = update u
+emailAddressToId uEmail =
+    replace "@" "AT" uEmail
+
+newUser uEmail = update u
   where
     u = do
         ohc <- openHcOrgPrefix
-        let (name:_:[]) = splitOn ("@"::String) userEmail
-            root  = mkX (T.pack name)
-        r   <- root
-        ia  <- isA
-        u   <- user
-        u1  <- updateTriple r ia u
+        id  <- mkX $ T.pack (emailAddressToId uEmail);    ia  <- isA;    u   <- user
+        u1  <- updateTriple id ia u
         ema <- emailAddress
-        u2  <- updateTriple r ema (T.pack userEmail)
+        u2  <- updateTriple id ema (T.pack uEmail)
         return UpdateQuery { queryUpdate = [u1,u2] }
+
+newGroup gName = update u
+  where
+    gnp = (T.pack gName)
+    u = do
+        ohc <- openHcOrgPrefix
+        id  <- mkX (T.pack gName);    ia  <- isA;    grp <- group
+        u1  <- updateTriple id ia grp
+        gn  <- groupName
+        u2  <- updateTriple id gn gnp
+        return UpdateQuery { queryUpdate = [u1,u2] }
+
+addUserToGroup uEmail gName = update u
+  where
+    u = do
+        ohc <- openHcOrgPrefix
+        id  <- mkX (T.pack $ emailAddressToId uEmail);    mo  <- memberOf;    mg  <- mkX (T.pack gName)
+        u1  <- updateTriple id mo mg
+        return UpdateQuery { queryUpdate = [u1] }
+
+addPermissionToGroup gName permission resource = do return () {- update u
+  where
+    u = do
+        ohc <- openHcOrgPrefix
+-}
 
 isDBAlreadyPopulated :: IO Bool
 isDBAlreadyPopulated = da aq
@@ -81,25 +106,22 @@ initializeDB = do
     dbAlreadyPopulated <- isDBAlreadyPopulated
     unless dbAlreadyPopulated initializeDB'
   where
-    haskellCurryName = "haskell.curry"
-    initializeDB' = (newUser $ haskellCurryName ++ "@projectdelta.com") `seq` update u -- TODO: RIGHT HERE
+    haskellCurryEmail = "haskell.curry@projectdelta.com"
+    mathGroup         = "mathGroup"
+    initializeDB' = do
+        -- make Haskell Curry a user and a member of the math group
+        newUser haskellCurryEmail
+        newGroup mathGroup
+        addUserToGroup haskellCurryEmail mathGroup
+        update u
     u = do
         ohc <- openHcOrgPrefix
-        -- make Haskell Curry a user and a member of the math group
-        let mathGroup = mkX "mathGroup"
-        hc  <- mkX (T.pack haskellCurryName)
-        mo  <- memberOf
-        mg  <- mathGroup
-        u3  <- updateTriple hc mo mg
 
-        -- make math a group
-        ia  <- isA
-        grp <- group
-        u4  <- updateTriple mg ia grp
         -- math group
-        let mathEmail  = (T.pack "math@projectdelta.com")
-            scheduling = (T.pack "https://scheduling.office.projectdelta.com/")
+        let mathEmail  = T.pack "math@projectdelta.com"
+            scheduling = T.pack "https://scheduling.office.projectdelta.com/"
         --     can read and send emails to the math@projectdelta.com mailing list
+        mg  <- mkX (T.pack mathGroup)
         rp  <- readPermission
         wp  <- writePermission
         u5  <- updateTriple mg rp mathEmail
@@ -114,7 +136,7 @@ initializeDB = do
         i   <- initialized
 --        u10 <- updateTriple i i i
 
-        return UpdateQuery { queryUpdate = [u3,u4,u5,u6,u7,u8,u9{-,u10-}] }
+        return UpdateQuery { queryUpdate = [u5,u6,u7,u8,u9{-,u10-}] }
 
 update x = do
     r <- updateQuery dbUpdateAddress x
