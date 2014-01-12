@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Dec 23 (Mon) 23:15:11 by carr.
-Last Modified : 2014 Jan 11 (Sat) 09:53:53 by Harold Carr.
+Last Modified : 2014 Jan 11 (Sat) 17:15:33 by Harold Carr.
 
 TODO:
 - Use Shelly to start up fuseki and then program that runs through it using below
@@ -16,19 +16,21 @@ import System.Environment (getArgs)
 dbAddress         = "http://localhost:3030/ds/"
 dbQueryAddress    = dbAddress ++ "query"
 dbUpdateAddress   = dbAddress ++ "update"
-emailAddress      = mkX "emailAddress"
-group             = mkX "group"
-groupName         = mkX "groupName"
-hasPermissions    = mkX "hasPermissions"
-initialized       = mkX "initialized"
-isA               = mkX "isA"
-memberOf          = mkX "memberOf"
+emailAddress      = ohcP "emailAddress"
+group             = ohcP "group"
+groupName         = ohcP "groupName"
+hasPermissions    = ohcP "hasPermissions"
+initialized       = ohcP "initialized"
+isA               = ohcP "isA"
+memberOf          = ohcP "memberOf"
 openHcOrgPrefix   = prefix "openHcOrg" (iriRef "http://openhc.org/")
-readPermission    = mkX "readPermission"
-user              = mkX "user"
-writePermission   = mkX "writePermission"
+readP             = "read"
+readPermission    = ohcP "readPermission"
+user              = ohcP "user"
+writeP            = "write"
+writePermission   = ohcP "writePermission"
 
-mkX x = do { ohc <- openHcOrgPrefix ; return (ohc .:. x) }
+ohcP x = do { ohc <- openHcOrgPrefix ; return (ohc .:. x) }
 
 main :: IO ()
 main = do
@@ -36,19 +38,21 @@ main = do
     av <- getArgs
     act av
 
-act ("new-user"                : uEmail : [])                       = newUser uEmail
-act ("add-user-to-group"       : uEmail : gName      :[])           = addUserToGroup uEmail gName
-act ("list-user-groups"        : uEmail : [])                       = do putStrLn "list-user-groups"
-act ("delete-user"             : uEmail : [])                       = do putStrLn "delete-user"
-act ("list-users"              : [])                                = do putStrLn "list-users"
+act ("new-user"                 : uEmail : [])                       = newUser              uEmail
+act ("add-user-to-group"        : uEmail : gName      :[])           = addUserToGroup       uEmail gName
+act ("rm-user-from-group"       : uEmail : gName      :[])           = do putStrLn "rmUserFromGroup      uEmail gName"
+act ("list-user-groups"         : uEmail : [])                       = do putStrLn "list-user-groups"
+act ("delete-user"              : uEmail : [])                       = do putStrLn "delete-user"
+act ("list-users"               : [])                                = do putStrLn "list-users"
 
-act ("new-group"               : gName  : [])                       = newGroup gName
-act ("add-permission-to-group" : gName  : permission : resource:[]) = addPermissionToGroup gName permission resource
-act ("list-group-permissions"  : gName  : [])                       = do putStrLn "list-user-groups"
-act ("delete-group"            : gName  : [])                       = do putStrLn "delete-group"
-act ("list-groups"             : [])                                = do putStrLn "list-users"
+act ("new-group"                : gName  : [])                       = newGroup             gName
+act ("add-permission-to-group"  : gName  : permission : resource:[]) = addPermissionToGroup gName  permission resource
+act ("rm-permission-from-group" : gName  : permission : resource:[]) = do putStrLn "rmPermissionFromGroup gName  permission resource"
+act ("list-group-permissions"   : gName  : [])                       = do putStrLn "list-user-groups"
+act ("delete-group"             : gName  : [])                       = do putStrLn "delete-group"
+act ("list-groups"              : [])                                = do putStrLn "list-users"
 
-act x                                                               = do putStrLn $ "unknown: " ++ (show x)
+act x                                                                = do putStrLn $ "unknown: " ++ (show x)
 
 emailAddressToId uEmail =
     replace "@" "AT" uEmail
@@ -57,7 +61,7 @@ newUser uEmail = update u
   where
     u = do
         ohc <- openHcOrgPrefix
-        id  <- mkX $ T.pack (emailAddressToId uEmail);    ia  <- isA;    u   <- user
+        id  <- ohcP $ T.pack (emailAddressToId uEmail);    ia  <- isA;    u   <- user
         u1  <- updateTriple id ia u
         ema <- emailAddress
         u2  <- updateTriple id ema (T.pack uEmail)
@@ -68,7 +72,7 @@ newGroup gName = update u
     gnp = (T.pack gName)
     u = do
         ohc <- openHcOrgPrefix
-        id  <- mkX (T.pack gName);    ia  <- isA;    grp <- group
+        id  <- ohcP (T.pack gName);    ia  <- isA;    grp <- group
         u1  <- updateTriple id ia grp
         gn  <- groupName
         u2  <- updateTriple id gn gnp
@@ -78,15 +82,23 @@ addUserToGroup uEmail gName = update u
   where
     u = do
         ohc <- openHcOrgPrefix
-        id  <- mkX (T.pack $ emailAddressToId uEmail);    mo  <- memberOf;    mg  <- mkX (T.pack gName)
+        id  <- ohcP (T.pack $ emailAddressToId uEmail);    mo  <- memberOf;    mg  <- ohcP (T.pack gName)
         u1  <- updateTriple id mo mg
         return UpdateQuery { queryUpdate = [u1] }
 
-addPermissionToGroup gName permission resource = do return () {- update u
+addPermissionToGroup gName permission resource = update u
   where
+    perm = pToP permission
     u = do
         ohc <- openHcOrgPrefix
--}
+        id  <- ohcP $ T.pack gName
+        p   <- perm
+        u1  <- updateTriple id p (T.pack resource)
+        return UpdateQuery { queryUpdate = [u1] }
+
+pToP x | x == readP  = readPermission
+       | x == writeP = writePermission
+       | otherwise   = ohcP $ T.pack x -- TODO: restrict
 
 isDBAlreadyPopulated :: IO Bool
 isDBAlreadyPopulated = da aq
@@ -113,30 +125,24 @@ initializeDB = do
         newUser haskellCurryEmail
         newGroup mathGroup
         addUserToGroup haskellCurryEmail mathGroup
+        let mathEmail  = "math@projectdelta.com"
+            scheduling = "https://scheduling.office.projectdelta.com/"
+        -- math group
+        --     can read and send emails to the math@projectdelta.com mailing list
+        addPermissionToGroup mathGroup readP  mathEmail
+        addPermissionToGroup mathGroup writeP mathEmail
+        --     can reserve conference rooms via https://scheduling.office.projectdelta.com/
+        addPermissionToGroup mathGroup readP  scheduling
+        addPermissionToGroup mathGroup writeP scheduling
+        --     has read-only access to financial reports at https://reports.finance.projectdelta.com/
+        addPermissionToGroup mathGroup readP  "https://reports.finance.projectdelta.com/"
         update u
     u = do
         ohc <- openHcOrgPrefix
-
-        -- math group
-        let mathEmail  = T.pack "math@projectdelta.com"
-            scheduling = T.pack "https://scheduling.office.projectdelta.com/"
-        --     can read and send emails to the math@projectdelta.com mailing list
-        mg  <- mkX (T.pack mathGroup)
-        rp  <- readPermission
-        wp  <- writePermission
-        u5  <- updateTriple mg rp mathEmail
-        u6  <- updateTriple mg wp mathEmail
-        --     can reserve conference rooms via https://scheduling.office.projectdelta.com/
-        u7  <- updateTriple mg rp scheduling
-        u8  <- updateTriple mg wp scheduling
-        --     has read-only access to financial reports at https://reports.finance.projectdelta.com/
-        u9  <- updateTriple mg rp (T.pack "https://reports.finance.projectdelta.com/")
-
         -- set the initialized marker
         i   <- initialized
 --        u10 <- updateTriple i i i
-
-        return UpdateQuery { queryUpdate = [u5,u6,u7,u8,u9{-,u10-}] }
+        return UpdateQuery { queryUpdate = [{-,u10-}] }
 
 update x = do
     r <- updateQuery dbUpdateAddress x

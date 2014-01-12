@@ -1,5 +1,5 @@
 Created       : 2013 Dec 23 (Mon) 22:22:50 by carr.
-Last Modified : 2014 Jan 10 (Fri) 20:49:49 by Harold Carr.
+Last Modified : 2014 Jan 11 (Sat) 16:40:27 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * task
@@ -20,8 +20,8 @@ chmod +x s-*
 
 ./fuseki-server --update --mem /ds &
 
-./fuseki-server --port 3029 --update --mem /ds &
 java -cp ~/.m2/repository/ws-commons/tcpmon/1.0/tcpmon-1.0.jar  org.apache.ws.commons.tcpmon.TCPMon &
+./fuseki-server --port 3029 --update --mem /ds &
 
 
 ** load data
