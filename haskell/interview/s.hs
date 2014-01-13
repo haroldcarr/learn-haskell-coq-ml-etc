@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Dec 23 (Mon) 23:15:11 by carr.
-Last Modified : 2014 Jan 11 (Sat) 17:15:33 by Harold Carr.
+Last Modified : 2014 Jan 12 (Sun) 16:03:43 by Harold Carr.
 
 TODO:
 - Use Shelly to start up fuseki and then program that runs through it using below
@@ -30,7 +30,7 @@ user              = ohcP "user"
 writeP            = "write"
 writePermission   = ohcP "writePermission"
 
-ohcP x = do { ohc <- openHcOrgPrefix ; return (ohc .:. x) }
+ohcP x = do { ohc <- openHcOrgPrefix ; return (ohc .:. (T.pack x)) }
 
 main :: IO ()
 main = do
@@ -38,70 +38,101 @@ main = do
     av <- getArgs
     act av
 
-act ("new-user"                 : uEmail : [])                       = newUser              uEmail
-act ("add-user-to-group"        : uEmail : gName      :[])           = addUserToGroup       uEmail gName
+act ("new-user"                 : uEmail : [])                       = newUserCLI              uEmail
+act ("add-user-to-group"        : uEmail : gName      :[])           = addUserToGroupCLI       uEmail gName
 act ("rm-user-from-group"       : uEmail : gName      :[])           = do putStrLn "rmUserFromGroup      uEmail gName"
 act ("list-user-groups"         : uEmail : [])                       = do putStrLn "list-user-groups"
 act ("delete-user"              : uEmail : [])                       = do putStrLn "delete-user"
-act ("list-users"               : [])                                = do putStrLn "list-users"
+act ("list-users"               : [])                                = listUsersCLI
 
-act ("new-group"                : gName  : [])                       = newGroup             gName
-act ("add-permission-to-group"  : gName  : permission : resource:[]) = addPermissionToGroup gName  permission resource
+act ("new-group"                : gName  : [])                       = newGroupCLI             gName
+act ("add-permission-to-group"  : gName  : permission : resource:[]) = addPermissionToGroupCLI gName  permission resource
 act ("rm-permission-from-group" : gName  : permission : resource:[]) = do putStrLn "rmPermissionFromGroup gName  permission resource"
 act ("list-group-permissions"   : gName  : [])                       = do putStrLn "list-user-groups"
 act ("delete-group"             : gName  : [])                       = do putStrLn "delete-group"
-act ("list-groups"              : [])                                = do putStrLn "list-users"
+act ("list-groups"              : [])                                = listGroupsCLI
 
 act x                                                                = do putStrLn $ "unknown: " ++ (show x)
 
-emailAddressToId uEmail =
-    replace "@" "AT" uEmail
+newUserCLI uEmail = do
+    r <- newUser uEmail
+    putStrLn $ show r
 
 newUser uEmail = update u
   where
     u = do
         ohc <- openHcOrgPrefix
-        id  <- ohcP $ T.pack (emailAddressToId uEmail);    ia  <- isA;    u   <- user
+        id  <- ohcP $ emailAddressToId uEmail;    ia  <- isA;    u   <- user
         u1  <- updateTriple id ia u
         ema <- emailAddress
         u2  <- updateTriple id ema (T.pack uEmail)
         return UpdateQuery { queryUpdate = [u1,u2] }
+
+listUsersCLI = do
+    r <- listUsers
+    putStrLn $ show r
+
+listUsers = do query q
+  where
+    q = do
+        s <- var;    ia  <- isA;    u   <- user
+        triple s ia u
+        return SelectQuery { queryVars = [s] }
+
+newGroupCLI gName = do
+    r <- newGroup gName
+    putStrLn $ show r
 
 newGroup gName = update u
   where
     gnp = (T.pack gName)
     u = do
         ohc <- openHcOrgPrefix
-        id  <- ohcP (T.pack gName);    ia  <- isA;    grp <- group
+        id  <- ohcP gName;    ia  <- isA;    grp <- group
         u1  <- updateTriple id ia grp
         gn  <- groupName
         u2  <- updateTriple id gn gnp
         return UpdateQuery { queryUpdate = [u1,u2] }
 
+addUserToGroupCLI uEmail gName = do
+    r <- addUserToGroup uEmail gName
+    putStrLn $ show r
+
 addUserToGroup uEmail gName = update u
   where
     u = do
         ohc <- openHcOrgPrefix
-        id  <- ohcP (T.pack $ emailAddressToId uEmail);    mo  <- memberOf;    mg  <- ohcP (T.pack gName)
-        u1  <- updateTriple id mo mg
+        id  <- ohcP $ emailAddressToId uEmail;    mo  <- memberOf;    g  <- ohcP gName
+        u1  <- updateTriple id mo g
         return UpdateQuery { queryUpdate = [u1] }
+
+addPermissionToGroupCLI gName permission resource = do
+    r <- addPermissionToGroup gName permission resource
+    putStrLn $ show r
 
 addPermissionToGroup gName permission resource = update u
   where
     perm = pToP permission
     u = do
         ohc <- openHcOrgPrefix
-        id  <- ohcP $ T.pack gName
+        id  <- ohcP gName
         p   <- perm
         u1  <- updateTriple id p (T.pack resource)
         return UpdateQuery { queryUpdate = [u1] }
 
-pToP x | x == readP  = readPermission
-       | x == writeP = writePermission
-       | otherwise   = ohcP $ T.pack x -- TODO: restrict
+listGroupsCLI = do
+    r <- listGroups
+    putStrLn $ show r
+
+listGroups = do query q
+  where
+    q = do
+        s <- var;    ia  <- isA;    g   <- group
+        triple s ia g
+        return SelectQuery { queryVars = [s] }
 
 isDBAlreadyPopulated :: IO Bool
-isDBAlreadyPopulated = da aq
+isDBAlreadyPopulated = ask aq
   where
     aq :: Query AskQuery
     aq = do
@@ -110,9 +141,6 @@ isDBAlreadyPopulated = da aq
         ask <- askTriple i i i
         return AskQuery { queryAsk = [ask] }
 
-    da :: Query AskQuery -> IO Bool
-    da aq = do { r <- askQuery dbQueryAddress aq; return r }
-
 initializeDB :: IO ()
 initializeDB = do
     dbAlreadyPopulated <- isDBAlreadyPopulated
@@ -120,13 +148,13 @@ initializeDB = do
   where
     haskellCurryEmail = "haskell.curry@projectdelta.com"
     mathGroup         = "mathGroup"
-    initializeDB' = do
+    mathEmail         = "math@projectdelta.com"
+    scheduling        = "https://scheduling.office.projectdelta.com/"
+    initializeDB'     = do
         -- make Haskell Curry a user and a member of the math group
         newUser haskellCurryEmail
         newGroup mathGroup
         addUserToGroup haskellCurryEmail mathGroup
-        let mathEmail  = "math@projectdelta.com"
-            scheduling = "https://scheduling.office.projectdelta.com/"
         -- math group
         --     can read and send emails to the math@projectdelta.com mailing list
         addPermissionToGroup mathGroup readP  mathEmail
@@ -137,16 +165,36 @@ initializeDB = do
         --     has read-only access to financial reports at https://reports.finance.projectdelta.com/
         addPermissionToGroup mathGroup readP  "https://reports.finance.projectdelta.com/"
         update u
+        return ()
     u = do
         ohc <- openHcOrgPrefix
         -- set the initialized marker
         i   <- initialized
---        u10 <- updateTriple i i i
-        return UpdateQuery { queryUpdate = [{-,u10-}] }
+        u1  <- updateTriple i i i
+        return UpdateQuery { queryUpdate = [u1] }
 
-update x = do
-    r <- updateQuery dbUpdateAddress x
-    putStrLn $ "result: " ++ show (r::Bool)
+mkDoUpdate s o p = do update u
+  where
+    u = do
+        ohc <- openHcOrgPrefix
+        s' <- s;    o' <- o;    p' <- p
+        u  <- updateTriple s' o' p'
+        return UpdateQuery { queryUpdate = [u] }
+
+update :: Query UpdateQuery -> IO Bool
+update u = do r <- updateQuery dbUpdateAddress u; return r
+
+query :: Query SelectQuery -> IO (Maybe [[BindingValue]])
+query  q = do r <- selectQuery dbQueryAddress  q; return r
+
+ask :: Query AskQuery -> IO Bool
+ask    a = do r <- askQuery    dbQueryAddress  a; return r
+
+emailAddressToId uEmail = replace "@" "AT" uEmail
+
+pToP x | x == readP  = readPermission
+       | x == writeP = writePermission
+       | otherwise   = ohcP x -- TODO: restrict
 
 ------------------------------------------------------------------------------
 -- Experiments
@@ -190,22 +238,5 @@ u = do
 
     return UpdateQuery { queryUpdate = [ut1,ut2,ut3] }
 
-
-dq :: Query SelectQuery -> IO ()
-dq query = do
-    result <- selectQuery "http://localhost:3030/ds/query" query
-    case result of
-        (Just s) -> putStrLn . show $ s
-        Nothing  -> error "bad"
-
-da :: IO ()
-da = do
-    res <- askQuery "http://localhost:3030/ds/query" a
-    putStrLn $ "result: " ++ show (res::Bool)
-
-du :: IO ()
-du = do
-    res <- updateQuery "http://localhost:3030/ds/update" u
-    putStrLn $ "result: " ++ show (res::Bool)
 
 -- End of file.
