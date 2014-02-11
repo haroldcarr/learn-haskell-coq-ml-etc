@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>motivation for monads</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">motivation for monads</h1>
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Motivation for Monads</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">example: non-monadic evaluator</h3>
+<div class="outline-text-3" id="text-1-1">
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #A52A2A; font-weight: bold;">type</span> <span style="color: #2F8B58; font-weight: bold;">Name</span>   <span style="color: #0084C8; font-weight: bold;">=</span>  <span style="color: #2F8B58; font-weight: bold;">String</span>                <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">variable names</span>
+
+<span style="color: #A52A2A; font-weight: bold;">data</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span>    <span style="color: #0084C8; font-weight: bold;">=</span>  <span style="color: #2F8B58; font-weight: bold;">Lit</span>  <span style="color: #2F8B58; font-weight: bold;">Integer</span>          <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">expressions</span>
+            <span style="color: #0084C8; font-weight: bold;">|</span>  <span style="color: #2F8B58; font-weight: bold;">Var</span>  <span style="color: #2F8B58; font-weight: bold;">Name</span>
+            <span style="color: #0084C8; font-weight: bold;">|</span>  <span style="color: #2F8B58; font-weight: bold;">Plus</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span>  <span style="color: #2F8B58; font-weight: bold;">Exp</span>
+            <span style="color: #0084C8; font-weight: bold;">|</span>  <span style="color: #2F8B58; font-weight: bold;">Abs</span>  <span style="color: #2F8B58; font-weight: bold;">Name</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span>
+            <span style="color: #0084C8; font-weight: bold;">|</span>  <span style="color: #2F8B58; font-weight: bold;">App</span>  <span style="color: #2F8B58; font-weight: bold;">Exp</span>  <span style="color: #2F8B58; font-weight: bold;">Exp</span>
+            <span style="color: #A52A2A; font-weight: bold;">deriving</span> (<span style="color: #2F8B58; font-weight: bold;">Eq</span>, <span style="color: #2F8B58; font-weight: bold;">Show</span>)
+
+<span style="color: #A52A2A; font-weight: bold;">data</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>  <span style="color: #0084C8; font-weight: bold;">=</span>  <span style="color: #2F8B58; font-weight: bold;">IntVal</span> <span style="color: #2F8B58; font-weight: bold;">Integer</span>        <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">values</span>
+            <span style="color: #0084C8; font-weight: bold;">|</span>  <span style="color: #2F8B58; font-weight: bold;">FunVal</span> <span style="color: #2F8B58; font-weight: bold;">Env</span> <span style="color: #2F8B58; font-weight: bold;">Name</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span>
+            <span style="color: #A52A2A; font-weight: bold;">deriving</span> (<span style="color: #2F8B58; font-weight: bold;">Eq</span>, <span style="color: #2F8B58; font-weight: bold;">Show</span>)
+
+<span style="color: #A52A2A; font-weight: bold;">type</span> <span style="color: #2F8B58; font-weight: bold;">Env</span>    <span style="color: #0084C8; font-weight: bold;">=</span>  <span style="color: #2F8B58; font-weight: bold;">Map.Map</span> <span style="color: #2F8B58; font-weight: bold;">Name</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>    <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">mapping from names to values</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">eval0</span>                 <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Env</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>
+<span style="color: #00578E; font-weight: bold;">eval0</span> env (<span style="color: #2F8B58; font-weight: bold;">Lit</span> i)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i
+<span style="color: #00578E; font-weight: bold;">eval0</span> env (<span style="color: #2F8B58; font-weight: bold;">Var</span> n)      <span style="color: #0084C8; font-weight: bold;">=</span> fromJust (<span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>lookup n env)
+<span style="color: #00578E; font-weight: bold;">eval0</span> env (<span style="color: #2F8B58; font-weight: bold;">Plus</span> e1 e2) <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">let</span>  <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i1  <span style="color: #0084C8; font-weight: bold;">=</span> eval0 env e1
+                              <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i2  <span style="color: #0084C8; font-weight: bold;">=</span> eval0 env e2
+                         <span style="color: #A52A2A; font-weight: bold;">in</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> (i1 <span style="color: #0084C8; font-weight: bold;">+</span> i2)
+<span style="color: #00578E; font-weight: bold;">eval0</span> env (<span style="color: #2F8B58; font-weight: bold;">Abs</span>  n  e)  <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env n e
+<span style="color: #00578E; font-weight: bold;">eval0</span> env (<span style="color: #2F8B58; font-weight: bold;">App</span>  e1 e2) <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">let</span>  val1  <span style="color: #0084C8; font-weight: bold;">=</span> eval0 env e1
+                              val2  <span style="color: #0084C8; font-weight: bold;">=</span> eval0 env e2
+                         <span style="color: #A52A2A; font-weight: bold;">in</span> <span style="color: #A52A2A; font-weight: bold;">case</span> val1 <span style="color: #A52A2A; font-weight: bold;">of</span>
+                              <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env' n body <span style="color: #0084C8; font-weight: bold;">-&gt;</span>
+                                  eval0 (<span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>insert n val2 env') body
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">12 + (\x -&gt; x) (4 + 2)</span>
+exampleExp
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Plus</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> 12) (<span style="color: #2F8B58; font-weight: bold;">App</span> (<span style="color: #2F8B58; font-weight: bold;">Abs</span> <span style="color: #4E9A06;">"x"</span> (<span style="color: #2F8B58; font-weight: bold;">Var</span> <span style="color: #4E9A06;">"x"</span>)) (<span style="color: #2F8B58; font-weight: bold;">Plus</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> 4) (<span style="color: #2F8B58; font-weight: bold;">Lit</span> 2)))
+
+<span style="color: #00578E; font-weight: bold;">eval0</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty exampleExp
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> 18
+
+<span style="color: #00578E; font-weight: bold;">eval0</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty (<span style="color: #2F8B58; font-weight: bold;">Plus</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> 2) (<span style="color: #2F8B58; font-weight: bold;">Abs</span> <span style="color: #4E9A06;">"x"</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> 1)))
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> <span style="color: #0084C8; font-weight: bold;">***</span> <span style="color: #2F8B58; font-weight: bold;">Exception:</span> m<span style="color: #0084C8; font-weight: bold;">.</span>hs<span style="color: #2F8B58; font-weight: bold;">:</span>59<span style="color: #2F8B58; font-weight: bold;">:</span>31<span style="color: #0084C8; font-weight: bold;">-</span>55<span style="color: #2F8B58; font-weight: bold;">:</span> <span style="color: #2F8B58; font-weight: bold;">Irrefutable</span> pattern failed for pattern <span style="color: #2F8B58; font-weight: bold;">Main.IntVal</span> i2
+
+<span style="color: #00578E; font-weight: bold;">eval0</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty (<span style="color: #2F8B58; font-weight: bold;">Var</span> <span style="color: #4E9A06;">"x"</span>)
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #0084C8; font-weight: bold;">***</span> <span style="color: #2F8B58; font-weight: bold;">Exception:</span> <span style="color: #2F8B58; font-weight: bold;">Maybe</span><span style="color: #0084C8; font-weight: bold;">.</span>fromJust<span style="color: #2F8B58; font-weight: bold;">:</span> <span style="color: #2F8B58; font-weight: bold;">Nothing</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">equivalent monadic evaluator</h3>
+<div class="outline-text-3" id="text-1-2">
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #A52A2A; font-weight: bold;">type</span> <span style="color: #2F8B58; font-weight: bold;">Eval1</span> alpha  <span style="color: #0084C8; font-weight: bold;">=</span>   <span style="color: #2F8B58; font-weight: bold;">Identity</span> alpha
+
+<span style="color: #00578E; font-weight: bold;">runEval1</span>          <span style="color: #0084C8; font-weight: bold;">::</span>  <span style="color: #2F8B58; font-weight: bold;">Eval1</span> alpha <span style="color: #0084C8; font-weight: bold;">-&gt;</span> alpha
+<span style="color: #00578E; font-weight: bold;">runEval1</span> ev       <span style="color: #0084C8; font-weight: bold;">=</span>   runIdentity ev
+
+<span style="color: #00578E; font-weight: bold;">eval1</span>                 <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Env</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval1</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>
+<span style="color: #00578E; font-weight: bold;">eval1</span> env (<span style="color: #2F8B58; font-weight: bold;">Lit</span> i)      <span style="color: #0084C8; font-weight: bold;">=</span> return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i
+<span style="color: #00578E; font-weight: bold;">eval1</span> env (<span style="color: #2F8B58; font-weight: bold;">Var</span> n)      <span style="color: #0084C8; font-weight: bold;">=</span> return <span style="color: #0084C8; font-weight: bold;">$</span> fromJust (<span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>lookup n env)
+<span style="color: #00578E; font-weight: bold;">eval1</span> env (<span style="color: #2F8B58; font-weight: bold;">Plus</span> e1 e2) <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span>  <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i1  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval1 env e1
+                             <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i2  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval1 env e2
+                             return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> (i1 <span style="color: #0084C8; font-weight: bold;">+</span> i2)
+<span style="color: #00578E; font-weight: bold;">eval1</span> env (<span style="color: #2F8B58; font-weight: bold;">Abs</span> n e)    <span style="color: #0084C8; font-weight: bold;">=</span> return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env n e
+<span style="color: #00578E; font-weight: bold;">eval1</span> env (<span style="color: #2F8B58; font-weight: bold;">App</span> e1 e2)  <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span>  val1  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval1 env e1
+                             val2  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval1 env e2
+                             <span style="color: #A52A2A; font-weight: bold;">case</span> val1 <span style="color: #A52A2A; font-weight: bold;">of</span>
+                                 <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env' n body <span style="color: #0084C8; font-weight: bold;">-&gt;</span>
+                                     eval1 (<span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>insert n val2 env') body
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">runEval1</span> (eval1 <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty exampleExp)
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> 18
+
+<span style="color: #00578E; font-weight: bold;">runEval1</span> (eval1 <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty (<span style="color: #2F8B58; font-weight: bold;">Var</span> <span style="color: #4E9A06;">"x"</span>))
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #0084C8; font-weight: bold;">***</span> <span style="color: #2F8B58; font-weight: bold;">Exception:</span> <span style="color: #2F8B58; font-weight: bold;">Maybe</span><span style="color: #0084C8; font-weight: bold;">.</span>fromJust<span style="color: #2F8B58; font-weight: bold;">:</span> <span style="color: #2F8B58; font-weight: bold;">Nothing</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">add unbound variable error handling</h3>
+<div class="outline-text-3" id="text-1-3">
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #A52A2A; font-weight: bold;">type</span> <span style="color: #2F8B58; font-weight: bold;">Eval2</span> alpha <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #2F8B58; font-weight: bold;">ErrorT</span> <span style="color: #2F8B58; font-weight: bold;">String</span> <span style="color: #2F8B58; font-weight: bold;">Identity</span> alpha
+
+<span style="color: #00578E; font-weight: bold;">runEval2</span>     <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Eval2</span> alpha <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Either</span> <span style="color: #2F8B58; font-weight: bold;">String</span> alpha
+<span style="color: #00578E; font-weight: bold;">runEval2</span> ev  <span style="color: #0084C8; font-weight: bold;">=</span> runIdentity (runErrorT ev)
+
+<span style="color: #00578E; font-weight: bold;">eval2a</span>                 <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Env</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval2</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>
+<span style="color: #00578E; font-weight: bold;">eval2a</span> env (<span style="color: #2F8B58; font-weight: bold;">Var</span> n)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">case</span> (<span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>lookup n env) <span style="color: #A52A2A; font-weight: bold;">of</span>
+                              <span style="color: #2F8B58; font-weight: bold;">Nothing</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> fail <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #4E9A06;">"unbound var: "</span> <span style="color: #0084C8; font-weight: bold;">++</span> n
+                              <span style="color: #2F8B58; font-weight: bold;">Just</span> v  <span style="color: #0084C8; font-weight: bold;">-&gt;</span> return v
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">runEval2</span> (eval2a <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty exampleExp)
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Right</span> (<span style="color: #2F8B58; font-weight: bold;">IntVal</span> 18)
+
+<span style="color: #00578E; font-weight: bold;">runEval2</span> (eval2a <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty (<span style="color: #2F8B58; font-weight: bold;">Var</span> <span style="color: #4E9A06;">"no-way"</span>))
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Left</span> <span style="color: #4E9A06;">"unbound var: no-way"</span>
+
+<span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">type error, but not apparent in error message</span>
+<span style="color: #00578E; font-weight: bold;">runEval2</span> (eval2a <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty (<span style="color: #2F8B58; font-weight: bold;">Plus</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> 12) (<span style="color: #2F8B58; font-weight: bold;">Abs</span> <span style="color: #4E9A06;">"x"</span> (<span style="color: #2F8B58; font-weight: bold;">Var</span> <span style="color: #4E9A06;">"x"</span>))))
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Left</span> <span style="color: #4E9A06;">"Pattern match failure in do expression at transformers.hs:138:34-42"</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4">handle type errors</h3>
+<div class="outline-text-3" id="text-1-4">
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">eval2b</span> env (<span style="color: #2F8B58; font-weight: bold;">Plus</span> e1 e2) <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span>  e1'  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval2b env e1
+                              e2'  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval2b env e2
+                              <span style="color: #A52A2A; font-weight: bold;">case</span> (e1', e2') <span style="color: #A52A2A; font-weight: bold;">of</span>
+                                (<span style="color: #2F8B58; font-weight: bold;">IntVal</span> i1, <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i2)
+                                  <span style="color: #0084C8; font-weight: bold;">-&gt;</span> return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> (i1 <span style="color: #0084C8; font-weight: bold;">+</span> i2)
+                                <span style="color: #A52A2A; font-weight: bold;">_</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> throwError <span style="color: #4E9A06;">"type error in Plus"</span>
+<span style="color: #00578E; font-weight: bold;">eval2b</span> env (<span style="color: #2F8B58; font-weight: bold;">App</span> e1 e2)  <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span>  val1  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval2b env e1
+                              val2  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval2b env e2
+                              <span style="color: #A52A2A; font-weight: bold;">case</span> val1 <span style="color: #A52A2A; font-weight: bold;">of</span>
+                                  <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env' n body
+                                    <span style="color: #0084C8; font-weight: bold;">-&gt;</span> eval2b (<span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>insert n val2 env') body
+                                  <span style="color: #A52A2A; font-weight: bold;">_</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> throwError <span style="color: #4E9A06;">"type error in App"</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">runEval2</span> (eval2b <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty (<span style="color: #2F8B58; font-weight: bold;">Plus</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> 12) (<span style="color: #2F8B58; font-weight: bold;">Abs</span> <span style="color: #4E9A06;">"x"</span> (<span style="color: #2F8B58; font-weight: bold;">Var</span> <span style="color: #4E9A06;">"x"</span>))))
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Left</span> <span style="color: #4E9A06;">"type error in Plus"</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-5" class="outline-3">
+<h3 id="sec-1-5">hide the environment</h3>
+<div class="outline-text-3" id="text-1-5">
+<p>
+<code>Env</code> only
+</p>
+<ul class="org-ul">
+<li>extended in <code>App</code>
+</li>
+<li>used in <code>Var</code> and <code>Abs</code>
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #A52A2A; font-weight: bold;">type</span> <span style="color: #2F8B58; font-weight: bold;">Eval3</span> alpha <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #2F8B58; font-weight: bold;">ReaderT</span> <span style="color: #2F8B58; font-weight: bold;">Env</span> (<span style="color: #2F8B58; font-weight: bold;">ErrorT</span> <span style="color: #2F8B58; font-weight: bold;">String</span> <span style="color: #2F8B58; font-weight: bold;">Identity</span>) alpha
+
+<span style="color: #00578E; font-weight: bold;">runEval3</span>     <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Env</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval3</span> alpha <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Either</span> <span style="color: #2F8B58; font-weight: bold;">String</span> alpha
+<span style="color: #00578E; font-weight: bold;">runEval3</span> env ev  <span style="color: #0084C8; font-weight: bold;">=</span> runIdentity (runErrorT (runReaderT ev env))
+
+<span style="color: #00578E; font-weight: bold;">eval3</span>             <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval3</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>
+<span style="color: #00578E; font-weight: bold;">eval3</span> (<span style="color: #2F8B58; font-weight: bold;">Var</span> n)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> env <span style="color: #0084C8; font-weight: bold;">&lt;-</span> ask
+                        <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>lookup n env <span style="color: #A52A2A; font-weight: bold;">of</span>
+                          <span style="color: #2F8B58; font-weight: bold;">Nothing</span>  <span style="color: #0084C8; font-weight: bold;">-&gt;</span> throwError (<span style="color: #4E9A06;">"unbound var: "</span> <span style="color: #0084C8; font-weight: bold;">++</span> n)
+                          <span style="color: #2F8B58; font-weight: bold;">Just</span> val <span style="color: #0084C8; font-weight: bold;">-&gt;</span> return val
+<span style="color: #00578E; font-weight: bold;">eval3</span> (<span style="color: #2F8B58; font-weight: bold;">Abs</span> n e)    <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> env <span style="color: #0084C8; font-weight: bold;">&lt;-</span> ask
+                        return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env n e
+<span style="color: #00578E; font-weight: bold;">eval3</span> (<span style="color: #2F8B58; font-weight: bold;">App</span> e1 e2)  <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> val1  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval3 e1
+                        val2  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval3 e2
+                        <span style="color: #A52A2A; font-weight: bold;">case</span> val1 <span style="color: #A52A2A; font-weight: bold;">of</span>
+                          <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env' n body
+                             <span style="color: #0084C8; font-weight: bold;">-&gt;</span> local (const (<span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>insert n val2 env'))
+                                      (eval3 body)
+                          <span style="color: #A52A2A; font-weight: bold;">_</span>  <span style="color: #0084C8; font-weight: bold;">-&gt;</span> throwError <span style="color: #4E9A06;">"type error in application"</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">runEval3</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty (eval3 exampleExp)
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Right</span> (<span style="color: #2F8B58; font-weight: bold;">IntVal</span> 18)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-6" class="outline-3">
+<h3 id="sec-1-6">add state (simulated mutability)</h3>
+<div class="outline-text-3" id="text-1-6">
+<p>
+add profiling to interpreter
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #A52A2A; font-weight: bold;">type</span> <span style="color: #2F8B58; font-weight: bold;">Eval4</span> alpha <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #2F8B58; font-weight: bold;">ReaderT</span> <span style="color: #2F8B58; font-weight: bold;">Env</span> (<span style="color: #2F8B58; font-weight: bold;">ErrorT</span> <span style="color: #2F8B58; font-weight: bold;">String</span> (<span style="color: #2F8B58; font-weight: bold;">StateT</span> <span style="color: #2F8B58; font-weight: bold;">Integer</span> <span style="color: #2F8B58; font-weight: bold;">Identity</span>)) alpha
+
+<span style="color: #00578E; font-weight: bold;">runEval4</span>            <span style="color: #0084C8; font-weight: bold;">::</span>  <span style="color: #2F8B58; font-weight: bold;">Env</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Integer</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval4</span> alpha <span style="color: #0084C8; font-weight: bold;">-&gt;</span> (<span style="color: #2F8B58; font-weight: bold;">Either</span> <span style="color: #2F8B58; font-weight: bold;">String</span> alpha, <span style="color: #2F8B58; font-weight: bold;">Integer</span>)
+<span style="color: #00578E; font-weight: bold;">runEval4</span> env st ev  <span style="color: #0084C8; font-weight: bold;">=</span>   runIdentity (runStateT (runErrorT (runReaderT ev env)) st)
+
+<span style="color: #00578E; font-weight: bold;">tick</span> <span style="color: #0084C8; font-weight: bold;">::</span> (<span style="color: #2F8B58; font-weight: bold;">Num</span> s, <span style="color: #2F8B58; font-weight: bold;">MonadState</span> s m) <span style="color: #0084C8; font-weight: bold;">=&gt;</span> m <span style="color: #2F8B58; font-weight: bold;">()</span>
+<span style="color: #00578E; font-weight: bold;">tick</span> <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span>  st <span style="color: #0084C8; font-weight: bold;">&lt;-</span> get
+           put (st <span style="color: #0084C8; font-weight: bold;">+</span> 1)
+
+<span style="color: #00578E; font-weight: bold;">eval4</span>             <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval4</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>
+<span style="color: #00578E; font-weight: bold;">eval4</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> i)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick
+                        return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i
+<span style="color: #00578E; font-weight: bold;">eval4</span> (<span style="color: #2F8B58; font-weight: bold;">Var</span> n)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick
+                        env <span style="color: #0084C8; font-weight: bold;">&lt;-</span> ask
+                        <span style="color: #0084C8; font-weight: bold;">...</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">runEval4</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty 0 (eval4 exampleExp)
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> (<span style="color: #2F8B58; font-weight: bold;">Right</span> (<span style="color: #2F8B58; font-weight: bold;">IntVal</span> 18),8) <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">8 reduction steps</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-7" class="outline-3">
+<h3 id="sec-1-7">add logging</h3>
+<div class="outline-text-3" id="text-1-7">
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #A52A2A; font-weight: bold;">type</span> <span style="color: #2F8B58; font-weight: bold;">Eval5</span> alpha <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #2F8B58; font-weight: bold;">ReaderT</span> <span style="color: #2F8B58; font-weight: bold;">Env</span>  (<span style="color: #2F8B58; font-weight: bold;">ErrorT</span> <span style="color: #2F8B58; font-weight: bold;">String</span> (<span style="color: #2F8B58; font-weight: bold;">WriterT</span> [<span style="color: #2F8B58; font-weight: bold;">String</span>] (<span style="color: #2F8B58; font-weight: bold;">StateT</span> <span style="color: #2F8B58; font-weight: bold;">Integer</span> <span style="color: #2F8B58; font-weight: bold;">Identity</span>))) alpha
+
+<span style="color: #00578E; font-weight: bold;">runEval5</span>            <span style="color: #0084C8; font-weight: bold;">::</span>  <span style="color: #2F8B58; font-weight: bold;">Env</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Integer</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval5</span> alpha <span style="color: #0084C8; font-weight: bold;">-&gt;</span> ((<span style="color: #2F8B58; font-weight: bold;">Either</span> <span style="color: #2F8B58; font-weight: bold;">String</span> alpha, [<span style="color: #2F8B58; font-weight: bold;">String</span>]), <span style="color: #2F8B58; font-weight: bold;">Integer</span>)
+<span style="color: #00578E; font-weight: bold;">runEval5</span> env st ev  <span style="color: #0084C8; font-weight: bold;">=</span>   runIdentity (runStateT (runWriterT (runErrorT (runReaderT ev env))) st)
+
+<span style="color: #00578E; font-weight: bold;">eval5</span>             <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval5</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>
+<span style="color: #00578E; font-weight: bold;">eval5</span> (<span style="color: #2F8B58; font-weight: bold;">Var</span> n)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick
+                        tell [n] <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">write name vars encountered during eval</span>
+                        env <span style="color: #0084C8; font-weight: bold;">&lt;-</span> ask
+                        <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>lookup n env <span style="color: #A52A2A; font-weight: bold;">of</span>
+                            <span style="color: #2F8B58; font-weight: bold;">Nothing</span>  <span style="color: #0084C8; font-weight: bold;">-&gt;</span> throwError (<span style="color: #4E9A06;">"unbound variable: "</span> <span style="color: #0084C8; font-weight: bold;">++</span> n)
+                            <span style="color: #2F8B58; font-weight: bold;">Just</span> val <span style="color: #0084C8; font-weight: bold;">-&gt;</span> return val
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">runEval5</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty 0 (eval5 exampleExp)
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> ((<span style="color: #2F8B58; font-weight: bold;">Right</span> (<span style="color: #2F8B58; font-weight: bold;">IntVal</span> 18),[<span style="color: #4E9A06;">"x"</span>]),8)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-8" class="outline-3">
+<h3 id="sec-1-8">add IO</h3>
+<div class="outline-text-3" id="text-1-8">
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">runEval6</span>           <span style="color: #0084C8; font-weight: bold;">::</span>  <span style="color: #2F8B58; font-weight: bold;">Env</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Integer</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval6</span> alpha <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">IO</span> ((<span style="color: #2F8B58; font-weight: bold;">Either</span> <span style="color: #2F8B58; font-weight: bold;">String</span> alpha, [<span style="color: #2F8B58; font-weight: bold;">String</span>]), <span style="color: #2F8B58; font-weight: bold;">Integer</span>)
+<span style="color: #00578E; font-weight: bold;">runEval6</span> env st ev  <span style="color: #0084C8; font-weight: bold;">=</span>  runStateT (runWriterT (runErrorT (runReaderT ev env))) st
+
+<span style="color: #00578E; font-weight: bold;">eval6</span>             <span style="color: #0084C8; font-weight: bold;">::</span> <span style="color: #2F8B58; font-weight: bold;">Exp</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> <span style="color: #2F8B58; font-weight: bold;">Eval6</span> <span style="color: #2F8B58; font-weight: bold;">Value</span>
+<span style="color: #00578E; font-weight: bold;">eval6</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> i)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick
+                        liftIO <span style="color: #0084C8; font-weight: bold;">$</span> print i <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">print each int encountered</span>
+                        return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">runEval6</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>empty 0 (eval6 exampleExp)
+12
+4
+2
+<span style="color: #0084C8; font-weight: bold;">=&gt;</span> ((<span style="color: #2F8B58; font-weight: bold;">Right</span> (<span style="color: #2F8B58; font-weight: bold;">IntVal</span> 18),[<span style="color: #4E9A06;">"x"</span>]),8)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-9" class="outline-3">
+<h3 id="sec-1-9">final version</h3>
+<div class="outline-text-3" id="text-1-9">
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #00578E; font-weight: bold;">eval6</span> (<span style="color: #2F8B58; font-weight: bold;">Lit</span> i)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick             <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">profiling (i.e., state)</span>
+                        liftIO <span style="color: #0084C8; font-weight: bold;">$</span> print i <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">print each int encountered</span>
+                        return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i
+<span style="color: #00578E; font-weight: bold;">eval6</span> (<span style="color: #2F8B58; font-weight: bold;">Var</span> n)      <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick
+                        tell [n]         <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">log each var encountered</span>
+                        env <span style="color: #0084C8; font-weight: bold;">&lt;-</span> ask       <span style="color: #5F7F5F;">-- </span><span style="color: #204A87;">consult env</span>
+                        <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>lookup n env <span style="color: #A52A2A; font-weight: bold;">of</span>
+                          <span style="color: #2F8B58; font-weight: bold;">Nothing</span>  <span style="color: #0084C8; font-weight: bold;">-&gt;</span> throwError (<span style="color: #4E9A06;">"unbound var: "</span> <span style="color: #0084C8; font-weight: bold;">++</span> n)
+                          <span style="color: #2F8B58; font-weight: bold;">Just</span> val <span style="color: #0084C8; font-weight: bold;">-&gt;</span> return val
+<span style="color: #00578E; font-weight: bold;">eval6</span> (<span style="color: #2F8B58; font-weight: bold;">Plus</span> e1 e2) <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick
+                        e1'  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval6 e1
+                        e2'  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval6 e2
+                        <span style="color: #A52A2A; font-weight: bold;">case</span> (e1', e2') <span style="color: #A52A2A; font-weight: bold;">of</span>
+                          (<span style="color: #2F8B58; font-weight: bold;">IntVal</span> i1, <span style="color: #2F8B58; font-weight: bold;">IntVal</span> i2)
+                            <span style="color: #0084C8; font-weight: bold;">-&gt;</span> return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">IntVal</span> (i1 <span style="color: #0084C8; font-weight: bold;">+</span> i2)
+                          <span style="color: #A52A2A; font-weight: bold;">_</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> throwError <span style="color: #4E9A06;">"type error in addition"</span>
+<span style="color: #00578E; font-weight: bold;">eval6</span> (<span style="color: #2F8B58; font-weight: bold;">Abs</span> n e)    <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick
+                        env <span style="color: #0084C8; font-weight: bold;">&lt;-</span> ask
+                        return <span style="color: #0084C8; font-weight: bold;">$</span> <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env n e
+<span style="color: #00578E; font-weight: bold;">eval6</span> (<span style="color: #2F8B58; font-weight: bold;">App</span> e1 e2)  <span style="color: #0084C8; font-weight: bold;">=</span> <span style="color: #A52A2A; font-weight: bold;">do</span> tick
+                        val1  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval6 e1
+                        val2  <span style="color: #0084C8; font-weight: bold;">&lt;-</span> eval6 e2
+                        <span style="color: #A52A2A; font-weight: bold;">case</span> val1 <span style="color: #A52A2A; font-weight: bold;">of</span>
+                          <span style="color: #2F8B58; font-weight: bold;">FunVal</span> env' n body
+                            <span style="color: #0084C8; font-weight: bold;">-&gt;</span> local (const (<span style="color: #2F8B58; font-weight: bold;">Map</span><span style="color: #0084C8; font-weight: bold;">.</span>insert n val2 env'))
+                                     (eval6 body)
+                          <span style="color: #A52A2A; font-weight: bold;">_</span> <span style="color: #0084C8; font-weight: bold;">-&gt;</span> throwError <span style="color: #4E9A06;">"type error in application"</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="xhtml-validation"></p>
+</div>
+</body>
+</html>

@@ -119,10 +119,10 @@ TODO:
 git remote -v
 git remote add original git@github.com:robstewart57/hsparql.git
 git remote -v
+
 git fetch original
 git merge original/master
 git push
-
 
 -- End of file.
 

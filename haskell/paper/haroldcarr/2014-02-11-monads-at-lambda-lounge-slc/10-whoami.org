@@ -1,0 +1,21 @@
+#+TITLE:     who am i
+#+AUTHOR:    Harold Carr
+
+#+OPTIONS:     num:nil toc:nil
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+# Created       : 2014 Jan 28 (Tue) 19:09:36 by Harold Carr.
+# Last Modified : 2014 Feb 09 (Sun) 20:39:17 by Harold Carr.
+
+Harold Carr
+- architect of WebLogic Infiniband Communication at Oracle
+- architect of SOAP Web Services Technology at Oracle/Sun
+- architect of CORBA/IIOP, RMI-IIOP Technology at Sun
+- architect of Visual LISP Technology at Autodesk
+- researcher of Distributed C++ at University of Utah/HP
+- developer of (Concurrent) Utah Scheme, Utah Common Lisp, Portable
+  Standard Lisp at University of Utah/HP
+- architect/developer of Logic Simulation at Patel Systems/Cirrus Logic
+
+# End of file.

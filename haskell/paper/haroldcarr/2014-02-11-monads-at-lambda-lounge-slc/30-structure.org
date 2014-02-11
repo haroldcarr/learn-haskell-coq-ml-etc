@@ -1,0 +1,83 @@
+#+TITLE:     monad structure
+#+AUTHOR:    Harold Carr
+
+#+OPTIONS:     num:nil toc:nil
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+# Created       : 2014 Jan 28 (Tue) 19:09:36 by Harold Carr.
+# Last Modified : 2014 Feb 11 (Tue) 12:48:05 by Harold Carr.
+
+# ------------------------------------------------------------------------------
+* example: logging pure functions
+
+** extend pure functions with logging
+
+Given =f,g :: Float -> Float=, keep an ordered log of when they are called.
+
+Extend : =f',g' :: Float -> (Float,String)=
+
+#+begin_comment
+#+begin_src ditaa :file f-called.png :cmdline -E -s 1.00
+                        +---+
+                  x---->|   |----------------------------->f' x
+                        |f' |
+                        |   |------------------->"F' called."
+                        +---+
+#+end_src
+#+end_comment
+
+#+ATTR_LaTeX: :height 2in :width 5in
+[[file:f-called.png]]
+
+** composing logging
+
+Want to compose
+=f=' =.= =g='
+---  but inputs/outputs do not match, so adapt:
+
+#+begin_src haskell
+let (y,s) = g' x
+    (z,t) = f' y in (z,s++t)
+#+end_src
+
+#+begin_comment
+#+begin_src ditaa :file g-f-called.png :cmdline -E -s 1.00
+       +---+            +---+
+       |   |----g' x--->|   |----------------------------->f' (g' x)
+x ---->|g' |            |f' |                    +----+
+       |   |----+       |   |---"F' called." --->|    |
+       +---+    |       +---+                    |    |
+                |                                |appe|---->"G' called.F' called."
+                +----"G' called."--------------->|    |
+                                                 +----+
+#+end_src
+#+end_comment
+
+#+ATTR_LaTeX: :height 2in :width 5in
+[[file:g-f-called.png]]
+
+** generalize (factor out composition)
+
+#+begin_src haskell
+bind :: (Float -> (Float,String)) -> ((Float,String) -> (Float,String))
+bind f' (gx, gs) =
+    let (fx, fs) = f' gx
+    in  (fx, gs++fs)
+#+end_src
+
+- apply f' to the correct part of g' x
+- concatenate string returned by g' with string returned by f'
+
+#+begin_src haskell
+f' `bind` g' 3.0
+#+end_src
+
+
+
+
+
+
+
+
+# End of file.

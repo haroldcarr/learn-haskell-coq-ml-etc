@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2014 Jan 02 (Thu) 13:06:36 by Harold Carr.
+# Last Modified : 2014 Feb 11 (Tue) 15:03:45 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -90,12 +90,15 @@ haskell/book/The_Fun_of_Programming
 
 haskell/book/Yesod
 
+haskell/course/coursera-fp-odersky-but-in-haskell/TAGS
 haskell/course/upenn/
 haskell/course/upenn/cis552/
 
 haskell/diagrams/
 
 haskell/example/
+
+haskell/interview/target
 
 haskell/paper/HaskellCheatSheet.pdf
 haskell/paper/History_of_Haskell-Hudak-Hughes-Peyton-Jones-Wadler.pdf
@@ -110,18 +113,26 @@ haskell/paper/haroldcarr/RCS/
 haskell/paper/haroldcarr/.Notes.org
 haskell/paper/haroldcarr/.ghci
 haskell/paper/haroldcarr/2013-concrete-monads-0-notes.org
+haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.hs
+haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.html
 haskell/paper/haroldcarr/Transformers-orig.lhs
-
-haskell/interview/target
-
+haskell/paper/haroldcarr/tikz-example.*
 
 haskell/paper/haskell-distributed/
+
+haskell/paper/haskellwiki/.ghci
+haskell/paper/jekor.com/
+
+
+
 haskell/paper/monad-reader/issue22/gadt.hs-save
 haskell/paper/monad-reader/issue22/issue22.pdf
 haskell/paper/monad-reader/issue22/r.hs
 haskell/paper/newartisans.com/RCS/
 haskell/paper/twoDznA.pdf
 haskell/paper/twoDznQ.pdf
+
+haskell/paper/wikibooks-haskell/.ghci
 haskell/paper/wikibooks-haskell/scheme-in-48/stdlib.scm
 
 # ------------------------------------------------------------------------------

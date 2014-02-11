@@ -1,5 +1,5 @@
 Created       : 2013 Aug 21 (Wed) 14:54:35 by carr.
-Last Modified : 2014 Jan 08 (Wed) 21:48:23 by Harold Carr.
+Last Modified : 2014 Feb 11 (Tue) 14:30:45 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * CABAL INSTALLS
@@ -25,6 +25,15 @@ hoogle data
 # install Pandoc, Haykll, ...
 cd ~/.sync/sites/haroldcarr.com/
 cabal install
+
+cabal install hasktags
+-- example usage
+cd ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/course/coursera-fp-odersky-but-in-haskell/
+hasktags -e --ignore-close-implementation .
+M-x visit-tags-table
+
+https://github.com/jaspervdj/stylish-haskell/blob/master/README.markdown
+cabal install stylish-haskell
 
 TODO
 cabal install lhs2tex

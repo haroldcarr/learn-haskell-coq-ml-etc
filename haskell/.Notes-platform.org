@@ -2,9 +2,10 @@ Haskell notes
 
 #+BEGIN_EXAMPLE
 Created       : 2011 Dec 29 (Thu) 19:40:46 by carr.
-Last Modified : 2014 Jan 02 (Thu) 13:59:23 by Harold Carr.
+Last Modified : 2014 Feb 09 (Sun) 11:49:07 by Harold Carr.
 #+END_EXAMPLE
 
+------------------------------------------------------------------------------
 * install Haskell
 
 ** install via haskell.org
@@ -87,6 +88,7 @@ sudo port uninstall ghc ghci cabal
 /Library/Haskell/ghc-7.0.4/bin/uninstall-hs --remove only 6.10.4
 #+END_EXAMPLE
 
+------------------------------------------------------------------------------
 * development environment
 
 [[http://www.haskell.org/haskellwiki/How_to_write_a_Haskell_program]]
@@ -105,6 +107,17 @@ lhs2tex    : publication
 #+END_EXAMPLE
 
 [[http://en.wikibooks.org/wiki/Haskell]]
+
+
+Hackage-Fu Chrome Extension
+
+
+------------------------------------------------------------------------------
+* when package names collide
+
+e.g., Ambiguous module name `Control.Monad.Writer': it was found in multiple packages: monads-tf-0.1.0.1 mtl-2.1.2
+
+http://stackoverflow.com/questions/2048953/control-monad-state-found-in-multiple-packages-haskell
 
 # End of file.
 
