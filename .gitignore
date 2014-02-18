@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2014 Feb 11 (Tue) 15:03:45 by Harold Carr.
+# Last Modified : 2014 Feb 17 (Mon) 20:52:29 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -70,6 +70,7 @@ haskell/book/Beginning_Haskell/.Notes.org
 haskell/book/Beginning_Haskell/Beginning_Haskell.epub
 haskell/book/Beginning_Haskell/Beginning_Haskell.mobi
 haskell/book/Beginning_Haskell/Beginning_Haskell.pdf
+haskell/book/Beginning_Haskell/eclipse-workspace
 
 haskell/book/Discrete_Mathematics_Using_a_Computer
 

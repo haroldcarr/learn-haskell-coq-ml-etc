@@ -2,7 +2,7 @@ Hakyll notes
 
 #+BEGIN_EXAMPLE
 Created       : 2013 May 31 (Fri) 19:40:46 by carr.
-Last Modified : 2013 Dec 08 (Sun) 12:25:17 by carr.
+Last Modified : 2014 Feb 17 (Mon) 20:39:55 by Harold Carr.
 #+END_EXAMPLE
 
 [[http://jaspervdj.be/hakyll/]]
@@ -59,19 +59,23 @@ cd ~/.sync/sites/haroldcarr.com
 cd ~/.sync/sites/haroldcarr.net
 
 # when changing haskell code:
+cabal clean
+cabal configure
+cabal build
 cabal install
 
 # when changing content, templates, ...
 ./dist/build/site/site build
+./dist/build/site/site +RTS -xc -RTS build
 
 # check before transfer
 ./dist/build/site/site preview &
 
-# transfer to site
+# transfer to site (--checksum to only copy new and changed files - not ones that got rebuilt but no change)
 !!! .COM:
-rsync -ave 'ssh' _site/* haroldcarr_haroldcarrcom@ssh.phx.nearlyfreespeech.net:.
+rsync --checksum -ave 'ssh' _site/* haroldcarr_haroldcarrcom@ssh.phx.nearlyfreespeech.net:.
 !!! .NET:
-rsync -ave 'ssh' _site/* haroldcarr_haroldcarrnet@ssh.phx.nearlyfreespeech.net:.
+rsync --checksum -ave 'ssh' _site/* haroldcarr_haroldcarrnet@ssh.phx.nearlyfreespeech.net:.
 #+END_EXAMPLE
 
 
@@ -98,6 +102,8 @@ ln -s /opt/local/lib/node_modules/twitter-bootstrap lib/bootstrap
 # https://bitbucket.org/lipis/less-bands/src/969ce7f1c26e6dd2e98571f4f1021f98fb0d53f0/main/static/lib/bootstrap/less/media.less
 # add it as lib/bootstrap/less/media.less
 
+mkdir _site/css
+
 rm _site/css/bootstrap.css
 lessc css/bootstrap.less > _site/css/bootstrap.css
 
@@ -113,7 +119,34 @@ lessc css/responsive.less > _site/css/responsive.css
 
 Made links from .net to .com
 
+------------------------------------------------------------------------------
+** after December 2013 disk crash
 
+WORKS:
+
+sftp from nearlyfreespeech to ~/.sync/sites/haroldcarr.com/css
+-rw-r--r--   1 carr  staff  101389 Feb 17 19:35 bootstrap.css
+-rw-r--r--   1 carr  staff  105247 Feb 17 19:35 main.css
+-rw-r--r--   1 carr  staff   14762 Feb 17 19:35 responsive.css
+
+HC/Main.hs
+- commented out any code referencing engineConf
+- replaced with   match "css/*" $ do     route idRoute;   compile copyFileCompiler
+
+
+# -------------------------
+# REINSTALL NODE STUFF, BUT AFTER BELOW IT DID NOT WORK
+# less@1.6.3 /usr/local/lib/node_modules/less
+npm install --global less
+
+# http://bootstrap.lesscss.ru/less.html
+# twitter-bootstrap@2.1.1 /usr/local/lib/node_modules/twitter-bootstrap
+npm install --global twitter-bootstrap
+rmdir lib/bootstrap
+ln -s /usr/local/lib/node_modules/twitter-bootstrap lib/bootstrap
+
+# https://bitbucket.org/lipis/less-bands/src/969ce7f1c26e6dd2e98571f4f1021f98fb0d53f0/main/static/lib/bootstrap/less/media.less
+# add it as lib/bootstrap/less/media.less
 
 -----------------------------------------------------------------------------
 * install Hakyll
