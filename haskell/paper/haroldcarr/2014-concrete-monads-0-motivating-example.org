@@ -1,42 +1,64 @@
-{-
-Created       : 2013 Dec 01 (Sun) 11:18:09 by carr.
-Last Modified : 2014 Feb 11 (Tue) 12:40:49 by Harold Carr.
+#+TITLE:       concrete monads 0 : motivating example
+#+AUTHOR:      Harold Carr
+#+DESCRIPTION: concrete monads 0 : motivating example
+#+PROPERTY:    tangle 2014-concrete-monads-0-motivating-example.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
-http://www.cs.virginia.edu/~wh5a/personal/Transformers.lhs
+#+BEGIN_HTML
+---
+title: concrete monads 0 : motivating example
+tags: haskell, monad
+---
+#+END_HTML
 
-About *using* monad transformers.
+# Created       : 2013 Dec 01 (Sun) 11:18:09 by carr.
+Last Modified : 2014 Feb 18 (Tue) 21:58:44 by Harold Carr.
 
-Monads for flexible, extensible structuring of programs.
+------------------------------------------------------------------------------
+* Introduction
 
-Hides book-keeping/plumbing in monads, removing clutter from main algorithm.
+This post is part of a series of posts on monads.  Its purpose is to
+motivate the /usage/ of monads (not to explain how they work, nor to
+explain in details the particular examples shown here).
 
-Monad transformers : for composing monad transformers.
--}
+This post is a condensed version of [[http://www.cs.virginia.edu/~wh5a/personal/Transformers.lhs]].
+
+This post will show
+- monads as a flexible, extensible way structuring of programs
+- monads hide book-keeping/plumbing, removing clutter from main algorithm
+- using monad transformers (a way to use two or more monads at the same time)
 
 ------------------------------------------------------------------------------
 -- ** setup
 
+#+BEGIN_SRC haskell
 {-# LANGUAGE PackageImports #-}
 
 -- module Transformers where
 
-import "mtl" Control.Monad.Identity
-import "mtl" Control.Monad.Error
-import "mtl" Control.Monad.Reader
-import "mtl" Control.Monad.State
-import "mtl" Control.Monad.Writer
+import           "mtl" Control.Monad.Identity
+import           "mtl" Control.Monad.Error
+import           "mtl" Control.Monad.Reader
+import           "mtl" Control.Monad.State
+import           "mtl" Control.Monad.Writer
 
-import Data.Maybe
-import qualified Data.Map as Map
+import                 Data.Maybe
+import qualified       Data.Map as Map
 
-
-import qualified Test.HUnit      as T
-import qualified Test.HUnit.Util as U
-import System.IO.Unsafe -- for one unit test
+import qualified       Test.HUnit      as T
+import qualified       Test.HUnit.Util as U
+import                 System.IO.Unsafe -- for one unit test
+#+END_SRC
 
 ------------------------------------------------------------------------------
--- ** non-monadic
+* non-monadic expression evaluator
 
+An expression evaluator will be used as a running example.
+Typical code for such an evaluator is:
+
+#+BEGIN_SRC haskell
 type Name   =  String                -- variable names
 
 data Exp    =  Lit  Integer          -- expressions
@@ -64,106 +86,180 @@ eval0 env (App  e1 e2) = let  val1  = eval0 env e1
                          in case val1 of
                               FunVal env' n body ->
                                   eval0 (Map.insert n val2 env') body
+#+END_SRC
 
--- 12 + (\x -> x) (4 + 2)
+Given the above, evaluating =12 + (\x -> x) (4 + 2)= will result in =(IntVal 18)= :
+
+#+BEGIN_SRC haskell
 exampleExp = Plus (Lit 12) (App (Abs "x" (Var "x")) (Plus (Lit 4) (Lit 2)))
 
-t0 = U.t "t0"
+t00 = U.t "t00"
      (eval0 Map.empty exampleExp)
      (IntVal 18)
+#+END_SRC
+
+The above evaluator works fine for the "happy path", but does not give useful
+error messages when things go wrong, like an unbound variable:
+
+#+BEGIN_SRC haskell
+t01 = U.e "t01"
+     (eval0 Map.empty (Var "x"))
+     "Maybe.fromJust: Nothing"
+#+END_SRC
+
+That can be fixed by using =Either=:
+
+#+BEGIN_SRC haskell
+eval0e                 :: Env -> Exp -> Either String Value
+eval0e env (Lit  i)     = Right $ IntVal i
+eval0e env (Var  n)     = case (Map.lookup n env) of
+                              Nothing -> Left $ "unbound var: " ++ n
+                              Just v  -> Right v
+eval0e env (Plus e1 e2) = let  Right (IntVal i1)  = eval0e env e1
+                               Right (IntVal i2)  = eval0e env e2
+                          in Right $ IntVal (i1 + i2)
+eval0e env (Abs  n  e)  = Right $ FunVal env n e
+eval0e env (App  e1 e2) = let  Right val1  = eval0e env e1
+                               Right val2  = eval0e env e2
+                          in case val1 of
+                              FunVal env' n body ->
+                                  eval0e (Map.insert n val2 env') body
+#+END_SRC haskell
+
+#+BEGIN_SRC haskell
+t0e0 = U.t "t0e0"
+     (eval0e Map.empty (Var "x"))
+     (Left "unbound var: x")
+#+END_SRC
+
+That worked, but the code got ugly fast, adding/removing =Left= and
+=Right= all over the place --- and the fix only dealt with unbound
+variables, not other problems like non- =IntVal= given to =Plus=.
 
 ------------------------------------------------------------------------------
--- ** conversion to monadic structure
+* conversion to monadic structure
 
-{-
-Conversion to monadic form : use =return= to wrap results; sequencing via =do= (i.e., =bind=).
+The solution is to write the code in a "monadic" style that makes it
+relatively easy to add, remove or change monads.  The monads to be
+added will handle error conditions, state, etc., (as will be seen
+later).
 
-Once restructured then relatively easy to add, remove or change monads.
-
-=Control.Monad.Identity= defines =return=, =>>==, =runIdentity=, etc.,
-Used as "base case" around which other monad transformers can be
-wrapped.
--}
-
+#+BEGIN_SRC haskell
 type Eval1 alpha  =   Identity alpha
 
--- For readability:
 runEval1          ::  Eval1 alpha -> alpha
 runEval1 ev       =   runIdentity ev
 
 eval1                 :: Env -> Exp -> Eval1 Value
-eval1 env (Lit i)      = return $ IntVal i
-eval1 env (Var n)      = return $ fromJust (Map.lookup n env)
+eval1 env (Lit  i)     = return $ IntVal i
+eval1 env (Var  n)     = return $ fromJust (Map.lookup n env)
 eval1 env (Plus e1 e2) = do  IntVal i1  <- eval1 env e1
                              IntVal i2  <- eval1 env e2
                              return $ IntVal (i1 + i2)
-eval1 env (Abs n e)    = return $ FunVal env n e
-eval1 env (App e1 e2)  = do  val1  <- eval1 env e1
+eval1 env (Abs  n  e)  = return $ FunVal env n e
+eval1 env (App  e1 e2) = do  val1  <- eval1 env e1
                              val2  <- eval1 env e2
                              case val1 of
                                  FunVal env' n body ->
                                      eval1 (Map.insert n val2 env') body
-{-
-=Lit=, =Plus=, =Abs= use =return=
+#+END_SRC
 
-=Var= does not need =fromJust= : =Map.lookup= calls monad's =fail= -- NOT TRUE
+For the purposes of this article, it is not necessary to understand
+the following details.  The main point is to see the top-level
+structure (and later, how that same structure can be leveraged).
 
-=Maybe.fail= is =Nothing=
+Compared to the non-monadic =eval0=, =eval1=
+- uses =return= in =Lit=, =Var=, =Plus=, =Abs=
+  - =return= "puts" the return value into the proper monad (which monad to use is decided by the compiler)
+- uses =do= in =Plus=, =App=
+  - =do= enables actions to be sequenced in order and "gets" values from monads (i.e., =IntVal i1 <- eval1 env e1= above)
+- uses the =Control.Monad.Identity= monad as "base case" monad around which other monad transformers will be added later
+- uses =runIdentity= to get the final =Value= from the =Identity= monad after =eval1= completes
 
-=Identity.fail= throws exception
+Compared to the non-monadic =eval0e=, =eval1=
+- uses the mechanics of monads to put/get things to/from monads (i.e., =Left= / =Right= in =eval0e=)
 
-=Plus=, =App= use =do=
--}
+=eval1= has the same behavior as =eval0=
 
-t1 = U.t "t1"
+#+BEGIN_SRC haskell
+t10 = U.t "t10"
      (runEval1 (eval1 Map.empty exampleExp))
      (IntVal 18)
 
-{-
+t11 = U.e "t11"
+     (runEval1 (eval1 Map.empty (Var "x")))
+     "Maybe.fromJust: Nothing"
+#+END_SRC
+
+The following sections will show how to leverage the monadic structure
+of =eval1= to fix problems with the evaluator by changing the type of
+the evaluator to use more monads --- all the while using the same
+top-level structure.
+
 ------------------------------------------------------------------------------
--- ** adding error handling
+* adding error handling
 
-evaluation is partial : will terminate with an error message for some inputs (e.g., unbound variables)
--}
+** unbound variables
 
--- result of evaluation now =Either String alpha=
-type Eval2 alpha = ErrorT String Identity alpha -- String is type arg to ErrorT - type of exceptions in example
+#+BEGIN_SRC haskell
+-- String is the type arg to ErrorT : the type of exceptions in example
+type Eval2 alpha = ErrorT String Identity alpha
 
 runEval2     :: Eval2 alpha -> Either String alpha
 runEval2 ev  = runIdentity (runErrorT ev)
 
 eval2a                 :: Env -> Exp -> Eval2 Value
-eval2a env (Lit i)      = return $ IntVal i
-eval2a env (Var n)      = case (Map.lookup n env) of
+eval2a env (Lit  i)     = return $ IntVal i
+
+-- only difference between eval1 and eval2a is variable handling
+eval2a env (Var  n)     = case (Map.lookup n env) of
                               Nothing -> fail $ "unbound var: " ++ n
                               Just v  -> return v
+
 eval2a env (Plus e1 e2) = do  IntVal i1  <- eval2a env e1
                               IntVal i2  <- eval2a env e2
                               return $ IntVal (i1 + i2)
-eval2a env (Abs n e)    = return $ FunVal env n e
-eval2a env (App e1 e2)  = do  val1  <- eval2a env e1
+eval2a env (Abs  n  e)  = return $ FunVal env n e
+eval2a env (App  e1 e2) = do  val1  <- eval2a env e1
                               val2  <- eval2a env e2
                               case val1 of
-                                  FunVal env' n body ->
-                                      eval2a (Map.insert n val2 env') body
+                                  FunVal env' n body -> eval2a (Map.insert n val2 env') body
+#+END_SRC
 
-t2 = U.t "t2"
+=eval2a= handles normal evaluation as before but also handles unbound variables in a more useful manner:
+
+#+BEGIN_SRC haskell
+t2a0 = U.t "t2a0"
      (runEval2 (eval2a Map.empty exampleExp))
      (Right (IntVal 18))
 
-t3 = U.t "t3"
+t2a1 = U.t "t2a1"
      (runEval2 (eval2a Map.empty (Var "no-way")))
      (Left "unbound var: no-way")
+#+END_SRC
 
-t4 = U.t "t4"
+An improvement.  But all the evaluators above still give poor error
+messages for incorrect dynamic typing:
+
+#+BEGIN_SRC haskell
+t2a2 = U.t "t2a2"
+     -- 12 + (\x -> x)
      (runEval2 (eval2a Map.empty (Plus (Lit 12) (Abs "x" (Var "x")))))
      (Left "Pattern match failure in do expression at transformers.hs:138:34-42")
 
--- Error reporting of the =ErrorT= not used in =t4=, therefore:
+t2a3 = U.e "t2a3"
+     -- 12 0
+     (runEval2 (eval2a Map.empty (App (Lit 12) (Lit 0))))
+     "Pattern match failure in do expression at transformers.hs:138:34-42"
+#+END_SRC
 
+That is fixed by pattern matching in =Plus= and =App= handling and
+explicitly throwing an appropriate error:
+
+#+BEGIN_SRC haskell
 eval2b                 :: Env -> Exp -> Eval2 Value
-eval2b env (Lit i)      = return $ IntVal i
-eval2b env (Var n)      = case (Map.lookup n env) of
+eval2b env (Lit  i)     = return $ IntVal i
+eval2b env (Var  n)     = case (Map.lookup n env) of
                               Nothing -> fail $ "unbound var: " ++ n
                               Just v  -> return v
 eval2b env (Plus e1 e2) = do  e1'  <- eval2b env e1
@@ -171,77 +267,52 @@ eval2b env (Plus e1 e2) = do  e1'  <- eval2b env e1
                               case (e1', e2') of
                                   (IntVal i1, IntVal i2) -> return $ IntVal (i1 + i2)
                                   _                      -> throwError "type error in Plus"
-eval2b env (Abs n e)    = return $ FunVal env n e
-eval2b env (App e1 e2)  = do  val1  <- eval2b env e1
+eval2b env (Abs  n  e)  = return $ FunVal env n e
+eval2b env (App  e1 e2) = do  val1  <- eval2b env e1
                               val2  <- eval2b env e2
                               case val1 of
                                   FunVal env' n body -> eval2b (Map.insert n val2 env') body
                                   _                  -> throwError "type error in App"
+#+END_SRC
 
-t5 = U.t "t5"
+The monadic structure enabled "throwing" the error without the need to
+thread that error return throughout the code.  Instead, it is hidden
+and handled by the =ErrorT= monad.
+
+#+BEGIN_SRC haskell
+t2b0 = U.t "t2b0"
      (runEval2 (eval2b Map.empty (Plus (Lit 12) (Abs "x" (Var "x")))))
-     (Left "type error")
+     (Left "type error in Plus")
 
--- monadic binding in a |do| expression uses the |fail| function whenever a pattern match fails, so:
+t2b1 = U.t "t2b1"
+     (runEval2 (eval2b Map.empty (App (Lit 12) (Lit 0))))
+     (Left "type error in App")
+#+END_SRC
 
-eval2c                 :: Env -> Exp -> Eval2 Value
-eval2c env (Lit i)      = return $ IntVal i
-eval2c env (Var n)      = case (Map.lookup n env) of
-                               Nothing -> fail $ "unbound var: " ++ n
-                               Just v  -> return v
-eval2c env (Plus e1 e2) = do  IntVal i1  <- eval2c env e1
-                              IntVal i2  <- eval2c env e2
-                              return $ IntVal (i1 + i2)
-eval2c env (Abs n e)     = return $ FunVal env n e
-eval2c env (App e1 e2)   = do  FunVal env' n body  <- eval2c env e1
-                               val2                <- eval2c env e2
-                               eval2c (Map.insert n val2 env') body
-
--- but error message says "pattern match failure" - no specific information
-t6 = U.t "t6"
-     (runEval2 (eval2c Map.empty (Plus (Lit 12) (Abs "x" (Var "x")))))
-     (Left "Pattern match failure in do expression at transformers.hs:189:34-42")
-
-
--- provide specific error messages:
-eval2                  :: Env -> Exp -> Eval2 Value
-eval2  env (Lit i)      = return $ IntVal i
-eval2  env (Var n)      = case Map.lookup n env of
-                              Nothing  -> throwError ("unbound variable: " ++ n)
-                              Just val -> return val
-eval2  env (Plus e1 e2) = do  e1'  <- eval2  env e1
-                              e2'  <- eval2  env e2
-                              case (e1', e2') of
-                                  (IntVal i1, IntVal i2) -> return $ IntVal (i1 + i2)
-                                  _                      -> throwError "type error in addition"
-eval2  env (Abs n e)    = return $ FunVal env n e
-eval2  env (App e1 e2)  = do  val1  <- eval2  env e1
-                              val2  <- eval2  env e2
-                              case val1 of
-                                  FunVal env' n body -> eval2  (Map.insert n val2 env') body
-                                  _                  -> throwError "type error in application"
-
-{-
 ------------------------------------------------------------------------------
--- ** hiding the environment
+* hiding the environment
 
-=Env= only extended in =App= and used in =Var= and =Abs=
+=Env= is only extended in =App= and used in =Var= and =Abs=.
+So the next change hide =Env= via the =ReaderT= monad.
 
-So hide it via =ReaderT= : passes a value into a computation and its sub-computations.
-Value can be read by all enclosed computations and get modified for nested computations.
+Using =ReaderT=, the =Env= is passed into =eval3=.  It can be read
+where need and extended for nested computations (via =local=).
 
-In contrast to state monads, an encapsulated computation cannot change
-the value used by surrounding computations.
--}
+Notice how, for each successive evaluator (i.e., =eval1=, =eval2=,
+=eval3=), an additional monad is pushed onto the front of the "monad
+stack" used in the type of the evaluator.  Likewise, the final value
+expression evaluation is obtained by removing each monad layer via
+=runReaderT=, =runErrorT=, =runIdentity=.
 
+#+BEGIN_SRC haskell
 type Eval3 alpha = ReaderT Env (ErrorT String Identity) alpha
 
 runEval3     :: Env -> Eval3 alpha -> Either String alpha
 runEval3 env ev  = runIdentity (runErrorT (runReaderT ev env))
 
 eval3             :: Exp -> Eval3 Value
-eval3 (Lit i)      = return $ IntVal i
-eval3 (Var n)      = do env <- ask
+eval3 (Lit  i)     = return $ IntVal i
+eval3 (Var  n)     = do env <- ask
                         case Map.lookup n env of
                             Nothing  -> throwError ("unbound variable: " ++ n)
                             Just val -> return val
@@ -249,29 +320,28 @@ eval3 (Plus e1 e2) = do e1'  <- eval3 e1
                         e2'  <- eval3 e2
                         case (e1', e2') of
                             (IntVal i1, IntVal i2) -> return $ IntVal (i1 + i2)
-                            _                      -> throwError "type error in addition"
-eval3 (Abs n e)    = do env <- ask
+                            _                      -> throwError "type error in Plus"
+eval3 (Abs  n  e)  = do env <- ask
                         return $ FunVal env n e
-eval3 (App e1 e2)  = do val1  <- eval3 e1
+eval3 (App  e1 e2) = do val1  <- eval3 e1
                         val2  <- eval3 e2
                         case val1 of
                             FunVal env' n body -> local (const (Map.insert n val2 env')) (eval3 body)
-                            _                  -> throwError "type error in application"
+                            _                  -> throwError "type error in App"
+#+END_SRC
 
-t7 = U.t "t7"
+#+BEGIN_SRC haskell
+t30 = U.t "t30"
      (runEval3 Map.empty (eval3 exampleExp))
      (Right (IntVal 18))
+#+END_SRC
 
-{-
-when =Env= needed, use =ask=
+In =eval3=, the =ReaderT= function =ask= is used to obtain =Env=, and
+=local= is used to extend =Env= for the recursive call to =eval3= in
+=App=.  (Note: the =local= environment, in this case, does not depend
+on the current environment, so =const= is used.)
 
-when =Env= extended for recursive all, use =local :: (r -> r) -> m a -> m a=
-
-NOTE: the "local" environment does not depend on the current environment, so use =const=
-
-aside: =asks= expects a function mapping env to value.  Used to extract individual components via record selectors
-
-
+#+BEGIN_COMMENT
 When =ReaderT= added on top of =ErrorT can call =ask= and =local= in =eval3=
 
 But need to call functions of inner monads (e.g., =throwError=) via:
@@ -295,43 +365,21 @@ about the design of all the plumbing behind the scene.
 
 But: we must call =MonadIO.liftIO=  in =eval6= because there is no =IO=
 class. But only once: do not need to worry about how many times to compose =lift=
+#+END_COMMENT
 
 ------------------------------------------------------------------------------
--- ** return types of examples
+* adding state
 
-=runEval4=
-- ignoring =ReaderT= as it does not affect the return value
-- peels off =ErrorT= and constructs a value of type =Either String a=
-- peels off =StateT= and constructs a pair whose
-  - first component is the value being computed
-  - second component is the side effect, i.e., the state
-- =(Either String a, Integer)=
+As an example of state, the evaluator is extended with "profiling" :
+an integer counting calls to =eval4=.  The state added is /not/ state
+like a mutable location in imperative languages.  It is "effectful"
+--- meaning updated values are seen after updating but no locations
+are mutated.  How that happens is not covered in this article.
 
-=runEval4'=
-- peels off =StateT= and then =ErrorT=
-- =Either String (a, Integer)=
+The =StateT= monad is wrapped around the innermost monad =Identity=
+(order of =State= and =Error= matters).
 
-See:
-- \href{http://www.haskell.org/all_about_monads/}{All About Monads},
-- \href{http://en.wikibooks.org/wiki/Haskell/Monad_transformers}{Monad transformers on WikiBooks},
-- \href{http://haskell.org/haskellwiki/Category:Monad}{Monad on haskell.org}, and
-- \href{http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours}{Write Yourself a Scheme in 48 Hours}.
-
-For more category theory stuff, start with
-- \href{http://en.wikibooks.org/wiki/Haskell/Category_theory}{Category theory on WikiBooks}
-- \href{http://stefan-klinger.de/files/monadGuide.pdf}{The Haskell Programmer's Guide to the IO Monad --- Don't Panic}
-- \href{ftp://ftp.cs.wpi.edu/pub/techreports/pdf/03-21.pdf}{Monads for Programming Languages}
-
-------------------------------------------------------------------------------
--- ** adding state
-
-=State= : simulated mutability.
-
-example : add profiling to interpreter : state is just integer counting calls to =eval4=
-
-wrap =StateT= around the innermost monad =Identity= (order of =State= and =Error= matters).
--}
-
+#+BEGIN_SRC haskell
 type Eval4 alpha = ReaderT Env (ErrorT String (StateT Integer Identity)) alpha
 
 -- returns evaluation result (error or value) and state
@@ -339,7 +387,7 @@ type Eval4 alpha = ReaderT Env (ErrorT String (StateT Integer Identity)) alpha
 runEval4            ::  Env -> Integer -> Eval4 alpha -> (Either String alpha, Integer)
 runEval4 env st ev  =   runIdentity (runStateT (runErrorT (runReaderT ev env)) st)
 
--- type not same as =Eval4= so it can reused elsewhere.
+-- tick type not same as =Eval4= so it can reused elsewhere.
 tick :: (Num s, MonadState s m) => m ()
 tick = do  st <- get
            put (st + 1)
@@ -368,12 +416,19 @@ eval4 (App e1 e2)  = do tick
                         case val1 of
                             FunVal env' n body -> local (const (Map.insert n val2 env')) (eval4 body)
                             _ -> throwError "type error in application"
+#+END_SRC
 
-t8 = U.t "t8"
+=eval4= is identical to =eval3= (other than the change in type
+signature) except each case starts by calling =tick= (and =do= is
+added to =Lit=).
+
+#+BEGIN_SRC haskell
+t40 = U.t "t40"
      (runEval4 Map.empty 0 (eval4 exampleExp))
      (Right (IntVal 18),8) -- 8 reduction steps
+#+END_SRC
 
-{-
+#+BEGIN_COMMENT
 Note: swap =StateT= and =ErrorT= then instead of:
 
 type Eval4 alpha = ReaderT Env (ErrorT String (StateT Integer Identity)) alpha
@@ -394,15 +449,45 @@ Note:
 =State.modify= applying function on state
 
 ------------------------------------------------------------------------------
--- ** adding logging
+* return types of examples
 
-=WriterT= (kind of a dual to =ReaderT=): can add values to result of
-computation (instead of using some values passed in like =ReaderT=).
--}
+=runEval4=
+- ignoring =ReaderT= as it does not affect the return value
+- peels off =ErrorT= and constructs a value of type =Either String a=
+- peels off =StateT= and constructs a pair whose
+  - first component is the value being computed
+  - second component is the side effect, i.e., the state
+- =(Either String a, Integer)=
 
-type Eval5 alpha = ReaderT Env  (ErrorT String (WriterT [String] (StateT Integer Identity))) alpha
+=runEval4'=
+- peels off =StateT= and then =ErrorT=
+- =Either String (a, Integer)=
 
-{-
+See:
+- [[http://www.haskell.org/all_about_monads/][All About Monads]]
+- [[http://en.wikibooks.org/wiki/Haskell/Monad_transformers][Monad transformers on WikiBooks]]
+- [[http://haskell.org/haskellwiki/Category:Monad][Monad on haskell.org]]
+- [[http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours][Write Yourself a Scheme in 48 Hours]]
+
+For more category theory stuff, start with
+- [[http://en.wikibooks.org/wiki/Haskell/Category_theory][Category theory on WikiBooks]]
+- [[http://stefan-klinger.de/files/monadGuide.pdf][The Haskell Programmer's Guide to the IO Monad --- Don't Panic]]
+- [[ftp://ftp.cs.wpi.edu/pub/techreports/pdf/03-21.pdf][Monads for Programming Languages]]
+#+END_COMMENT
+
+------------------------------------------------------------------------------
+* adding logging
+
+The evaluator is now extended to collect the name of each variable
+encountered during evaluation and return the collection when
+evaluation is done.
+
+That is done via the =WriterT= monad.  =WriterT= is a kind of a dual
+to =ReaderT=: =WriterT= can add (e.g., "write") values to result of
+computation, whereas =ReaderT= can only use (e.g., "read") values
+passed in.
+
+#+BEGIN_COMMENT
 Similar to =StateT=, =WriterT= interacts with =ErrorT= because it produces output.
 
 So depending on order of =ErrorT= and =WriterT=, result will include
@@ -411,7 +496,10 @@ the values written out or not when an error occurs.
 Type of =WriterT= output values restricted to be a =Monoid=.  Because
 class methods used internally to construct initial value and to
 combine several values written out.
--}
+#+END_COMMENT
+
+#+BEGIN_SRC haskell
+type Eval5 alpha = ReaderT Env  (ErrorT String (WriterT [String] (StateT Integer Identity))) alpha
 
 runEval5            ::  Env -> Integer -> Eval5 alpha -> ((Either String alpha, [String]), Integer)
 runEval5 env st ev  =   runIdentity (runStateT (runWriterT (runErrorT (runReaderT ev env))) st)
@@ -420,7 +508,7 @@ eval5             :: Exp -> Eval5 Value
 eval5 (Lit i)      = do tick
                         return $ IntVal i
 eval5 (Var n)      = do tick
-                        tell [n] -- write out name of each var encountered during evaluation
+                        tell [n] -- collect name of each var encountered during evaluation
                         env <- ask
                         case Map.lookup n env of
                             Nothing  -> throwError ("unbound variable: " ++ n)
@@ -440,15 +528,23 @@ eval5 (App e1 e2)   = do tick
                          case val1 of
                              FunVal env' n body -> local (const (Map.insert n val2 env')) (eval5 body)
                              _                  -> throwError "type error in application"
+#+END_SRC
 
-t9 = U.t "t9"
+The only change from =eval4= to =eval5 (besides type signature) is that =tell= is used in =Var= handling.
+
+#+BEGIN_SRC haskell
+t50 = U.t "t50"
       (runEval5 Map.empty 0 (eval5 exampleExp))
       ((Right (IntVal 18),["x"]),8)
+#+END_SRC
 
 ------------------------------------------------------------------------------
--- ** IO
+* IO
 
-{-
+The final extension is to add IO to the evaluator: =eval6= will print
+the value of each =Lit= encountered during evaluation.
+
+#+BEGIN_COMMENT
 Not possible to define an IO monad transformer because IO execution
 cannot be arbitrarily nested into other functions or monads.  Only
 allowed in the monad =IO=.
@@ -456,26 +552,25 @@ allowed in the monad =IO=.
 mtl provides infrastructure to integrate IO: substitute =IO= for =Identity=
 
 Because =Identity= is base monad, =runIdentity= applied last.
--}
-type Eval6 alpha = ReaderT Env  (ErrorT String (WriterT [String] (StateT Integer IO))) alpha
 
-{-
 =runEval6= wrapped in =IO= constructor, so does not directly yield
 result.  Yields IO computation which must be run to get result.
 
 Also =runIdentity= invocation gone.
--}
+#+END_COMMENT
+
+#+BEGIN_SRC haskell
+type Eval6 alpha = ReaderT Env  (ErrorT String (WriterT [String] (StateT Integer IO))) alpha
 
 runEval6           ::  Env -> Integer -> Eval6 alpha -> IO ((Either String alpha, [String]), Integer)
 runEval6 env st ev  =  runStateT (runWriterT (runErrorT (runReaderT ev env))) st
 
--- must use =liftIO= to lift into the currently running monad
-
 eval6             :: Exp -> Eval6 Value
-eval6 (Lit i)      = do tick
+eval6 (Lit  i)     = do tick
+                        -- must use =liftIO= to lift into the currently running monad
                         liftIO $ print i -- print each int when evaluated
                         return $ IntVal i
-eval6 (Var n)      = do tick
+eval6 (Var  n)     = do tick
                         tell [n]
                         env <- ask
                         case Map.lookup n env of
@@ -487,21 +582,54 @@ eval6 (Plus e1 e2) = do tick
                         case (e1', e2') of
                             (IntVal i1, IntVal i2) -> return $ IntVal (i1 + i2)
                             _                      -> throwError "type error in addition"
-eval6 (Abs n e)    = do tick
+eval6 (Abs  n  e)  = do tick
                         env <- ask
                         return $ FunVal env n e
-eval6 (App e1 e2)  = do tick
+eval6 (App  e1 e2) = do tick
                         val1  <- eval6 e1
                         val2  <- eval6 e2
                         case val1 of
                             FunVal env' n body -> local (const (Map.insert n val2 env')) (eval6 body)
                             _                  -> throwError "type error in application"
+#+END_SRC
 
-t10 = U.t "t10"
+The only change from =eval5= to =eval6 (besides type signature) is
+that =liftIO ...= in =Lit= handling.
+
+#+BEGIN_SRC haskell
+t60 = U.t "60"
       (unsafePerformIO (runEval6 Map.empty 0 (eval6 exampleExp)))
       ((Right (IntVal 18),["x"]),8)
+#+END_SRC
 
+------------------------------------------------------------------------------
+* summary
+
+The important point to see is that evaluators =eval1= through =eval6=
+all have the same structure.  The only change is in the type signature
+and then the usage of specific monad functions (e.g., =ask=, =tell=).
+
+The mechanics of how state, logging, environment hiding, handling
+errors, etc., were all weaved through that structure are hidden inside
+the monad implementations (rather than cluttering the main program).
+
+Hopefully this article provided a glimpse into the power and
+usefulness of monads.
+
+------------------------------------------------------------------------------
+* article accuracy
+
+#+BEGIN_SRC haskell
 rt =
-    T.runTestTT $ T.TestList $ t0 ++ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9 ++ t10
+    T.runTestTT $ T.TestList $ t00  ++ t01  ++
+                               t0e0 ++
+                               t10  ++ t11  ++
+                               t2a0 ++ t2a1 ++ t2a2 ++ t2a3 ++
+                               t2b0 ++ t2b1 ++
+                               t30  ++
+                               t40  ++
+                               t50  ++ t60
+#+END_SRC
 
--- End of file.
+# End of file.
+
