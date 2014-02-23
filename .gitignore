@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2014 Feb 17 (Mon) 20:52:29 by Harold Carr.
+# Last Modified : 2014 Feb 23 (Sun) 11:46:24 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -116,7 +116,6 @@ haskell/paper/haroldcarr/.ghci
 haskell/paper/haroldcarr/2013-concrete-monads-0-notes.org
 haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.hs
 haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.html
-haskell/paper/haroldcarr/Transformers-orig.lhs
 haskell/paper/haroldcarr/tikz-example.*
 
 haskell/paper/haskell-distributed/
