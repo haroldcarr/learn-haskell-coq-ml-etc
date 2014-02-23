@@ -2,7 +2,7 @@ Hakyll notes
 
 #+BEGIN_EXAMPLE
 Created       : 2013 May 31 (Fri) 19:40:46 by carr.
-Last Modified : 2014 Feb 18 (Tue) 20:12:01 by Harold Carr.
+Last Modified : 2014 Feb 19 (Wed) 12:37:56 by Harold Carr.
 #+END_EXAMPLE
 
 [[http://jaspervdj.be/hakyll/]]

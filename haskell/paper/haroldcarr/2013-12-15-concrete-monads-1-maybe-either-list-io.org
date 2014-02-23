@@ -14,15 +14,11 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-Last Modified : 2013 Dec 18 (Wed) 10:52:45 by carr.
+Last Modified : 2014 Feb 19 (Wed) 12:30:08 by Harold Carr.
 
 ------------------------------------------------------------------------------
-<<SERIES-OVERVIEW>>
-* series overview
 
-- concrete monads 1 : Maybe, Either, list, IO (this article)
-- concrete monads 2 : Writer, Reader, State (TBD)
-- concrete monads 3 : transformers (TBD)
+This post is part of a [[http://haroldcarr.com/posts/2014-02-19-monad-series.html][series of posts on monads]].
 
 ------------------------------------------------------------------------------
 * initial intuition
