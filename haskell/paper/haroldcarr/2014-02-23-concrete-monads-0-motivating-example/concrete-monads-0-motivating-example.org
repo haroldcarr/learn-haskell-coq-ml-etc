@@ -14,7 +14,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2013 Dec 01 (Sun) 11:18:09 by carr.
-Last Modified : 2014 Feb 23 (Sun) 11:38:27 by Harold Carr.
+Last Modified : 2014 Feb 23 (Sun) 19:19:09 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * Introduction
@@ -142,14 +142,17 @@ t0e00 = U.t "t0e00"
 
 That worked, but the code got ugly fast, adding/removing =Left= and
 =Right= all over the place --- and the fix only dealt with unbound
-variables, not other problems like a non- =IntVal= given to =Plus=.
+variables, not other problems like a non- =IntVal= given to =Plus=
+(shown later).
 
-#+BEGIN_SRC haskell
+#+BEGIN_COMMENT
+TODO : U.e not handling
+   concrete-monads-0-motivating-example.hs:63:32-65: Irrefutable pattern failed for pattern Data.Either.Right (Main.IntVal i2)
 t0e01 = U.t "t0e01"
      -- 12 + (\x -> x)
      (eval0e Map.empty (Plus (Lit 12) (Abs "x" (Var "x"))))
-     (Left "Pattern match failure in do expression at transformers.hs:138:34-42")
-#+END_SRC
+     (Right (IntVal 3))
+#+END_COMMENT
 
 ------------------------------------------------------------------------------
 * conversion to monadic structure
@@ -283,13 +286,16 @@ messages for incorrect dynamic typing:
 t2a2 = U.t "t2a2"
      -- 12 + (\x -> x)
      (runEval2 (eval2a Map.empty (Plus (Lit 12) (Abs "x" (Var "x")))))
-     (Left "Pattern match failure in do expression at transformers.hs:138:34-42")
+     (Left "Pattern match failure in do expression at concrete-monads-0-motivating-example.hs:117:31-39")
+#+END_SRC
 
+#+BEGIN_COMMENT
+TODO: U.e not catching this.
 t2a3 = U.e "t2a3"
      -- 12 0
      (runEval2 (eval2a Map.empty (App (Lit 12) (Lit 0))))
-     "Pattern match failure in do expression at transformers.hs:138:34-42"
-#+END_SRC
+     "concrete-monads-0-motivating-example.hs:(127,31)-(128,92): Non-exhaustive patterns in case"
+#+END_COMMENT
 
 That is fixed by pattern matching in =Plus= and =App= handling and
 explicitly throwing an appropriate error:
@@ -689,15 +695,32 @@ usefulness of monads.
 
 #+BEGIN_SRC haskell
 runTests =
-    T.runTestTT $ T.TestList $ t00   ++ t01   ++
-                               t0e00 ++ t0e01 ++
-                               t10   ++ t11   ++
-                               t2a0  ++ t2a1  ++ t2a2 ++ t2a3 ++
-                               t2b0  ++ t2b1  ++
+    T.runTestTT $ T.TestList $ t00   ++ t01  ++
+                               t0e00 ++
+                               t10   ++ t11  ++
+                               t2a0  ++ t2a1 ++ t2a2 ++
+                               t2b0  ++ t2b1 ++
                                t30   ++
                                t40   ++
                                t50   ++ t60
 #+END_SRC
+
+#+BEGIN_EXAMPLE
+runTests
+12
+4
+2
+=> Counts {cases = 14, tried = 14, errors = 0, failures = 0}
+#+END_EXAMPLE
+
+(Note: =12=, =4=, =2= are printed to the console from the =eval6= test.)
+
+------------------------------------------------------------------------------
+* source code
+
+The emacs org-mode literate source code of this article is available at:
+
+- [[https://github.com/haroldcarr/learn-haskell-coq-ml-etc/blob/master/haskell/paper/haroldcarr/2014-02-23-concrete-monads-0-motivating-example/concrete-monads-0-motivating-example.org]]
 
 # End of file.
 
