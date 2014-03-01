@@ -14,7 +14,7 @@ tags: haskell, graphviz, shelly
 #+END_HTML
 
 # Created       : 2014 Feb 26 (Wed) 18:54:30 by Harold Carr.
-Last Modified : 2014 Feb 28 (Fri) 21:43:24 by Harold Carr.
+Last Modified : 2014 Feb 28 (Fri) 22:13:25 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * graphviz
@@ -100,6 +100,7 @@ pastel28 n = Color $ pastel28CL n
 
 results in:
 
+#+CAPTION: &nbsp;
 [[file:ex1.png]]
 
 ------------------------------------------------------------------------------
@@ -168,6 +169,7 @@ The above results in (a diagram for the beginnings of a simple wire
 protocol with possibly fragmented request messages and single response
 messages):
 
+#+CAPTION: &nbsp;
 [[file:ex2.png]]
 
 ------------------------------------------------------------------------------
@@ -203,6 +205,7 @@ digraph exe {
 
 which results in:
 
+#+CAPTION: &nbsp;
 [[file:ex3.dot.png]]
 
 Unfortunately =Data.GraphViz= only supports clustering (or at least I
@@ -248,6 +251,7 @@ Manually removing the =cluster_N= after =subgraph= gives me what I want.
 
 If =cluster_N= is not removed what results is:
 
+#+CAPTION: &nbsp;
 [[file:ex3.png]]
 
 which is not what I'm after.
@@ -327,6 +331,6 @@ manually writing and maintaining =*.dot= files.
 
 The emacs org-mode literate source code of this article is available at:
 
-- [[https://github.com/haroldcarr/learn-haskell-coq-ml-etc/blob/master/haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.org]]
+- [[https://github.com/haroldcarr/learn-haskell-coq-ml-etc/blob/master/haskell/paper/haroldcarr/graphviz/2014-02-28-using-graphviz-via-haskell/2014-02-28-using-graphviz-via-haskell.org]]
 
 # End of file.
