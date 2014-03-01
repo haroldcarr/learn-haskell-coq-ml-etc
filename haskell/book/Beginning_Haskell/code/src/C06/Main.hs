@@ -1,14 +1,15 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PackageImports        #-}
 {-# LANGUAGE TemplateHaskell       #-}
 
 module Main where
 
 import           Control.Lens
-import           Control.Monad.Reader
-import           Control.Monad.State
-import           Control.Monad.Writer
+import           "mtl" Control.Monad.Reader
+import           "mtl" Control.Monad.State
+import           "mtl" Control.Monad.Writer
 import           Data.Char            (toUpper)
 import           Data.Default
 import           Data.List
@@ -19,23 +20,23 @@ import           Data.Maybe
 -- k-means - p. 134
 
 {-
-- observed fact is point in n-dimensional space
+- fact is point in n-dimensional space
 - similarity between facts corresponds to proximity of points
 - divide set of points into K partitions so aggregated distance between point minimized
-- K must be given in advance (for dynamic approach, see: http://en.wikipedia.org/wiki/Determining_the_number_of_clusters_in_a_data_set
+- K must be given in advance (for dynamic approach, see: http://en.wikipedia.org/wiki/Determining_the_number_of_clusters_in_a_data_set)
 -}
 
 -- 2D vector for distance and proximity
 
 class (Default v, Ord v) => Vector v where
-    distance :: v   -> v -> Double
-    centroid :: [v] -> v
+    distance ::  v  -> v -> Double    -- distance between to facts (i.e., points/Vectors)
+    centroid :: [v] -> v              -- a virtual point representing the average location of facts
 
 instance Vector (Double, Double) where
     distance (a,b) (c,d) = sqrt $ (c-a)*(c-a) + (d-b)*(d-b)
     centroid lst = let (u,v) = foldr (\(a,b) (c,d) -> (a+c,b+d)) (0.0,0.0) lst
                        n     = fromIntegral $ length lst
-                   in (u / n, v / n)
+                   in (u / n, v / n)  -- average point
 
 -- p. 135
 
@@ -50,19 +51,17 @@ instance Vectorizable (Double,Double) (Double,Double) where
 -- p. 136
 
 {-
-- K-means describes cluster via one vector for each, called centroid of the cluster.
+- K-means describes a cluster via centroid for each cluster.
 - Each element in data set is assigned to the cluster whose centroid is nearer to the data point.
 
 - K-means algorithm
-  - first phase
-    - generates k vectors : used as initial centroids
-    - each point assigned to cluster of nearest centroid (i.e., first partition of data points created)
+  - first phase :  partition data points into K clusters
+    - generates k vectors/points : used as initial centroids
+    - each point assigned to cluster of nearest initial centroid
   - compute new centroids
     - updated centroid of each cluster is average of all points in that cluster
   - new centroids become input of new cluster-point assignment and centroid updating phases
   - when clusters have no more change: final centroids are result
-
-- make parameter: method for generating initial vectors
 -}
 
 clusterAssignmentPhase0 :: (Vector v, Vectorizable e v) => [v] -> [e] -> M.Map v [e]
@@ -76,37 +75,41 @@ clusterAssignmentPhase0 centroids points =
 
 -- p. 137
 
+-- list of (old,new)
 newCentroidPhase0 :: (Vector v, Vectorizable e v) => M.Map v [e] -> [(v,v)]
 newCentroidPhase0 = M.toList . fmap (centroid . map toVector)
 
 shouldStop0 :: (Vector v) => [(v,v)] -> Double -> Bool
 shouldStop0 centroids threshold = foldr (\(x,y) s -> s + distance x y) 0.0 centroids < threshold
 
-kMeans0 :: (Vector v, Vectorizable e v) =>
-           (Int -> [e] -> [v])  -- initialization function
-        -> Int                  -- number of centroids
-        -> [e]                  -- the data
-        -> Double               -- threshold
-        -> ([v], Int)           -- final centroids and recursivion counter
-kMeans0 i k points = kMeans0' 1 (i k points) points
+kMeans0 :: (Vector v, Vectorizable e v) => (Int -> [e] -> [v])  -- function for generating initial vectors
+                                           -> Int               -- number of centroids
+                                           -> [e]               -- the data
+                                           -> Double            -- threshold
+                                           -> ([v], Int)        -- final centroids and recursivion counter
+kMeans0 f k points = kMeans0' 1 (f k points) points
 
 
 kMeans0' :: (Vector v, Vectorizable e v) => Int-> [v] -> [e] -> Double -> ([v], Int)
 kMeans0' recursionCounter centroids points threshold =
-    let assignments     = clusterAssignmentPhase0 centroids points
-        oldNewCentroids = newCentroidPhase0 assignments
-        newCentroids    = map snd oldNewCentroids
-    in if shouldStop0 oldNewCentroids threshold
+    let assignments        = clusterAssignmentPhase0 centroids points
+        oldAndNewCentroids = newCentroidPhase0 assignments
+        newCentroids       = map snd oldAndNewCentroids
+    in if shouldStop0 oldAndNewCentroids threshold
        then (newCentroids, recursionCounter)
        else kMeans0' (recursionCounter + 1) newCentroids points threshold
 
 -- test - p. 137
 
-initializeSimple :: Int -> [e] -> [(Double,Double)]
-initializeSimple 0 _ = []
-initializeSimple n v = (fromIntegral n, fromIntegral n) : initializeSimple (n-1) v
+-- this generator does not use the data points (v), but other versions might
+-- generates [(n,n), (n-1,n-1), ... (1,1)]
+generateCentroids :: Int -> [e] -> [(Double,Double)]
+generateCentroids 0 _ = []
+generateCentroids n v = (fromIntegral n, fromIntegral n) : generateCentroids (n-1) v
 
--- kMeans0 initializeSimple 2 ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)]) 0.001 -- [(1.0,1.5),(4.0,4.5)]
+-- ([(1.0,1.5),(4.0,4.5)],3)
+tryKMeans0 :: IO ()
+tryKMeans0 = print $ show $ kMeans0 generateCentroids 2 ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)]) 0.001
 
 ------------------------------------------------------------------------------
 -- lens - p. 138
@@ -123,6 +126,8 @@ firstNameSL :: Simple Lens PersonI String
 firstNameSL = lens (\(PersonI f _) -> f)
                    (\(PersonI _ l) newF -> PersonI newF l)
 
+-- p. 139
+
 lastNameSL :: Simple Lens PersonI String
 lastNameSL = lens (\(PersonI _ l) -> l)
                   (\(PersonI f _) newL -> PersonI f newL)
@@ -130,13 +135,13 @@ lastNameSL = lens (\(PersonI _ l) -> l)
 -- to change type, e.g., ClientI Int to ClientI Double
 identifierL :: Lens (ClientI i) (ClientI j) i j
 identifierL = lens (\x -> case x of
-                            (GovOrgI i _)      -> i
-                            (CompanyI i _ _ _) -> i
-                            (IndividualI i _)  -> i)
+                            (GovOrgI     i _)     -> i
+                            (CompanyI    i _ _ _) -> i
+                            (IndividualI i _)     -> i)
                    (\client newId -> case client of
-                       GovOrgI _ n      -> GovOrgI newId n
-                       CompanyI _ n p r -> CompanyI newId n p r
-                       IndividualI _ p  -> IndividualI newId p)
+                       GovOrgI     _ n     -> GovOrgI     newId n
+                       CompanyI    _ n p r -> CompanyI    newId n p r
+                       IndividualI _ p     -> IndividualI newId p)
 
 -- lens can be used for anything that has well-defined way to get/return value
 
@@ -164,12 +169,12 @@ data Person = Person { _firstName :: String
 makeLenses ''Client
 makeLenses ''Person
 
--- exactly same as above, but use Person
+-- exactly same as above, but use Person instead of PersonI
 fullName :: Simple Lens Person String
-fullName = lens (\(Person f l) -> f ++ " " ++ l)
+fullName = lens (\(Person f l)  -> f ++ " " ++ l)
                 (\_ newFullName -> case words newFullName of
-                                         f:l:_ -> Person f l
-                                         _     -> error "Incorrect name")
+                                       f:l:_ -> Person f l
+                                       _     -> error "Incorrect name")
 
 -- because can't load above into ghci:
 {-
@@ -257,18 +262,18 @@ data KMeansState e v = KMeansState { _centroids :: [v]
 makeLenses ''KMeansState
 
 initializeState :: (Int -> [e] -> [v]) -> Int -> [e] -> Double -> KMeansState e v
-initializeState i n pts t = KMeansState (i n pts) pts (1.0/0.0) t 0
+initializeState f n pts t = KMeansState (f n pts) pts (1.0/0.0) t 0
 
 kMeans :: (Vector v, Vectorizable e v) => (Int -> [e] -> [v]) -> Int -> [e] -> Double -> [v]
-kMeans i n pts t = view centroids $ kMeans' (initializeState i n pts t)
+kMeans f n pts t = view centroids $ kMeans' (initializeState f n pts t)
 
 kMeans' :: (Vector v, Vectorizable e v) => KMeansState e v -> KMeansState e v
 kMeans' state' =
   let assignments = clusterAssignments state'
-      state1 = state'  & centroids.traversed
+      state1 = state' &  centroids.traversed
                       %~ (\c -> centroid $ fmap toVector $ M.findWithDefault [] c assignments)
-      state2 = state1 & err .~ sum (zipWith distance (state'^.centroids) (state1^.centroids))
-      state3 = state2 & steps +~ 1
+      state2 = state1 &  err .~ sum (zipWith distance (state'^.centroids) (state1^.centroids))
+      state3 = state2 &  steps +~ 1
    in if state3^.err < state3^.threshold then state3 else kMeans' state3
 
 -- exercise 6-3 - p. 143
@@ -285,7 +290,7 @@ clusterAssignments state' =
 e63 :: IO ()
 e63 = do
     -- [(4.0,4.5),(1.0,1.5)] -- Note - kMeans0 returned [(1.0,1.5),(4.0,4.5)]
-    putStrLn $ show $ kMeans  initializeSimple  2  ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)])  0.001
+    putStrLn $ show $ kMeans  generateCentroids  2  ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)])  0.001
 
 ------------------------------------------------------------------------------
 -- discovering monads - p. 143
@@ -424,8 +429,8 @@ kMeansS''' points' =
 
 kms :: IO ()
 kms = do
-    putStrLn $ show $ kMeansS    initializeSimple  2  ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)])  0.001
-    putStrLn $ show $ kMeansS''  initializeSimple  2  ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)])  0.001
+    putStrLn $ show $ kMeansS    generateCentroids  2  ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)])  0.001
+    putStrLn $ show $ kMeansS''  generateCentroids  2  ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)])  0.001
 
 ------------------------------------------------------------------------------
 -- Monad - p. 148
@@ -472,7 +477,7 @@ initializeStateM    i                      n      pts    t       = KMeansStateS 
 
 kmm :: IO ()
 kmm = do
-    putStrLn $ show $ kMeansM    initializeSimple  2  ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)])  0.001
+    putStrLn $ show $ kMeansM    generateCentroids  2  ([(1,1),(1,2),(4,4),(4,5)]::[(Double,Double)])  0.001
 
 ------------------------------------------------------------------------------
 -- state and lenses - p. 153
@@ -630,6 +635,7 @@ computeValue _ = do return 1
 
 main :: IO ()
 main = do
+    tryKMeans0
     lensEx
     e62
     e63
