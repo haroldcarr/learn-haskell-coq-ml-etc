@@ -14,7 +14,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2013 Dec 01 (Sun) 11:18:09 by carr.
-Last Modified : 2014 Feb 23 (Sun) 19:19:09 by Harold Carr.
+Last Modified : 2014 Mar 02 (Sun) 12:59:54 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * Introduction
@@ -278,6 +278,8 @@ t2a1 = U.t "t2a1"
      (runEval2 (eval2a Map.empty (Var "no-way")))
      (Left "unbound var: no-way")
 #+END_SRC
+
+** dynamic type errors
 
 An improvement.  But all the evaluators above still give poor error
 messages for incorrect dynamic typing:
