@@ -2,27 +2,30 @@
 
 {-
 Created       : 2014 Feb 26 (Wed) 18:54:30 by Harold Carr.
-Last Modified : 2014 Feb 28 (Fri) 21:58:05 by Harold Carr.
+Last Modified : 2014 Mar 01 (Sat) 21:42:42 by Harold Carr.
 -}
 
 module Main where
 
 import           Data.Graph.Inductive
 import           Data.GraphViz
-import           Data.GraphViz.Attributes.Colors.Brewer
 import           Data.GraphViz.Attributes.Complete
-import           Data.GraphViz.Types.Generalised        as G
+import           Data.GraphViz.Types.Generalised   as G
 import           Data.GraphViz.Types.Monadic
-import           Data.Text.Lazy                         as L
+import           Data.Text.Lazy                    as L
 import           Data.Word
-import           Shelly                                 (shelly)
 import           WriteRunDot
 
-pastel28CL :: Word8 -> ColorList
-pastel28CL n = toColorList [toColor (BC (BScheme Pastel2 8) n)]
+-- http://www.colorcombos.com/color-schemes/2025/ColorCombo2025.html
+myColorCL :: Word8 -> ColorList
+myColorCL n | n == 1 = c $ (RGB 127 108 138)
+            | n == 2 = c $ (RGB 175 177 112)
+            | n == 3 = c $ (RGB 226 206 179)
+            | n == 4 = c $ (RGB 172 126 100)
+ where c rgb = toColorList [rgb]
 
-pastel28 :: Word8 -> Attribute
-pastel28 n = Color $ pastel28CL n
+myColor :: Word8 -> Attribute
+myColor n = Color $ myColorCL n
 
 ------------------------------------------------------------------------------
 -- http://speely.wordpress.com/2010/09/17/haskell-graphs-and-underpants/
@@ -39,15 +42,15 @@ ex1Params = nonClusteredParams { globalAttributes = ga
                                , fmtNode          = fn
                                , fmtEdge          = fe
                                }
-  where fn (_,l)   = [(Label . StrLabel) l]
-        fe (_,_,l) = [(Label . StrLabel) l]
+  where fn (_,l)   = [textLabel l]
+        fe (_,_,l) = [textLabel l]
 
         ga = [ GraphAttrs [ RankDir   FromLeft
                           , BgColor   [toWColor White]
                           ]
-             , NodeAttrs  [ Shape     BoxShape
-                          , FillColor (pastel28CL 2)
-                          , Style     [SItem Filled []]
+             , NodeAttrs  [ shape     BoxShape
+                          , FillColor (myColorCL 2)
+                          , style     filled
                           ]
              ]
 
@@ -61,22 +64,22 @@ ex2 = digraph (Str "ex2") $ do
     nodeAttrs  [style filled]
 
     cluster (Int 0) $ do
-        node "Ready"               [textLabel "ready"
-                                   , Shape DoubleCircle, pastel28 1, FixedSize True, Width 1]
+        node "Ready"               [ textLabel "ready"
+                                   , shape DoubleCircle, myColor 1, FixedSize True, Width 1]
     cluster (Int 1) $ do
         graphAttrs [textLabel "active"]
-        node "Open"                [textLabel "open"
-                                   , Shape       Circle, pastel28 2, FixedSize True, Width 1]
-        node "OpenExpectFragment"  [textLabel "open expect\nfragment"
-                                   , Shape       Circle, pastel28 2, FixedSize True, Width 1]
-        node "HalfClosed"          [textLabel "half-clsd"
-                                   , Shape       Circle, pastel28 2, FixedSize True, Width 1]
-        node "endMessage?"         [textLabel "end req?"
-                                   , Shape DiamondShape, pastel28 6, FixedSize True, Width 1.25, Height 1.25]
-        node "fragmentEndMessage?" [textLabel "end req?"
-                                   , Shape DiamondShape, pastel28 6, FixedSize True, Width 1.25, Height 1.25]
-        node "requestFragment"     [textLabel "FRAGMENT"
-                                   , Shape     BoxShape, pastel28 5]
+        node "Open"                [ textLabel "open"
+                                   , shape       Circle, myColor 2, FixedSize True, Width 1]
+        node "OpenExpectFragment"  [ textLabel "open expect\nfragment"
+                                   , shape       Circle, myColor 2, FixedSize True, Width 1]
+        node "HalfClosed"          [ textLabel "half-clsd"
+                                   , shape       Circle, myColor 2, FixedSize True, Width 1]
+        node "endMessage?"         [ textLabel "end req?"
+                                   , shape DiamondShape, myColor 4, FixedSize True, Width 1.25, Height 1.25]
+        node "fragmentEndMessage?" [ textLabel "end req?"
+                                   , shape DiamondShape, myColor 4, FixedSize True, Width 1.25, Height 1.25]
+        node "requestFragment"     [ textLabel "FRAGMENT"
+                                   , shape     BoxShape, myColor 3]
 
         "Open"                     --> "endMessage?"
         edge "endMessage?"             "HalfClosed"          [textLabel "true"]
@@ -88,14 +91,14 @@ ex2 = digraph (Str "ex2") $ do
 
     cluster (Int 2) $ do
         graphAttrs [textLabel "done"]
-        node "Closed"              [textLabel "closed"
-                                   , Shape DoubleCircle, pastel28 1, FixedSize True, Width 1]
+        node "Closed"              [ textLabel "closed"
+                                   , shape DoubleCircle, myColor 1, FixedSize True, Width 1]
 
     -- outside the box(es)
-    node "request"                 [textLabel "REQUEST"
-                                   , Shape     BoxShape, pastel28 5]
-    node "response"                [textLabel "RESPONSE"
-                                   , Shape     BoxShape, pastel28 5]
+    node "request"                 [ textLabel "REQUEST"
+                                   , shape     BoxShape, myColor 3]
+    node "response"                [ textLabel "RESPONSE"
+                                   , shape     BoxShape, myColor 3]
 
     "Ready"      --> "request"
     "request"    --> "Open"
@@ -110,16 +113,16 @@ ex3 = digraph (Str "exe") $ do
     graphAttrs [RankDir FromLeft]
 
     cluster (Int 0) $ do
-        nodeAttrs               [Shape DoubleCircle, FixedSize True, Width 1, style filled, pastel28 1]
+        nodeAttrs               [shape DoubleCircle, FixedSize True, Width 1, style filled, myColor 1]
         node "Open"             [textLabel "open"]
         node "Closed"           [textLabel "closed"]
 
     cluster (Int 1) $ do
-        nodeAttrs               [Shape       Circle, FixedSize True, Width 1, style filled, pastel28 1]
+        nodeAttrs               [shape       Circle, FixedSize True, Width 1, style filled, myColor 1]
         node "ClosedWaitingAck" [textLabel "clsd waiting\nACK"]
 
     cluster (Int 2) $ do
-        nodeAttrs               [shape     BoxShape,                 Width 1, style filled, pastel28 5]
+        nodeAttrs               [shape     BoxShape,                 Width 1, style filled, myColor 3]
         node "cancel"           [textLabel "CANCEL"]
         node "cancelAck"        [textLabel "CANCEL_ACK"]
 
@@ -129,11 +132,13 @@ ex3 = digraph (Str "exe") $ do
     "cancelAck"        --> "Closed"
 
 ------------------------------------------------------------------------------
+
 main :: IO ()
-main = shelly $ do
+main = do
     doDots [ ("ex1" , graphToDot ex1Params ex1) ]
     doDots [ ("ex2" , ex2)
            , ("ex3" , ex3)
            ]
+
 
 -- End of file.

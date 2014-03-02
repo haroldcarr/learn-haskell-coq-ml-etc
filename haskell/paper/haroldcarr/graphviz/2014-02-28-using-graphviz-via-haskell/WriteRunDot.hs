@@ -1,44 +1,26 @@
-{-# LANGUAGE ExtendedDefaultRules #-}
-{-# LANGUAGE OverloadedStrings    #-}
-{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 {-
 Created       : 2014 Feb 26 (Wed) 18:54:30 by Harold Carr.
-Last Modified : 2014 Feb 28 (Fri) 19:17:31 by Harold Carr.
+Last Modified : 2014 Mar 01 (Sat) 21:45:47 by Harold Carr.
 -}
 
 module WriteRunDot where
 
-import           Control.Monad          (forM_)
+import           Control.Monad (forM_)
 import           Data.GraphViz
-import           Data.GraphViz.Printing
-import qualified Data.Text              as T
-import           Data.Text.Lazy         as L
-import           Shelly
-default (T.Text)
+import qualified Data.Text     as T
 
-writeDot :: PrintDot a => (T.Text, a) -> Sh ()
-writeDot ng = writeDotToDir "/tmp" ng
+doDots :: PrintDotRepr dg n => [(T.Text, dg n)] -> IO ()
+doDots cases = forM_ cases createImage
 
-writeDotToDir :: PrintDot a => T.Text -> (T.Text, a) -> Sh ()
-writeDotToDir d (n,g) =
-    writefile (fromText (mkFileName d n "dot"))
-              (T.pack (unpack (renderDot $ toDot g)))
+createImage :: PrintDotRepr dg n => (T.Text, dg n) -> IO FilePath
+createImage (n, g) = createImageInDir "/tmp" n Png g
 
-runDot :: T.Text -> Sh ()
-runDot n = runDotFromTo "/tmp" "/tmp" n "png"
-
-runDotFromTo :: T.Text -> T.Text -> T.Text -> T.Text -> Sh ()
-runDotFromTo f t n e = do
-    let from = mkFileName f n "dot"
-    let to   = mkFileName t n e
-    run_ "dot" [T.append "-T" e, from, "-o", to]
-
---doDots :: [(T.Text, G.DotGraph L.Text)] -> Sh ()
-doDots :: PrintDot a => [(T.Text, a)] -> Sh ()
-doDots cases = forM_ cases (\x -> do writeDot x; (runDot . fst) x)
-
-mkFileName :: T.Text -> T.Text -> T.Text -> T.Text
-mkFileName d n e = T.concat [d,"/",n,".",e]
+createImageInDir :: PrintDotRepr dg n => T.Text -> T.Text -> GraphvizOutput -> dg n -> IO FilePath
+createImageInDir d n o g = w $ mkFilePath $ T.toLower (T.pack (show o))
+    where mkFilePath e = T.unpack $ T.concat [d,"/",n,".",e]
+          w fp         = runGraphvizCommand Dot g o fp
 
 -- End of file.
