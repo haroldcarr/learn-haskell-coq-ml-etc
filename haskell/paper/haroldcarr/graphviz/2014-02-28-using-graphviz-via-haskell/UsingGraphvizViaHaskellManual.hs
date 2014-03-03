@@ -2,7 +2,7 @@
 
 {-
 Created       : 2014 Feb 26 (Wed) 18:54:30 by Harold Carr.
-Last Modified : 2014 Mar 01 (Sat) 21:42:42 by Harold Carr.
+Last Modified : 2014 Mar 02 (Sun) 14:56:32 by Harold Carr.
 -}
 
 module Main where
@@ -108,7 +108,7 @@ ex2 = digraph (Str "ex2") $ do
 
 ------------------------------------------------------------------------------
 ex3 :: G.DotGraph L.Text
-ex3 = digraph (Str "exe") $ do
+ex3 = digraph (Str "ex3") $ do
 
     graphAttrs [RankDir FromLeft]
 
@@ -133,11 +133,41 @@ ex3 = digraph (Str "exe") $ do
 
 ------------------------------------------------------------------------------
 
+doubleCircle :: n -> Text -> Dot n
+doubleCircle n l = node n [textLabel l, shape DoubleCircle, FixedSize True, Width 1, style filled, myColor 1]
+
+circle       :: n -> Text -> Dot n
+circle       n l = node n [textLabel l, shape       Circle, FixedSize True, Width 1, style filled, myColor 1]
+
+rectangle    :: n -> Text -> Dot n
+rectangle    n l = node n [textLabel l, shape     BoxShape,                 Width 1, style filled, myColor 3]
+
+open, closed, waiting, cancel, cancelAck :: Dot L.Text
+open      = doubleCircle "Open"             "open"
+closed    = doubleCircle "Closed"           "closed"
+waiting   = circle       "ClosedWaitingAck" "clsd waiting\nACK"
+cancel    = rectangle    "cancel"           "CANCEL"
+cancelAck = rectangle    "cancelAck"        "CANCEL_ACK"
+
+ex4 :: G.DotGraph L.Text
+ex4 = digraph (Str "ex4") $ do
+
+    graphAttrs [RankDir FromLeft]
+    open; closed; waiting; cancel; cancelAck
+
+    "Open"             --> "cancel"
+    "cancel"           --> "ClosedWaitingAck"
+    "ClosedWaitingAck" --> "cancelAck"
+    "cancelAck"        --> "Closed"
+
+------------------------------------------------------------------------------
+
 main :: IO ()
 main = do
     doDots [ ("ex1" , graphToDot ex1Params ex1) ]
     doDots [ ("ex2" , ex2)
            , ("ex3" , ex3)
+           , ("ex4" , ex4)
            ]
 
 

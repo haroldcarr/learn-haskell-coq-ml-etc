@@ -14,7 +14,7 @@ tags: haskell, graphviz
 #+END_HTML
 
 # Created       : 2014 Feb 26 (Wed) 18:54:30 by Harold Carr.
-Last Modified : 2014 Mar 01 (Sat) 22:11:14 by Harold Carr.
+Last Modified : 2014 Mar 02 (Sun) 16:17:32 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * graphviz
@@ -178,7 +178,7 @@ messages):
 [[file:ex2.png]]
 
 ------------------------------------------------------------------------------
-* enhancement request
+* minor limitation and workaround
 
 Quite often I create diagrams that do not use clustering but have
 different node types, each type with a distinct shape, size and color.
@@ -214,12 +214,16 @@ which results in:
 [[file:ex3.dot.png]]
 
 =Data.GraphViz= supports =subgraph= for =Data.Graph.Inductive= graphs
-via the =isDotCluster= setting in =GraphvizParams=.  But I have not
-figured out how to do something similar for =Data.GraphViz.Types=
-graphs (or maybe it can't be done for this case).
+via the =isDotCluster= setting in =GraphvizParams=.
 
-The dot output above was
-produced from:
+It also supports =subgraph= for =Data.GraphViz.Types= =Canonical= and
+=Generalised= graphs via setting =isCluster= to =False= for their
+appropriate =DotSubGraph= types.
+
+However, =Graph= and =Monadic= do not (yet) have a setting that
+supports =subgraph=.
+
+The dot output above was produced from:
 
 #+BEGIN_SRC haskell
 ex3 :: G.DotGraph L.Text
@@ -247,7 +251,7 @@ ex3 = digraph (Str "ex3") $ do
     "cancelAck"        --> "Closed"
 #+END_SRC
 
-almost has what I want as output:
+which almost has what I want as output:
 
 #+BEGIN_EXAMPLE
 digraph exe {
@@ -265,11 +269,53 @@ If =cluster_N= is not removed what results is:
 
 which is not what I'm after.
 
+** workaround
+
+Since all of Haskell is available to build the graph, one can do:
+
+#+BEGIN_SRC haskell
+doubleCircle :: n -> Text -> Dot n
+doubleCircle n l = node n [textLabel l, shape DoubleCircle, FixedSize True, Width 1, style filled, myColor 1]
+
+circle       :: n -> Text -> Dot n
+circle       n l = node n [textLabel l, shape       Circle, FixedSize True, Width 1, style filled, myColor 1]
+
+rectangle    :: n -> Text -> Dot n
+rectangle    n l = node n [textLabel l, shape     BoxShape,                 Width 1, style filled, myColor 3]
+
+open, closed, waiting, cancel, cancelAck :: Dot L.Text
+open      = doubleCircle "Open"             "open"
+closed    = doubleCircle "Closed"           "closed"
+waiting   = circle       "ClosedWaitingAck" "clsd waiting\nACK"
+cancel    = rectangle    "cancel"           "CANCEL"
+cancelAck = rectangle    "cancelAck"        "CANCEL_ACK"
+
+ex4 :: G.DotGraph L.Text
+ex4 = digraph (Str "ex4") $ do
+
+    graphAttrs [RankDir FromLeft]
+    open; closed; waiting; cancel; cancelAck
+
+    "Open"             --> "cancel"
+    "cancel"           --> "ClosedWaitingAck"
+    "ClosedWaitingAck" --> "cancelAck"
+    "cancelAck"        --> "Closed"
+#+END_SRC
+
+This results in the exact same output as the manually editted graph:
+
+#+CAPTION: &nbsp;
+[[file:ex4.png]]
+
+I also use the above "trick" to factor out common parts of graphs and
+share them (my original motivation for using =Data.GraphViz= instead
+of manually writing =dot=).
+
 ------------------------------------------------------------------------------
 * creating images
 
 Images for these examples can be created using the utilities (the
-important piece being =runGraphvizCommand=):
+important piece being =runGraphvizCommand= and =addExtension=):
 
 #+BEGIN_EXAMPLE
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -277,20 +323,18 @@ important piece being =runGraphvizCommand=):
 
 module WriteRunDot where
 
-import           Control.Monad (forM_)
+import           Control.Monad   (forM_)
 import           Data.GraphViz
-import qualified Data.Text     as T
+import           System.FilePath
 
-doDots :: PrintDotRepr dg n => [(T.Text, dg n)] -> IO ()
+doDots :: PrintDotRepr dg n => [(FilePath, dg n)] -> IO ()
 doDots cases = forM_ cases createImage
 
-createImage :: PrintDotRepr dg n => (T.Text, dg n) -> IO FilePath
+createImage :: PrintDotRepr dg n => (FilePath, dg n) -> IO FilePath
 createImage (n, g) = createImageInDir "/tmp" n Png g
 
-createImageInDir :: PrintDotRepr dg n => T.Text -> T.Text -> GraphvizOutput -> dg n -> IO FilePath
-createImageInDir d n o g = w $ mkFilePath $ T.toLower (T.pack (show o))
-    where mkFilePath e = T.unpack $ T.concat [d,"/",n,".",e]
-          w fp         = runGraphvizCommand Dot g o fp
+createImageInDir :: PrintDotRepr dg n => FilePath -> FilePath -> GraphvizOutput -> dg n -> IO FilePath
+createImageInDir d n o g = Data.GraphViz.addExtension (runGraphvizCommand Dot g) o (combine d n)
 #+END_EXAMPLE
 
 and use the utilities via:
@@ -301,6 +345,7 @@ main = do
     doDots [ ("ex1" , graphToDot ex1Params ex1) ]
     doDots [ ("ex2" , ex2)
            , ("ex3" , ex3)
+           , ("ex4" , ex4)
            ]
 #+END_SRC
 

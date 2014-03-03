@@ -21,6 +21,7 @@ executable UsingGraphvizViaHaskellManual
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
                        , fgl
+                       , filepath
                        , graphviz
                        , haskell-src
                        , shelly
