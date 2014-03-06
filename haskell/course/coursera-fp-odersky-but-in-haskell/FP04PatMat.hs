@@ -1,11 +1,11 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:41:15 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:24:14 by carr.
+Last Modified : 2014 Mar 05 (Wed) 16:21:12 by Harold Carr.
 -}
 
 module FP04PatMat where
 
-import Data.List (find)
+import           Data.List (find)
 
 data CodeTree =
       --   left     right    chars  weight
@@ -36,9 +36,9 @@ times = foldl doChar []
 makeOrderedLeafList :: [(Char, Int)] -> [CodeTree] -- [Leaf]
 makeOrderedLeafList = foldl doChar []
   where
-    doChar []                        (c,w) = [Leaf c w]
-    doChar acc@(h@(Leaf ac ai):t) cw@(c,w) = if   w < ai then Leaf c w : acc
-                                             else             h        : doChar t cw
+    doChar []                       (c,w) = [Leaf c w]
+    doChar acc@(h@(Leaf _ ai):t) cw@(c,w) = if   w < ai then Leaf c w : acc
+                                            else             h        : doChar t cw
 
 combine :: [CodeTree] -> [CodeTree]
 combine trees
@@ -58,7 +58,7 @@ createCodeTreeFromUnorderPairs :: [(Char, Int)] -> CodeTree
 createCodeTreeFromUnorderPairs pairs = head $ until (\ trees -> length trees == 1) combine $ makeOrderedLeafList pairs
 
 createCodeTree :: String -> CodeTree
-createCodeTree chars = createCodeTreeFromUnorderPairs (times chars)
+createCodeTree = createCodeTreeFromUnorderPairs . times
 
 type Bit = Int
 
@@ -73,7 +73,7 @@ encode :: CodeTree -> String -> [Bit]
 encode tree0 text0 = iter tree0 text0
   where
     iter _              []       = []
-    iter (Fork l r _ _) cs@(h:t) = if h `elem` chars l then 0 : iter l cs
+    iter (Fork l r _ _) cs@(h:_) = if h `elem` chars l then 0 : iter l cs
                                    else                     1 : iter r cs
     iter (Leaf _ _)        (_:t) = iter tree0 t
 
@@ -89,9 +89,9 @@ convert :: CodeTree -> CodeTable
 convert (Leaf _ _)     = error "IllegalArgumentException"
 convert (Fork l r _ _) = mergeCodeTables (loop l 0) (loop r 1)
   where
-    loop (Fork l r _ _) directionBit = addDirectionBit directionBit $ mergeCodeTables (loop l 0) (loop r 1)
-    loop (Leaf c _)     directionBit = [(c, [directionBit])]
-    addDirectionBit db = foldl (\ acc (char,bits) -> (char, db : bits) : acc) []
+    loop (Fork l' r' _ _) directionBit = addDirectionBit directionBit $ mergeCodeTables (loop l' 0) (loop r' 1)
+    loop (Leaf c' _)      directionBit = [(c', [directionBit])]
+    addDirectionBit db = foldl (\acc (char,bits) -> (char, db : bits) : acc) []
     mergeCodeTables    = foldr (:)
 
 quickEncode :: CodeTree -> String -> [Bit]

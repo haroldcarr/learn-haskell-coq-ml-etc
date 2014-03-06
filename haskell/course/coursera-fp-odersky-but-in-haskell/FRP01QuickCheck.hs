@@ -1,16 +1,18 @@
 {-
 Created       : 2013 Nov 06 (Wed) 18:33:56 by carr.
-Last Modified : 2013 Nov 07 (Thu) 18:22:49 by carr.
+Last Modified : 2014 Mar 06 (Thu) 14:04:40 by Harold Carr.
 -}
 
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TemplateHaskell      #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
-import Test.QuickCheck
-import Test.QuickCheck.All
-import Control.Monad (liftM)
-import Data.MeldableHeap -- http://hackage.haskell.org/package/meldable-heap-2.0.3/docs/Data-MeldableHeap.html
-import Data.List (sort)
-import Data.Maybe (fromJust, isNothing)
+import           Control.Monad       (liftM)
+import           Data.List           (sort)
+import           Data.Maybe          (fromJust, isNothing)
+import           Data.MeldableHeap
+import           Test.QuickCheck
+import           Test.QuickCheck.All
 
 {-
 -- https://gitorious.org/aocapq/aocapq/source/7f24bb1571b3bd89ada668ea81c37ccdeb825498:src/PriorityQueue/QuickCheck.hs
@@ -133,6 +135,7 @@ mkList h = case extractMin h of
 runTests :: IO Bool
 runTests = $quickCheckAll
 
+main :: IO Bool
 main = runTests
 
 -- End of file.

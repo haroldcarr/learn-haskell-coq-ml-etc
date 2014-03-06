@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:23:26 by carr.
+Last Modified : 2014 Mar 05 (Wed) 13:10:17 by Harold Carr.
 -}
 
 module FP02FunSetsWorksheet
@@ -10,8 +10,8 @@ module FP02FunSetsWorksheet
 -- note: we would not export `reduce` if this was a module for Rational
 ) where
 
-import Test.HUnit
-import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
+import           Test.HUnit
+import           Test.HUnit.Util
 
 -- currying
 sum' :: (Int -> Int) -> Int -> Int -> Int
@@ -35,6 +35,7 @@ sp u spf f a b = iter a
 
 
 -- higher-order functions: functions that take functions as args and/or return functions results
+tolerance :: Double
 tolerance = 0.0001
 
 isCloseEnough :: Double -> Double -> Bool
@@ -56,6 +57,7 @@ averageDamp f x = (x + f x) / 2
 sqrt' :: Double -> Double
 sqrt' x = fixedPoint (averageDamp (\y -> x / y)) 1.0
 
+higherOrderFunctionTests :: Test
 higherOrderFunctionTests = TestList
     [teq "product"    (product' (+ 1) 1 2)            6
     ,teq "fact 5"     (fact 5)                      120
@@ -95,9 +97,9 @@ less (Rational' n1 d1) (Rational' n2 d2) = n1 * d2 < n2 * d1
 instance Show Rational' where
     show (Rational' n d) = show n ++ "/" ++ show d
 
-x = Rational' 1 3
-y = Rational' 5 7
-z = Rational' 3 2
+xR = Rational' 1 3
+yR = Rational' 5 7
+zR = Rational' 3 2
 
 -- http://hackage.haskell.org/package/base-4.6.0.1/docs/Data-Ratio.html
 -- http://www.haskell.org/ghc/docs/7.4.2/html/libraries/base/src/GHC-Real.html
@@ -110,20 +112,21 @@ reduce (Rational' n d) = Rational' (n `quot` g) (d `quot` g)
     gcd a b = if b == 0 then a else gcd b $ a `mod` b
 
 dataTypeTests = TestList
-    [teq "add rat"           (show $ add x y)           "22/21"
-    ,teq "add rat infix"     (show $ x `add` y)         "22/21"
-    ,teq "add rat operator"  (show $ x +:    y)         "22/21"
-    ,teq "sub rat"           (show   (sub (sub x y) z)) "-79/42"
-    ,teq "sub rat infix"     (show $ x `sub` y `sub` z) "-79/42"
-    ,teq "sub rat op"        (show $ x -:    y -:    z) "-79/42"
-    ,teq "add rat self"      (show $ add y y)           "70/49"
-    ,teq "add rat self gcd"  (show $ reduce $ add y y)  "10/7"
-    ,ter "rat zero denom"    (reduce (Rational' 1 0))   "Rational': zero denominator"
-    ,teq "less rat"          (less x   y)               True
-    ,teq "less rat infix"    (x `less` y)               True
-    ,teq "less rat operator" (x <:     y)               True
+    [teq "add rat"           (show $ add xR yR)            "22/21"
+    ,teq "add rat infix"     (show $ xR `add` yR)          "22/21"
+    ,teq "add rat operator"  (show $ xR +:    yR)          "22/21"
+    ,teq "sub rat"           (show   (sub (sub xR yR) zR)) "-79/42"
+    ,teq "sub rat infix"     (show $ xR `sub` yR `sub` zR) "-79/42"
+    ,teq "sub rat op"        (show $ xR -:    yR -:    zR) "-79/42"
+    ,teq "add rat self"      (show $ add yR yR)            "70/49"
+    ,teq "add rat self gcd"  (show $ reduce $ add yR yR)   "10/7"
+    ,ter "rat zero denom"    (reduce (Rational' 1 0))      "Rational': zero denominator"
+    ,teq "less rat"          (less xR   yR)                True
+    ,teq "less rat infix"    (xR `less` yR)                True
+    ,teq "less rat operator" (xR <:     yR)                True
     ]
 
+main :: IO Counts
 main = do
     runTestTT higherOrderFunctionTests
     runTestTT dataTypeTests

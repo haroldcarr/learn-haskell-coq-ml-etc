@@ -1,14 +1,15 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:23:19 by carr.
+Last Modified : 2014 Mar 05 (Wed) 13:04:01 by Harold Carr.
 -}
 
 module FP02FunSetsTest where
 
-import Test.HUnit
-import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import FP02FunSets
+import           FP02FunSets
+import           Test.HUnit
+import           Test.HUnit.Util
 
+s1, s2, s3, sl0, sg0, s1to9, s6to14, sEven :: Set
 s1     = singletonSet 1
 s2     = singletonSet 2
 s3     = singletonSet 3
@@ -17,8 +18,11 @@ sg0    = Set (> 0)
 s1to9  = Set (\x -> x > 0 && x < 10)
 s6to14 = Set (\x -> x > 5 && x < 15)
 {-# ANN isEven "HLint: ignore Redundant lambda" #-}
+isEven :: Int -> Bool
 isEven =      \x -> x `mod` 2 == 0
 sEven  = Set isEven
+
+us1s2, usl0sg0, is1s2, is1to9s6to14, ds1s2, ds1to9s6to14, fs1to9sEven :: Set
 
 us1s2        = s1  `union` s2
 usl0sg0      = sl0 `union` sg0
@@ -31,6 +35,7 @@ ds1to9s6to14 = diff s1to9 s6to14
 
 fs1to9sEven  = filter' s1to9 isEven
 
+tests :: Test
 tests = TestList
     [
     -- UNION
@@ -112,6 +117,7 @@ tests = TestList
 
     ]
 
+main :: IO Counts
 main = runTestTT tests
 
 -- End of file.

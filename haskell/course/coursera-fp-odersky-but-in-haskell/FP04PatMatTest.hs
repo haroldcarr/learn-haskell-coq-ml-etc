@@ -1,24 +1,31 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:42:02 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:24:23 by carr.
+Last Modified : 2014 Mar 05 (Wed) 16:26:37 by Harold Carr.
 -}
 
 module FP04PatMatTest where
 
-import Test.HUnit
-import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import FP04PatMat
+import           FP04PatMat
+import           Test.HUnit
+import           Test.HUnit.Util
 
 {-# ANN module "HLint: ignore Use string literal" #-}
 
+t1, t2 :: CodeTree
 t1 = Fork (Leaf 'a' 2) (Leaf 'b' 3) ['a','b'] 5
 t2 = Fork (Fork (Leaf 'a' 2) (Leaf 'b' 3) ['a','b'] 5) (Leaf 'd' 4) ['a','b','d'] 9
+hwBangsChars :: String
 hwBangsChars = "hello, world!!!"
+
+leaflist1, leaflist2, leaflist3 :: [CodeTree]
 leaflist1 = [Leaf 'e' 1, Leaf 't' 2, Leaf 'x' 4]
 leaflist2 = [Leaf 'e' 1, Leaf 't' 4, Leaf 'x' 4]
 leaflist3 = [Leaf 'e' 1, Leaf 't' 3, Leaf 'x' 4]
-hwTree  = createCodeTree hwBangsChars
 
+hwTree :: CodeTree
+hwTree = createCodeTree hwBangsChars
+
+frenchCode :: CodeTree
 frenchCode = createCodeTreeFromUnorderPairs [('s', 121895),
                                              ('d',  56269),
                                              ('x',  5928),
@@ -46,12 +53,16 @@ frenchCode = createCodeTreeFromUnorderPairs [('s', 121895),
                                              ('i',  115465),
                                              ('a', 117110)]
 
+secret :: [Int]
 secret = [0,0,1,1,1,0,1,0,1,1,1,0,0,1,1,0,1,0,0,1,1,0,1,0,1,1,0,0,1,1,1,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,1]
 
+decodedSecret :: String
 decodedSecret = decode frenchCode secret
 
+ds :: [Char]
 ds  = ['h', 'u', 'f', 'f', 'm', 'a', 'n', 'e', 's', 't', 'c', 'o', 'o', 'l']
 
+baseTests :: Test
 baseTests = TestList
     [teq "weight of a larger tree" (weight t1)  5
     ,teq "chars of a larger tree"  (chars t2) "abd"
@@ -140,10 +151,16 @@ baseTests = TestList
     ]
 
 
+text :: String
 text  = "this is an example of a huffman tree"
+
+pairs :: [CodeTree]
 pairs = makeOrderedLeafList $ times text
+
+wTree :: CodeTree
 wTree  = createCodeTree text
 
+wikiTests :: Test
 wikiTests = TestList
     [teq "http://en.wikipedia.org/wiki/Huffman_coding 1"
                             pairs
@@ -157,8 +174,10 @@ wikiTests = TestList
                             text
     ]
 
+qTable :: CodeTable
 qTable = convert $ createCodeTree hwBangsChars
 
+quickTests :: Test
 quickTests = TestList
     [teq "quick qTable"     qTable
                             [('h', [1,0,1,0]),
@@ -176,6 +195,7 @@ quickTests = TestList
                             (encode      hwTree hwBangsChars)
     ]
 
+main :: IO Counts
 main = do
     runTestTT baseTests
     runTestTT wikiTests

@@ -1,19 +1,23 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:41:15 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:24:42 by carr.
+Last Modified : 2014 Mar 06 (Thu) 13:31:55 by Harold Carr.
 -}
 
 module FP06ForCompTest where
 
-import Test.HUnit
-import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import qualified Data.Map.Strict as M
-import System.IO.Unsafe
-import FP06ForComp
+import qualified Data.Map.Strict  as M
+import           FP06ForComp
+import           System.IO.Unsafe
+import           Test.HUnit
+import           Test.HUnit.Util
 
+dictionaryByOccurrences' :: M.Map Occurrences [Word]
 dictionaryByOccurrences' = unsafePerformIO dictionaryByOccurrences
 
+abba :: [(Char,Int)]
 abba = [('a', 2), ('b', 2)]
+
+abbacomb :: [[(Char,Int)]]
 abbacomb = [[]
            ,[('b',1)]
            ,[('b',2)]
@@ -37,7 +41,10 @@ abbacomb = [[]
            ]
 -}
 
+sentence :: [String]
 sentence = ["Linux", "rulez"]
+
+anas :: [[String]]
 anas     = [["Zulu","Lin","Rex"]
            ,["Zulu","nil","Rex"]
            ,["Zulu","Rex","Lin"]
@@ -82,6 +89,7 @@ anas =     [["Rex", "Lin", "Zulu"]
            ,["Linux", "rulez"]
            ]
 -}
+tests :: Test
 tests = TestList
     [teq "wordOccurrences: abcd"            (wordOccurrences "abcd")                                           [('a', 1), ('b', 1), ('c', 1), ('d', 1)]
     ,teq "wordOccurrences: Robert"          (wordOccurrences "Robert")                                         [('b', 1), ('e', 1), ('o', 1), ('r', 2), ('t', 1)]
@@ -96,6 +104,7 @@ tests = TestList
     ,teq "sentence anagrams: Linux rulez"   (sentenceAnagrams sentence dictionaryByOccurrences')               anas
     ]
 
+main :: IO Counts
 main = runTestTT tests
 
 -- End of file.

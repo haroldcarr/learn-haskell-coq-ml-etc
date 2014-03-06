@@ -1,23 +1,23 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:25:10 by carr.
+Last Modified : 2014 Mar 06 (Thu) 13:50:49 by Harold Carr.
 -}
 
 module FP07Solver where
 
-import FP07GameDef
-import FP07StringParserTerrain
+import           FP07GameDef
 
+done :: Game -> Block -> Bool
 done game b = b == Block (goal game) (goal game)
 
 neighborsWithHistory :: Game -> Block -> [Move] -> [(Block, [Move])]
-neighborsWithHistory game b history =
-      map (\(b,m) -> (b, m:history)) $ legalNeighbors game b
+neighborsWithHistory game b0 history =
+      map (\(b,m) -> (b, m:history)) $ legalNeighbors game b0
 
 -- TODO (Set Block)
 newNeighborsOnly :: [(Block, [Move])] -> [Block] -> [(Block, [Move])]
-newNeighborsOnly neighbors explored =
-      filter (\(b,_) -> (b `notElem` explored)) neighbors
+newNeighborsOnly neighbors0 explored =
+      filter (\(b,_) -> (b `notElem` explored)) neighbors0
 
 from :: Game -> [(Block, [Move])] -> [Block] -> [(Block, [Move])]
 from game (p@(b,h):t) explored =
@@ -29,12 +29,12 @@ pathsFromStart :: Game -> [(Block, [Move])]
 pathsFromStart game = from game [(startBlock game, [])] []
 
 pathsToGoal :: Game -> [(Block, [Move])]
-pathsToGoal game = filter (\(b,m) -> done game b) (pathsFromStart game)
+pathsToGoal game = filter (\(b,_) -> done game b) (pathsFromStart game)
 
 solution :: Game -> [Move]
 solution game =
     case pathsToGoal game of
-        (_,x):t -> reverse x
+        (_,s):_ -> reverse s
         _       -> []
 
 startBlock :: Game -> Block

@@ -1,15 +1,15 @@
 {-
 Created       : 2013 Oct 07 (Mon) 14:41:15 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:24:31 by carr.
+Last Modified : 2014 Mar 06 (Thu) 13:27:59 by Harold Carr.
 -}
 
 module FP06ForComp where
 
-import           Data.Char (toLower)
-import           Data.Function (on)
-import           Data.List (groupBy, sort, sortBy)
+import           Data.Char       (toLower)
+import           Data.Function   (on)
+import           Data.List       (groupBy, sortBy)
 import qualified Data.Map.Strict as M
-import           Data.Ord (comparing)
+import           Data.Ord        (comparing)
 import           SplitLines
 
 type Word        = String
@@ -47,7 +47,7 @@ combinations = foldr step [[]]
   where
     step (char, num) acc = acc ++ [ (char,n) : pair | pair <- acc,  n <- [1..num] ]
 
--- subtract :: Occurrences -> Occurrences -> Occurrences
+subtract' :: Occurrences -> Occurrences -> Occurrences
 subtract' x y = M.toList $ foldl step (M.fromList x) y
   where
     step accMap (char, num) =
@@ -56,13 +56,13 @@ subtract' x y = M.toList $ foldl step (M.fromList x) y
            else                M.delete char accMap
 
 sentenceAnagrams :: [Word] -> M.Map [(Char, Int)] [Word] -> [[Word]]
-sentenceAnagrams sentence dictionaryByOccurrences =
+sentenceAnagrams sentence0 dictByOccurrences =
     let iter [] = [[]]
         iter occurrences = [ word : sentence | combination <- combinations occurrences,
-                                               word        <- M.findWithDefault [] combination dictionaryByOccurrences,
+                                               word        <- M.findWithDefault [] combination dictByOccurrences,
                                                sentence    <- iter $ subtract' occurrences (wordOccurrences word),
                                                not $ null combination ]
-    in iter $ sentenceOccurrences sentence
+    in iter $ sentenceOccurrences sentence0
 
 -- End of file.
 

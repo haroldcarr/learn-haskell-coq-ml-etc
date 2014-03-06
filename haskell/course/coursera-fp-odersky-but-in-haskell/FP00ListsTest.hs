@@ -1,12 +1,13 @@
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:22:49 by carr.
+Last Modified : 2014 Mar 05 (Wed) 12:59:02 by Harold Carr.
 -}
 
-import Test.HUnit
-import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import FP00Lists
+import           FP00Lists
+import           Test.HUnit
+import           Test.HUnit.Util
 
+tests :: Test
 tests = TestList
     [teq "sum' empty"   (sum' [])                      0
     ,teq "sum' pos"     (sum' [1,2,0])                 3
@@ -18,6 +19,7 @@ tests = TestList
     ,teq "max' neg/pos" (max' [-1,1,-2,2,-3,3,-4,4])   4
     ]
 
+main :: IO Counts
 main = runTestTT tests
 
 -- End of file.

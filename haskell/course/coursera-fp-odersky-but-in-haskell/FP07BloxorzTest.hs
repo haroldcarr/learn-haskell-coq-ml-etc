@@ -1,27 +1,28 @@
 {-
 Created       : 2013 Oct 29 (Tue) 18:57:36 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:24:54 by carr.
+Last Modified : 2014 Mar 06 (Thu) 13:35:01 by Harold Carr.
 -}
 
 module FP07BloxorzTest where
 
-import Test.HUnit
-import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import Data.Vector as V
-import FP07GameDef
-import FP07Solver
-import FP07StringParserTerrain
+import           Data.Vector             as V
+import           FP07GameDef
+import           FP07Solver
+import           FP07StringParserTerrain
+import           Test.HUnit
+import           Test.HUnit.Util
 
 solve :: Game -> [Move] -> Block
-solve game = Prelude.foldl step (startBlock game)
+solve game0 = Prelude.foldl step (startBlock game0)
   where
-    step blockAcc move =
-        (case move of
+    step blockAcc direction =
+        (case direction of
              MLeft  -> left
              MRight -> right
              MUp    -> up
              MDown  -> down) blockAcc
 
+level :: String
 level =
     "ooo-------\n\
     \oSoooo----\n\
@@ -30,12 +31,16 @@ level =
     \-----ooToo\n\
     \------ooo-"
 
+game :: Game
 game = mkGame level
 
+infiniteGame :: Game
 infiniteGame = Game (const True) (Pos 1 3) (Pos 5 8)
 
+optsolution :: [Move]
 optsolution = [MRight, MRight, MDown, MRight, MRight, MRight, MDown]
 
+tests :: Test
 tests = TestList
     [teq "vector" (vector level) (V.fromList [V.fromList "ooo-------"
                                              ,V.fromList "oSoooo----"
@@ -137,6 +142,7 @@ tests = TestList
     ,teq "InfiniteTerrain"                 (Prelude.length     (solution infiniteGame))   (Prelude.length optsolution)
     ]
 
+main :: IO Counts
 main = runTestTT tests
 
 -- End of file.

@@ -1,17 +1,18 @@
 {-
 Created       : 2013 Oct 01 (Tue) 14:46:30 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:24:05 by carr.
+Last Modified : 2014 Mar 05 (Wed) 13:25:38 by Harold Carr.
 -}
 
 module FP03ObjSetsTweetSetTest where
 
-import Control.Monad
-import Test.HUnit
-import Test.HUnit.Util -- https://github.com/haroldcarr/test-hunit-util
-import FP03ObjSetsTweetData
-import FP03ObjSetsTweetReader
-import FP03ObjSetsTweetSet
+import           FP03ObjSetsTweetData
+import           FP03ObjSetsTweetReader
+import           FP03ObjSetsTweetSet
+import           Test.HUnit
+import           Test.HUnit.Util
 
+set1, set2, set3, set4c, set4d, set5, seven, three, one, five, nine, eight :: TweetSet
+c, d :: Tweet
 set1  = Empty
 set2  = incl set1  (Tweet "a" "a body" 20)
 set3  = incl set2  (Tweet "b" "b body" 20)
@@ -28,10 +29,16 @@ five   =  incl one   (Tweet "5" "5" 5)
 nine   =  incl five  (Tweet "9" "9" 9)
 eight  =  incl nine  (Tweet "8" "8" 8)
 
+trends :: [Tweet]
 trends = descendingByRetweet set5
+
+getUser :: Tweet -> String
 getUser     (Tweet user _ _       ) = user
+
+getRetweets :: Tweet -> Int
 getRetweets (Tweet _    _ retweets) = retweets
 
+tests :: Test
 tests = TestList
     [teq "filter': on empty set"     (size (filter' (\x -> getUser     x == "a") set1))                 0
     ,teq "filter': a on set5"        (size (filter' (\x -> getUser     x == "a") set5))                 1
@@ -45,9 +52,11 @@ tests = TestList
 
 ------------------------------------------------------------------------------
 
+googleKeywords, appleKeywords :: [String]
 googleKeywords = ["android", "Android", "galaxy", "Galaxy", "nexus", "Nexus"]
 appleKeywords  = ["ios", "iOS", "iphone", "iPhone", "ipad", "iPad"]
 
+main :: IO Counts
 main = do
     runTestTT tests
 
@@ -59,14 +68,14 @@ main = do
     gadgetlabTweets   <- parseTweets gadgetlabJSON
     mashableTweets    <- parseTweets mashableJSON
 
-    let all = allTweets [gizmodoTweets, techcrunchTweets, engadgetTweets, amazondealsTweets, cnetTweets, gadgetlabTweets,  mashableTweets]
-    runTestTT $ TestList[teq "size all"          (size all)          695]
-    -- foreach all  (\x -> putStrLn (show x))
+    let all' = allTweets [gizmodoTweets, techcrunchTweets, engadgetTweets, amazondealsTweets, cnetTweets, gadgetlabTweets,  mashableTweets]
+    runTestTT $ TestList[teq "size all'"          (size all')          695]
+    -- foreach all'  (\x -> putStrLn (show x))
 
-    let googleTweets = collectByKeywords all googleKeywords
+    let googleTweets = collectByKeywords all' googleKeywords
     runTestTT $ TestList[teq "size googleTweets" (size googleTweets)  38]
 
-    let appleTweets  = collectByKeywords all appleKeywords
+    let appleTweets  = collectByKeywords all' appleKeywords
     runTestTT $ TestList[teq "size appleTweets"  (size appleTweets)  150]
 
     let trending = descendingByRetweet $ googleTweets `union ` appleTweets

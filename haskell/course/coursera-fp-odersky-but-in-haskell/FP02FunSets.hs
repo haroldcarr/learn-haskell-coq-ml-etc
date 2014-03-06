@@ -1,8 +1,9 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 {-
 Created       : 2013 Sep 28 (Sat) 09:01:51 by carr.
-Last Modified : 2013 Nov 06 (Wed) 18:23:12 by carr.
+Last Modified : 2014 Mar 05 (Wed) 13:01:27 by Harold Carr.
 
 See my question and answers on Set representation:
     http://stackoverflow.com/questions/19086408/haskell-how-to-define-instance-show-set-for-type-set-int-bool
@@ -15,16 +16,16 @@ NOTE: LANGUAGE above only needed for Set' representation below.
 
 module FP02FunSets where
 
-import Data.List (intercalate)
+import           Data.List (intercalate)
 
 newtype Set = Set (Int -> Bool)
 
 {-# ANN contains   "HLint: ignore Eta reduce" #-}
 contains :: Set -> Int -> Bool
-contains (Set s) elem = s elem
+contains (Set s) el = s el
 
 singletonSet :: Int -> Set
-singletonSet elem = Set (== elem)
+singletonSet el = Set (== el)
 
 union :: Set -> Set -> Set
 union (Set s) (Set t) = Set (\x -> s x || t x)
@@ -38,6 +39,7 @@ diff (Set s) (Set t) = Set (\x -> s x  && not (t x))
 filter' :: Set -> (Int -> Bool) -> Set
 filter' (Set s) p = Set (\x -> s x && p x) -- same as intersect
 
+bound :: Int
 bound = 1000
 
 forall :: Set -> (Int -> Bool) -> Bool
