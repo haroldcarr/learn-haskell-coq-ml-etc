@@ -4,7 +4,7 @@
 
 module C02 where
 
-firstOrEmpty :: [[Char]] -> [Char]
+firstOrEmpty :: [String] -> String
 firstOrEmpty lst = if not (null lst) then head lst else "empty"
 
 -- ADT - p. 31
@@ -114,7 +114,7 @@ timeMachines =
 ack :: (Num a1, Num a, Ord a1, Ord a) => a1 -> a -> a
 ack m n
     | m  > 0 && n  > 0 = ack (m - 1) (ack m (n - 1))
-    | m  > 0 && n == 0 = ack (m -1) 1
+    | m  > 0 && n == 0 = ack (m - 1) 1
     | m == 0           = n + 1
 ack _ _                = error "bad args to ack"
 
@@ -140,7 +140,7 @@ specialClient _                                   = False
 
 -- records - p. 41
 
-greet :: ClientR -> [Char]
+greet :: ClientR -> String
 greet IndividualR { person = PersonR { .. } } = "Hi " ++ firstName
 greet CompanyR    { .. }                      = "Hello " ++ clientRName
 greet GovOrgR     { }                         = "Welcome"
