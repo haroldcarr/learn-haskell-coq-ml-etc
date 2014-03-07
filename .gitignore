@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2014 Feb 28 (Fri) 22:03:55 by Harold Carr.
+# Last Modified : 2014 Mar 06 (Thu) 14:13:12 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -118,6 +118,7 @@ haskell/paper/haroldcarr/.ghci
 haskell/paper/haroldcarr/2013-concrete-monads-0-notes.org
 haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.hs
 haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.html
+haskell/paper/haroldcarr/bitly-client/.access_token
 haskell/paper/haroldcarr/graphviz/2014-02-28-using-graphviz-via-haskell/2014-02-28-using-graphviz-via-haskell.hs
 haskell/paper/haroldcarr/graphviz/2014-02-28-using-graphviz-via-haskell/2014-02-28-using-graphviz-via-haskell.html
 haskell/paper/haroldcarr/tikz-example.*

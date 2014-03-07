@@ -23,10 +23,13 @@ executable BitlyClient
   build-depends:       aeson
                        , base >=4.6 && <4.7
                        , bytestring
+                       , ghc-prim
                        , HTTP
                        , HUnit
                        , http-conduit
                        , network
+                       , syb
+                       , template-haskell
                        , test-hunit-util
                        , transformers
   hs-source-dirs:      src
