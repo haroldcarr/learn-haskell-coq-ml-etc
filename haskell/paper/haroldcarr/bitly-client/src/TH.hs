@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 06 (Thu) 17:12:50 by Harold Carr.
-Last Modified : 2014 Mar 06 (Thu) 21:01:31 by Harold Carr.
+Last Modified : 2014 Mar 10 (Mon) 00:02:34 by Harold Carr.
 
 http://www.haskell.org/haskellwiki/Template_Haskell#Generating_records_which_are_variations_of_existing_records
 -}
@@ -50,11 +50,19 @@ fooey = do
         bazVC = mkName "BazVC"
         eqD   = mkName "Eq"
         showD = mkName "Show"
+        barTC = mkName "BarTC"
+        quxVC = mkName "QuxVC"
     aTV   <- newName "aTV"
     bTV   <- newName "bTV"
     return [ DataD [] fooTC [ PlainTV aTV, PlainTV bTV ]
              [ NormalC barVC [ (NotStrict, VarT aTV) ]
              , NormalC bazVC [ (NotStrict, VarT bTV) ]
+             ]
+             [ eqD
+             , showD
+             ]
+           , DataD [] barTC [ PlainTV aTV ]
+             [ NormalC quxVC [ (NotStrict, VarT aTV) ]
              ]
              [ eqD
              , showD

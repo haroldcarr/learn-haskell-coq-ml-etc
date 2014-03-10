@@ -2,7 +2,7 @@
 
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 06 (Thu) 13:14:32 by Harold Carr.
+Last Modified : 2014 Mar 10 (Mon) 00:06:25 by Harold Carr.
 -}
 
 module BitlyClient where
@@ -28,11 +28,14 @@ data Request = ExpandRequest { shortUrl :: [String]
                                 }
 
 mkReqUrl :: Request -> String
-mkReqUrl r = case r of
-    (ExpandRequest  s h) -> mru "expand"  $ urlEncodeVars $ zip (repeat "shortUrl") s ++ zip (repeat "hash") h
-    (ShortenRequest l d) -> mru "shorten" $ urlEncodeVars [("longUrl", l), ("domain", d)]
-  where
-    mru op p = bitlyApiV3 ++ op ++ "?" ++ p
+mkReqUrl (ExpandRequest  s h) = mru "expand"  (zr "shortUrl"  s  ++ zr "hash"    h)
+mkReqUrl (ShortenRequest l d) = mru "shorten" (zr "longUrl"  [l] ++ zr "domain" [d])
+
+zr :: String -> [a] -> [(String,a)]
+zr = zip . repeat
+
+mru :: String -> [(String,String)] -> String
+mru op p = bitlyApiV3 ++ op ++ "?" ++ (urlEncodeVars p)
 
 addAccessToken :: String -> IO String
 addAccessToken x = do
