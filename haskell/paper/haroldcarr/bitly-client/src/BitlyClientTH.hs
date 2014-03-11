@@ -3,7 +3,7 @@
 
 {-
 Created       : 2014 Mar 06 (Thu) 17:12:50 by Harold Carr.
-Last Modified : 2014 Mar 10 (Mon) 00:10:37 by Harold Carr.
+Last Modified : 2014 Mar 10 (Mon) 18:18:55 by Harold Carr.
 
 data Request = ExpandRequest { shortUrl :: [String]
                              , hash     :: [String]
@@ -20,6 +20,7 @@ mk "Request" [ ("Expand" , ["shortUrl", "hash"], [])
 
 module BitlyClientTH where
 
+import           BitlyClientCommon
 import           Language.Haskell.TH
 
 mk :: String -> [ (String, [ String ], [ String ]) ] -> Q [Dec]
@@ -36,7 +37,13 @@ mk tcName valueConstructors =
     ssf (name:t) = (mkName name, NotStrict,             ConT (mkName "String"))  : ssf t
     ssf [] = []
 
+zr :: String -> [a] -> [(String,a)]
+zr = zip . repeat
 
+mru :: String -> [(String,String)] -> String
+mru op p = bitlyApiV3 ++ op ++ "?" ++ (urlEncodeVars p)
+
+{-
 [FunD mkReqUrl_0 [Clause [ConP BitlyClient.ExpandRequest [VarP s_1,VarP h_2]]
                   (NormalB (AppE (AppE (VarE BitlyClient.mru) (LitE (StringL "expand")))
                             (InfixE
@@ -52,8 +59,7 @@ mk tcName valueConstructors =
                              (VarE GHC.Base.++)
                              (Just (AppE (AppE (VarE BitlyClient.zr) (LitE (StringL "domain"))) (ListE [VarE d_5])))))) []]]
 
-
-
+-}
 
 -- End of file.
 

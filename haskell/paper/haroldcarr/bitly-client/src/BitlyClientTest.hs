@@ -1,11 +1,12 @@
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 06 (Thu) 13:22:06 by Harold Carr.
+Last Modified : 2014 Mar 10 (Mon) 18:23:19 by Harold Carr.
 -}
 
 module BitlyClientTest where
 
 import           BitlyClient
+import           BitlyClientCommon
 import qualified Data.ByteString.Lazy.Char8 as L (pack)
 import           System.IO.Unsafe           (unsafePerformIO)
 import           Test.HUnit
@@ -26,7 +27,7 @@ encodeTestParams  = [ ("hash"        , "api-client")
                     ]
 
 expandRequestTestData :: Request
-expandRequestTestData = ExpandRequest [ "http://bit.ly/LCJq0b"
+expandRequestTestData = RequestExpand [ "http://bit.ly/LCJq0b"
                                       , "http://bit.ly/phphotoCrossroads"
                                       , "http://bit.ly/springFever"
                                       , "http://bit.ly/phphotoBenched"
@@ -56,5 +57,10 @@ runLocalTests = runTestTT localTests
 
 runRemoteTests :: IO Counts
 runRemoteTests = runTestTT requestTests
+
+runTests :: IO Counts
+runTests = do
+    runLocalTests
+    runRemoteTests
 
 -- End of file.
