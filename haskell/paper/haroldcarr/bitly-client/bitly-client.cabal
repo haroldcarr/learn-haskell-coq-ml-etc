@@ -24,6 +24,7 @@ executable BitlyClient
                        , base >=4.6 && <4.7
                        , bytestring
                        , ghc-prim
+                       , haskell-src-exts
                        , HTTP
                        , HUnit
                        , http-conduit
@@ -32,5 +33,6 @@ executable BitlyClient
                        , template-haskell
                        , test-hunit-util
                        , transformers
+                       , uniplate
   hs-source-dirs:      src
   default-language:    Haskell2010

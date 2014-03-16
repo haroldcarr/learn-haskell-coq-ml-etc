@@ -3,7 +3,7 @@
 
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 10 (Mon) 18:21:17 by Harold Carr.
+Last Modified : 2014 Mar 11 (Tue) 20:11:59 by Harold Carr.
 -}
 
 module BitlyClient where
@@ -12,8 +12,6 @@ import           BitlyClientCommon
 import           BitlyClientTH
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.ByteString.Lazy   as L
-import           Data.List              (intercalate)
-import qualified Network.HTTP           as H (urlEncode)
 import qualified Network.HTTP.Conduit   as C
 import           System.IO
 
@@ -34,8 +32,10 @@ doRequest r = do
     url <- liftIO (addAccessToken (mkReqUrl r))
     C.simpleHttp url
 
+{-
 mkReqUrl :: Request -> String
-mkReqUrl (RequestExpand  s h) = mru "expand"  (zr "shortUrl"  s  ++ zr "hash"    h)
 mkReqUrl (RequestShorten l d) = mru "shorten" (zr "longUrl"  [l] ++ zr "domain" [d])
-
+mkReqUrl (RequestShorten l d) = mru "shorten" ((++) (zr "longUrl"  [l]) (zr "domain" [d]))
+mkReqUrl (RequestShorten l d) = mru "shorten" (concatMap id [("longUrl", "foo")])
+-}
 -- End of file.
