@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 06 (Thu) 17:12:50 by Harold Carr.
-Last Modified : 2014 Mar 15 (Sat) 22:25:05 by Harold Carr.
+Last Modified : 2014 Mar 15 (Sat) 22:46:54 by Harold Carr.
 
 http://www.haskell.org/haskellwiki/Template_Haskell#Generating_records_which_are_variations_of_existing_records
 -}

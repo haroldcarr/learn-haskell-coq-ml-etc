@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 06 (Thu) 17:12:50 by Harold Carr.
-Last Modified : 2014 Mar 10 (Mon) 18:30:31 by Harold Carr.
+Last Modified : 2014 Mar 15 (Sat) 23:23:31 by Harold Carr.
 
 http://www.haskell.org/haskellwiki/Template_Haskell#Generating_records_which_are_variations_of_existing_records
 -}
@@ -68,5 +68,25 @@ fooey = do
              , showD
              ]
            ]
+
+------------------------------------------------------------------------------
+
+-- http://www.haskell.org/haskellwiki/Template_Haskell#Why_does_runQ_crash_if_I_try_to_reify_something.3F
+{-
+$(stringE . show =<< reify ''Request)
+
+TyConI (DataD [] TH.Request [] [RecC TH.Expand   [(TH.shortUrl,NotStrict,AppT ListT (ConT GHC.Base.String))
+                                                 ,(TH.hash,NotStrict,AppT ListT (ConT GHC.Base.String))]
+                               ,RecC TH.Shorten  [(TH.longUrl,NotStrict,ConT GHC.Base.String)
+                                                 ,(TH.domain,NotStrict,ConT GHC.Base.String)]
+                               ,RecC TH.LinkEdit [(TH.link,NotStrict,ConT GHC.Base.String)
+                                                 ,(TH.title,NotStrict,AppT (ConT Data.Maybe.Maybe) (ConT GHC.Base.String))
+                                                 ,(TH.note,NotStrict,AppT (ConT Data.Maybe.Maybe) (ConT GHC.Base.String))
+                                                 ,(TH.private,NotStrict,AppT (ConT Data.Maybe.Maybe) (ConT GHC.Types.Bool))
+                                                 ,(TH.user_ts,NotStrict,AppT (ConT Data.Maybe.Maybe) (ConT GHC.Types.Int))
+                                                 ,(TH.archived,NotStrict,AppT (ConT Data.Maybe.Maybe) (ConT GHC.Types.Bool))
+                                                 ,(TH.edit,NotStrict,AppT ListT (ConT GHC.Base.String))]]
+        [])
+-}
 
 -- End of file.
