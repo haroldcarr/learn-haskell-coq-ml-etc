@@ -2,7 +2,7 @@
 
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 15 (Sat) 22:22:40 by Harold Carr.
+Last Modified : 2014 Mar 16 (Sun) 16:33:49 by Harold Carr.
 -}
 
 module BitlyClient where
@@ -14,9 +14,24 @@ import qualified Data.ByteString.Lazy   as L
 import qualified Network.HTTP.Conduit   as C
 import           System.IO
 
-mk "Request" [ ("Expand" , ["shortUrl", "hash"], [])
-             , ("Shorten", []                  , ["longUrl", "domain"])
-             ]
+data Request
+  = Expand { shortUrl :: [String]
+           , hash     :: [String]
+           }
+  | Shorten { longUrl :: String
+            , domain  :: String
+            }
+  | LinkEdit { link     :: String
+             , title    :: Maybe String
+             , note     :: Maybe String
+             , private  :: Maybe Bool
+             , user_ts  :: Maybe Int
+             , archived :: Maybe Bool
+             , edit     :: [String]
+             }
+  deriving (Eq, Show)
+
+mk ''Request
 
 accessTokenFile :: String
 accessTokenFile = ".access_token" -- single line, no newline

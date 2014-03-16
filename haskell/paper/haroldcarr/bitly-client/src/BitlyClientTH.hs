@@ -3,56 +3,44 @@
 
 {-
 Created       : 2014 Mar 06 (Thu) 17:12:50 by Harold Carr.
-Last Modified : 2014 Mar 13 (Thu) 17:23:22 by Harold Carr.
-
-data Request = ExpandRequest { shortUrl :: [String]
-                             , hash     :: [String]
-                             }
-               | ShortenRequest { longUrl :: String
-                                , domain  :: String
-                                }
-
-mk "Request" [ ("Expand" , ["shortUrl", "hash"], [])
-             , ("Shorten", []                  , ["longUrl", "domain"])
-             ]
-
+Last Modified : 2014 Mar 16 (Sun) 16:54:00 by Harold Carr.
 -}
 
 module BitlyClientTH where
 
 import           BitlyClientCommon
+import           Data.Char           (toLower)
 import           Language.Haskell.TH
 
-mk :: String -> [ (String, [ String ], [ String ]) ] -> Q [Dec]
-mk tcName valueConstructors =
-    return [ recs, funs ]
+mk :: Name -> Q [Dec]
+mk name = do
+    decl <- reify name
+    return [ mkFun decl]
   where
-    recs = DataD [] (mkName tcName) [] vcs [ mkName "Eq", mkName "Show" ]
-    vcs = mkVcs valueConstructors
-    mkVcs ((vcName, multiStringFields, singleStringFields):t) =
-        RecC (mkName $ tcName ++ vcName) (mfs multiStringFields singleStringFields) : mkVcs t
-    mkVcs [] = []
-    mfs m s = msf m ++ ssf s
-    msf (name:t) = (mkName name, NotStrict, AppT ListT (ConT (mkName "String"))) : msf t
-    msf [] = []
-    ssf (name:t) = (mkName name, NotStrict,             ConT (mkName "String"))  : ssf t
-    ssf [] = []
-    varS = mkName "s"
-    varH = mkName "h"
-    funs = FunD (mkName "mkReqUrl")
-                [Clause [ConP (mkName "BitlyClient.RequestExpand") [VarP varS,VarP varH]]
-                 (NormalB (AppE (AppE (VarE (mkName "BitlyClientTH.mru")) (LitE (StringL "expand")))
-                           (InfixE
-                            (Just (AppE (AppE (VarE (mkName "BitlyClientTH.zr")) (LitE (StringL "shortUrl"))) (VarE varS)))
-                            (VarE (mkName "++"))
-                            (Just (AppE (AppE (VarE (mkName "BitlyClientTH.zr")) (LitE (StringL "hash"))) (VarE varH))))))
-                 []]
+    mkFun (TyConI (DataD _ _ _ vcs _)) = FunD (mkName "mkReqUrl") (mkRecs vcs)
+    mkFun                            _ = error "unexpected"
+    mkRecs ((RecC name0 fields):xs) =
+        let stripQualifier = tail . dropWhile ('.'/=)
+            vcName  = show name0
+            urlParm = map toLower $ stripQualifier vcName
+            zrName  = mkName "BitlyClientTH.zr"
+            varPs   = map (\(nam,_,_) -> VarP (mkName (stripQualifier (show nam)))) fields
+        in  [Clause [ConP (mkName vcName) varPs]
+             (NormalB (AppE (AppE (VarE (mkName "BitlyClientTH.mru")) (LitE (StringL (map toLower urlParm))))
+                       (AppE (VarE (mkName "concat"))
+                        (ListE
+                         [(AppE (AppE (VarE zrName) (LitE (StringL "shortUrl"))) (VarE $ mkName "shortUrl"))
+                         ,(AppE (AppE (VarE zrName) (LitE (StringL "hash")))     (VarE $ mkName "hash"))
+                         ]))))
+             []]
+    mkRecs _ = error "unexpected"
 
 zr :: String -> [a] -> [(String,a)]
 zr = zip . repeat
 
 mru :: String -> [(String,String)] -> String
 mru op p = bitlyApiV3 ++ op ++ "?" ++ (urlEncodeVars p)
+
 
 {-
 [FunD mkReqUrl_0 [Clause [ConP BitlyClient.RequestExpand [VarP s_1,VarP h_2]]
@@ -62,7 +50,9 @@ mru op p = bitlyApiV3 ++ op ++ "?" ++ (urlEncodeVars p)
                              (Just (AppE (AppE (VarE BitlyClientTH.zr) (LitE (StringL "shortUrl"))) (VarE s_1)))
                              (VarE GHC.Base.++)
                              (Just (AppE (AppE (VarE BitlyClientTH.zr) (LitE (StringL "hash"))) (VarE h_2))))))
-                  []]]
+                  []
+                 ]
+  ]
 
 [FunD mkReqUrl_3 [Clause [ConP BitlyClient.RequestShorten [VarP l_4,VarP d_5]]
                   (NormalB (AppE (AppE (VarE BitlyClientTH.mru)

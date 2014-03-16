@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 06 (Thu) 17:12:50 by Harold Carr.
-Last Modified : 2014 Mar 15 (Sat) 23:23:31 by Harold Carr.
+Last Modified : 2014 Mar 16 (Sun) 16:41:05 by Harold Carr.
 
 http://www.haskell.org/haskellwiki/Template_Haskell#Generating_records_which_are_variations_of_existing_records
 -}
@@ -39,8 +39,20 @@ mkOptional n = do
 {-
 ghci -XTemplateHaskell
 :m + Language.Haskell.TH
+
 runQ [d| data Foo a b = Bar a | Baz b deriving (Eq, Show) |]
 [DataD [] Foo_0 [PlainTV a_3,PlainTV b_4] [NormalC Bar_2 [(NotStrict,VarT a_3)],NormalC Baz_1 [(NotStrict,VarT b_4)]] [GHC.Classes.Eq,GHC.Show.Show]]
+
+runQ [| \x -> concat [[1],[x]] |]
+LamE [VarP x_0] (AppE (VarE GHC.List.concat) (ListE [ListE [LitE (IntegerL 1)],ListE [VarE x_0]]))
+
+runQ [| \(Shorten l d) -> mru "shorten" (concat [(zr "longUrl"  [l]), (zr "domain" [d])]) |]
+LamE [ConP Shorten [VarP l_0,VarP d_1]]
+     (AppE (AppE (VarE BitlyClientTH.mru) (LitE (StringL "shorten")))
+      (AppE (VarE GHC.List.concat)
+       (ListE
+        [AppE (AppE (VarE BitlyClientTH.zr) (LitE (StringL "longUrl"))) (ListE [VarE l_0])
+        ,AppE (AppE (VarE BitlyClientTH.zr) (LitE (StringL "domain"))) (ListE [VarE d_1])])))
 -}
 
 fooey :: Q [Dec]

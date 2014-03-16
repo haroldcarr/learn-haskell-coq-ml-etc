@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 15 (Sat) 17:38:34 by Harold Carr.
-Last Modified : 2014 Mar 15 (Sat) 22:28:21 by Harold Carr.
+Last Modified : 2014 Mar 16 (Sun) 11:17:56 by Harold Carr.
 
 http://neilmitchell.blogspot.com/2013/10/haskell-type-graphs-with-uniplate-and.html
 -}
