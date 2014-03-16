@@ -1,9 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 11 (Tue) 20:11:59 by Harold Carr.
+Last Modified : 2014 Mar 15 (Sat) 22:22:40 by Harold Carr.
 -}
 
 module BitlyClient where
