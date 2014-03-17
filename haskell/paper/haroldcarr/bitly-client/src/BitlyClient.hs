@@ -2,7 +2,7 @@
 
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 16 (Sun) 16:33:49 by Harold Carr.
+Last Modified : 2014 Mar 16 (Sun) 17:42:52 by Harold Carr.
 -}
 
 module BitlyClient where
@@ -48,8 +48,7 @@ doRequest r = do
 
 {-
 mkReqUrl :: Request -> String
-mkReqUrl (RequestShorten l d) = mru "shorten" (zr "longUrl"  [l] ++ zr "domain" [d])
-mkReqUrl (RequestShorten l d) = mru "shorten" ((++) (zr "longUrl"  [l]) (zr "domain" [d]))
-mkReqUrl (RequestShorten l d) = mru "shorten" (concatMap id [("longUrl", "foo")])
+mkReqUrl (Shorten l d) = mru "shorten" (zr "longUrl"  [l] ++ zr "domain" [d])
+mkReqUrl (Shorten l d) = mru "shorten" (concat [(zr "longUrl"  [l]), (zr "domain" [d])])
 -}
 -- End of file.
