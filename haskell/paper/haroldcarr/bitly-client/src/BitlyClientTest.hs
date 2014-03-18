@@ -1,12 +1,13 @@
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 10 (Mon) 22:52:04 by Harold Carr.
+Last Modified : 2014 Mar 17 (Mon) 16:38:59 by Harold Carr.
 -}
 
 module BitlyClientTest where
 
 import           BitlyClient
 import           BitlyClientCommon
+import           BitlyClientRequests
 import qualified Data.ByteString.Lazy.Char8 as L (pack)
 import           System.IO.Unsafe           (unsafePerformIO)
 import           Test.HUnit
@@ -27,24 +28,28 @@ encodeTestParams  = [ ("hash"        , "api-client")
                     ]
 
 expandRequestTestData :: Request
-expandRequestTestData = RequestExpand [ "http://bit.ly/LCJq0b"
-                                      , "http://bit.ly/phphotoCrossroads"
-                                      , "http://bit.ly/springFever"
-                                      , "http://bit.ly/phphotoBenched"
-                                      , "http://bit.ly/Lt5SJo"
-                                      ]
-                                      [ "api-client"
-                                      , "phphotoWinterSunII"
-                                      , "phphotoQuoVadis"
-                                      , "phphotoDock3"
-                                      , "phphotoZueriWest"
-                                      ]
+expandRequestTestData =  mkExpandRequest [ "http://bit.ly/LCJq0b"
+                                         , "http://bit.ly/phphotoCrossroads"
+                                         , "http://bit.ly/springFever"
+                                         , "http://bit.ly/phphotoBenched"
+                                         , "http://bit.ly/Lt5SJo"
+                                         ]
+                                         [ "api-client"
+                                         , "phphotoWinterSunII"
+                                         , "phphotoQuoVadis"
+                                         , "phphotoDock3"
+                                         , "phphotoZueriWest"
+                                         ]
 
 localTests :: Test
 localTests = TestList
     [teq "urlEncodeVars"   (urlEncodeVars encodeTestParams) "hash=api-client&hash=phphotoWinterSunII&hash=phphotoQuoVadis&hash=phphotoDock3&hash=phphotoZueriWest&shortUrl=http%3A%2F%2Fbit.ly%2FLCJq0b&shortUrl=http%3A%2F%2Fbit.ly%2FphphotoCrossroads&shortUrl=http%3A%2F%2Fbit.ly%2FspringFever&shortUrl=http%3A%2F%2Fbit.ly%2FphphotoBenched&shortUrl=http%3A%2F%2Fbit.ly%2FLt5SJo&access_token=FOOBAR"
 
-    ,teq "mkReqUrl expand" (mkReqUrl expandRequestTestData) "https://api-ssl.bitly.com/v3/expand?shortUrl=http%3A%2F%2Fbit.ly%2FLCJq0b&shortUrl=http%3A%2F%2Fbit.ly%2FphphotoCrossroads&shortUrl=http%3A%2F%2Fbit.ly%2FspringFever&shortUrl=http%3A%2F%2Fbit.ly%2FphphotoBenched&shortUrl=http%3A%2F%2Fbit.ly%2FLt5SJo&hash=api-client&hash=phphotoWinterSunII&hash=phphotoQuoVadis&hash=phphotoDock3&hash=phphotoZueriWest"
+    ,teq "makeRequestUrl expand" (makeRequestUrl expandRequestTestData) "https://api-ssl.bitly.com/v3/expand?shortUrl=http%3A%2F%2Fbit.ly%2FLCJq0b&shortUrl=http%3A%2F%2Fbit.ly%2FphphotoCrossroads&shortUrl=http%3A%2F%2Fbit.ly%2FspringFever&shortUrl=http%3A%2F%2Fbit.ly%2FphphotoBenched&shortUrl=http%3A%2F%2Fbit.ly%2FLt5SJo&hash=api-client&hash=phphotoWinterSunII&hash=phphotoQuoVadis&hash=phphotoDock3&hash=phphotoZueriWest"
+
+    ,teq "makeRequestUrl shorten" (makeRequestUrl (mkShortenRequest "u" "d")) "https://api-ssl.bitly.com/v3/shorten?longUrl=u&domain=d"
+    ,teq "makeRequestUrl expand"  (makeRequestUrl (mkExpandRequest ["u1","u2"] ["h1"])) "https://api-ssl.bitly.com/v3/expand?shortUrl=u1&shortUrl=u2&hash=h1"
+    ,teq "makeRequestUrl linkedit" (makeRequestUrl (mkLinkEditRequest "linkValue" (Just "maybeTitleValue") Nothing (Just True) (Just 3) Nothing ["edit1","edit2"])) "https://api-ssl.bitly.com/v3/linkedit?link=linkValue&title=maybeTitleValue&private=True&user_ts=3&edit=edit1&edit=edit2"
     ]
 
 remoteTests :: Test
