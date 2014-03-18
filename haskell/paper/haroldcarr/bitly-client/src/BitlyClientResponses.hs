@@ -3,7 +3,7 @@
 
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 18 (Tue) 15:33:08 by Harold Carr.
+Last Modified : 2014 Mar 18 (Tue) 16:03:10 by Harold Carr.
 -}
 
 module BitlyClientResponses where
@@ -48,28 +48,13 @@ instance FromJSON DataStatusCodeStatusTxt where
         return $ DSCST dat sc st
     parseJSON _ = mzero
 
-toResponseData :: Value -> Parser ResponseData
-toResponseData (Object o) = do
-  return $
-    case M.lookup "expand" o of
-        Just e  -> parseExpand e -- ExpandResponseData [J "J"]
-        Nothing -> ExpandResponseData [N "N"]
-toResponseData _ = Control.Applicative.empty
-
 instance FromJSON ResponseData where
-    parseJSON = toResponseData
-
-parseExpand :: Value -> ResponseData
-parseExpand v = ExpandResponseData [J (show v)]
-
-{-
-toResponse     :: Value -> Parser Response
-toResponse (Object o) = ExpandResponse <$> o .: ([]::String) <*> o .: ([]::String) "" "" "" ([]::String)
-toResponse _ = Control.Applicative.empty
-
-instance FromJSON Response where
-    parseJSON = toResponse
--}
+    parseJSON (Object o) =
+      return $
+        case M.lookup "expand" o of
+            Just e  -> ExpandResponseData [J (show e)]
+            Nothing -> ExpandResponseData [N "N"]
+    parseJSON _ = mzero
 
 parseResponse :: String -> Maybe DataStatusCodeStatusTxt
 parseResponse x = decode $ L.pack x
