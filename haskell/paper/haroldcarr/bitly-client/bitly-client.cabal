@@ -21,6 +21,7 @@ executable BitlyClient
   -- other-modules:       
   -- other-extensions:    
   build-depends:       aeson
+                       , attoparsec
                        , base >=4.6 && <4.7
                        , bytestring
                        , ghc-prim
@@ -32,7 +33,9 @@ executable BitlyClient
                        , syb
                        , template-haskell
                        , test-hunit-util
+                       , text
                        , transformers
                        , uniplate
+                       , unordered-containers
   hs-source-dirs:      src
   default-language:    Haskell2010
