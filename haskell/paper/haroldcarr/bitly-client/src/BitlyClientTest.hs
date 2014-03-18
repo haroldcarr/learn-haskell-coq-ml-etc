@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 18 (Tue) 14:48:09 by Harold Carr.
+Last Modified : 2014 Mar 18 (Tue) 15:04:46 by Harold Carr.
 -}
 
 module BitlyClientTest where
@@ -53,7 +53,7 @@ localTests = TestList
     ,teq "makeRequestUrl shorten" (makeRequestUrl (mkShortenRequest "u" "d")) "https://api-ssl.bitly.com/v3/shorten?longUrl=u&domain=d"
     ,teq "makeRequestUrl expand"  (makeRequestUrl (mkExpandRequest ["u1","u2"] ["h1"])) "https://api-ssl.bitly.com/v3/expand?shortUrl=u1&shortUrl=u2&hash=h1"
     ,teq "makeRequestUrl linkedit" (makeRequestUrl (mkLinkEditRequest "linkValue" (Just "maybeTitleValue") Nothing (Just True) (Just 3) Nothing ["edit1","edit2"])) "https://api-ssl.bitly.com/v3/linkedit?link=linkValue&title=maybeTitleValue&private=True&user_ts=3&edit=edit1&edit=edit2"
-    ,teq "parseResponse" (parseResponse expandResponseTestData) (Just (DSCST [] {- (ExpandResponseData []) -} 200 "OK"))
+    ,teq "parseResponse" (parseResponse expandResponseTestData) (Just (DSCST (ExpandResponseData []) 200 "OK"))
     ]
 
 remoteTests :: Test
