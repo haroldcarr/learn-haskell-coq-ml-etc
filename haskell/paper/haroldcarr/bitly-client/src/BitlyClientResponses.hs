@@ -3,7 +3,7 @@
 
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 18 (Tue) 16:03:10 by Harold Carr.
+Last Modified : 2014 Mar 19 (Wed) 09:53:22 by Harold Carr.
 -}
 
 module BitlyClientResponses where
@@ -29,34 +29,49 @@ data ResponseData
                        }
     deriving (Eq, Show)
 
-data Response = ExpandResponse { short_url   :: [String] -- [URI]
-                               , hash        :: [String]
-                               , user_hash   :: String
+data Response = ExpandResponse { long_url    :: [String] -- [URI]
                                , global_hash :: String
-                               , error       :: String
-                               , long_url    :: [String] -- [URI]
+                               , short_url   :: [String] -- [URI]
+                               , user_hash   :: String
+                               -- , hash        :: [String]
+                               -- , error       :: String
                                }
               | J String
               | N String
     deriving (Eq, Show)
 
 instance FromJSON DataStatusCodeStatusTxt where
-    parseJSON (Object o) = do
-        dat <- parseJSON =<< (o .: "data")
-        sc  <- (o .: "status_code")
-        st  <- (o .: "status_txt")
-        return $ DSCST dat sc st
-    parseJSON _ = mzero
+    parseJSON (Object o) = DSCST <$>
+                               o .: "data" <*>
+                               o .: "status_code" <*>
+                               o .: "status_txt"
+    parseJSON x = fail $ "FAIL: DataStatusCodeStatusTxt: " ++ (show x)
 
 instance FromJSON ResponseData where
     parseJSON (Object o) =
-      return $
         case M.lookup "expand" o of
-            Just e  -> ExpandResponseData [J (show e)]
-            Nothing -> ExpandResponseData [N "N"]
-    parseJSON _ = mzero
+            -- Just v  -> return $ ExpandResponseData [J ((show o) ++ " $$$ " ++ (show v))] -- parseJSON v -- ((o .: "data") >>= (.: "expand"))
+            -- BEST YET - but doesn't parse arrays
+            Just v  -> do { d <- (parseJSON v) :: Parser Response; return $ ExpandResponseData [d] }
 
-parseResponse :: String -> Maybe DataStatusCodeStatusTxt
-parseResponse x = decode $ L.pack x
+            -- Right (Left "when expecting a [a], encountered String instead")
+            -- Just _  -> do { d <- parseJSON =<< (o .: "expand"); return $ ExpandResponseData d}
+            -- Just _  -> do { d <- parseJSON o; return $ ExpandResponseData d}
+
+            Nothing -> return $ ExpandResponseData [N "N"]
+    parseJSON x =  fail $ "FAIL: ResponseData: " ++ (show x)
+
+instance FromJSON Response where
+    parseJSON (Object o) = ExpandResponse         <$>
+                               o .: "long_url"    <*>
+                               o .: "global_hash" <*>
+                               o .: "short_url"   <*>
+                               o .: "user_hash"
+                               -- o .: "hash"        <*>
+                               -- o .: "error"       <*>
+    parseJSON x =  fail $ "FAIL: Response: " ++ (show x)
+
+parseResponse :: String -> Either String DataStatusCodeStatusTxt
+parseResponse x = eitherDecode $ L.pack x
 
 -- End of file.
