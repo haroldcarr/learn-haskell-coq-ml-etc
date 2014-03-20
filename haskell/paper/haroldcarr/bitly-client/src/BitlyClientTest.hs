@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 20 (Thu) 09:36:30 by Harold Carr.
+Last Modified : 2014 Mar 20 (Thu) 09:39:01 by Harold Carr.
 -}
 
 module BitlyClientTest where
@@ -94,7 +94,7 @@ remoteTests :: Test
 remoteTests = TestList
     [teq "doRequest expand"  (unsafePerformIO (doRequest  expandRequestTestData)) (L.pack expandResponseTestData)
     ,teq "doRequest info"    (unsafePerformIO (doRequest    infoRequestTestData)) (L.pack   infoResponseTestData)
---    ,teq "doRequest shorten" (unsafePerformIO (doRequest shortenRequestTestData)) (L.pack "shortenResponseTestData")
+    ,teq "doRequest shorten" (unsafePerformIO (doRequest shortenRequestTestData)) (L.pack "shortenResponseTestData")
     ]
 
 ------------------------------------------------------------------------------

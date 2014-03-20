@@ -1,9 +1,9 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 20 (Thu) 09:03:55 by Harold Carr.
+Last Modified : 2014 Mar 20 (Thu) 09:42:16 by Harold Carr.
 -}
+
+{-# LANGUAGE TemplateHaskell #-}
 
 module BitlyClientRequests
        ( Request

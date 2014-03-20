@@ -1,9 +1,9 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 10 (Mon) 18:17:21 by Harold Carr.
+Last Modified : 2014 Mar 20 (Thu) 09:42:04 by Harold Carr.
 -}
+
+{-# LANGUAGE OverloadedStrings #-}
 
 module BitlyClientCommon where
 

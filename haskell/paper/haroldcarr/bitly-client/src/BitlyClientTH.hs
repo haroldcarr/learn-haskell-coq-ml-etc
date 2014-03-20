@@ -1,9 +1,9 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 {-
 Created       : 2014 Mar 06 (Thu) 17:12:50 by Harold Carr.
-Last Modified : 2014 Mar 17 (Mon) 14:31:22 by Harold Carr.
+Last Modified : 2014 Mar 20 (Thu) 09:42:27 by Harold Carr.
 -}
+
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module BitlyClientTH where
 
