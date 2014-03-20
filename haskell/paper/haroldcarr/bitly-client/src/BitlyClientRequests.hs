@@ -2,7 +2,7 @@
 
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 19 (Wed) 20:57:46 by Harold Carr.
+Last Modified : 2014 Mar 20 (Thu) 09:03:55 by Harold Carr.
 -}
 
 module BitlyClientRequests
@@ -26,7 +26,7 @@ data Request
                 , expand_user :: Maybe Bool
                 }
   | ShortenRequest { longUrl :: String
-                   , domain  :: String
+                   , domain  :: Maybe String
                    }
   | LinkEditRequest { link     :: String
                     , title    :: Maybe String
@@ -46,7 +46,7 @@ mkExpandRequest shortUrl hash = ExpandRequest shortUrl hash
 mkInfoRequest :: [String] -> [String] -> Maybe Bool -> Request
 mkInfoRequest hash shortUrl expand_user = InfoRequest hash shortUrl expand_user
 
-mkShortenRequest :: String -> String -> Request
+mkShortenRequest :: String -> Maybe String -> Request
 mkShortenRequest longUrl  domain = ShortenRequest longUrl domain
 
 mkLinkEditRequest :: String -> Maybe String -> Maybe String -> Maybe Bool -> Maybe Int -> Maybe Bool -> [String] -> Request

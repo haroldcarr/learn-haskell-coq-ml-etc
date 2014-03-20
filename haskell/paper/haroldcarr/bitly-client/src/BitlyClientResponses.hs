@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 19 (Wed) 23:26:20 by Harold Carr.
+Last Modified : 2014 Mar 20 (Thu) 09:17:38 by Harold Carr.
 -}
 
 {-# LANGUAGE FlexibleInstances #-}
@@ -30,13 +30,13 @@ data Response = ExpandResponse { short_url   :: Maybe String -- [URI]
                                , user_hash   :: Maybe String
                                , global_hash :: Maybe String
                                , hash        :: Maybe String
-                               , error       :: Maybe String
+                               , eerror      :: Maybe String
                                }
               | InfoResponse { short_url   :: Maybe String
                              , hash        :: Maybe String
                              , user_hash   :: Maybe String
                              , global_hash :: Maybe String
-                             , error       :: Maybe String
+                             , eerror      :: Maybe String
                              , title       :: Maybe String
                              , created_by  :: Maybe String
                              , created_at  :: Maybe String
