@@ -2,13 +2,14 @@
 
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 17 (Mon) 16:38:30 by Harold Carr.
+Last Modified : 2014 Mar 19 (Wed) 20:57:46 by Harold Carr.
 -}
 
 module BitlyClientRequests
        ( Request
        , makeRequestUrl
        , mkExpandRequest
+       , mkInfoRequest
        , mkShortenRequest
        , mkLinkEditRequest
        )
@@ -20,6 +21,10 @@ data Request
   = ExpandRequest { shortUrl :: [String] -- [URI]
                   , hash     :: [String]
                   }
+  | InfoRequest { hash        :: [String]
+                , shortUrl    :: [String] -- URI
+                , expand_user :: Maybe Bool
+                }
   | ShortenRequest { longUrl :: String
                    , domain  :: String
                    }
@@ -37,6 +42,9 @@ BCTH.mk ''Request
 
 mkExpandRequest :: [String] -> [String] -> Request
 mkExpandRequest shortUrl hash = ExpandRequest shortUrl hash
+
+mkInfoRequest :: [String] -> [String] -> Maybe Bool -> Request
+mkInfoRequest hash shortUrl expand_user = InfoRequest hash shortUrl expand_user
 
 mkShortenRequest :: String -> String -> Request
 mkShortenRequest longUrl  domain = ShortenRequest longUrl domain
