@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Mar 03 (Mon) 20:39:50 by Harold Carr.
-Last Modified : 2014 Mar 20 (Thu) 10:23:21 by Harold Carr.
+Last Modified : 2014 Mar 21 (Fri) 16:33:51 by Harold Carr.
 -}
 
 {-# LANGUAGE FlexibleInstances #-}
@@ -21,20 +21,21 @@ data DataStatusCodeStatusTxt =
     deriving (Eq, Show)
 
 data ResponseData
-    = ExpandResponseData  { expand :: [Response] }
-    | InfoResponseData    { info :: [Response] }
-    | ShortenResponseData { shorten :: Response }
+    = ExpandResponseData     { expand :: [Response] }
+    | InfoResponseData       { info :: [Response] }
+    | LinkLookupResponseData { link_lookup :: [Response] }
+    | ShortenResponseData    { shorten :: Response }
     deriving (Eq, Show)
 
-data Response = ExpandResponse { er_short_url   :: Maybe String -- [URI]
-                               , er_long_url    :: Maybe String -- [URI]
-                               , er_user_hash   :: Maybe String
-                               , er_global_hash :: Maybe String
+data Response = ExpandResponse { er_short_url   :: Maybe String -- URI
+                               , er_long_url    :: String -- URI
+                               , er_user_hash   :: String
+                               , er_global_hash :: String
                                , er_hash        :: Maybe String
                                , er_error       :: Maybe String
                                }
               | InfoResponse { ir_created_by  :: String
-                             , ir_created_at  :: String
+                             , ir_created_at  :: Integer
                              , ir_short_url   :: Maybe String
                              , ir_hash        :: Maybe String
                              , ir_user_hash   :: Maybe String
@@ -42,6 +43,9 @@ data Response = ExpandResponse { er_short_url   :: Maybe String -- [URI]
                              , ir_error       :: Maybe String
                              , ir_title       :: Maybe String
                              }
+              | LinkLookupResponse { llr_aggregate_link :: String
+                                   , llr_url            :: String
+                                     }
               | ShortenResponse { sr_new_hash    :: Integer
                                 , sr_url         :: String
                                 , sr_hash        :: String
@@ -60,38 +64,45 @@ instance FromJSON DataStatusCodeStatusTxt where
 
 instance FromJSON ResponseData where
     parseJSON = withObject "ResponseData" $ \o ->
-            ExpandResponseData <$> o .: "expand"
-        <|> InfoResponseData   <$> o .: "info"
+            ExpandResponseData     <$> o .: "expand"
+        <|> InfoResponseData       <$> o .: "info"
+        <|> LinkLookupResponseData <$> o .: "link_lookup"
+--        <|> ShortenResponseData
 
 instance FromJSON Response where
-    parseJSON v =     infoParse    v
-                  <|> expandParse  v
-                  <|> shortenParse v
+    parseJSON v =     expandParse     v
+                  <|> infoParse       v
+                  <|> linkLookupParse v
+                  <|> shortenParse    v
 
 expandParse :: Value -> Parser Response
-expandParse = withObject "expand" (\o -> ExpandResponse <$> o .:? "short_url"
-                                                        <*> o .:? "long_url"
-                                                        <*> o .:? "user_hash"
-                                                        <*> o .:? "global_hash"
-                                                        <*> o .:? "hash"
-                                                        <*> o .:? "error")
+expandParse = withObject "expandParse" (\o -> ExpandResponse <$> o .:? "short_url"
+                                                             <*> o .:  "long_url"
+                                                             <*> o .:  "user_hash"
+                                                             <*> o .:  "global_hash"
+                                                             <*> o .:? "hash"
+                                                             <*> o .:? "error")
 
 infoParse :: Value -> Parser Response
-infoParse = withObject "info" (\o ->  InfoResponse <$> o .:  "created_by"
-                                                   <*> o .:  "created_at"
-                                                   <*> o .:? "short_url"
-                                                   <*> o .:? "hash"
-                                                   <*> o .:? "user_hash"
-                                                   <*> o .:? "global_hash"
-                                                   <*> o .:? "error"
-                                                   <*> o .:? "title")
+infoParse = withObject "infoParse" (\o ->  InfoResponse <$> o .:  "created_by"
+                                                        <*> o .:  "created_at"
+                                                        <*> o .:? "short_url"
+                                                        <*> o .:? "hash"
+                                                        <*> o .:? "user_hash"
+                                                        <*> o .:? "global_hash"
+                                                        <*> o .:? "error"
+                                                        <*> o .:? "title")
+
+linkLookupParse :: Value -> Parser Response
+linkLookupParse = withObject "infoParse" (\o ->  LinkLookupResponse <$> o .: "aggregate_link"
+                                                                    <*> o .: "url")
 
 shortenParse :: Value -> Parser Response
-shortenParse = withObject "shorten" (\o -> ShortenResponse <$> o .: "new_hash"
-                                                           <*> o .: "url"
-                                                           <*> o .: "hash"
-                                                           <*> o .: "global_hash"
-                                                           <*> o .: "long_url")
+shortenParse = withObject "shortenParse" (\o -> ShortenResponse <$> o .: "new_hash"
+                                                                <*> o .: "url"
+                                                                <*> o .: "hash"
+                                                                <*> o .: "global_hash"
+                                                                <*> o .: "long_url")
 
 parseResponse :: String -> Either String DataStatusCodeStatusTxt
 parseResponse x = eitherDecode $ L.pack x

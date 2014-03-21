@@ -29,6 +29,7 @@ executable BitlyClient
                        , HTTP
                        , HUnit
                        , http-conduit
+                       , MissingH
                        , network
                        , syb
                        , template-haskell
