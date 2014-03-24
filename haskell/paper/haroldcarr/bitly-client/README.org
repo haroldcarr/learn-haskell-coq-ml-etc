@@ -1,0 +1,6 @@
+bitly-client
+
+A project to learn Template Haskell and JSON parsing via AESON.
+
+This is slowly turning into a "real" client.
+
