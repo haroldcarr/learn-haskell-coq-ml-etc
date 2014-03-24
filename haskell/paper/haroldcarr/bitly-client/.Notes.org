@@ -1,6 +1,0 @@
-Created       : 2014 Mar 04 (Tue) 17:50:00 by Harold Carr.
-Last Modified : 2014 Mar 19 (Wed) 10:48:21 by Harold Carr.
-
-file:/Users/carr/NOSYNC/bitly-api-client
-
-https://www.fpcomplete.com/user/adinapoli/the-pragmatic-haskeller/episode-1-json
