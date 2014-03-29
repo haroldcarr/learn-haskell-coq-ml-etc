@@ -4,8 +4,8 @@ selected contents:
 
 Haskell
 - [[./haskell/course/coursera-fp-odersky-but-in-haskell][Solutions in Haskell to Martin Odersky's Functional Programming Principles in Scala coursera course]]
+- [[https://github.com/haroldcarr/learn-haskell-coq-ml-etc/tree/master/haskell/course/nicta/src/Course][Solutions and Equational Reasoning to NICTA Haskell course]]
 - [[./haskell/paper/monad-reader/issue22/gadt.org][Type Level Computation in Haskell via GADTs]]
-- [[./haskell/book/Real_World_Haskell/Real_World_Haskell.org][Real World Haskell]]
 
 Coq
 - [[./coq/book/SF-2013-07-18-worked][Software Foundations]]
