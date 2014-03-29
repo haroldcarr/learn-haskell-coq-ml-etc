@@ -1,0 +1,268 @@
+#+TITLE:       HC
+#+AUTHOR:      Harold Carr
+#+DESCRIPTION: HC
+#+PROPERTY:    tangle HC.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+#+BEGIN_HTML
+---
+title: monads : from concrete to abstract
+tags: haskell, monads
+---
+#+END_HTML
+
+# Created       : 2013 Nov 26 (Tue) 15:29:38 by carr.
+Last Modified : 2013 Dec 04 (Wed) 21:38:43 by carr.
+
+- SEE: http://stackoverflow.com/questions/20203056/is-there-a-standard-haskell-function-for-return-a-b
+
+------------------------------------------------------------------------------
+* setup
+
+#+BEGIN_SRC haskell
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
+module Course.HC  where
+
+import Course.Core
+import Course.Applicative
+import Course.Apply
+import Course.Bind
+import Course.Functor
+import Course.Monad
+import Course.Optional(Optional(Full, Empty))
+import Course.State
+import qualified Prelude as P
+#+END_SRC
+
+------------------------------------------------------------------------------
+* a "container"
+
+#+BEGIN_SRC haskell
+data HC a = HC a deriving (Eq, Show)
+#+END_SRC
+
+------------------------------------------------------------------------------
+* =Functor=
+
+To apply a function to the value inside need to do one of:
+
+#+BEGIN_SRC haskell
+-- |
+-- >>> HC $ (+1) (runHC (HC 3))
+-- HC 4
+--
+-- >>> applyFHC (+1) (HC 3)
+-- HC 4
+--
+runHC :: HC a -> a
+runHC (HC a) = a
+
+applyFHC :: (a -> b) -> HC a -> HC b
+applyFHC f (HC a) = HC (f a)
+#+END_SRC
+
+This pattern is abstracted into the Functor typeclass:
+
+#+BEGIN_SRC haskell
+instance Functor HC where
+    f <$> (HC x) = HC (f x)
+#+END_SRC
+
+Now, instead of special purpose "HC" functions, use "standard" (=fmap=) notation to do the same:
+
+#+BEGIN_SRC haskell
+-- |
+-- >>> (+1) <$> (HC 3)
+-- HC 4
+#+END_SRC
+
+------------------------------------------------------------------------------
+* =Applicative=
+
+- http://www.haskell.org/haskellwiki/Applicative_functor
+- http://en.wikibooks.org/wiki/Haskell/Applicative_Functors
+
+-- But if function to be applied is also embedded in same type of container need to extract first:
+
+#+BEGIN_SRC haskell
+-- |
+-- >>> runHC (HC (+1)) <$> (HC 3)
+-- HC 4
+#+END_SRC
+
+This pattern is abstracted into the =Apply= part of the =Applicative= typeclass:
+
+#+BEGIN_SRC haskell
+instance Apply HC where
+    HC f <*> HC x = HC (f x)
+#+END_SRC
+
+Now use "standard" applicative notation:
+
+#+BEGIN_SRC haskell
+-- |
+-- >>> HC (+1) <*> (HC 3)
+-- HC 4
+#+END_SRC
+
+Likewise, rather than returning specific types:
+
+#+BEGIN_SRC haskell
+-- |
+-- >>> exampleHCSpecific (HC 'a') 3
+-- (HC 'a',HC 3)
+--
+-- exampleHCSpecific (Full 'a') 3 -- gets type error
+--
+exampleHCSpecific :: HC t -> a -> (HC t, HC a)
+exampleHCSpecific x y = (x, HC y)
+#+END_SRC
+
+leverage the type system to make code more generic:
+
+#+BEGIN_SRC haskell
+instance Applicative HC where
+    pure = HC
+
+-- |
+-- >>> examplePure (HC 'a') 3
+-- (HC 'a',HC 3)
+--
+-- >>> examplePure (Full 'a') 3
+-- (Full 'a',Full 3)
+--
+examplePure :: Applicative f => (f a) -> b -> (f a, f b)
+examplePure x y = (x, pure y)
+#+END_SRC
+
+The type system figures out which =pure= is needed above.
+
+------------------------------------------------------------------------------
+* =Monad=
+
+# --------------------------------------------------
+** a "context"
+
+#+BEGIN_SRC haskell
+data HCM a = HCN | HCJ a deriving (Eq, Show)
+#+END_SRC
+
+# --------------------------------------------------
+** context usage
+
+#+BEGIN_SRC haskell
+-- |
+-- >>> exampleContextUsage HCN      (\a -> HCJ a)  (\b -> b)
+-- HCN
+--
+-- >>> exampleContextUsage (HCJ 1)  (\_ -> HCN  )  (\b -> b)
+-- HCN
+--
+-- >>> exampleContextUsage (HCJ 1)  (\a -> HCJ a)  (\b -> b)
+-- HCJ 1
+--
+exampleContextUsage :: HCM a -> (a -> HCM b) -> (b -> c) -> HCM c
+exampleContextUsage f1 f2 f3 =
+    case f1 of
+        HCN    -> HCN
+        HCJ a1 -> case f2 a1 of
+                     HCN    -> HCN
+                     HCJ a2 -> HCJ (f3 a2)
+#+END_SRC
+
+To eliminate the repeated type-specific checking this pattern is abstracted into the =Monad= typeclass:
+
+#+BEGIN_SRC haskell
+instance Functor HCM where
+    (<$>) _  HCN    = HCN
+    (<$>) f (HCJ x) = HCJ (f x)
+
+instance Apply HCM where
+    (<*>)  HCN    _       = HCN
+    (<*>)  _        HCN   = HCN
+    (<*>) (HCJ f) (HCJ x) = HCJ (f x)
+
+instance Applicative HCM where
+    pure = HCJ
+
+instance Bind HCM where
+    (=<<) _  HCN    = HCN
+    (=<<) f (HCJ x) = (f x)
+
+instance Monad HCM where
+#+END_SRC
+
+So the mainline code only contains "computations" that can make
+progress.  The rest is hidden inside the =HCM= =Monad= =instance=.
+Plus, the code is generic so can be used with other =Monad= instaces:
+
+#+BEGIN_SRC haskell
+-- |
+-- >>> exampleContextUsageMonadic HCN       (\a -> HCJ a)   (\b -> b)
+-- HCN
+--
+-- >>> exampleContextUsageMonadic Empty     (\a -> pure a)  (\b -> b)
+-- Empty
+--
+--
+-- >>> exampleContextUsageMonadic (HCJ 1)   (\_ -> HCN)     (\b -> b)
+-- HCN
+--
+-- >>> exampleContextUsageMonadic (Full 1)  (\_ -> Empty)   (\b -> b)
+-- Empty
+--
+--
+-- >>> exampleContextUsageMonadic (HCJ 1)   (\a -> HCJ a)   (\b -> b)
+-- HCJ 1
+--
+-- >>> exampleContextUsageMonadic (Full 1)  (\a -> pure a)  (\b -> b)
+-- Full 1
+--
+exampleContextUsageMonadic :: Monad m => m a -> (a -> m b) -> (b -> c) -> m c
+exampleContextUsageMonadic f1 f2 f3 =
+    pure . f3 =<< f2 =<< f1
+#+END_SRC
+
+------------------------------------------------------------------------------
+* "effectful" programming via monads
+
+"Effectful" means to get the benefits of side-effects by simulating
+them with pure functions.
+
+One example is the =State= monad.
+
+#+BEGIN_SRC haskell
+-- |
+-- >>> stateExampleMonadic "hello world" shiftM upperM
+-- ("!E","llo world")
+--
+stateExampleMonadic   :: [Char] -> ([Char] -> State [Char] Char) -> ([Char] -> State [Char] Char) -> ([Char], [Char])
+stateExampleMonadic i f1 f2 =
+  runState
+   (get          >>=
+    \s0 -> f1 s0 >>=
+    \r1 -> get   >>=
+    \s1 -> f2 s1 >>=
+    \r2 -> pure (r1:r2:[]) ) i
+
+shiftM :: [Char] -> State [Char] Char
+shiftM (s:ss) = put ss >>= \_ -> pure $ chr (ord s - 71)
+
+upperM :: [Char] -> State [Char] Char
+upperM (s:ss) = put ss >>= \_ -> pure $ toUpper s
+#+END_SRC
+
+------------------------------------------------------------------------------
+* combining monads via monad transformers
+
+** TODO
+
+------------------------------------------------------------------------------
+#+BEGIN_SRC haskell
+-- End of file.
+#+END_SRC
+# End of file.

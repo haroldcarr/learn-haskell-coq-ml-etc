@@ -1,0 +1,68 @@
+Created       : 2013 Nov 23 (Sat) 09:55:30 by carr.
+Last Modified : 2014 Mar 28 (Fri) 18:38:27 by Harold Carr.
+
+diff -rbwB ~/ftptmp/ebooks-music-pics/tech/haskell-nicta-course/ ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/course/nicta/
+
+- file:~/ftptmp/ebooks-music-pics/tech/haskell-nicta-course/
+
+- [[https://github.com/tonymorris/course]] -- answers
+- [[https://github.com/NICTA/course]]      -- course
+- [[https://github.com/NICTA/course/issues?state=closed]] -- issues
+- [[https://groups.google.com/forum/#!forum/haskell-exercises]]
+
+HC specific files
+
+- .Notes.org
+- Makefile
+- class-hierarchy.org
+- class-hierarchy.png
+- src/Course/HC.org
+- src/Course/HCTestAll.hs
+- test.sh
+
+------------------------------------------------------------------------------
+My unit tests
+
+:l src/Course/HCTestAll
+runTests
+
+------------------------------------------------------------------------------
+doctests
+
+for f in Applicative Apply Bind Comonad Extend Functor HC List Optional State StateT Validation
+do
+./test.sh $f
+done
+
+------------------------------------------------------------------------------
+doctests (but using nicta framework, but getting weird `mkName` errors)
+
+excerpt:
+
+517 hcmb nicta> cabal test
+Building course-0.1.1...
+Preprocessing library course-0.1.1...
+In-place registering course-0.1.1...
+Preprocessing test suite 'doctests' for course-0.1.1...
+Running 1 test suites...
+Test suite doctests: RUNNING...
+
+### Failure in src/Course/StateT.hs:84: expression `runStateT ((const $ putT 2) =<< putT 1) 0'
+expected: ((),2)
+ but got: ((),0)
+### Failure in src/Course/StateT.hs:156: expression `runStateT (putT 2) 0'
+expected: ((),2)
+ but got: ((),0)
+
+### Failure in src/Course/State.hs:162: expression `\(Fun _ f) -> exec (State f) s == snd (runState (State f) s)'
+
+<interactive>:2103:19: Not in scope: `mkName'
+
+
+### Failure in src/Course/Functor.hs:125: expression `void [1,2,3]'
+expected: [(),(),()]
+ but got: *** Exception: todo
+
+
+
+# End of file.
