@@ -1,3 +1,7 @@
+-- for instance Functor Id => Applicative Id where
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 import           Control.Applicative
 import           Control.Monad
 import qualified Data.Map            as Map
@@ -7,11 +11,11 @@ import           Test.HUnit.Util
 -- http://www.soi.city.ac.uk/~ross/papers/Applicative.pdf
 
 ------------------------------------------------------------------------------
--- p. 2
+-- p. 2  Example: sequencing commands
+
+-- sequencing commands via Monad ap and return
 
 -- return :: Monad       m => a -> m a
---     ap :: Monad       m => m (a -> b) -> m a -> m b
-
 
 -- http://hackage.haskell.org/package/base-4.6.0.0/docs/src/Control-Monad.html#ap
 liftM2'  :: (Monad m) => (a1 -> a2 -> r) -> m a1 -> m a2 -> m r
@@ -24,21 +28,30 @@ liftM2' f m1 m2 = m1 >>= \x1 -> m2 >>= \x2 -> return (f x1 x2)
 ap' :: (Monad m) => m (a -> b) -> m a -> m b
 ap' =  liftM2' id
 
+seq'  :: Monad m => [m a] -> m [a]
+seq'  []       = return []
+seq'  (c : cs) = return (:) `ap'` c `ap'` seq'  cs
+
+-- p. 4
+
+-- sequencing commands via Applicative <*> and pure
+
+--  class Applicative f where
+--    (<*>) :: Applicative f => f (a -> b) -> f a -> f b
+--    pure  :: Applicative f => a -> f a
+
+-- Note: Applicative generalizes S and K combinators (see eval below)
+-- from threading an environment to threading an effect in general.
+
+-- Can be defined using Monad operations (but the power of those operations not strictly needed).
 -- http://hackage.haskell.org/package/base-4.4.1.0/docs/src/Control-Applicative.html
 -- instance Applicative [] where
 --     pure = return
 --    (<*>) = ap
 
-seq'  :: Monad       m => [m a] -> m [a]
-seq'  []       = return []
-seq'  (c : cs) = return (:) `ap'` c `ap'` seq'  cs
-
--- p. 4
---  (<*>) :: Applicative f => f (a -> b) -> f a -> f b
---   pure :: Applicative f => a -> f a
 seq'' :: Applicative f => [f a] -> f [a]
-seq'' []       = pure   []
-seq'' (c : cs) = pure   (:) <*>  c <*>  seq'' cs
+seq'' []       = pure []
+seq'' (c : cs) = pure (:) <*>  c <*>  seq'' cs
 
 ioa = [getLine,getLine,getLine]
 -- seq'  ioa
@@ -65,9 +78,11 @@ t1 = tt "t1"
      (Just [1, 2])
 
 ------------------------------------------------------------------------------
--- p. 2
--- typeclassopedia: collection point of view
--- pair functions and inputs elementwise and produce list of resulting outputs
+-- p. 2  Example: transposing 'matrices'
+
+-- typeclassopedia
+--   collection point of view
+--   pair functions and inputs elementwise and produce list of resulting outputs
 
 transpose   :: [[a]] -> [[a]]
 transpose [] = repeat []
@@ -93,9 +108,11 @@ t2 = tt "t2"
      ]
      [[1,4],[2,5],[3,6]]
 
--- p. 5
--- typeclassopedia: non-deterministic computation point of view
--- apply function to inputs in turn
+-- http://stackoverflow.com/questions/22734551/request-clarification-of-transposition-example-in-mcbride-paterson-applicative-p
+-- Note: the transpose defined on page 5 is NOT the standard idiom bracket translation:
+-- typeclassopedia
+--   non-deterministic computation point of view
+--   apply function to inputs in turn
 
 transpose'' :: [[a]] -> [[a]]
 transpose''         [] = pure []
@@ -106,8 +123,10 @@ t3 = t "t3"
      (transpose'' v)
      [[1,4],[1,5],[1,6],[2,4],[2,5],[2,6],[3,4],[3,5],[3,6]]
 
+-- Instead, the paper says "where pure = repeat and (~) = zapp" which tranlates to transpose' above.
+
 ------------------------------------------------------------------------------
--- p. 3
+-- p. 3  Example: hiding environment when evaluating expressions
 
 data Exp v = Var v
            | Val Int
@@ -119,11 +138,13 @@ type Env v = Map.Map v Int
 fetch :: Ord v => v -> Env v -> Int
 fetch v env = env Map.! v
 
+-- explicit environment
 eval  :: Ord v => Exp v -> Env v -> Int
 eval  (Var x)   env = fetch x env
 eval  (Val i)   env = i
 eval  (Add p q) env = eval p env + eval q env
 
+-- hiding environment using S and K combinators
 eval' :: Ord v => Exp v -> Env v -> Int
 eval' (Var x)       = fetch x
 eval' (Val i)       = k i
@@ -143,6 +164,7 @@ t4 = tt "t4"
 
 -- p. 4
 
+-- hiding the environment using Applicative
 eval'' :: Ord v => Exp v -> Env v -> Int
 eval'' (Var x)       = fetch x
 eval'' (Val i)       = pure i
@@ -155,24 +177,27 @@ t5 = tt "t5"
      7
 
 ------------------------------------------------------------------------------
--- p. 5
+-- p. 5  traversing data structures
 
-dist :: Applicative f => [f a] -> f [a]
-dist [] = pure []
-dist (v : vs) = pure (:) <*> v <*> (dist vs)
+-- `dist'` is a generalization of `transpose''` to work with any Applicative (not just lists)
+dist' :: Applicative f => [f a] -> f [a]
+dist' [] = pure []
+dist' (v : vs) = pure (:) <*> v <*> (dist' vs)
 
+-- map operation (that might fail) such that any individual failure causes overall failure
 -- traverses list twice
 flakyMap :: (a -> Maybe b) -> [a] -> Maybe [b]
-flakyMap f ss = dist (fmap f ss)
+flakyMap f ss = dist' (fmap f ss)
 
-funny x = if x `mod` 2 /= 0 then Nothing else Just x
+isEven :: Int -> Maybe Int
+isEven x = if even x then Just x else Nothing
 
 t6 = tt "t6"
-     [   flakyMap funny [3,4]
-     , dist (fmap funny [3,4])
-     , dist [Nothing,Just 8]
-     , pure (:) <*> Nothing <*> (dist [Just 8])
-     , pure (:) <*> Nothing <*> (pure (:) <*> Just 8 <*> (dist []))
+     [   flakyMap isEven [3,4]
+     , dist' (fmap isEven [3,4])
+     , dist' [Nothing,Just 8]
+     , pure (:) <*> Nothing <*>       (dist' [Just 8])
+     , pure (:) <*> Nothing <*> (pure (:) <*> Just 8 <*> (dist' []))
      , pure (:) <*> Nothing <*> (pure (:) <*> Just 8 <*> (pure []))
      , Just (:) <*> Nothing <*> (Just (:) <*> Just 8 <*> (Just []))
      , (liftM2 (id) (Just (:)) Nothing) <*> (Just (:) <*> Just 8 <*> (Just []))
@@ -182,26 +207,61 @@ t6 = tt "t6"
      Nothing
 
 t7 = t "t7"
-     (flakyMap funny [2,4])
+     (flakyMap isEven [2,4])
      (Just [2,4])
 
--- traverse list once
-traverse :: Applicative f => (a -> f b) -> [a] -> f [b]
-traverse f [] = pure []
-traverse f (x : xs) = pure (:) <*> (f x) <*> (traverse f xs)
+-- applicative mapping
+-- same this as `flakyMap`, but traverse list once
+-- just like `map` for lists, but applicative version
+traverse' :: Applicative f => (a -> f b) -> [a] -> f [b]
+traverse' f [] = pure []
+traverse' f (x : xs) = pure (:) <*> (f x) <*> (traverse' f xs)
 
 t8 = t "t8"
-     (traverse funny [5,8])
+     (traverse' isEven [5,8])
      Nothing
 
 t9 = t "t9"
-     (traverse funny [6,8])
+     (traverse' isEven [6,8])
      (Just [6,8])
+
+-- TODO: below compiles but t10 is infinite loop
+
+-- generalized `traverse'` (like `fmap` is generalized map)
+-- fmap :: Functor f => (a -> b) -> f a -> f b
+-- where `t` is the generalization (of [])
+-- http://hackage.haskell.org/package/base-4.6.0.1/docs/src/Data-Traversable.html#Traversable
+class Functor t => Traversable t where
+  traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
+  traverse f = dist . fmap f
+  dist     :: Applicative f =>           t (f a) -> f (t a)
+  dist      = traverse id
+
+-- note: can use above to define `fmap` where `f` above is `Id`
+
+newtype Id a = An { an :: a }
+
+instance Functor Id => Applicative Id where
+  pure          = An
+  An f <*> An x = An (f x)
+
+instance Functor Id where
+  fmap f (An a) = An (f a)
+
+fmap' :: Traversable t => (a -> b) -> t a -> t b
+fmap' f = an . traverse (An . f)
+
+instance Traversable Maybe where
+
+t10 = t "t10"
+      (fmap' (*2) (Just 2))
+      (Just 4)
 
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
 runTests =
     runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9
+                              ++ t10
 
 -- End of file
