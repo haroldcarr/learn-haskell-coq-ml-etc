@@ -12,27 +12,26 @@ import           Test.HUnit.Util
 -- return :: Monad       m => a -> m a
 --     ap :: Monad       m => m (a -> b) -> m a -> m b
 
-{-
-http://hackage.haskell.org/package/base-4.6.0.0/docs/src/Control-Monad.html#ap
-liftM2  :: (Monad m) => (a1 -> a2 -> r) -> m a1 -> m a2 -> m r
-liftM2 f m1 m2 = do { x1 <- m1; x2 <- m2; return (f x1 x2) }
 
-> return f `ap` x1 `ap` ... `ap` xn
-equivalent to
-> liftMn f x1 x2 ... xn
+-- http://hackage.haskell.org/package/base-4.6.0.0/docs/src/Control-Monad.html#ap
+liftM2'  :: (Monad m) => (a1 -> a2 -> r) -> m a1 -> m a2 -> m r
+liftM2' f m1 m2 = m1 >>= \x1 -> m2 >>= \x2 -> return (f x1 x2)
 
-ap :: (Monad m) => m (a -> b) -> m a -> m b
-ap =  liftM2 id
+-- > return f `ap` x1 `ap` ... `ap` xn
+-- equivalent to
+-- > liftMn f x1 x2 ... xn
 
-http://hackage.haskell.org/package/base-4.4.1.0/docs/src/Control-Applicative.html
-instance Applicative [] where
-    pure = return
-    (<*>) = ap
--}
+ap' :: (Monad m) => m (a -> b) -> m a -> m b
+ap' =  liftM2' id
+
+-- http://hackage.haskell.org/package/base-4.4.1.0/docs/src/Control-Applicative.html
+-- instance Applicative [] where
+--     pure = return
+--    (<*>) = ap
 
 seq'  :: Monad       m => [m a] -> m [a]
 seq'  []       = return []
-seq'  (c : cs) = return (:) `ap` c `ap` seq'  cs
+seq'  (c : cs) = return (:) `ap'` c `ap'` seq'  cs
 
 -- p. 4
 --  (<*>) :: Applicative f => f (a -> b) -> f a -> f b
@@ -167,20 +166,42 @@ flakyMap :: (a -> Maybe b) -> [a] -> Maybe [b]
 flakyMap f ss = dist (fmap f ss)
 
 funny x = if x `mod` 2 /= 0 then Nothing else Just x
--- flakyMap funny [2,4,5,8]
--- flakyMap funny [2,4,6,8]
+
+t6 = tt "t6"
+     [   flakyMap funny [3,4]
+     , dist (fmap funny [3,4])
+     , dist [Nothing,Just 8]
+     , pure (:) <*> Nothing <*> (dist [Just 8])
+     , pure (:) <*> Nothing <*> (pure (:) <*> Just 8 <*> (dist []))
+     , pure (:) <*> Nothing <*> (pure (:) <*> Just 8 <*> (pure []))
+     , Just (:) <*> Nothing <*> (Just (:) <*> Just 8 <*> (Just []))
+     , (liftM2 (id) (Just (:)) Nothing) <*> (Just (:) <*> Just 8 <*> (Just []))
+     ,                         Nothing  <*> (Just (:) <*> Just 8 <*> (Just []))  -- this is the MAGIC step
+     ,            (liftM2 (id) Nothing      (Just (:) <*> Just 8 <*> (Just [])))
+     ]
+     Nothing
+
+t7 = t "t7"
+     (flakyMap funny [2,4])
+     (Just [2,4])
 
 -- traverse list once
 traverse :: Applicative f => (a -> f b) -> [a] -> f [b]
 traverse f [] = pure []
 traverse f (x : xs) = pure (:) <*> (f x) <*> (traverse f xs)
--- traverse funny [2,4,5,8]
--- traverse funny [2,4,6,8]
+
+t8 = t "t8"
+     (traverse funny [5,8])
+     Nothing
+
+t9 = t "t9"
+     (traverse funny [6,8])
+     (Just [6,8])
 
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
 runTests =
-    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5
+    runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9
 
 -- End of file
