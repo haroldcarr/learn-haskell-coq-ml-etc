@@ -225,7 +225,7 @@ t9 = t "t9"
      (traverse' isEven [6,8])
      (Just [6,8])
 
--- TODO: below compiles but t10 is infinite loop
+-- TODO: I do not understand this section.
 
 -- generalized `traverse'` (like `fmap` is generalized map)
 -- fmap :: Functor f => (a -> b) -> f a -> f b
@@ -235,18 +235,18 @@ class Functor t => Traversable t where
   traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
   traverse f = dist . fmap f
   dist     :: Applicative f =>           t (f a) -> f (t a)
-  dist      = traverse id
+  dist       = traverse id
 
 -- note: can use above to define `fmap` where `f` above is `Id`
 
-newtype Id a = An { an :: a }
-
-instance Functor Id => Applicative Id where
-  pure          = An
-  An f <*> An x = An (f x)
+newtype Id a = An { an :: a } deriving (Eq, Show)
 
 instance Functor Id where
-  fmap f (An a) = An (f a)
+     f `fmap` An x = An (f x)
+
+instance Applicative Id where
+  pure             = An
+  An f <*>    An x = An (f x)
 
 fmap' :: Traversable t => (a -> b) -> t a -> t b
 fmap' f = an . traverse (An . f)
@@ -254,8 +254,89 @@ fmap' f = an . traverse (An . f)
 instance Traversable Maybe where
 
 t10 = t "t10"
-      (fmap' (*2) (Just 2))
-      (Just 4)
+      (fmap (An . (*2)) (Just 3))
+      (Just (An {an = 6}))
+
+-- infinite loop:
+--       (fmap' (*2) (Just 3))
+
+-- :t                                (An . (*2))
+-- =>                                (An . (*2))            :: Num b => b -> Id b
+
+-- :t       traverse                 (An . (*2))   (Just 3)
+-- =>       traverse                 (An . (*2))   (Just 3) :: Num b => Id (Maybe b)
+
+-- :t (an . traverse                 (An . (*2)))  (Just 3)
+-- => (an . traverse                 (An . (*2)))  (Just 3) :: Num b =>     Maybe b
+
+-- :t (an . (dist             . fmap (An . (*2)))) (Just 3)
+-- => (an . (dist             . fmap (An . (*2)))) (Just 3) :: Num a => Maybe a
+
+-- :t (an . (traverse id      . fmap (An . (*2)))) (Just 3)
+-- => (an . (traverse id      . fmap (An . (*2)))) (Just 3) :: Num b => Maybe b
+
+-- :t (an . ((dist . fmap id) . fmap (An . (*2)))) (Just 3)
+-- => (an . ((dist . fmap id) . fmap (An . (*2)))) (Just 3) :: Num a => Maybe a
+
+-- :t fmap (An . (*2))
+-- => fmap (An . (*2)) :: (Functor f, Num b) => f b -> f (Id b)
+
+-- p. 6  traverse a tree
+{-
+data Tree a = Leaf | Node (Tree a) a (Tree a) deriving (Eq, Show)
+
+instance Functor Tree where
+  fmap _ Leaf = Leaf
+  fmap f (Node l a r) = (Node (fmap f l) (f a) (fmap f r))
+
+instance Applicative Tree where
+  pure x                          = Node (pure x) x (pure x)
+  Leaf         <*> _              = Leaf
+  _            <*> Leaf           = Leaf
+  (Node l f r) <*> (Node l' v r') = Node (l <*> l') (f v) (r <*> r')
+
+instance Traversable Tree where
+  traverse f Leaf         = pure (Leaf)
+  traverse f (Node l x r) = pure Node <*> (traverse f l) <*> (f x) <*> (traverse f r)
+
+t11 = t "t11"
+      (traverse (*2) (Node Leaf 3 Leaf))
+      (Node Leaf 6 Leaf)
+-}
+
+------------------------------------------------------------------------------
+-- p. 8/9  Applicative viz Monad
+
+-- Monad bind (>>=) enables the value returned by one computation to inﬂuence the choice of another.
+-- Applicative apply (<*>) keeps the structure of a computation ﬁxed, just sequencing the effects.
+
+------------------------------------------------------------------------------
+-- http://en.wikibooks.org/wiki/Haskell/Applicative_Functors
+
+-- handle variable number of applicative arguments
+
+tw1 = tt "tw1"
+      [        (\a   -> a * 3)       `fmap` (Just 10)
+      ,        (\a b -> a + b)       `fmap` (Just 15) <*> (Just 15)
+      ,        (\a b -> a + b)       <$>    (Just 15) <*> (Just 15)
+      ,        (\a b c -> a + b + c) <$>    (Just 10) <*> (Just 10) <*> (Just 10)
+      , pure   (\a b c -> a + b + c) <*>    (Just 10) <*> (Just 10) <*> (Just 10)
+      , liftA3 (\a b c -> a + b + c)        (Just 10)     (Just 10)     (Just 10)
+      ]
+      (Just 30)
+
+------------------------------------------------------------------------------
+
+-- hide an argument until needed (e.g., at `id` below)
+
+hide :: Int -> Int -> Int
+hide 2 = pure 2
+hide 5 = pure (+) <*> hide 2 <*> hide 2
+hide _ = id
+
+th1 = t "th1" ((hide 2) 100) 2
+th2 = t "th2" ((hide 5) 100) 4
+th3 = t "th3" ((hide 1) 100) 100
 
 ------------------------------------------------------------------------------
 
@@ -263,5 +344,7 @@ runTests :: IO Counts
 runTests =
     runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9
                               ++ t10
+                              ++ tw1
+                              ++ th1 ++ th2 ++ th3
 
 -- End of file
