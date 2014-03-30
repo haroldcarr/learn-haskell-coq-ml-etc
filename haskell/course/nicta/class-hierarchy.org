@@ -15,34 +15,26 @@
 
 #+BEGIN_COMMENT
 Created       : 2013 Nov 27 carr.
-Last Modified : 2014 Mar 28 (Fri) 17:31:39 by Harold Carr.
+Last Modified : 2014 Mar 29 (Sat) 09:30:43 by Harold Carr.
 #+END_COMMENT
 
-#+begin_src ditaa :file class-hierarchy.png :cmdline -E -s 4.0 :cache yes
- +-------------------------------+
- |            Functor            |
- |             fmap              |
- |(<$>) :: (a -> b) -> f a -> f b|
- +-------------------------------+
-             ^
-             |
- +---------------------------------+
- |              Apply              |
- |              apply              |
- |(<*>) :: f (a -> b) -> f a -> f b|
- +---------------------------------+
-         ^                  ^
-         |                  |
-+----------------+    +---------------------------------+
-|  Applicative   |    |               Bind              |
-|pure :: a -> f a|    |               bind              |
-+----------------+    |(=<<) :: (a -> f b) -> f a -> f b|
-                ^     +---------------------------------+
-                |      ^
-                |      |
-              +---------+
-              |  Monad  |
-              +---------+
+#+begin_src plantuml :file class-hierarchy.png
+skinparam monochrome true
+
+Functor : fmap : (<$>) :: (a -> b) -> f a -> f b
+
+Functor <|-- Apply
+
+Apply : apply : (<*>) :: f (a -> b) -> f a -> f b
+
+Apply <|-- Applicative
+Apply <|-- Bind
+
+Applicative : pure :: a -> f a
+Bind : bind : (=<<) :: (a -> f b) -> f a -> f b
+
+Applicative <|-- Monad
+Bind <|-- Monad
 #+end_src
 
 # End of file.
