@@ -68,8 +68,8 @@ data HCEither a b = Bad a | Good b deriving Show
 --
 -- Note the partially applied type constructor.
 instance Functor (HCEither a) where
-  (<$>) _ (Bad  a) = Bad a
-  (<$>) f (Good b) = Good (f b)
+  (<$>) _ (Bad  x) = Bad x
+  (<$>) f (Good x) = Good (f x)
 
 -- | Maps a function on the "reader" ((->) t) functor.
 -- Note: a type constructor `t -> a` can be written `(->) t a`
