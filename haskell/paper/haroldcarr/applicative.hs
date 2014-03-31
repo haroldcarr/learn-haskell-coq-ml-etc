@@ -316,12 +316,25 @@ t11 = t "t11"
 -- handle variable number of applicative arguments
 
 tw1 = tt "tw1"
-      [        (\a   -> a * 3)       `fmap` (Just 10)
-      ,        (\a b -> a + b)       `fmap` (Just 15) <*> (Just 15)
-      ,        (\a b -> a + b)       <$>    (Just 15) <*> (Just 15)
-      ,        (\a b c -> a + b + c) <$>    (Just 10) <*> (Just 10) <*> (Just 10)
-      , pure   (\a b c -> a + b + c) <*>    (Just 10) <*> (Just 10) <*> (Just 10)
-      , liftA3 (\a b c -> a + b + c)        (Just 10)     (Just 10)     (Just 10)
+      [        (\a   -> a * 3)       `fmap` (Just 10) -- fmap by itself can only deal with one context/container
+
+       -- fmap combined with apply (<*>) can handle multiple contexts/containers
+
+      ,        (\a b c -> a + b + c) `fmap` (Just  5) <*> (Just 10) <*> (Just 15)
+      ,        (\a b c -> a + b + c) <$>    (Just  5) <*> (Just 10) <*> (Just 15)
+      , pure   (\a b c -> a + b + c) <*>    (Just  5) <*> (Just 10) <*> (Just 15)
+      , Just   (\a b c -> a + b + c) <*>    (Just  5) <*> (Just 10) <*> (Just 15)
+      , liftA3 (\a b c -> a + b + c)        (Just  5)     (Just 10)     (Just 15)
+      ]
+      (Just 30)
+
+-- this is how it does it
+
+tw2 = tt "tw2"
+      [                (\a b c -> a + b + c)       `fmap` (Just 5) <*> (Just 10) <*> (Just 15)
+      ,          Just ((\a b c -> a + b + c)                    5) <*> (Just 10) <*> (Just 15)
+      ,         Just (((\a b c -> a + b + c)                    5)           10) <*> (Just 15)
+      ,        Just ((((\a b c -> a + b + c) 5)                              10)           15)
       ]
       (Just 30)
 
@@ -344,7 +357,7 @@ runTests :: IO Counts
 runTests =
     runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6 ++ t7 ++ t8 ++ t9
                               ++ t10
-                              ++ tw1
+                              ++ tw1 ++ tw2
                               ++ th1 ++ th2 ++ th3
 
 -- End of file
