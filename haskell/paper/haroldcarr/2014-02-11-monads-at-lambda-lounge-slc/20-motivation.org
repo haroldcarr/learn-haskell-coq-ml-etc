@@ -2,7 +2,7 @@
 #+AUTHOR:    Harold Carr
 
 # Created       : 2014 Jan 28 (Tue) 19:09:36 by Harold Carr.
-# Last Modified : 2014 Feb 11 (Tue) 12:46:38 by Harold Carr.
+# Last Modified : 2014 Apr 17 (Thu) 15:31:11 by Harold Carr.
 #+OPTIONS:     num:nil toc:nil
 #+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
@@ -230,6 +230,8 @@ runEval5 Map.empty 0 (eval5 exampleExp)
 ** add IO
 
 #+begin_src haskell
+type Eval6 alpha = ReaderT Env  (ErrorT String (WriterT [String] (StateT Integer IO))) alpha
+
 runEval6           ::  Env -> Integer -> Eval6 alpha -> IO ((Either String alpha, [String]), Integer)
 runEval6 env st ev  =  runStateT (runWriterT (runErrorT (runReaderT ev env))) st
 
