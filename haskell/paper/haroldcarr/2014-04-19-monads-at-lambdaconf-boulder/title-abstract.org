@@ -1,0 +1,21 @@
+Created       : 2014 Mar 31 (Mon) 10:35:44 by Harold Carr.
+Last Modified : 2014 Mar 31 (Mon) 10:44:54 by Harold Carr.
+
+http://www.degoesconsulting.com/lambdaconf/
+
+John A. De Goes john@degoes.net
+
+Title:
+
+Monads : why should you care?
+
+Abstract:
+
+Most monad explanations use analogies like "container" or "context"
+then show how monads are implemented and/or how they relate to
+category theory---leaving people more confused then when they started.
+This presentation will instead show the usefulness of monads---what
+they can do for you (not how they work).  The aim is to motivate you
+to get a glimpse of the benefits of monads such that you can use them
+in your work and motivate you to understand how they work on your own.
+
