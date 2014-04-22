@@ -17,15 +17,14 @@
 
 #+startup: beamer
 #+LaTeX_CLASS: beamer
-#+LaTeX_CLASS_OPTIONS: [bigger]
+#+LaTeX_CLASS_OPTIONS: [9pt]
 #+latex_header: \mode<beamer>{\usetheme{Madrid}}
+#+latex_header: \mode<beamer>{\beamertemplatenavigationsymbolsempty}
 #+BEAMER_FRAME_LEVEL: 2
-
 #+latex_header: \AtBeginSection[]{\begin{frame}<beamer>\frametitle{Topic}\tableofcontents[currentsection]\end{frame}}
-
 #+COLUMNS: %20ITEM %13BEAMER_env(Env) %6BEAMER_envargs(Args) %4BEAMER_col(Col) %7BEAMER_extra(Extra)
-
 #+latex_header: \setbeamertemplate{navigation symbols}{} %no nav symbols
+#+latex_header: \setbeamertemplate{footline}{\hfill \insertpagenumber \enspace}
 
 # ------------------------------------------------------------------------------
 * abstract, me, what you will learn
@@ -62,7 +61,7 @@ Source of examples: Martin Grabmuller :
 - Logic Simulation at Patel Systems/Cirrus Logic
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-# Last Modified : 2014 Apr 19 (Sat) 12:50:56 by Harold Carr.
+# Last Modified : 2014 Apr 21 (Mon) 22:18:18 by Harold Carr.
 
 # --------------------------------------------------
 ** what you will learn
