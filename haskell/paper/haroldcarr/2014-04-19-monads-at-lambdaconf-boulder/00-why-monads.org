@@ -61,7 +61,7 @@ Source of examples: Martin Grabmuller :
 - Logic Simulation at Patel Systems/Cirrus Logic
 
 # Created       : 2013 Oct 10 (Thu) 16:03:42 by carr.
-# Last Modified : 2014 Apr 21 (Mon) 22:18:18 by Harold Carr.
+# Last Modified : 2014 Apr 27 (Sun) 08:20:40 by Harold Carr.
 
 # --------------------------------------------------
 ** what you will learn
@@ -584,6 +584,9 @@ eval6 (App e1 e2)  = do tick
 - =Maybe=, =Either=, =[]=, =IO= monads (and more to come) :
   - [[http://haroldcarr.com/posts/2014-02-19-monad-series.html]]
 
+- Phillip Wadler : covers similar ground : in Scala : must see :
+  - [[http://yow.eventer.com/yow-2013-1080/the-first-monad-tutorial-by-phillip-wadler-1359]]
+
 - Dan Piponi's :
   - [[http://blog.sigfpe.com/2006/08/you-could-have-invented-monads-and.html]]
 
@@ -595,9 +598,6 @@ eval6 (App e1 e2)  = do tick
 
 - deep dive with Mike Vanier :
   - [[http://mvanier.livejournal.com/3917.html]]
-
-- me
-  - [[mailto:harold.carr@gmail.com][harold.carr@gmail.com]] / @haroldcarr / [[http://haroldcarr.com/][haroldcarr.com]]
 
 # End of file.
 
