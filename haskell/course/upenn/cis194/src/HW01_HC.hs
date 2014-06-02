@@ -1,6 +1,6 @@
 {-
 Created       : 2014 May 23 (Fri) 14:32:50 by Harold Carr.
-Last Modified : 2014 May 27 (Tue) 21:55:18 by Harold Carr.
+Last Modified : 2014 Jun 01 (Sun) 19:00:06 by Harold Carr.
 -}
 
 module HW01_HC where
@@ -10,6 +10,7 @@ import           Data.List       (unfoldr)
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
 
+------------------------------------------------------------------------------
 -- Exercise 1
 
 toDigits :: Integer -> [Integer]
@@ -34,6 +35,7 @@ e1 = T.TestList
     , U.teq "0" (toDigits   (-17)) []
     ]
 
+------------------------------------------------------------------------------
 -- Exercise 2
 
 -- O(3n)
@@ -67,6 +69,7 @@ e2 = T.TestList
     , U.teq "deo123"    (doubleEveryOther     [1,2,3])     [1,4,3]
     ]
 
+------------------------------------------------------------------------------
 -- Exercise 3
 
 sumDigits :: [Integer] -> Integer
@@ -79,6 +82,7 @@ e3 = T.TestList
     , U.teq "1" (sumDigits [16,7,12,5]) 22
     ]
 
+------------------------------------------------------------------------------
 -- Exercise 4
 
 validate :: Integer -> Bool
@@ -91,6 +95,7 @@ e4 = T.TestList
     , U.teq "vf" (validate 4012888888881882) False
     ]
 
+------------------------------------------------------------------------------
 -- Exercise 5 - Towers of Hanoi
 
 {-
@@ -169,14 +174,16 @@ e5 = T.TestList
     , U.teq "h15l"        (length h15)  (2^15-1)
     ]
 
-
+------------------------------------------------------------------------------
+-- Exercise 6
 -- TODO
 hanoi4p :: Integer -> Peg -> Peg -> Peg -> Peg -> [Move]
 hanoi4p = undefined
 -- hanoi4p 3 "a" "b" "c" "d"
 
-main :: IO T.Counts
-main = do
+------------------------------------------------------------------------------
+hw01 :: IO T.Counts
+hw01 = do
     T.runTestTT e1
     T.runTestTT e2
     T.runTestTT e3
