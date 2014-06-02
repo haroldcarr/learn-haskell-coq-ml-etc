@@ -19,6 +19,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     HW01_HC
                        , HW02_HC_LogAnalysis
+                       , HW03_HC_Golf
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
