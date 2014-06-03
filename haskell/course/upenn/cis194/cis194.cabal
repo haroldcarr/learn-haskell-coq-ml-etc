@@ -23,6 +23,7 @@ library
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
+                       , split
                        , HUnit >=1.2 && <1.3
                        -- , lens <= 4.1
                        , test-hunit-util >=0.1 && <0.2

@@ -1,11 +1,12 @@
 {-
 Created       : 2014 Jun 01 (Sun) 19:54:26 by Harold Carr.
-Last Modified : 2014 Jun 01 (Sun) 21:50:15 by Harold Carr.
+Last Modified : 2014 Jun 03 (Tue) 16:09:28 by Harold Carr.
 -}
 
 module HW03_HC_Golf where
 
-import           Data.List       (init, tails, unfoldr)
+import           Data.List       (tails, unfoldr)
+import           Data.List.Split (chop)
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
 
@@ -41,12 +42,20 @@ localMaxima l@(x1:x2:x3:_) | x1 < x2 && x2 > x3 = x2 : lmt
   where lmt = localMaxima (tail l)
 localMaxima _ = []
 
+lm :: [Integer] -> [Integer]
+lm xs0 = concat $ chop f xs0
+  where f l@(x1:x2:x3:_) = if x1 < x2 && x2 > x3 then ([x2], tail l) else ([], tail l)
+        f _              = ([], [])
+
 e2 :: T.Test
 e2 = T.TestList
     [
       U.teq "lm0" (localMaxima [2,9,5,6,1]) [9,6]
+    , U.teq "lm0" (lm          [2,9,5,6,1]) [9,6]
     , U.teq "lm1" (localMaxima [2,3,4,1,5]) [4]
+    , U.teq "lm1" (lm          [2,3,4,1,5]) [4]
     , U.teq "lm2" (localMaxima [1,2,3,4,5]) []
+    , U.teq "lm2" (lm          [1,2,3,4,5]) []
     ]
 
 ------------------------------------------------------------------------------
