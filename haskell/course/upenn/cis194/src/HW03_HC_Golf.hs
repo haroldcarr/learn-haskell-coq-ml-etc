@@ -1,14 +1,13 @@
 {-
 Created       : 2014 Jun 01 (Sun) 19:54:26 by Harold Carr.
-Last Modified : 2014 Jun 03 (Tue) 22:35:07 by Harold Carr.
+Last Modified : 2014 Jun 04 (Wed) 08:11:33 by Harold Carr.
 -}
 
 module HW03_HC_Golf where
 
-import           Data.List       (foldr, intercalate, tails, unfoldr)
+import           Data.List       (tails, unfoldr)
 import           Data.List.Split (chop)
-import           Data.Map        as M (Map, empty, fromList, insertWith, lookup,
-                                       update)
+import           Data.Map        as M (empty, insertWith, lookup)
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
 
@@ -46,8 +45,8 @@ localMaxima _ = []
 
 lm :: [Integer] -> [Integer]
 lm xs0 = concat $ chop f xs0
-  where f (x1:t@(x2:x3:_)) = (if x1 < x2 && x2 > x3 then [x2] else [], t)
-        f _                = ([], [])
+  where f (x1:t@(x2:x3:_)) = ([x2 | x1 < x2 && x2 > x3],  t)
+        f _                = (                       [], [])
 
 e2 :: T.Test
 e2 = T.TestList
@@ -64,7 +63,7 @@ e2 = T.TestList
 -- Exercise 3
 
 histogram :: [Integer] -> String
-histogram xs = [ f r c | r <- [9, 8 .. 1], c <- [0 .. 10] ] ++ "==========\n0123456789"
+histogram xs = [ f r c | r <- [9::Integer, 8 .. 1], c <- [0 .. 10] ] ++ "==========\n0123456789"
   where
     m = foldr (\k acc -> M.insertWith (+) k 1 acc) M.empty xs
     f _ 10 = '\n'

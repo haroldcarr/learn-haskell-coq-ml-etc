@@ -23,13 +23,13 @@ parseMessage r@_      = Unknown r
 parseTsMsg :: String -> String -> (Int, String)
 parseTsMsg _   []     = error "impossible"
 parseTsMsg acc (x:xs) = if x == ' '
-                        then ((read (reverse acc)) :: Int, xs)
+                        then (read (reverse acc) :: Int, xs)
                         else parseTsMsg (x:acc) xs
 
 parseSTsMsg :: String -> String -> (Int, Int, String)
 parseSTsMsg _   []     = error "impossible"
 parseSTsMsg acc (x:xs) = if x == ' '
-                         then let (ts, msg) = parseTsMsg [] xs in ((read (reverse acc)) :: Int, ts, msg)
+                         then let (ts, msg) = parseTsMsg [] xs in (read (reverse acc) :: Int, ts, msg)
                          else parseSTsMsg (x:acc) xs
 
 parse :: String -> [LogMessage]
@@ -74,9 +74,9 @@ insert _                     (Node _ (Unknown _) _)                      = error
 insert l@_                   Leaf                                        = Node Leaf l Leaf
 insert l@(LogMessage _ ts _) n@(Node left l'@(LogMessage _ ts' _) right) =
     case compare ts ts' of
-        LT -> (Node (insert l left)  l'           right)
+        LT -> Node (insert l left)  l'           right
         EQ -> n
-        GT -> (Node           left   l' (insert l right))
+        GT -> Node           left   l' (insert l right)
 
 i1,i2,i3,i4,i5,i6,i7,i8,i9,i10 :: MessageTree
 i1 = insert (testData !! 0) Leaf
