@@ -1,12 +1,14 @@
 {-
 Created       : 2014 Jun 01 (Sun) 19:54:26 by Harold Carr.
-Last Modified : 2014 Jun 03 (Tue) 16:09:28 by Harold Carr.
+Last Modified : 2014 Jun 03 (Tue) 22:35:07 by Harold Carr.
 -}
 
 module HW03_HC_Golf where
 
-import           Data.List       (tails, unfoldr)
+import           Data.List       (foldr, intercalate, tails, unfoldr)
 import           Data.List.Split (chop)
+import           Data.Map        as M (Map, empty, fromList, insertWith, lookup,
+                                       update)
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
 
@@ -44,8 +46,8 @@ localMaxima _ = []
 
 lm :: [Integer] -> [Integer]
 lm xs0 = concat $ chop f xs0
-  where f l@(x1:x2:x3:_) = if x1 < x2 && x2 > x3 then ([x2], tail l) else ([], tail l)
-        f _              = ([], [])
+  where f (x1:t@(x2:x3:_)) = (if x1 < x2 && x2 > x3 then [x2] else [], t)
+        f _                = ([], [])
 
 e2 :: T.Test
 e2 = T.TestList
@@ -59,9 +61,32 @@ e2 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
+-- Exercise 3
+
+histogram :: [Integer] -> String
+histogram xs = [ f r c | r <- [9, 8 .. 1], c <- [0 .. 10] ] ++ "==========\n0123456789"
+  where
+    m = foldr (\k acc -> M.insertWith (+) k 1 acc) M.empty xs
+    f _ 10 = '\n'
+    f i  j = case M.lookup j m of
+                (Just n) -> if n >= i then '*' else ' '
+                Nothing  -> ' '
+
+e3 :: T.Test
+e3 = T.TestList
+    [
+      U.teq "h0" (histogram [1,1,1,5])
+                 "          \n          \n          \n          \n          \n          \n *        \n *        \n *   *    \n==========\n0123456789"
+    , U.teq "h1" (histogram [1,4,5,4,6,6,3,4,2,4,9])
+                 "          \n          \n          \n          \n          \n    *     \n    *     \n    * *   \n ******  *\n==========\n0123456789"
+    ]
+
+------------------------------------------------------------------------------
+
 hw03 :: IO T.Counts
 hw03 = do
     _ <- T.runTestTT e1
-    T.runTestTT e2
+    _ <- T.runTestTT e2
+    T.runTestTT e3
 
 -- End of file.
