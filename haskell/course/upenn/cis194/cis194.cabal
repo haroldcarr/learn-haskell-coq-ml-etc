@@ -17,7 +17,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     HW01_HC
+  exposed-modules:     Main
+                       , HW01_HC
                        , HW02_HC_LogAnalysis
                        , HW03_HC_Golf
   -- other-modules:       

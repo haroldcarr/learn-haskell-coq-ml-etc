@@ -1,6 +1,6 @@
 {-
 Created       : 2014 May 23 (Fri) 14:32:50 by Harold Carr.
-Last Modified : 2014 Jun 04 (Wed) 08:12:26 by Harold Carr.
+Last Modified : 2014 Jun 04 (Wed) 08:18:14 by Harold Carr.
 -}
 
 module HW01_HC where
@@ -41,14 +41,6 @@ e1 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 2
 
--- O(3n)
-doubleEveryOther3n :: Num a => [a] -> [a]
-doubleEveryOther3n xs0 = reverse $ deo False (reverse xs0)
-  where deo b xs1 =
-            case xs1 of
-                []     -> []
-                (x:xs) -> (if b then 2*x else x) : deo (not b) xs
-
 -- O(n)
 -- correct type sig is:
 -- doubleEveryOther :: Num a => [a] -> [a]
@@ -60,6 +52,15 @@ doubleEveryOther xs0 =
             []     -> (False, [])
             (x:xs) -> let (b, xs') = deo xs in (not b, (if b then 2*x else x) : xs')
     in r
+
+-- O(3n)
+-- doubleEveryOther3n :: Num a => [a] -> [a]
+doubleEveryOther3n :: [Integer] -> [Integer]
+doubleEveryOther3n xs0 = reverse $ deo False (reverse xs0)
+  where deo b xs1 =
+            case xs1 of
+                []     -> []
+                (x:xs) -> (if b then 2*x else x) : deo (not b) xs
 
 -- http://stackoverflow.com/questions/23842473/what-to-use-instead-of-explicit-recursion-in-haskell
 -- doubleEveryOtherLens = over (elements even) (*2) [8,7,6,5]
@@ -79,7 +80,7 @@ e2 = T.TestList
 -- Exercise 3
 
 sumDigits :: [Integer] -> Integer
-sumDigits = foldr (\x acc -> truncate (fromIntegral x / 10) + x `mod` 10 + acc) 0
+sumDigits = foldr (\x acc -> tc x + x `mod` 10 + acc) 0
 
 e3 :: T.Test
 e3 = T.TestList
