@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 05 (Thu) 20:29:15 by Harold Carr.
-Last Modified : 2014 Jun 08 (Sun) 07:31:50 by Harold Carr.
+Last Modified : 2014 Jun 08 (Sun) 12:24:53 by Harold Carr.
 -}
 
 module HW04_HC where
@@ -177,16 +177,17 @@ cartProd :: [a] -> [b] -> [(a, b)]
 cartProd xs ys = [(x,y) | x <- xs, y <- ys]
 
 sieveSundaram :: Integer -> [Integer]
-sieveSundaram n =
-    let ns = [1::Integer .. n]
+sieveSundaram n0 =
+    let ns = [1::Integer .. n0]
         cp = cartProd ns ns
-        ft = filter (\(i, j) -> i + j + 2*i*j > n) cp
-    in map (\(x,_) -> 2*x + 1) ft
+        ft = filter (\n -> all (\(i, j) -> i + j + (2*i*j) /= n) cp) ns
+    in map (\x -> 2*x + 1) ft
 
 e4 :: T.Test
 e4 = T.TestList
     [
       U.teq "cp" (cartProd [1::Integer,2] ['a','b']) [(1,'a'),(1,'b'),(2,'a'),(2,'b')]
+    , U.teq "si" (sieveSundaram 100) [3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199]
     ]
 
 ------------------------------------------------------------------------------
