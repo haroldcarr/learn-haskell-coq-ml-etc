@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 05 (Thu) 20:29:15 by Harold Carr.
-Last Modified : 2014 Jun 07 (Sat) 11:22:30 by Harold Carr.
+Last Modified : 2014 Jun 08 (Sun) 07:31:50 by Harold Carr.
 -}
 
 module HW04_HC where
@@ -11,6 +11,7 @@ import qualified Test.HUnit.Util as U
 ------------------------------------------------------------------------------
 -- Exercise 1
 
+-------------------------
 -- 1
 
 fun1 :: [Integer] -> Integer
@@ -20,35 +21,56 @@ fun1 (x:xs)
     | otherwise =           fun1 xs
 
 fun1' :: [Integer] -> Integer
-fun1' = foldr (\x acc -> (if even x then (x - 2) else 1) * acc) 1
+fun1' = foldr (\x acc -> (if even x then x - 2 else 1) * acc) 1
 
+fun1'' :: [Integer] -> Integer
+fun1'' [] = 1
+fun1'' xs = product $ map (\x -> x - 2) $ filter even xs
+
+e1fun1 :: T.Test
+e1fun1 = T.TestList
+    [
+      -- if a 2 is anywhere in the list result is 0
+      U.teq "fun10"    (fun1   [1::Integer, 2 .. 10])      0
+    , U.teq "fun1'0"   (fun1'  [1::Integer, 2 .. 10])      0
+    , U.teq "fun11"    (fun1   [1::Integer, 3 .. 11])      1
+    , U.teq "fun1'1"   (fun1'  [1::Integer, 3 .. 11])      1
+    , U.teq "fun1''1"  (fun1'' [1::Integer, 3 .. 11])      1
+    , U.teq "fun148"   (fun1      [4::Integer, 6, 8]) (2*4*6)
+    , U.teq "fun1'48"  (fun1'     [4::Integer, 6, 8]) (2*4*6)
+    , U.teq "fun148'"  (fun1    [3::Integer, 4 .. 8]) (2*4*6)
+    , U.teq "fun1'48'" (fun1'   [3::Integer, 4 .. 8]) (2*4*6)
+    ]
+
+-------------------------
 -- 2
 
 fun2 :: Integer -> Integer
-fun2 1 = 0
 fun2 n
+    | n == 1    = 0
     | even n    = n + fun2 (n `div` 2)
     | otherwise =     fun2 (3 * n + 1)
 
--- TODO : use takeWhile and interate
+-- use takeWhile and interate
+-- iterate :: (a -> a) -> a -> [a]
+-- iterate f x =  x : iterate f (f x)
+
 fun2' :: Integer -> Integer
-fun2' 1 = 0
--- fun2' n = takeWhile (even n)
+fun2' n0 = sum (map fst (takeWhile (\(n,_) -> n /= 1)
+                                   (iterate (\(_, n) -> if n == 1
+                                                        then (1, 1)
+                                                        else if even n
+                                                             then (n, n `div` 2)
+                                                             else (0, 3 * n + 1))
+                                            (0, n0))))
 
-e1 :: T.Test
-e1 = T.TestList
+e1fun2 :: T.Test
+e1fun2 = T.TestList
     [
-      -- if a 2 is anywhere in the list result is 0
-      U.teq "fun10"    (fun1  [1::Integer, 2 .. 10])      0
-    , U.teq "fun1'0"   (fun1' [1::Integer, 2 .. 10])      0
-    , U.teq "fun11"    (fun1  [1::Integer, 3 .. 11])      1
-    , U.teq "fun1'1"   (fun1' [1::Integer, 3 .. 11])      1
-    , U.teq "fun148"   (fun1     [4::Integer, 6, 8]) (2*4*6)
-    , U.teq "fun1'48"  (fun1'    [4::Integer, 6, 8]) (2*4*6)
-    , U.teq "fun148'"  (fun1   [3::Integer, 4 .. 8]) (2*4*6)
-    , U.teq "fun1'48'" (fun1'  [3::Integer, 4 .. 8]) (2*4*6)
-
-    , U.teq "fun2" (map fun2 [1::Integer, 2 .. 10]) [0,2,40,6,30,46,234,14,276,40]
+      U.teq "fun2"   (map fun2  [1::Integer, 2 .. 10]) [0,2,40,6,30,46,234,14,276,40]
+    , U.teq "fun2'"  (map fun2' [1::Integer, 2 .. 10]) [0,2,40,6,30,46,234,14,276,40]
+    , U.teq "fun2eq" (map fun2  [1::Integer, 2 .. 1000])
+                     (map fun2' [1::Integer, 2 .. 1000])
     ]
 
 ------------------------------------------------------------------------------
@@ -59,16 +81,42 @@ e1 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 3
 
+-------------------------
 -- 1
 
 xor :: [Bool] -> Bool
 xor = odd . foldr (\x acc -> (if x then (+1) else (*1)) acc) (0::Integer)
 
+xor' :: [Bool] -> Bool
+xor' = odd . length. filter id
+
+e3xor :: T.Test
+e3xor = T.TestList
+    [
+      U.teq "xor0"  (xor                                 []) False
+    , U.teq "xor'0" (xor'                                []) False
+    , U.teq "xor1"  (xor               [False, True, False]) True
+    , U.teq "xor'1" (xor'              [False, True, False]) True
+    , U.teq "xor2"  (xor  [False, True, False, False, True]) False
+    , U.teq "xor'2" (xor' [False, True, False, False, True]) False
+    ]
+
+-------------------------
 -- 2
 
 map' :: (a -> b) -> [a] -> [b]
 map' f = foldr (\x acc -> f x : acc) []
 
+e3map :: T.Test
+e3map = T.TestList
+    [
+      U.teq "map0" (map' (*2)      [1::Integer ..9])
+                   (map  (*2)      [1::Integer ..9])
+    , U.teq "map1" (map' fun2 [1::Integer, 2 .. 10])
+                   (map  fun2 [1::Integer, 2 .. 10])
+    ]
+
+-------------------------
 -- 3
 
 -- BEGIN for stepping and watching reductions
@@ -83,31 +131,25 @@ myPlus :: Integer -> Integer -> Integer
 myPlus x y = x + y
 -- END for stepping and watching reductions
 
+-- the parens around myFoldr are redundant,
+-- but helps pointing out it returns a function
 myFoldl :: (a -> b -> a) -> a -> [b] -> a
 myFoldl stepL zeroL xs = (myFoldr stepR id xs) zeroL
   where stepR lastL accR accInitL = accR (stepL accInitL lastL)
 
+-- redundant lambda, but helps with intuition
 foo :: Integer -> (Integer -> t) -> Integer -> t
 foo = \lastL accR accInitL -> accR (myPlus accInitL lastL)
 
-e3 :: T.Test
-e3 = T.TestList
+e3foldr :: T.Test
+e3foldr = T.TestList
     [
-      U.teq "xor0" (xor                                []) False
-    , U.teq "xor1" (xor              [False, True, False]) True
-    , U.teq "xor2" (xor [False, True, False, False, True]) False
-
-    , U.teq "map0" (map' (*2)      [1::Integer ..9])
-                   (map  (*2)      [1::Integer ..9])
-    , U.teq "map1" (map' fun2 [1::Integer, 2 .. 10])
-                   (map  fun2 [1::Integer, 2 .. 10])
-
-    , U.teq "fll0" (foldl   (\x a -> x ++ a) [] ["foo","bar"])
-                   (myFoldl (\x a -> x ++ a) [] ["foo","bar"])
-    , U.teq "fll1" (foldl   (\x a -> x ++ a) [] [[1::Integer],[2],[3]])
-                   (myFoldl (\x a -> x ++ a) [] [[1::Integer],[2],[3]])
-    , U.teq "fll1" (foldl   myPlus           0  [1::Integer,2,3])
-                   (myFoldl myPlus           0  [1::Integer,2,3])
+      U.teq "fll0" (foldl   (++)   [] ["foo","bar"])
+                   (myFoldl (++)   [] ["foo","bar"])
+    , U.teq "fll1" (foldl   (++)   [] [[1::Integer],[2],[3]])
+                   (myFoldl (++)   [] [[1::Integer],[2],[3]])
+    , U.teq "fll1" (foldl   myPlus  0 [1::Integer,2,3])
+                   (myFoldl myPlus  0 [1::Integer,2,3])
     ]
 
 mf :: [T.Test]
@@ -129,11 +171,34 @@ mf = U.tt "mf"
   3
 
 ------------------------------------------------------------------------------
+-- Exercise 4
+
+cartProd :: [a] -> [b] -> [(a, b)]
+cartProd xs ys = [(x,y) | x <- xs, y <- ys]
+
+sieveSundaram :: Integer -> [Integer]
+sieveSundaram n =
+    let ns = [1::Integer .. n]
+        cp = cartProd ns ns
+        ft = filter (\(i, j) -> i + j + 2*i*j > n) cp
+    in map (\(x,_) -> 2*x + 1) ft
+
+e4 :: T.Test
+e4 = T.TestList
+    [
+      U.teq "cp" (cartProd [1::Integer,2] ['a','b']) [(1,'a'),(1,'b'),(2,'a'),(2,'b')]
+    ]
+
+------------------------------------------------------------------------------
 
 hw04 :: IO T.Counts
 hw04 = do
-    _ <- T.runTestTT e1
-    _ <- T.runTestTT e3
-    T.runTestTT $ T.TestList $ mf
+    _ <- T.runTestTT e1fun1
+    _ <- T.runTestTT e1fun2
+    _ <- T.runTestTT e3xor
+    _ <- T.runTestTT e3map
+    _ <- T.runTestTT e3foldr
+    _ <- T.runTestTT $ T.TestList $ mf
+    T.runTestTT e4
 
 -- End of file.
