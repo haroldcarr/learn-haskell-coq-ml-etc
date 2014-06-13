@@ -2,7 +2,7 @@ module HW05_StackVM (StackVal(..), StackExp(..), Stack, Program, stackVM) where
 
 -- Values that may appear in the stack. Such a value will also be
 -- returned by the stackVM program execution function.
-data StackVal = IVal Integer | BVal Bool | Void deriving Show
+data StackVal = IVal Integer | BVal Bool | Void deriving (Eq, Show)
 
 -- The various expressions our VM understands.
 data StackExp = PushI Integer
@@ -11,7 +11,7 @@ data StackExp = PushI Integer
               | Mul
               | And
               | Or
-                deriving Show
+                deriving (Eq, Show)
 
 type Stack   = [StackVal]
 type Program = [StackExp]

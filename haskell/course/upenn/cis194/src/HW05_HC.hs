@@ -1,15 +1,17 @@
 {-
 Created       : 2014 Jun 08 (Sun) 13:47:39 by Harold Carr.
-Last Modified : 2014 Jun 10 (Tue) 22:09:41 by Harold Carr.
+Last Modified : 2014 Jun 13 (Fri) 13:31:12 by Harold Carr.
 -}
 
--- {-# LANGUAGE ScopedTypeVariables #-}
--- {-# LANGUAGE InstanceSigs #-}
+-- these two for Exercise 5
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module HW05_HC where
 
-import           HW05_ExprT
+import           HW05_ExprT      as E
 import           HW05_Parser
+import           HW05_StackVM    as S
 
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
@@ -19,13 +21,13 @@ import qualified Test.HUnit.Util as U
 
 eval :: ExprT -> Integer
 eval (Lit i) = i
-eval (Mul e1 e2) = eval e1 * eval e2
-eval (Add e1 e2) = eval e1 + eval e2
+eval (E.Mul e1 e2) = eval e1 * eval e2
+eval (E.Add e1 e2) = eval e1 + eval e2
 
 ex1 :: T.Test
 ex1 = T.TestList
     [
-      U.teq "eval0" (eval (Mul (Add (Lit 2) (Lit 3)) (Lit 4))) 20
+      U.teq "eval0" (eval (E.Mul (E.Add (Lit 2) (Lit 3)) (Lit 4))) 20
     ]
 
 ------------------------------------------------------------------------------
@@ -33,14 +35,14 @@ ex1 = T.TestList
 
 evalStr :: String -> Maybe Integer
 evalStr s = do
-    e <- parseExp Lit Add Mul s
+    e <- parseExp E.Lit E.Add E.Mul s
     return $ eval e
 
 ex2 :: T.Test
 ex2 = T.TestList
     [
-      U.teq "evs0" (evalStr "(2+3)*4") (Just (eval (Mul (Add (Lit 2) (Lit 3)) (Lit 4))))
-    , U.teq "evs1" (evalStr "2+3*4")   (Just (eval (Add (Lit 2) (Mul (Lit 3) (Lit 4)))))
+      U.teq "evs0" (evalStr "(2+3)*4") (Just (eval (E.Mul (E.Add (Lit 2) (Lit 3)) (Lit 4))))
+    , U.teq "evs1" (evalStr "2+3*4")   (Just (eval (E.Add (E.Lit 2) (E.Mul (Lit 3) (Lit 4)))))
     , U.teq "evs2" (evalStr "2+3*")    Nothing
     ]
 
@@ -53,9 +55,9 @@ class Expr a where
     mul :: a -> a -> a
 
 instance Expr ExprT where
-    lit = Lit
-    add = Add
-    mul = Mul
+    lit = E.Lit
+    add = E.Add
+    mul = E.Mul
 
 reify :: ExprT -> ExprT
 reify = id
@@ -63,8 +65,8 @@ reify = id
 ex3 :: T.Test
 ex3 = T.TestList
     [
-      U.teq "tc0"       ((mul (add (lit 2) (lit 3)) (lit 4)) :: ExprT) (Mul (Add (Lit 2) (Lit 3)) (Lit 4))
-    , U.teq "tc0" (reify (mul (add (lit 2) (lit 3)) (lit 4)))          (Mul (Add (Lit 2) (Lit 3)) (Lit 4))
+      U.teq "tc0"       ((mul (add (lit 2) (lit 3)) (lit 4)) :: ExprT) (E.Mul (E.Add (Lit 2) (Lit 3)) (Lit 4))
+    , U.teq "tc0" (reify (mul (add (lit 2) (lit 3)) (lit 4)))          (E.Mul (E.Add (Lit 2) (Lit 3)) (Lit 4))
     ]
 
 ------------------------------------------------------------------------------
@@ -89,7 +91,7 @@ instance Expr MinMax where
 
 newtype Mod7 = Mod7 Integer deriving (Eq, Show)
 
-{-
+{- I could not get this to typecheck, so ended up defining addMod7 and mulMod7 and using them in instance.
 instance Num Mod7 where
     (Mod7 l) + (Mod7 r) = Mod7 (l + r)
     (Mod7 l) - (Mod7 r) = Mod7 (l - r)
@@ -115,22 +117,23 @@ instance Expr Mod7 where
     add   = addMod7
     mul   = mulMod7
 
-testExp :: Expr a => Maybe a
-testExp = parseExp lit add mul "(3 * -4) + 5"
+testExp     :: Expr a => Maybe a
+testExp     = parseExp lit add mul "(3 * -4) + 5"
+
 testInteger :: Maybe Integer
 testInteger = testExp
-testBool :: Maybe Bool
-testBool = testExp
-testMM :: Maybe MinMax
-testMM = testExp
+testBool    :: Maybe Bool
+testBool    = testExp
+testMM      :: Maybe MinMax
+testMM      = testExp
 -- testExp contains a (-4) which is not legal for Mod7
-testSat :: Maybe Mod7
-testSat = testExp
+testSat     :: Maybe Mod7
+testSat     = testExp
 
-testM7Add :: Maybe Mod7
-testM7Add = parseExp lit add mul "(3 + 5)"
-testM7Mul :: Maybe Mod7
-testM7Mul = parseExp lit add mul "(3 * 5)"
+testM7Add   :: Maybe Mod7
+testM7Add   = parseExp lit add mul "(3 + 5)"
+testM7Mul   :: Maybe Mod7
+testM7Mul   = parseExp lit add mul "(3 * 5)"
 
 ex4 :: T.Test
 ex4 = T.TestList
@@ -138,7 +141,7 @@ ex4 = T.TestList
       U.teq "ti"  testInteger (Just (-7))
     , U.teq "tb"  testBool    (Just True)
     , U.teq "tm"  testMM      (Just (MinMax 5))
-    -- TODO : testSat gives error
+    -- SKIP : testSat gives error because of (-4) not legal
     , U.teq "m7a" testM7Add   (Just (Mod7 1))
     , U.teq "m7m" testM7Mul   (Just (Mod7 7)) -- is this the right result?
     ]
@@ -146,7 +149,34 @@ ex4 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 5
 
--- TODO
+-- TODO: extend to handle Bool/And/Or
+
+instance Expr Program where
+    lit x                      = [(PushI x)]
+    add x y =  x ++ y ++ [S.Add]
+    mul x y =  x ++ y ++ [S.Mul]
+
+compile :: String -> Maybe Program
+compile s = parseExp lit add mul s
+
+exec :: Maybe Program -> Either String StackVal
+exec p =
+    case p of
+        Nothing -> Left "bad"
+        Just x  -> stackVM x
+
+ex5 :: T.Test
+ex5 = T.TestList
+    [
+      U.teq "p0" ((mul (add (lit 2) (lit 3)) (lit 4))::Program)    [PushI 2,PushI 3,S.Add,PushI 4,S.Mul]
+    , U.teq "p1" ((parseExp lit add mul "(3 * 5)")::Maybe Program) (Just [PushI 3,PushI 5,S.Mul])
+    , U.teq "p2" (compile               "(3 * 5)")                 (Just [PushI 3,PushI 5,S.Mul])
+    , U.teq "p3" (exec (compile         "(3 * 5)"))                (Right (IVal 15))
+      -- parser is not like Haskell - haskell returns 121 (first does mul then final add)
+    , U.teq "p4" (exec (compile "(2*3)*(4*5)+1" ))                 (Right (IVal 126))
+      -- haskell returns 126 on this one - so parser is adding before doing the middle mul
+    , U.teq "p5" (exec (compile "(2*3)*((4*5)+1)"))                (Right (IVal 126))
+    ]
 
 ------------------------------------------------------------------------------
 -- Exercise 6
@@ -161,5 +191,6 @@ hw05 = do
     T.runTestTT ex2
     T.runTestTT ex3
     T.runTestTT ex4
+    T.runTestTT ex5
 
 -- End of file.
