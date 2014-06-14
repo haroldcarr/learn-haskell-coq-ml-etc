@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 08 (Sun) 13:47:39 by Harold Carr.
-Last Modified : 2014 Jun 13 (Fri) 13:31:12 by Harold Carr.
+Last Modified : 2014 Jun 13 (Fri) 22:41:03 by Harold Carr.
 -}
 
 -- these two for Exercise 5
@@ -12,6 +12,8 @@ module HW05_HC where
 import           HW05_ExprT      as E
 import           HW05_Parser
 import           HW05_StackVM    as S
+
+import qualified Data.Map        as M
 
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
@@ -181,7 +183,46 @@ ex5 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 6
 
--- TODO
+class HasVars a where
+    var :: String -> a
+
+data VarExprT = VLit Integer
+              | VAdd VarExprT VarExprT
+              | VMul VarExprT VarExprT
+              | VVar String
+              deriving (Show, Eq)
+
+instance Expr VarExprT where
+    lit = VLit
+    add = VAdd
+    mul = VMul
+
+instance HasVars VarExprT where
+    var = VVar
+
+instance HasVars (M.Map String Integer -> Maybe Integer) where
+    var = M.lookup
+
+-- last arg is Map
+instance Expr (M.Map String Integer -> Maybe Integer) where
+    lit x0    _ = Just x0
+    add x0 y0 m =         (x0 m) >>= \x ->      (y0 m) >>= \y -> return (x + y)
+    mul x0 y0 m = do x <- (x0 m);          y <- (y0 m);          return (x * y)
+
+withVars :: [(String, Integer)]
+         -> (M.Map String Integer -> Maybe Integer)
+         -> Maybe Integer
+withVars vs exp0 = exp0 $ M.fromList vs
+
+ex6 :: T.Test
+ex6 = T.TestList
+    [
+      U.teq "v0" ((add (lit 3) (var "x")) :: VarExprT)                                     (VAdd (VLit 3) (VVar "x"))
+    , U.teq "v1" ((add (lit 3) (var "x")) :: (HasVars a, Expr a) => a)                     (VAdd (VLit 3) (VVar "x"))
+    , U.teq "v2" (withVars [("x", 6)] $                              var "x")              (Just  6)
+    , U.teq "v3" (withVars [("x", 6)] $                 add (lit 3) (var "x"))             (Just  9)
+    , U.teq "v4" (withVars [("x", 6), ("y", 10)] $ mul (add (lit 3) (var "x")) (var "y"))  (Just 90)
+    ]
 
 ------------------------------------------------------------------------------
 
@@ -192,5 +233,6 @@ hw05 = do
     T.runTestTT ex3
     T.runTestTT ex4
     T.runTestTT ex5
+    T.runTestTT ex6
 
 -- End of file.
