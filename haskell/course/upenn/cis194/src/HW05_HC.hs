@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 08 (Sun) 13:47:39 by Harold Carr.
-Last Modified : 2014 Jun 13 (Fri) 22:41:03 by Harold Carr.
+Last Modified : 2014 Jun 14 (Sat) 15:04:31 by Harold Carr.
 -}
 
 -- these two for Exercise 5
@@ -107,8 +107,8 @@ addMod7 :: Mod7 -> Mod7 -> Mod7
 addMod7 (Mod7 l) (Mod7 r) = Mod7 ((l + r) `div` 7)
 
 mulMod7 :: Mod7 -> Mod7 -> Mod7
-mulMod7 (Mod7 0) (Mod7 _) = Mod7 0
-mulMod7 (Mod7 _) (Mod7 0) = Mod7 0
+mulMod7 (Mod7  0) (Mod7  _) = Mod7 0
+mulMod7 (Mod7  _) (Mod7  0) = Mod7 0
 mulMod7 (Mod7 l0) (Mod7 r0) = Mod7 (mod7 l0 r0)
   where mod7 l r = if l == 1
                    then r
@@ -120,22 +120,22 @@ instance Expr Mod7 where
     mul   = mulMod7
 
 testExp     :: Expr a => Maybe a
-testExp     = parseExp lit add mul "(3 * -4) + 5"
+testExp      = parseExp lit add mul "(3 * -4) + 5"
 
 testInteger :: Maybe Integer
-testInteger = testExp
+testInteger  = testExp
 testBool    :: Maybe Bool
-testBool    = testExp
+testBool     = testExp
 testMM      :: Maybe MinMax
-testMM      = testExp
+testMM       = testExp
 -- testExp contains a (-4) which is not legal for Mod7
 testSat     :: Maybe Mod7
-testSat     = testExp
+testSat      = testExp
 
 testM7Add   :: Maybe Mod7
-testM7Add   = parseExp lit add mul "(3 + 5)"
+testM7Add    = parseExp lit add mul "(3 + 5)"
 testM7Mul   :: Maybe Mod7
-testM7Mul   = parseExp lit add mul "(3 * 5)"
+testM7Mul    = parseExp lit add mul "(3 * 5)"
 
 ex4 :: T.Test
 ex4 = T.TestList
@@ -154,7 +154,7 @@ ex4 = T.TestList
 -- TODO: extend to handle Bool/And/Or
 
 instance Expr Program where
-    lit x                      = [(PushI x)]
+    lit x   = [(PushI x)]
     add x y =  x ++ y ++ [S.Add]
     mul x y =  x ++ y ++ [S.Mul]
 
@@ -183,9 +183,7 @@ ex5 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 6
 
-class HasVars a where
-    var :: String -> a
-
+-- This data and the following two instances are part of the exercise, but is not needed for `withVars`
 data VarExprT = VLit Integer
               | VAdd VarExprT VarExprT
               | VMul VarExprT VarExprT
@@ -200,28 +198,59 @@ instance Expr VarExprT where
 instance HasVars VarExprT where
     var = VVar
 
+ex6 :: T.Test
+ex6 = T.TestList
+    [
+      U.teq "v0" ((add (lit 3) (var "x")) :: VarExprT)                   (VAdd (VLit 3) (VVar "x"))
+    , U.teq "v1" ((add (lit 3) (var "x")) :: (HasVars a, Expr a) => a)   (VAdd (VLit 3) (VVar "x"))
+    ]
+
+-- for this exercise, var could just be a regular top-level function
+-- but making it a type class makes it extensible (see first part of exercise 6 above)
+class HasVars a where
+    var :: String -> a
+
 instance HasVars (M.Map String Integer -> Maybe Integer) where
     var = M.lookup
 
 -- last arg is Map
 instance Expr (M.Map String Integer -> Maybe Integer) where
-    lit x0    _ = Just x0
-    add x0 y0 m =         (x0 m) >>= \x ->      (y0 m) >>= \y -> return (x + y)
-    mul x0 y0 m = do x <- (x0 m);          y <- (y0 m);          return (x * y)
+    lit x0      = \_ -> Just x0
+    add x0 y0   = \m ->         (x0 m) >>= \x ->      (y0 m) >>= \y -> return (x + y)
+    -- mul is equivalent to add except using currying of arg and do (and * instead of + of course)
+    mul x0 y0 m = do x <-       (x0 m);          y <- (y0 m);          return (x * y)
 
 withVars :: [(String, Integer)]
          -> (M.Map String Integer -> Maybe Integer)
          -> Maybe Integer
 withVars vs exp0 = exp0 $ M.fromList vs
 
-ex6 :: T.Test
-ex6 = T.TestList
+-- just to make below shorter
+type FM = M.Map String Integer -> Maybe Integer
+type MI = Maybe Integer
+mm :: M.Map String Integer
+mm  = M.fromList [("x", 6), ("y", 10)]
+
+ex6' :: T.Test
+ex6' = T.TestList
     [
-      U.teq "v0" ((add (lit 3) (var "x")) :: VarExprT)                                     (VAdd (VLit 3) (VVar "x"))
-    , U.teq "v1" ((add (lit 3) (var "x")) :: (HasVars a, Expr a) => a)                     (VAdd (VLit 3) (VVar "x"))
-    , U.teq "v2" (withVars [("x", 6)] $                              var "x")              (Just  6)
-    , U.teq "v3" (withVars [("x", 6)] $                 add (lit 3) (var "x"))             (Just  9)
-    , U.teq "v4" (withVars [("x", 6), ("y", 10)] $ mul (add (lit 3) (var "x")) (var "y"))  (Just 90)
+      U.teq "v2"  (withVars [("x", 6)] $                              var "x")              (Just  6)
+    , U.teq "v3"  (withVars [("x", 6)] $                 add (lit 3) (var "x"))             (Just  9)
+
+      -- abandoned equational reasoning - too many steps
+    , U.teq "v40" (withVars [("x", 6), ("y", 10)] $ mul (add (lit 3) (var "x")) (var "y"))        (Just 90)
+    , U.teq "v41" ((mul (add (lit 3) (var "x")) (var "y")::FM) $ mm)                              (Just 90)
+    , U.teq "v42" ((do x <- ((add (lit 3) (var "x")) mm); y <- ((var "y") mm); return (x*y))::MI) (Just 90)
+
+      -- shorter example instead
+    , U.teq "v50" (withVars [("x", 6)] $ add (lit 3) (var "x"))  (Just 9)
+    , U.teq "v51"      ((add (lit 3)            (var "x")::FM) $ mm)                  (Just 9)
+    , U.teq "v52" ((do x <- ((lit 3) mm); y <- ((var "x") mm) ; return (x+y))::MI)    (Just 9)
+    , U.teq "v53" ((do x <-  Just 3     ; y <- ((var "x") mm) ; return (x+y))::MI)    (Just 9)
+    , U.teq "v54" ((do x <-  Just 3     ; y <- M.lookup "x" mm; return (x+y))::MI)    (Just 9)
+    , U.teq "v55" ((do x <-  Just 3     ; y <- Just 6         ; return (x+y))::MI)    (Just 9)
+    , U.teq "v56"                                              (return (3+6) ::MI)    (Just 9)
+    , U.teq "v57"                                              (Just   (3+6::Int))    (Just 9)
     ]
 
 ------------------------------------------------------------------------------
@@ -234,5 +263,6 @@ hw05 = do
     T.runTestTT ex4
     T.runTestTT ex5
     T.runTestTT ex6
+    T.runTestTT ex6'
 
 -- End of file.
