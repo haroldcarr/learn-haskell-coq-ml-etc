@@ -1,6 +1,6 @@
 {-
 Created       : Jun 14 (Sat) 19:50:18 by Harold Carr.
-Last Modified : 2014 Jun 14 (Sat) 21:23:00 by Harold Carr.
+Last Modified : 2014 Jun 15 (Sun) 08:14:07 by Harold Carr.
 -}
 
 module HW06_HC where
@@ -19,7 +19,7 @@ fib 1 = 1
 fib n = fib (n - 1) + fib (n - 2)
 
 fibs1 :: [Integer]
-fibs1 = [ fib n | n <- [0 ..] ]
+fibs1 = [ fib n | n <- [0 .. ] ]
 
 ex1 :: T.Test
 ex1 = T.TestList
@@ -52,24 +52,38 @@ streamToList :: Stream a -> [a]
 streamToList (S h t) = h : streamToList t
 
 instance Show a => Show (Stream a) where
-    show (S h0 (S h1 (S h2 (S h3 (S h4 (S h5 (S h6 (S h7 (S h8 (S h9 (S h10 (S h11 (S h12 (S h13 (S h14 (S h15 _)))))))))))))))) =
-        "Stream" ++ concatMap (\x -> " " ++ show x) [h0,h1,h2,h3,h4,h5,h6,h7,h8,h9,h10,h11,h12,h13,h14,h15] ++ " .. "
+    show a = "Stream" ++ init (show $ take 20 $ streamToList a) ++ " .. ]"
 
-s :: Stream Integer
-s = (S 1 s)
+es :: Stream Integer
+es = (S 1 es)
 
 ex3 :: T.Test
 ex3 = T.TestList
     [
-      U.teq "e30" (show s) "Stream 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 .. "
+      U.teq "e30" (show es) "Stream[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 .. ]"
     ]
 
 ------------------------------------------------------------------------------
 -- Exercise 4
 
+streamRepeat :: a -> Stream a
+streamRepeat a = s where s = (S a s)
+
+-- TODO : do not use explicit recursion
+streamMap :: (a -> b) -> Stream a -> Stream b
+streamMap f s = go (streamToList s)
+  where
+    go (x:xs) = (S (f x) (go xs))
+{-
+streamFromSeed :: (a -> a) -> a -> Stream a
+streamFromSeed f a =
+-}
 ex4 :: T.Test
 ex4 = T.TestList
     [
+      -- TODO: fix show of Stream
+      U.teq "e30" (show (streamRepeat 'a'))  "Stream\"aaaaaaaaaaaaaaaaaaaa .. ]"
+    , U.teq "e31" (show (streamMap (+1) es)) "Stream[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 .. ]"
     ]
 
 ------------------------------------------------------------------------------
