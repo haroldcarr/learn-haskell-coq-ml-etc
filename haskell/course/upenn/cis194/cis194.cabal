@@ -23,6 +23,9 @@ library
                        , HW03_HC_Golf
                        , HW04_HC
                        , HW05_HC
+                       , HW06_HC
+                       , HW07_HC_JoinList
+                       , HW07_HC_Scrabble
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
@@ -30,6 +33,7 @@ library
                        , split
                        , HUnit >=1.2 && <1.3
                        -- , lens <= 4.1
+                       , mtl >= 2.1.2
                        , test-hunit-util >=0.1 && <0.2
   hs-source-dirs:      src
   default-language:    Haskell2010

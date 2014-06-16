@@ -1,0 +1,33 @@
+Created       : 2014 Jun 16 (Mon) 08:35:09 by Harold Carr.
+Last Modified : 2014 Jun 16 (Mon) 08:35:45 by Harold Carr.
+
+$ runhaskell StringBufEditor.hs
+33> n
+0: This buffer is for notes you don’t want to save, and for
+*1: evaluation of steam valve coefficients.
+2: To load a different file, type the character L followed
+3: by the name of the file.
+33> l carol.txt
+31559> 3640
+3638:
+3639: "An intelligent boy!" said Scrooge. "A remarkable boy!
+*3640: Do you know whether they’ve sold the prize Turkey that
+3641: was hanging up there?--Not the little prize Turkey: the
+3642: big one?"
+31559> e
+Replace line 3640: Do you know whether they’ve sold the prize Goose that
+31559> n
+3639: "An intelligent boy!" said Scrooge. "A remarkable boy!
+3640: Do you know whether they’ve sold the prize Goose that
+*3641: was hanging up there?--Not the little prize Turkey: the
+3642: big one?"
+3643:
+31559> e
+Replace line 3641: was hanging up there?--Not the little one: the
+31558> v
+3639: "An intelligent boy!" said Scrooge. "A remarkable boy!
+3640: Do you know whether they’ve sold the prize Goose that
+*3641: was hanging up there?--Not the little one: the
+3642: big one?"
+3643:
+31559> q

@@ -1,6 +1,6 @@
 {-
-Created       : Jun 14 (Sat) 19:50:18 by Harold Carr.
-Last Modified : 2014 Jun 15 (Sun) 17:45:12 by Harold Carr.
+Created       : 2014 Jun 14 (Sat) 19:50:18 by Harold Carr.
+Last Modified : 2014 Jun 16 (Mon) 08:31:38 by Harold Carr.
 -}
 
 module HW06_HC where

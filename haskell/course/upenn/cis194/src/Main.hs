@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 04 (Wed) 08:19:48 by Harold Carr.
-Last Modified : 2014 Jun 14 (Sat) 19:53:00 by Harold Carr.
+Last Modified : 2014 Jun 16 (Mon) 10:12:49 by Harold Carr.
 -}
 
 module Main where
@@ -11,6 +11,8 @@ import           HW03_HC_Golf
 import           HW04_HC
 import           HW05_HC
 import           HW06_HC
+import           HW07_HC_JoinList
+import           HW07_HC_Scrabble
 import           Test.HUnit.Base
 
 main :: IO Counts
@@ -21,5 +23,7 @@ main = do
     hw04
     hw05
     hw06
+    hw07jl
+    hw07s
 
 -- End of file.
