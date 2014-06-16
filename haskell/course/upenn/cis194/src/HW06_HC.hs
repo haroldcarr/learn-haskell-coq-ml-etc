@@ -1,6 +1,6 @@
 {-
 Created       : Jun 14 (Sat) 19:50:18 by Harold Carr.
-Last Modified : 2014 Jun 15 (Sun) 08:14:07 by Harold Carr.
+Last Modified : 2014 Jun 15 (Sun) 17:45:12 by Harold Carr.
 -}
 
 module HW06_HC where
@@ -74,31 +74,63 @@ streamMap :: (a -> b) -> Stream a -> Stream b
 streamMap f s = go (streamToList s)
   where
     go (x:xs) = (S (f x) (go xs))
-{-
+
 streamFromSeed :: (a -> a) -> a -> Stream a
-streamFromSeed f a =
--}
+streamFromSeed f a0 = (S a0 (go a0))
+  where
+    go a = (S (f a) (go (f a)))
+
 ex4 :: T.Test
 ex4 = T.TestList
     [
       -- TODO: fix show of Stream
-      U.teq "e30" (show (streamRepeat 'a'))  "Stream\"aaaaaaaaaaaaaaaaaaaa .. ]"
-    , U.teq "e31" (show (streamMap (+1) es)) "Stream[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 .. ]"
+      U.teq "e30" (show (streamRepeat   'a'))            "Stream\"aaaaaaaaaaaaaaaaaaaa .. ]"
+    , U.teq "e31" (show (streamMap      (+1) es))        "Stream[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 .. ]"
+    , U.teq "e32" (show (streamFromSeed (+1) (1::Int)))  "Stream[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 .. ]"
     ]
 
 ------------------------------------------------------------------------------
 -- Exercise 5
 
+nats :: Stream Integer
+nats = streamFromSeed (+1) 0
+
+interleaveStreams :: Stream a -> Stream a -> Stream a
+interleaveStreams s10 s20 = go (streamToList s10) (streamToList s20)
+  where
+    go (l:ls) (r:rs) = (S l (S r (go ls rs)))
+
+-- 2/2^1; 4/2^2; 6/2^1; 8/2^3; 10/2^1; 12/2^2; 14/2^1; 16/2^4
+-- http://books.google.com/books?id=ZZMjbAYwGPcC&pg=PA291&lpg=PA291&dq=%22ruler+function%22&source=bl&ots=d4Z2vz1okS&sig=AsLZ7x66QyD5wkvd5HX1ttYEusw&hl=en&sa=X&ei=ODqeU6T_IJKyyATM3oC4Cg&ved=0CBwQ6AEwADgo#v=onepage&q=%22ruler%20function%22&f=false
+
+ruler :: Stream Integer
+ruler = interleaveStreams (streamFromSeed (id) 0) (streamMap rul (streamFromSeed (+2) 2))
+  where
+    rul :: Integer -> Integer
+    rul n | odd n     = 0
+          | otherwise = let k = n `div` 2 in rul k + 1
+
 ex5 :: T.Test
 ex5 = T.TestList
+    [
+      U.teq "e50" (show nats)                        "Stream[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 .. ]"
+    , U.teq "e51" (show (interleaveStreams nats es)) "Stream[0,1,1,1,2,1,3,1,4,1,5,1,6,1,7,1,8,1,9,1 .. ]"
+    , U.teq "e52" (show ruler)                       "Stream[0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2 .. ]"
+    ]
+
+------------------------------------------------------------------------------
+-- Exercise 6 - TODO
+
+ex6 :: T.Test
+ex6 = T.TestList
     [
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 6
+-- Exercise 7 - TODO
 
-ex6 :: T.Test
-ex6 = T.TestList
+ex7 :: T.Test
+ex7 = T.TestList
     [
     ]
 
@@ -112,5 +144,6 @@ hw06 = do
     T.runTestTT ex4
     T.runTestTT ex5
     T.runTestTT ex6
+    T.runTestTT ex7
 
 -- End of file.
