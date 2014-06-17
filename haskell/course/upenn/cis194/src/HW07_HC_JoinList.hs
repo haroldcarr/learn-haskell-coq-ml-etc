@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 15 (Sun) 17:51:15 by Harold Carr.
-Last Modified : 2014 Jun 16 (Mon) 16:27:59 by Harold Carr.
+Last Modified : 2014 Jun 16 (Mon) 17:41:08 by Harold Carr.
 -}
 
 module HW07_HC_JoinList where
@@ -78,7 +78,8 @@ gst :: (Sized b, Monoid b) => JoinList b a -> Int
 gst = getSize . size . tag
 
 indexJ :: (Sized b, Monoid b) => Int -> JoinList b a -> Maybe a
-indexJ _  Empty                       = Nothing
+-- indexJ _  Empty                       = Nothing -- not necessary - covered by guard
+-- indexJ  0 s@(Single _ _)              = Just s -- TODO
 indexJ i0 jl    | i0 >= gst jl        = Nothing
                 | otherwise           = ij i0 jl
   where
@@ -156,8 +157,8 @@ same jl = [ go i0 | i0 <- [ 0 .. gst jl - 1] ]
         ij = indexJ i jl
         tl = toList jl !!? i
 
-ex2 :: T.Test
-ex2 = T.TestList
+ex21 :: T.Test
+ex21 = T.TestList
     [
       U.teq "e210" (same yeah)         (replicate 4 (Right True))
     , U.teq "e211" (indexJ 4 yeah)     Nothing
@@ -166,6 +167,34 @@ ex2 = T.TestList
     , U.teq "e213" (indexJ 9 abcl)     Nothing
     , U.teq "e214" (same abcr)         (replicate 9 (Right True))
     , U.teq "e215" (indexJ 9 abcr)     Nothing
+    ]
+
+--------------------------------------------------
+-- 2.
+
+-- The instructions do not state whether the returned JoinList should be balanced.
+-- This version returns an unbalanced one.
+-- Note: added Eq for testing.
+dropJ :: (Eq a, Sized b, Monoid b) => Int -> JoinList b a -> JoinList b a
+dropJ 0 s@(Single _ _)                = s
+dropJ i0 jl            | i0 >= gst jl = Empty
+                       | otherwise    = dj i0 jl
+  where
+    dj _ s@(Single _ _)               = s
+    dj i (Append _ l r) | i < gst l   = dj i l +++ r
+                        | otherwise   = dj (i - gst l) r
+
+dropper :: (Eq a, Sized b, Monoid b) => Int -> JoinList b a -> Bool
+dropper n jl = toList (dropJ n jl) == drop n (toList jl)
+
+ex22 :: T.Test
+ex22 = T.TestList
+    [
+      U.teq "e220" (dropJ 9 (dropJ 2 (Single (Size 1) 'i')))   Empty
+    , U.teq "e221" (dropJ 0 (Single (Size 1) 'i'))             (Single (Size 1) 'i')
+    , U.teq "e222" (dropJ 8 abcl)                              (Single (Size 1) 'i')
+    , U.teq "e223" (dropJ 7 abcr)                              (Append (Size 2) (Single (Size 1) 'h') (Single (Size 1) 'i'))
+    , U.teq "e224" (dropper 2 abcl)                            True
     ]
 
 ------------------------------------------------------------------------------
@@ -217,7 +246,8 @@ t = hw07jl
 hw07jl :: IO T.Counts
 hw07jl = do
     T.runTestTT ex1
-    T.runTestTT ex2
+    T.runTestTT ex21
+    T.runTestTT ex22
     T.runTestTT ex3
     T.runTestTT ex4
     T.runTestTT ex5
