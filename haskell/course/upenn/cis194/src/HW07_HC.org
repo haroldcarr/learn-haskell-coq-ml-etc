@@ -1,13 +1,15 @@
 Created       : 2014 Jun 16 (Mon) 08:35:09 by Harold Carr.
-Last Modified : 2014 Jun 16 (Mon) 08:35:45 by Harold Carr.
+Last Modified : 2014 Jun 17 (Tue) 09:35:53 by Harold Carr.
 
-$ runhaskell StringBufEditor.hs
+cd ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/course/upenn/cis194/src
+$ runhaskell HW07_StringBufEditor.hs
+$ runhaskell HW07_HC_JoinListEditor.hs
 33> n
 0: This buffer is for notes you don’t want to save, and for
 *1: evaluation of steam valve coefficients.
 2: To load a different file, type the character L followed
 3: by the name of the file.
-33> l carol.txt
+33> l HW07-carol.txt
 31559> 3640
 3638:
 3639: "An intelligent boy!" said Scrooge. "A remarkable boy!
