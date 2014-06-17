@@ -1,16 +1,17 @@
 {-
 Created       : 2014 Jun 15 (Sun) 17:51:15 by Harold Carr.
-Last Modified : 2014 Jun 16 (Mon) 18:12:28 by Harold Carr.
+Last Modified : 2014 Jun 16 (Mon) 21:34:14 by Harold Carr.
 -}
 
 module HW07_HC_JoinList where
 
+import           HW07_HC_Scrabble
 import           HW07_Sized
 
-import           Data.Monoid     (Monoid (..), Product (..), mempty, (<>))
+import           Data.Monoid      (Monoid (..), Product (..), mempty, (<>))
 
-import qualified Test.HUnit      as T
-import qualified Test.HUnit.Util as U
+import qualified Test.HUnit       as T
+import qualified Test.HUnit.Util  as U
 
 ------------------------------------------------------------------------------
 -- This version used for rest of file.
@@ -213,9 +214,16 @@ ex2 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 3
 
+scoreLine :: String -> JoinList Score String
+scoreLine s = (Single (scoreString s) s)
+
 ex3 :: T.Test
 ex3 = T.TestList
     [
+      U.teq "e31" (score 'c')                                  (Score 3)
+    , U.teq "e32" (score 'z')                                  (Score 10)
+    , U.teq "e33" (scoreString "Harold")                       (Score 4+1+1+1+1+2)
+    , U.teq "e34" (scoreLine "yay " +++ scoreLine "haskell!")  (Append (Score 23) (Single (Score 9) "yay ") (Single (Score 14) "haskell!"))
     ]
 
 ------------------------------------------------------------------------------
@@ -227,43 +235,16 @@ ex4 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 5
-
-ex5 :: T.Test
-ex5 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
--- Exercise 6 - TODO
-
-ex6 :: T.Test
-ex6 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
--- Exercise 7 - TODO
-
-ex7 :: T.Test
-ex7 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
 
 -- TODO: remove this when final
 t :: IO T.Counts
-t = hw07jl
+t = hw07
 
-hw07jl :: IO T.Counts
-hw07jl = do
+hw07 :: IO T.Counts
+hw07 = do
     T.runTestTT ex1
     T.runTestTT ex2
     T.runTestTT ex3
     T.runTestTT ex4
-    T.runTestTT ex5
-    T.runTestTT ex6
-    T.runTestTT ex7
 
 -- End of file.

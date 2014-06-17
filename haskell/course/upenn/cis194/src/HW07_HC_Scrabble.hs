@@ -1,79 +1,57 @@
 {-
 Created       : 2014 Jun 15 (Sun) 17:51:15 by Harold Carr.
-Last Modified : 2014 Jun 16 (Mon) 10:12:29 by Harold Carr.
+Last Modified : 2014 Jun 16 (Mon) 21:28:18 by Harold Carr.
 -}
+
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module HW07_HC_Scrabble where
 
-import qualified Test.HUnit      as T
-import qualified Test.HUnit.Util as U
+import           Data.Char   (toLower)
+import           Data.Monoid
 
-------------------------------------------------------------------------------
--- Exercise 1
+newtype Score = Score Int
+  deriving (Eq, Ord, Show, Num)
 
-ex1 :: T.Test
-ex1 = T.TestList
-    [
-    ]
+getScore :: Score -> Int
+getScore (Score i) = i
 
-------------------------------------------------------------------------------
--- Exercise 2
+instance Monoid Score where
+    mempty  = Score 0
+    mappend = (+)
 
-ex2 :: T.Test
-ex2 = T.TestList
-    [
-    ]
+score :: Char -> Score
+score c =
+    Score (case toLower c of
+                'a' -> 1
+                'b' -> 3
+                'c' -> 3
+                'd' -> 2
+                'e' -> 1
+                'f' -> 4
+                'g' -> 2
+                'h' -> 4
+                'i' -> 1
+                'j' -> 8
+                'k' -> 5
+                'l' -> 1
+                'm' -> 3
+                'n' -> 1
+                'o' -> 1
+                'p' -> 3
+                'q' -> 10
+                'r' -> 1
+                's' -> 1
+                't' -> 1
+                'u' -> 1
+                'w' -> 4
+                'x' -> 8
+                'y' -> 4
+                'z' -> 10
+                _   -> 0)
 
-------------------------------------------------------------------------------
--- Exercise 3
-
-ex3 :: T.Test
-ex3 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
--- Exercise 4
-
-ex4 :: T.Test
-ex4 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
--- Exercise 5
-
-ex5 :: T.Test
-ex5 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
--- Exercise 6 - TODO
-
-ex6 :: T.Test
-ex6 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
--- Exercise 7 - TODO
-
-ex7 :: T.Test
-ex7 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
-
-hw07s :: IO T.Counts
-hw07s = do
-    T.runTestTT ex1
-    T.runTestTT ex2
-    T.runTestTT ex3
-    T.runTestTT ex4
-    T.runTestTT ex5
-    T.runTestTT ex6
-    T.runTestTT ex7
+scoreString :: String -> Score
+scoreString = Score . foldr (\c acc -> getScore (score c) + acc) 0
 
 -- End of file.

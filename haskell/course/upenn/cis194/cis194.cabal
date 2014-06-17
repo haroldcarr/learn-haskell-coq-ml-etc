@@ -25,7 +25,6 @@ library
                        , HW05_HC
                        , HW06_HC
                        , HW07_HC_JoinList
-                       , HW07_HC_Scrabble
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
