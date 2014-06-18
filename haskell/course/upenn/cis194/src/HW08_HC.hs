@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 17 (Tue) 15:48:54 by Harold Carr.
-Last Modified : 2014 Jun 17 (Tue) 22:07:39 by Harold Carr.
+Last Modified : 2014 Jun 18 (Wed) 06:43:28 by Harold Carr.
 -}
 
 -- for exercise 1.2
@@ -23,7 +23,7 @@ import qualified Test.HUnit.Util as U
 -- 1
 
 emptyGL :: GuestList
-emptyGL = (GL [] 0)
+emptyGL = GL [] 0
 
 glCons :: Employee -> GuestList -> GuestList
 glCons e@(Emp _ ef) (GL gl glf) = GL (e:gl) (ef + glf)
@@ -36,7 +36,7 @@ instance Monoid GuestList where
     mappend (GL lgl _) (GL rgl _) =
         let u = lgl `union` rgl
             f = foldr ((+) . empFun) 0 u
-        in (GL u f)
+        in GL u f
 
 -- 3
 
@@ -47,11 +47,11 @@ moreFun l@(GL _ lf) r@(GL _ rf) | lf > rf   = l
 -- test
 
 you  :: Employee
-you   = (Emp "you" 5)
+you   = Emp "you" 5
 me   :: Employee
-me    = (Emp "me" 10)
+me    = Emp "me" 10
 them :: Employee
-them  = (Emp "them" 15)
+them  = Emp "them" 15
 
 youAndMe        :: GuestList
 youAndMe         = glCons you (glCons me   emptyGL)
@@ -78,7 +78,7 @@ ex1 = T.TestList
 -- Exercise 2
 
 treeFold :: (Tree a -> b -> b) -> b -> Tree a -> b
-treeFold f z t@(Node _ xs) = f t $ foldr (\x acc -> treeFold f acc x) z xs
+treeFold f z t@(Node _ xs) = f t $ foldr (flip (treeFold f)) z xs
 
 ex2 :: T.Test
 ex2 = T.TestList

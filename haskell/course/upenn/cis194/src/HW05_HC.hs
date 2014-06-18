@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 08 (Sun) 13:47:39 by Harold Carr.
-Last Modified : 2014 Jun 14 (Sat) 15:04:31 by Harold Carr.
+Last Modified : 2014 Jun 18 (Wed) 06:34:33 by Harold Carr.
 -}
 
 -- these two for Exercise 5
@@ -154,12 +154,12 @@ ex4 = T.TestList
 -- TODO: extend to handle Bool/And/Or
 
 instance Expr Program where
-    lit x   = [(PushI x)]
+    lit x   =            [PushI x]
     add x y =  x ++ y ++ [S.Add]
     mul x y =  x ++ y ++ [S.Mul]
 
 compile :: String -> Maybe Program
-compile s = parseExp lit add mul s
+compile = parseExp lit add mul
 
 exec :: Maybe Program -> Either String StackVal
 exec p =
@@ -216,9 +216,9 @@ instance HasVars (M.Map String Integer -> Maybe Integer) where
 -- last arg is Map
 instance Expr (M.Map String Integer -> Maybe Integer) where
     lit x0      = \_ -> Just x0
-    add x0 y0   = \m ->         (x0 m) >>= \x ->      (y0 m) >>= \y -> return (x + y)
+    add x0 y0   = \m ->   x0 m >>= \x ->      y0 m >>= \y -> return (x + y)
     -- mul is equivalent to add except using currying of arg and do (and * instead of + of course)
-    mul x0 y0 m = do x <-       (x0 m);          y <- (y0 m);          return (x * y)
+    mul x0 y0 m = do x <- x0 m;          y <- y0 m;          return (x * y)
 
 withVars :: [(String, Integer)]
          -> (M.Map String Integer -> Maybe Integer)

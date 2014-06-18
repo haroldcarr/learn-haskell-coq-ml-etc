@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 15 (Sun) 17:51:15 by Harold Carr.
-Last Modified : 2014 Jun 17 (Tue) 16:18:18 by Harold Carr.
+Last Modified : 2014 Jun 18 (Wed) 06:39:37 by Harold Carr.
 -}
 
 -- these are for exercise 4
@@ -125,8 +125,8 @@ takeJ i0 jl             | i0 >= gst jl = jl
 
 -- create a balanced tree
 yeah :: JoinList Size Char
-yeah = ((Single (Size 1) 'y') +++ (Single (Size 1) 'e')) +++
-       ((Single (Size 1) 'a') +++ (Single (Size 1) 'h'))
+yeah = (Single (Size 1) 'y' +++ Single (Size 1) 'e') +++
+       (Single (Size 1) 'a' +++ Single (Size 1) 'h')
 {-
 Append (Size 4)
        (Append (Size 2)
@@ -223,7 +223,7 @@ ex2 = T.TestList
 -- Exercise 3
 
 scoreLine :: String -> JoinList Score String
-scoreLine s = (Single (scoreString s) s)
+scoreLine s = Single (scoreString s) s
 
 ex3 :: T.Test
 ex3 = T.TestList
@@ -239,7 +239,7 @@ ex3 = T.TestList
 
 instance Buffer (JoinList (Score, Size) String) where
   toString          = init . unlines . toList -- TODO: init removes that "extra" \n at the end that is not there on original
-  fromString      s = foldr (\x acc -> (Single (scoreString x, Size 1) x) +++ acc) Empty (lines s)
+  fromString      s = foldr (\x acc -> Single (scoreString x, Size 1) x +++ acc) Empty (lines s)
   line              = indexJ
   replaceLine n l b = takeJ n b +++ fromString l +++ dropJ (n + 1) b
   numLines          = getSize  . snd . tag

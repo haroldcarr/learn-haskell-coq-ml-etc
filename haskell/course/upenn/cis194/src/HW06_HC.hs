@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 14 (Sat) 19:50:18 by Harold Carr.
-Last Modified : 2014 Jun 16 (Mon) 08:31:38 by Harold Carr.
+Last Modified : 2014 Jun 18 (Wed) 06:37:31 by Harold Carr.
 -}
 
 module HW06_HC where
@@ -55,7 +55,7 @@ instance Show a => Show (Stream a) where
     show a = "Stream" ++ init (show $ take 20 $ streamToList a) ++ " .. ]"
 
 es :: Stream Integer
-es = (S 1 es)
+es = S 1 es
 
 ex3 :: T.Test
 ex3 = T.TestList
@@ -67,18 +67,18 @@ ex3 = T.TestList
 -- Exercise 4
 
 streamRepeat :: a -> Stream a
-streamRepeat a = s where s = (S a s)
+streamRepeat a = s where s = S a s
 
 -- TODO : do not use explicit recursion
 streamMap :: (a -> b) -> Stream a -> Stream b
 streamMap f s = go (streamToList s)
   where
-    go (x:xs) = (S (f x) (go xs))
+    go (x:xs) = S (f x) (go xs)
 
 streamFromSeed :: (a -> a) -> a -> Stream a
-streamFromSeed f a0 = (S a0 (go a0))
+streamFromSeed f a0 = S a0 (go a0)
   where
-    go a = (S (f a) (go (f a)))
+    go a = S (f a) (go (f a))
 
 ex4 :: T.Test
 ex4 = T.TestList
@@ -98,13 +98,13 @@ nats = streamFromSeed (+1) 0
 interleaveStreams :: Stream a -> Stream a -> Stream a
 interleaveStreams s10 s20 = go (streamToList s10) (streamToList s20)
   where
-    go (l:ls) (r:rs) = (S l (S r (go ls rs)))
+    go (l:ls) (r:rs) = S l (S r (go ls rs))
 
 -- 2/2^1; 4/2^2; 6/2^1; 8/2^3; 10/2^1; 12/2^2; 14/2^1; 16/2^4
 -- http://books.google.com/books?id=ZZMjbAYwGPcC&pg=PA291&lpg=PA291&dq=%22ruler+function%22&source=bl&ots=d4Z2vz1okS&sig=AsLZ7x66QyD5wkvd5HX1ttYEusw&hl=en&sa=X&ei=ODqeU6T_IJKyyATM3oC4Cg&ved=0CBwQ6AEwADgo#v=onepage&q=%22ruler%20function%22&f=false
 
 ruler :: Stream Integer
-ruler = interleaveStreams (streamFromSeed (id) 0) (streamMap rul (streamFromSeed (+2) 2))
+ruler = interleaveStreams (streamFromSeed id 0) (streamMap rul (streamFromSeed (+2) 2))
   where
     rul :: Integer -> Integer
     rul n | odd n     = 0
