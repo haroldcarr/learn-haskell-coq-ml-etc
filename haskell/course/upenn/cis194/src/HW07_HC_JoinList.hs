@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 15 (Sun) 17:51:15 by Harold Carr.
-Last Modified : 2014 Jun 17 (Tue) 09:15:28 by Harold Carr.
+Last Modified : 2014 Jun 17 (Tue) 16:18:18 by Harold Carr.
 -}
 
 -- these are for exercise 4
@@ -287,10 +287,6 @@ exJl :: TJL
 exJl = Append (Score 572,Size 14) (Single (Score 110,Size 1) "The Project Gutenberg EBook of A Christmas Carol, by Charles Dickens") (Append (Score 462,Size 13) (Single (Score 0,Size 1) "") (Append (Score 462,Size 12) (Single (Score 90,Size 1) "This eBook is for the use of anyone anywhere at no cost and with") (Append (Score 372,Size 11) (Single (Score 84,Size 1) "almost no restrictions whatsoever.  You may copy it, give it away or") (Append (Score 288,Size 10) (Single (Score 89,Size 1) "re-use it under the terms of the Project Gutenberg License included") (Append (Score 199,Size 9) (Single (Score 66,Size 1) "with this eBook or online at www.gutenberg.net") (Append (Score 133,Size 8) (Single (Score 0,Size 1) "") (Append (Score 133,Size 7) (Single (Score 0,Size 1) "") (Append (Score 133,Size 6) (Single (Score 29,Size 1) "Title: A Christmas Carol") (Append (Score 104,Size 5) (Single (Score 39,Size 1) "       A Ghost Story of Christmas") (Append (Score 65,Size 4) (Single (Score 0,Size 1) "") (Append (Score 65,Size 3) (Single (Score 35,Size 1) "Author: Charles Dickens") (Append (Score 30,Size 2) (Single (Score 0,Size 1) "") (Append (Score 30,Size 1) (Single (Score 30,Size 1) "Release Date: August 11, 2004 [EBook #46]") Empty)))))))))))))
 
 ------------------------------------------------------------------------------
-
--- TODO: remove this when final
-t :: IO T.Counts
-t = hw07
 
 hw07 :: IO T.Counts
 hw07 = do
