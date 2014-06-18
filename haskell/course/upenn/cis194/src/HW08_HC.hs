@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 17 (Tue) 15:48:54 by Harold Carr.
-Last Modified : 2014 Jun 17 (Tue) 17:00:11 by Harold Carr.
+Last Modified : 2014 Jun 17 (Tue) 22:07:39 by Harold Carr.
 -}
 
 -- for exercise 1.2
@@ -12,6 +12,7 @@ import           HW08_Employee
 
 import           Data.List       (union)
 import           Data.Monoid
+import           Data.Tree
 
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
@@ -76,9 +77,14 @@ ex1 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 2
 
+treeFold :: (Tree a -> b -> b) -> b -> Tree a -> b
+treeFold f z t@(Node _ xs) = f t $ foldr (\x acc -> treeFold f acc x) z xs
+
 ex2 :: T.Test
 ex2 = T.TestList
     [
+      U.teq "e20" (treeFold (\(Node (Emp _ fun) _) acc -> fun + acc) 0 testCompany)  (9+2+5+1+5+3+17+4)
+    , U.teq "e21" (treeFold (\(Node (Emp _ fun) _) acc -> fun + acc) 0 testCompany2) (9+3+5+1+5+3+17+4)
     ]
 
 ------------------------------------------------------------------------------
@@ -116,8 +122,8 @@ ex6 = T.TestList
 ------------------------------------------------------------------------------
 
 -- TODO: remove this when final
-t :: IO T.Counts
-t = hw08
+tt :: IO T.Counts
+tt = hw08
 
 hw08 :: IO T.Counts
 hw08 = do
