@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 15:36:04 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 16:47:10 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -106,8 +106,6 @@ parsePhone = Parser $ pp isDigit
 parseEmployee :: Parser Employee
 parseEmployee = Emp <$> parseName <*> parsePhone
 
--- runParser (runParser (Emp <$> parseName) "Harold") "23"
-
 pp :: (Char -> Bool) -> String -> Maybe (String, String)
 pp f s0 = pp' s0 []
   where
@@ -154,11 +152,34 @@ ex2' = U.tt "trc"
       (Just (Emp "H" "8", "e"))
 
 ------------------------------------------------------------------------------
--- Exercise 3 -- TODO
+-- Exercise 3
+
+abParser :: Parser (Char, Char)
+abParser = (,) <$> (satisfy ('a'==)) <*> (satisfy ('b'==))
+
+abParser_ :: Parser ()
+abParser_ = (\(_,_) -> ()) <$> abParser
+
+-- an explicit one just to see how it works
+intPairP :: Parser [Integer]
+intPairP = Parser (\s -> let (x,r1) = fromJust $ runParser posInt s
+                             (_,r2) = fromJust $ runParser (satisfy (' '==)) r1
+                             (y,r3) = fromJust $ runParser posInt r2
+                         in Just ([x,y], r3))
+
+-- the real deal using applicatives
+intPair :: Parser [Integer]
+intPair = (\x _ y -> [x,y]) <$> posInt <*> (satisfy (' '==)) <*> posInt
 
 ex3 :: T.Test
 ex3 = T.TestList
     [
+      U.teq "e300" (runParser abParser  "abcdef")   (Just (('a','b'),"cdef"))
+    , U.teq "e301" (runParser abParser  "aebcdf")   Nothing
+    , U.teq "e310" (runParser abParser_ "abcdef")   (Just (()       ,"cdef"))
+    , U.teq "e311" (runParser abParser_ "aebcdf")   Nothing
+    , U.teq "e320" (runParser intPairP  "12 34")    (Just ([12,34],""))
+    , U.teq "e321" (runParser intPair   "12 34")    (Just ([12,34],""))
     ]
 
 ------------------------------------------------------------------------------
