@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 12:59:13 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 13:38:16 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -8,6 +8,7 @@ module HW10_HC_AParser where
 import           Control.Applicative
 
 import           Data.Char
+import           Data.List           (unfoldr)
 
 import qualified Test.HUnit          as T
 import qualified Test.HUnit.Util     as U
@@ -85,9 +86,32 @@ ex1 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 2
 
+instance Applicative Parser where
+    pure    = undefined
+    _ <*> _ = undefined
+
+-- for test
+
+type Name = String
+data Employee = Emp { name :: Name, phone :: String }
+
+parseName  :: Parser Name
+parseName = Parser (\s -> undefined)
+
+parsePhone :: Parser String
+parsePhone = undefined
+
+pp :: (Char -> Bool) -> String -> String
+pp f = unfoldr (\b -> case b of
+                          []     -> Nothing
+                          (x:xs) -> if f x then Just (x, xs) else Nothing)
+
 ex2 :: T.Test
 ex2 = T.TestList
     [
+      U.teq "e20" (pp isAlpha "Harold8016824058") "Harold"
+    , U.teq "e20" (pp isDigit "Harold8016824058") ""
+    , U.teq "e20" (pp isDigit "8016824058Harold") "8016824058"
     ]
 
 ------------------------------------------------------------------------------
