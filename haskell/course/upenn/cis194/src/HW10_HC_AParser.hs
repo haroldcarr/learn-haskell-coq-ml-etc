@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 13:38:16 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 14:01:41 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -96,22 +96,24 @@ type Name = String
 data Employee = Emp { name :: Name, phone :: String }
 
 parseName  :: Parser Name
-parseName = Parser (\s -> undefined)
+parseName = Parser $ pp isAlpha
 
 parsePhone :: Parser String
-parsePhone = undefined
+parsePhone = Parser $ pp isDigit
 
-pp :: (Char -> Bool) -> String -> String
-pp f = unfoldr (\b -> case b of
-                          []     -> Nothing
-                          (x:xs) -> if f x then Just (x, xs) else Nothing)
+pp :: (Char -> Bool) -> String -> Maybe (String, String)
+pp f s0 = pp' s0 []
+  where
+    pp' s acc = case (runParser (satisfy f)) s of
+           Nothing -> if null acc then Nothing else Just (reverse acc, s) -- TODO avoid reverse
+           (Just (c,rest)) -> pp' rest (c:acc)
 
 ex2 :: T.Test
 ex2 = T.TestList
     [
-      U.teq "e20" (pp isAlpha "Harold8016824058") "Harold"
-    , U.teq "e20" (pp isDigit "Harold8016824058") ""
-    , U.teq "e20" (pp isDigit "8016824058Harold") "8016824058"
+      U.teq "e20" (pp isAlpha "Harold8016824058") (Just ("Harold", "8016824058"))
+    , U.teq "e20" (pp isDigit "Harold8016824058") Nothing
+    , U.teq "e20" (pp isDigit "8016824058Harold") (Just ("8016824058", "Harold"))
     ]
 
 ------------------------------------------------------------------------------
