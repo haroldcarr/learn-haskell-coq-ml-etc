@@ -1,12 +1,16 @@
-{- CIS 194 HW 10
-   due Monday, 1 April
+{-
+Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 11:20:10 by Harold Carr.
 -}
 
-module AParser where
+module HW10_HC_AParser where
 
 import           Control.Applicative
 
 import           Data.Char
+
+import qualified Test.HUnit          as T
+import qualified Test.HUnit.Util     as U
 
 -- A parser for a value of type a is a function which takes a String
 -- represnting the input to be parsed, and succeeds or fails; if it
@@ -33,17 +37,6 @@ satisfy p = Parser f
 char :: Char -> Parser Char
 char c = satisfy (== c)
 
-{- For example:
-
-*Parser> runParser (satisfy isUpper) "ABC"
-Just ('A',"BC")
-*Parser> runParser (satisfy isUpper) "abc"
-Nothing
-*Parser> runParser (char 'x') "xyz"
-Just ('x',"yz")
-
--}
-
 -- For convenience, we've also provided a parser for positive
 -- integers.
 posInt :: Parser Integer
@@ -54,6 +47,67 @@ posInt = Parser f
       | otherwise = Just (read ns, rest)
       where (ns, rest) = span isDigit xs
 
+ex0 :: T.Test
+ex0 = T.TestList
+    [
+      U.teq "e00" (runParser (satisfy isUpper) "ABC")  (Just ('A',"BC"))
+    , U.teq "e01" (runParser (satisfy isUpper) "abc")  Nothing
+    , U.teq "e02" (runParser (char 'x')        "xyz")  (Just ('x',"yz"))
+    ]
+
 ------------------------------------------------------------
 -- Your code goes below here
 ------------------------------------------------------------
+
+------------------------------------------------------------------------------
+-- Exercise 1
+
+ex1 :: T.Test
+ex1 = T.TestList
+    [
+    ]
+
+------------------------------------------------------------------------------
+-- Exercise 2
+
+ex2 :: T.Test
+ex2 = T.TestList
+    [
+    ]
+
+------------------------------------------------------------------------------
+-- Exercise 3 -- TODO
+
+ex3 :: T.Test
+ex3 = T.TestList
+    [
+    ]
+
+------------------------------------------------------------------------------
+-- Exercise 4 -- TODO
+
+ex4 :: T.Test
+ex4 = T.TestList
+    [
+    ]
+
+------------------------------------------------------------------------------
+-- Exercise 5 -- TODO
+
+ex5 :: T.Test
+ex5 = T.TestList
+    [
+    ]
+
+------------------------------------------------------------------------------
+
+hw10 :: IO T.Counts
+hw10 = do
+    T.runTestTT ex0
+    T.runTestTT ex1
+    T.runTestTT ex2
+    T.runTestTT ex3
+    T.runTestTT ex4
+    T.runTestTT ex5
+
+-- End of file.
