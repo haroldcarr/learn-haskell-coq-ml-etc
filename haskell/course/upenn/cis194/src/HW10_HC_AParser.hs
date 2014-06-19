@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 11:20:10 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 12:59:13 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -50,9 +50,13 @@ posInt = Parser f
 ex0 :: T.Test
 ex0 = T.TestList
     [
-      U.teq "e00" (runParser (satisfy isUpper) "ABC")  (Just ('A',"BC"))
-    , U.teq "e01" (runParser (satisfy isUpper) "abc")  Nothing
-    , U.teq "e02" (runParser (char 'x')        "xyz")  (Just ('x',"yz"))
+      U.teq "e00" (runParser (satisfy isUpper) "ABC")      (Just ('A',"BC"))
+    , U.teq "e01" (runParser (satisfy isUpper) "abc")      Nothing
+    , U.teq "e02" (runParser (char 'x')        "xyz")      (Just ('x',"yz"))
+
+    , U.teq "e03" (runParser posInt             "10ab20")  (Just (10,"ab20"))
+    , U.teq "e03" (runParser posInt               "ab20")  Nothing
+    , U.teq "e03" (runParser posInt                 "20")  (Just (20,""))
     ]
 
 ------------------------------------------------------------
@@ -62,9 +66,20 @@ ex0 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 1
 
+instance Functor Parser where
+    fmap f (Parser p) = Parser (\s -> case p s of
+                                          Nothing       -> Nothing
+                                          Just (r,rest) -> Just (f r, rest))
+
 ex1 :: T.Test
 ex1 = T.TestList
     [
+      U.teq "e10" (runParser (fmap (toUpper) (satisfy isLower))
+                             "abc")
+                  (Just ('A', "bc"))
+    , U.teq "e11" (runParser (fmap (*2)      posInt)
+                             "20")
+                  (Just (40, ""))
     ]
 
 ------------------------------------------------------------------------------
