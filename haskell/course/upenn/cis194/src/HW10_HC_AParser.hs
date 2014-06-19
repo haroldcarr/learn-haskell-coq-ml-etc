@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 14:31:47 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 15:36:04 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -9,6 +9,7 @@ import           Control.Applicative
 
 import           Data.Char
 import           Data.List           (unfoldr)
+import           Data.Maybe          (fromJust)
 
 import qualified Test.HUnit          as T
 import qualified Test.HUnit.Util     as U
@@ -68,9 +69,7 @@ ex0 = T.TestList
 -- Exercise 1
 
 instance Functor Parser where
-    fmap f (Parser p) = Parser (\s -> case p s of
-                                          Nothing       -> Nothing
-                                          Just (r,rest) -> Just (f r, rest))
+    fmap f (Parser p) = Parser (\s -> p s >>= \(r,rest) -> return (f r, rest))
 
 ex1 :: T.Test
 ex1 = T.TestList
@@ -81,19 +80,17 @@ ex1 = T.TestList
     , U.teq "e11" (runParser (fmap (*2)      posInt)
                              "20")
                   (Just (40, ""))
+    , U.teq "e12" (runParser (     (*3) <$>  posInt)
+                             "20")
+                  (Just (60, ""))
     ]
 
 ------------------------------------------------------------------------------
 -- Exercise 2
 
 instance Applicative Parser where
-    pure    = undefined
-    Parser l <*> Parser r = Parser (\s -> case l s of
-                                              Nothing -> Nothing
-                                              Just (a,rest) -> case r rest of
-                                                                   Nothing -> Nothing
-                                                                   Just (a',rest') -> Just (a a', rest'))
-
+    pure    = undefined -- TODO
+    Parser l <*> Parser r = Parser (\s -> l s >>= \(a,rest) -> r rest >>= \(a',rest') -> return (a a', rest'))
 
 -- for test
 
@@ -127,6 +124,35 @@ ex2 = T.TestList
     , U.teq "e23" (runParser parseEmployee "Harold8016824058etc") (Just (Emp "Harold" "8016824058", "etc"))
     ]
 
+ex2' :: [T.Test]
+ex2' = U.tt "trc"
+      [ runParser parseEmployee "H8e"
+      , runParser (Emp <$> parseName <*> parsePhone) "H8e"
+      , runParser (Parser (\s -> let (r,rest) = fromJust $ (runParser parseName) s in Just (Emp r,rest)) <*> parsePhone) "H8e"
+      , runParser (Parser (\s' -> (\s -> let (r,rest) = fromJust $ (runParser parseName) s in Just (Emp r,rest)) s'
+                                  >>= \(a,rest) -> (runParser parsePhone) rest
+                                                   >>= \(a',rest') -> return (a a', rest'))) "H8e"
+
+      ,                   (\s -> let (r,rest) = fromJust $ (runParser parseName) s in Just (Emp r,rest)) "H8e"
+                                  >>= \(a,rest) -> (runParser parsePhone) rest
+                                                   >>= \(a',rest') -> return (a a', rest')
+
+      ,                          let (r,rest) = fromJust $ (runParser parseName) "H8e" in Just (Emp r,rest)
+                                  >>= \(a,rest) -> (runParser parsePhone) rest
+                                                   >>= \(a',rest') -> return (a a', rest')
+
+      ,                                                                                   Just (Emp "H","8e")
+                                  >>= \(a,rest) -> (runParser parsePhone) rest
+                                                   >>= \(a',rest') -> return (a a', rest')
+
+      ,                                            (runParser parsePhone) "8e"
+                                                   >>= \(a',rest') -> return (Emp "H" a', rest')
+
+      ,                                                               Just   (Emp "H" "8", "e")
+
+      ]
+      (Just (Emp "H" "8", "e"))
+
 ------------------------------------------------------------------------------
 -- Exercise 3 -- TODO
 
@@ -158,6 +184,7 @@ hw10 = do
     T.runTestTT ex0
     T.runTestTT ex1
     T.runTestTT ex2
+    T.runTestTT $ T.TestList $ ex2'
     T.runTestTT ex3
     T.runTestTT ex4
     T.runTestTT ex5
