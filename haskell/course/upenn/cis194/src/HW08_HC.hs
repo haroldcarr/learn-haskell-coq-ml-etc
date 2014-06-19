@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 17 (Tue) 15:48:54 by Harold Carr.
-Last Modified : 2014 Jun 18 (Wed) 06:43:28 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 10:21:59 by Harold Carr.
 -}
 
 -- for exercise 1.2
@@ -88,7 +88,10 @@ ex2 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 3
+-- Exercise 3 -- TODO
+
+nextLevel :: Employee -> [(GuestList, GuestList)] -> (GuestList, GuestList)
+nextLevel = undefined
 
 ex3 :: T.Test
 ex3 = T.TestList
@@ -96,7 +99,7 @@ ex3 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 4
+-- Exercise 4 -- TODO
 
 ex4 :: T.Test
 ex4 = T.TestList
@@ -104,7 +107,7 @@ ex4 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 5
+-- Exercise 5 -- TODO
 
 ex5 :: T.Test
 ex5 = T.TestList
@@ -112,18 +115,6 @@ ex5 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 6
-
-ex6 :: T.Test
-ex6 = T.TestList
-    [
-    ]
-
-------------------------------------------------------------------------------
-
--- TODO: remove this when final
-tt :: IO T.Counts
-tt = hw08
 
 hw08 :: IO T.Counts
 hw08 = do
@@ -132,6 +123,5 @@ hw08 = do
     T.runTestTT ex3
     T.runTestTT ex4
     T.runTestTT ex5
-    T.runTestTT ex6
 
 -- End of file.
