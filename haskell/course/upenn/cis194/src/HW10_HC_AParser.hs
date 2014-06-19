@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 14:01:41 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 14:31:47 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -88,18 +88,28 @@ ex1 = T.TestList
 
 instance Applicative Parser where
     pure    = undefined
-    _ <*> _ = undefined
+    Parser l <*> Parser r = Parser (\s -> case l s of
+                                              Nothing -> Nothing
+                                              Just (a,rest) -> case r rest of
+                                                                   Nothing -> Nothing
+                                                                   Just (a',rest') -> Just (a a', rest'))
+
 
 -- for test
 
 type Name = String
-data Employee = Emp { name :: Name, phone :: String }
+data Employee = Emp { name :: Name, phone :: String } deriving (Eq, Show)
 
 parseName  :: Parser Name
 parseName = Parser $ pp isAlpha
 
 parsePhone :: Parser String
 parsePhone = Parser $ pp isDigit
+
+parseEmployee :: Parser Employee
+parseEmployee = Emp <$> parseName <*> parsePhone
+
+-- runParser (runParser (Emp <$> parseName) "Harold") "23"
 
 pp :: (Char -> Bool) -> String -> Maybe (String, String)
 pp f s0 = pp' s0 []
@@ -111,9 +121,10 @@ pp f s0 = pp' s0 []
 ex2 :: T.Test
 ex2 = T.TestList
     [
-      U.teq "e20" (pp isAlpha "Harold8016824058") (Just ("Harold", "8016824058"))
-    , U.teq "e20" (pp isDigit "Harold8016824058") Nothing
-    , U.teq "e20" (pp isDigit "8016824058Harold") (Just ("8016824058", "Harold"))
+      U.teq "e20" (runParser parseName     "Harold8016824058etc") (Just ("Harold", "8016824058etc"))
+    , U.teq "e21" (runParser parsePhone    "Harold8016824058etc") Nothing
+    , U.teq "e22" (runParser parsePhone    "8016824058Harold000") (Just ("8016824058", "Harold000"))
+    , U.teq "e23" (runParser parseEmployee "Harold8016824058etc") (Just (Emp "Harold" "8016824058", "etc"))
     ]
 
 ------------------------------------------------------------------------------
