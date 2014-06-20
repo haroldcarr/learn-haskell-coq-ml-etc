@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 16:47:10 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 16:59:47 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -89,7 +89,7 @@ ex1 = T.TestList
 -- Exercise 2
 
 instance Applicative Parser where
-    pure    = undefined -- TODO
+    pure                  = undefined -- TODO
     Parser l <*> Parser r = Parser (\s -> l s >>= \(a,rest) -> r rest >>= \(a',rest') -> return (a a', rest'))
 
 -- for test
@@ -183,11 +183,19 @@ ex3 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 4 -- TODO
+-- Exercise 4
+
+instance Alternative Parser where
+    empty                     = Parser (\_ -> Nothing)
+    (Parser l) <|> (Parser r) = Parser (\s -> case l s of
+                                                  Nothing -> r s
+                                                  result  -> result)
 
 ex4 :: T.Test
 ex4 = T.TestList
     [
+      U.teq "e40" (runParser ((satisfy isAlpha) <|> (satisfy isDigit)) "a1b2")   (Just ('a',"1b2"))
+    , U.teq "e41" (runParser ((satisfy isDigit) <|> (satisfy isAlpha)) "a1b2")   (Just ('a',"1b2"))
     ]
 
 ------------------------------------------------------------------------------
