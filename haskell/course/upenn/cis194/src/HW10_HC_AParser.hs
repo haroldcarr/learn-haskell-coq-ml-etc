@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 16:59:47 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 17:07:24 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -199,11 +199,19 @@ ex4 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 5 -- TODO
+-- Exercise 5
+
+-- parses either an integer value or an uppercase character
+intOrUppercase :: Parser ()
+intOrUppercase = u <$> posInt <|> u <$> satisfy isUpper
+    where u _ = ()
 
 ex5 :: T.Test
 ex5 = T.TestList
     [
+      U.teq "e50" (runParser intOrUppercase "XYZ")  (Just ((), "YZ"))
+    , U.teq "e51" (runParser intOrUppercase "foo")  Nothing
+    , U.teq "e51" (runParser intOrUppercase "10X")  (Just ((), "X"))
     ]
 
 ------------------------------------------------------------------------------
