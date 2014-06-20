@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 17:07:24 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 17:15:00 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -8,7 +8,6 @@ module HW10_HC_AParser where
 import           Control.Applicative
 
 import           Data.Char
-import           Data.List           (unfoldr)
 import           Data.Maybe          (fromJust)
 
 import qualified Test.HUnit          as T
@@ -74,7 +73,7 @@ instance Functor Parser where
 ex1 :: T.Test
 ex1 = T.TestList
     [
-      U.teq "e10" (runParser (fmap (toUpper) (satisfy isLower))
+      U.teq "e10" (runParser (fmap toUpper (satisfy isLower))
                              "abc")
                   (Just ('A', "bc"))
     , U.teq "e11" (runParser (fmap (*2)      posInt)
@@ -109,7 +108,7 @@ parseEmployee = Emp <$> parseName <*> parsePhone
 pp :: (Char -> Bool) -> String -> Maybe (String, String)
 pp f s0 = pp' s0 []
   where
-    pp' s acc = case (runParser (satisfy f)) s of
+    pp' s acc = case runParser (satisfy f) s of
            Nothing -> if null acc then Nothing else Just (reverse acc, s) -- TODO avoid reverse
            (Just (c,rest)) -> pp' rest (c:acc)
 
@@ -155,7 +154,7 @@ ex2' = U.tt "trc"
 -- Exercise 3
 
 abParser :: Parser (Char, Char)
-abParser = (,) <$> (satisfy ('a'==)) <*> (satisfy ('b'==))
+abParser = (,) <$> satisfy ('a'==) <*> satisfy ('b'==)
 
 abParser_ :: Parser ()
 abParser_ = (\(_,_) -> ()) <$> abParser
@@ -169,7 +168,7 @@ intPairP = Parser (\s -> let (x,r1) = fromJust $ runParser posInt s
 
 -- the real deal using applicatives
 intPair :: Parser [Integer]
-intPair = (\x _ y -> [x,y]) <$> posInt <*> (satisfy (' '==)) <*> posInt
+intPair = (\x _ y -> [x,y]) <$> posInt <*> satisfy (' '==) <*> posInt
 
 ex3 :: T.Test
 ex3 = T.TestList
@@ -186,7 +185,7 @@ ex3 = T.TestList
 -- Exercise 4
 
 instance Alternative Parser where
-    empty                     = Parser (\_ -> Nothing)
+    empty                     = Parser (const Nothing)
     (Parser l) <|> (Parser r) = Parser (\s -> case l s of
                                                   Nothing -> r s
                                                   result  -> result)
@@ -194,8 +193,8 @@ instance Alternative Parser where
 ex4 :: T.Test
 ex4 = T.TestList
     [
-      U.teq "e40" (runParser ((satisfy isAlpha) <|> (satisfy isDigit)) "a1b2")   (Just ('a',"1b2"))
-    , U.teq "e41" (runParser ((satisfy isDigit) <|> (satisfy isAlpha)) "a1b2")   (Just ('a',"1b2"))
+      U.teq "e40" (runParser (satisfy isAlpha <|> satisfy isDigit) "a1b2")   (Just ('a',"1b2"))
+    , U.teq "e41" (runParser (satisfy isDigit <|> satisfy isAlpha) "a1b2")   (Just ('a',"1b2"))
     ]
 
 ------------------------------------------------------------------------------
@@ -221,7 +220,7 @@ hw10 = do
     T.runTestTT ex0
     T.runTestTT ex1
     T.runTestTT ex2
-    T.runTestTT $ T.TestList $ ex2'
+    T.runTestTT $ T.TestList ex2'
     T.runTestTT ex3
     T.runTestTT ex4
     T.runTestTT ex5
