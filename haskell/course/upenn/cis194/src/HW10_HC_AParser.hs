@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 10:59:09 by Harold Carr.
-Last Modified : 2014 Jun 19 (Thu) 17:15:00 by Harold Carr.
+Last Modified : 2014 Jun 19 (Thu) 18:44:44 by Harold Carr.
 -}
 
 module HW10_HC_AParser where
@@ -88,8 +88,9 @@ ex1 = T.TestList
 -- Exercise 2
 
 instance Applicative Parser where
-    pure                  = undefined -- TODO
-    Parser l <*> Parser r = Parser (\s -> l s >>= \(a,rest) -> r rest >>= \(a',rest') -> return (a a', rest'))
+    pure   a              = Parser (\s -> Just (a, s))
+--  Parser l <*> Parser r = Parser (\s -> l s >>= \(a,rest) -> r rest >>= \(a',rest') -> return (a a', rest'))
+    Parser l <*>        r = Parser (\s -> l s >>= \(a,rest) -> runParser (a <$> r) rest)
 
 -- for test
 
