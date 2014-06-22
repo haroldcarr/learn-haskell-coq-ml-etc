@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 17:22:43 by Harold Carr.
-Last Modified : 2014 Jun 21 (Sat) 21:32:04 by Harold Carr.
+Last Modified : 2014 Jun 21 (Sat) 22:16:08 by Harold Carr.
 -}
 
 module HW11_HC_SExpr where
@@ -8,7 +8,7 @@ module HW11_HC_SExpr where
 import           HW10_HC_AParser
 
 import           Control.Applicative
-import           Data.Char           (isUpper)
+import           Data.Char           (isAlpha, isAlphaNum, isSpace, isUpper)
 
 import qualified Test.HUnit          as T
 import qualified Test.HUnit.Util     as U
@@ -41,17 +41,19 @@ lec = T.TestList
 --  1. Parsing repetitions
 ------------------------------------------------------------
 
+-- I got this from Control.Applicative (magic!, but understandable after-the-fact)
+
 zeroOrMore :: Parser a -> Parser [a]
-zeroOrMore p = oneOrMore p <|> pure []
+zeroOrMore v = zeroOrMore_v
+  where
+    zeroOrMore_v = oneOrMore_v <|> pure []
+    oneOrMore_v = (:) <$> v <*> zeroOrMore_v
 
 oneOrMore :: Parser a -> Parser [a]
--- oneOrMore p = fmap (++) (fmap (\x -> [x]) p) <*> (fmap (\x -> [x]) p)
-oneOrMore p = fmapap go <*>
-             (fmapap go <*>
-                     go)
+oneOrMore v = oneOrMore_v
   where
-    fmapap = fmap (++)
-    go     = fmap (: []) p
+    zeroOrMore_v = oneOrMore_v <|> pure []
+    oneOrMore_v = (:) <$> v <*> zeroOrMore_v
 
 ex1' :: T.Test
 ex1' = T.TestList
@@ -67,14 +69,19 @@ ex1' = T.TestList
 ------------------------------------------------------------
 
 spaces :: Parser String
-spaces = undefined
+spaces = zeroOrMore (satisfy isSpace)
 
 ident :: Parser String
-ident = undefined
+ident = (++) <$> oneOrMore (satisfy isAlpha) <*> zeroOrMore (satisfy isAlphaNum)
 
 ex2'' :: T.Test
 ex2'' = T.TestList
     [
+      U.teq "e20" (runParser ident  "foobar baz") (Just ("foobar"," baz"))
+    , U.teq "e21" (runParser ident  "foo33fA")    (Just ("foo33fA",""))
+    , U.teq "e22" (runParser ident  "2bad")       Nothing
+    , U.teq "e23" (runParser ident  "")           Nothing
+    , U.teq "e23" (runParser spaces "   hello")   (Just ("   ","hello"))
     ]
 
 ------------------------------------------------------------
