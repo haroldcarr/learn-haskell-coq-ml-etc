@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 17:22:43 by Harold Carr.
-Last Modified : 2014 Jun 20 (Fri) 22:33:25 by Harold Carr.
+Last Modified : 2014 Jun 21 (Sat) 19:13:33 by Harold Carr.
 -}
 
 module HW11_HC_SExpr where
@@ -27,14 +27,14 @@ lec :: T.Test
 lec = T.TestList
     [
       -- example of non-deterministic list applicative
-      U.teq "l0" (Emp <$> ["A", "B"] <*> ["1", "2"])   [Emp "A" "1",Emp "A" "2",Emp "B" "1",Emp "B" "2"]
+      U.teq "l0" (Emp <$> ["A", "B"] <*> ["1", "2"])            [Emp "A" "1",Emp "A" "2",Emp "B" "1",Emp "B" "2"]
 
       -- (either 4 or 5) times 2, plus either 6 or 1
-    , U.teq "l1" (([4,5] .* pure 2) .+ [6,1])      [14,9,16,11::Integer]
+    , U.teq "l1" (([4,5] .* pure 2) .+ [6,1])                   [14,9,16,11::Integer]
 
       -- possibly-failing arithmetic
---    , U.teq "l2" ((Just (3::Integer) .+ Just 5)  .* Just 8) []
---    , U.teq "l3" ((Just 3 .+ Nothing) .* Just 8) Nothing
+--    , U.teq "l2" ((Just (3::Integer) .+ Just 5)  .* Just 8)   []
+--    , U.teq "l3" ((Just 3 .+ Nothing) .* Just 8)              Nothing
     ]
 
 ------------------------------------------------------------
@@ -42,10 +42,10 @@ lec = T.TestList
 ------------------------------------------------------------
 
 zeroOrMore :: Parser a -> Parser [a]
-zeroOrMore p = undefined
+zeroOrMore p = oneOrMore p <|> pure []
 
 oneOrMore :: Parser a -> Parser [a]
-oneOrMore p = undefined
+oneOrMore p = fmap (\x -> [x]) p
 
 ex1 :: T.Test
 ex1 = T.TestList
