@@ -1,11 +1,11 @@
 {-
 Created       : 2014 Jun 19 (Thu) 17:22:43 by Harold Carr.
-Last Modified : 2014 Jun 21 (Sat) 19:13:33 by Harold Carr.
+Last Modified : 2014 Jun 21 (Sat) 19:46:02 by Harold Carr.
 -}
 
 module HW11_HC_SExpr where
 
-import           HW11_AParser
+import           HW10_HC_AParser
 
 import           Control.Applicative
 import           Data.Char           (isUpper)
@@ -16,7 +16,7 @@ import qualified Test.HUnit.Util     as U
 ------------------------------------------------------------------------------
 -- Examples from lecture
 
-data Employee = Emp { name :: String, phone :: String } deriving (Eq, Show)
+-- data Employee = Emp { name :: String, phone :: String } deriving (Eq, Show)
 
 -- nondeterministic arithmetic
 (.+), (.*) :: [Integer] -> [Integer] -> [Integer]
@@ -45,10 +45,10 @@ zeroOrMore :: Parser a -> Parser [a]
 zeroOrMore p = oneOrMore p <|> pure []
 
 oneOrMore :: Parser a -> Parser [a]
-oneOrMore p = fmap (\x -> [x]) p
+oneOrMore p = fmap (++) (fmap (\x -> [x]) p) <*> (fmap (\x -> [x]) p)
 
-ex1 :: T.Test
-ex1 = T.TestList
+ex1' :: T.Test
+ex1' = T.TestList
     [
       U.teq "e10" (runParser (zeroOrMore (satisfy isUpper)) "ABCdEfgH") (Just ("ABC","dEfgH"))
     , U.teq "e11" (runParser (oneOrMore  (satisfy isUpper)) "ABCdEfgH") (Just ("ABC","dEfgH"))
@@ -66,8 +66,8 @@ spaces = undefined
 ident :: Parser String
 ident = undefined
 
-ex2 :: T.Test
-ex2 = T.TestList
+ex2'' :: T.Test
+ex2'' = T.TestList
     [
     ]
 
@@ -89,8 +89,8 @@ data SExpr = A Atom
            | Comb [SExpr]
   deriving Show
 
-ex3 :: T.Test
-ex3 = T.TestList
+ex3' :: T.Test
+ex3' = T.TestList
     [
     ]
 
@@ -99,6 +99,6 @@ ex3 = T.TestList
 hw11 :: IO T.Counts
 hw11 = do
     T.runTestTT lec
-    T.runTestTT ex1
-    T.runTestTT ex2
-    T.runTestTT ex3
+    T.runTestTT ex1'
+    T.runTestTT ex2''
+    T.runTestTT ex3'
