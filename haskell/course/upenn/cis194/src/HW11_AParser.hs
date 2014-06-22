@@ -24,6 +24,8 @@ posInt = Parser f
       | otherwise = Just (read ns, rest)
       where (ns, rest) = span isDigit xs
 
+inParser :: ((String -> Maybe (a, String)) -> String -> Maybe (b, String))
+            -> Parser a -> Parser b
 inParser f = Parser . f . runParser
 
 first :: (a -> b) -> (a,c) -> (b,c)
