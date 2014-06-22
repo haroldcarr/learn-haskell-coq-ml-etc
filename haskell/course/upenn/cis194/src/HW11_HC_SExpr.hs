@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 17:22:43 by Harold Carr.
-Last Modified : 2014 Jun 21 (Sat) 19:46:02 by Harold Carr.
+Last Modified : 2014 Jun 21 (Sat) 21:32:04 by Harold Carr.
 -}
 
 module HW11_HC_SExpr where
@@ -45,7 +45,13 @@ zeroOrMore :: Parser a -> Parser [a]
 zeroOrMore p = oneOrMore p <|> pure []
 
 oneOrMore :: Parser a -> Parser [a]
-oneOrMore p = fmap (++) (fmap (\x -> [x]) p) <*> (fmap (\x -> [x]) p)
+-- oneOrMore p = fmap (++) (fmap (\x -> [x]) p) <*> (fmap (\x -> [x]) p)
+oneOrMore p = fmapap go <*>
+             (fmapap go <*>
+                     go)
+  where
+    fmapap = fmap (++)
+    go     = fmap (: []) p
 
 ex1' :: T.Test
 ex1' = T.TestList
