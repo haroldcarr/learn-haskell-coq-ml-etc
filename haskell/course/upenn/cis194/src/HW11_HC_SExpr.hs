@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jun 19 (Thu) 17:22:43 by Harold Carr.
-Last Modified : 2014 Jun 21 (Sat) 22:59:21 by Harold Carr.
+Last Modified : 2014 Jun 22 (Sun) 09:58:17 by Harold Carr.
 -}
 
 module HW11_HC_SExpr where
@@ -106,9 +106,9 @@ data SExpr = A Atom
 atom :: Parser SExpr
 atom = A <$> (N <$> posInt <|> I <$> ident)
 
--- S ::= atom | (S∗)
+-- S ::= atom | (S∗*)
 s :: Parser SExpr
-s = atom <|> (satisfy (== '(') *> (Comb <$> oneOrMore s) <* satisfy (== ')'))
+s = spaces *> (atom <|> (satisfy (== '(') *> (Comb <$> oneOrMore s) <* satisfy (== ')'))) <* spaces
 
 parseSExpr :: Parser SExpr
 parseSExpr = s
@@ -116,13 +116,22 @@ parseSExpr = s
 ex3 :: T.Test
 ex3 = T.TestList
     [
-      U.teq "e30" (runParser parseSExpr "5")                                        (Just (A (N 5),""))
-    , U.teq "e31" (runParser parseSExpr "foo3")                                     (Just (A (I "foo3"),""))
-    , U.teq "e32" (runParser parseSExpr "(foo)")                                    (Just (Comb [A (I "foo")],""))
-    , U.teq "e33" (runParser parseSExpr "(foo bar)")                                (Just (Comb [A (I "foo")],""))
-    , U.teq "e34" (runParser parseSExpr "(bar (foo) 3 5 874)")                      Nothing
-    , U.teq "e35" (runParser parseSExpr "(((lambda x (lambda y (plus x y))) 3) 5)") Nothing
-    , U.teq "e36" (runParser parseSExpr "( lots of ( spaces in ) this ( one ) )") Nothing
+      U.teq "e30" (runParser parseSExpr "5")
+                  (Just (A (N 5),""))
+    , U.teq "e31" (runParser parseSExpr "foo3")
+                  (Just (A (I "foo3"),""))
+    , U.teq "e32" (runParser parseSExpr "foo bar")
+                  (Just (A (I "foo"),"bar"))
+    , U.teq "e33" (runParser parseSExpr "(foo)")
+                  (Just (Comb [A (I "foo")],""))
+    , U.teq "e34" (runParser parseSExpr "(foo bar)")
+                  (Just (Comb [A (I "foo"),A (I "bar")],""))
+    , U.teq "e35" (runParser parseSExpr "(bar (foo) 3 5 874)")
+                  (Just (Comb [A (I "bar"),Comb [A (I "foo")],A (N 3),A (N 5),A (N 874)],""))
+    , U.teq "e36" (runParser parseSExpr "(((lambda x (lambda y (plus x y))) 3) 5)")
+                  (Just (Comb [Comb [Comb [A (I "lambda"),A (I "x"),Comb [A (I "lambda"),A (I "y"),Comb [A (I "plus"),A (I "x"),A (I "y")]]],A (N 3)],A (N 5)],""))
+    , U.teq "e37" (runParser parseSExpr "( lots of ( spaces in ) this ( one ) )")
+                  (Just (Comb [A (I "lots"),A (I "of"),Comb [A (I "spaces"),A (I "in")],A (I "this"),Comb [A (I "one")]],""))
     ]
 
 ------------------------------------------------------------------------------
@@ -133,3 +142,5 @@ hw11 = do
     T.runTestTT ex1
     T.runTestTT ex2
     T.runTestTT ex3
+
+-- End of file.
