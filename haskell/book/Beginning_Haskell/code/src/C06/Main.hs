@@ -1,3 +1,8 @@
+{-
+Created       : 2014 Feb                   by Harold Carr.
+Last Modified : 2014 Jun 30 (Mon) 02:45:29 by Harold Carr.
+-}
+
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}

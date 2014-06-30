@@ -1,3 +1,8 @@
+{-
+Created       : 2014 Feb                   by Harold Carr.
+Last Modified : 2014 Jun 30 (Mon) 09:41:31 by Harold Carr.
+-}
+
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE ParallelListComp  #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -7,10 +12,15 @@
 module C03 where
 
 import           C02
-import           Data.Char (toUpper)
-import           Data.List (delete, find, unfoldr)
-import           GHC.Exts  (groupWith, sortWith, the)
+import           Data.Char       (toUpper)
+import           Data.List       (delete, find, unfoldr)
+import qualified Data.Map        as M
+import           GHC.Exts        (groupWith, sortWith, the)
 
+import qualified Test.HUnit      as T
+import qualified Test.HUnit.Util as U
+
+------------------------------------------------------------------------------
 -- exercise 3-1 - p. 50
 
 swapTriple :: (a,b,c) -> (b,c,a)
@@ -31,19 +41,17 @@ index    (x:xs) = let indexed@((n,_):_) = index xs
 maybeA :: [a] -> Char
 maybeA    _    = 'a'
 
+------------------------------------------------------------------------------
 -- exercise 3-2 - p. 53
 
 filterOnes :: [Integer] -> [Integer]
 filterOnes = filter (==1)
--- filterOnes [1,2,1,2,3,2,1]
 
 filterANumber :: Eq a => a -> [a] -> [a]
 filterANumber n = filter (==n)
--- filterANumber 3 [1,2,1,2,3,2,1]
 
 filterNot :: (a -> Bool) -> [a] -> [a]
 filterNot f = foldr (\x a -> if not $ f x then x:a else a) []
--- filterNot (==1) [1,2,1,2,3,2,1]
 
 isGovOrg :: Client -> Bool
 isGovOrg (GovOrg _) = True
@@ -52,10 +60,18 @@ isGovOrg _          = False
 filterGovOrgs :: [Client] -> [Client]
 filterGovOrgs = filter isGovOrg
 
--- filterGovOrgs clients
+e32 :: T.Test
+e32 = T.TestList
+    [
+      U.teq "321" (filterOnes      [1,2,1,2,3,2,1])   [1,1,1]
+    , U.teq "322" (filterANumber 3 [1,2,1,2,3,2,1])   [3::Int]
+    , U.teq "323" (filterNot (==1) [1,2,1,2,3,2,1])   [2,2,3,2::Int]
+    , U.teq "324" (isGovOrg (clients !! 3))           True
+    , U.teq "325" (filterGovOrgs clients)             [GovOrg "NSA"]
+    ]
 
-
--- smart constructors and views
+------------------------------------------------------------------------------
+-- smart constructors and views - p.59
 
 -- does not prevent incorrect values
 data Range = Range Integer Integer deriving Show
@@ -80,52 +96,86 @@ prettyRange :: Range -> String
 prettyRange rng = case rng of
                       (r -> R a b) -> "[" ++ show a ++ "," ++ show b ++ "]"
 
+------------------------------------------------------------------------------
 -- exercise 3-3 - p. 64
 
--- product : computes the product of a list of integers
--- minimumClient : computes the cClient with the shortest name
--- all : . computes conjunction (&&) of a list of Boolean values
+-- product       : computes the product of a list of integers
+-- minimumClient : computes the Client with the shortest name
+-- all           : computes conjunction (&&) of a list of Boolean values
 
--- Write the functions using pattern matching, without resorting to any higher-order function.
+-- Write the functions using pattern matching, without using higher-order function.
 -- Write the functions as folds. in each case, first try to find the aggregation operation, and from that derive a sensible initial value.
 
 pduct :: Num a => [a] -> a
 pduct [] = 1
 pduct (x:xs) = x * pduct xs
-pduct' :: [Integer] -> Integer
+pduct' :: Num a => [a] -> a
 pduct' = foldr (*) 1
--- pduct [1,2,3]
--- pduct' [1,2,3]
 
 shorterName :: Client -> Client -> Client
-shorterName x (GovOrg "BAD") = x
-shorterName x y  = if length (clientName x) < length (clientName y) then x else y
+shorterName x y | length (clientName x) < length (clientName y) = x
+                | otherwise                                     = y
 
-minClient :: [Client] -> Client
-minClient [] = GovOrg "BAD"
-minClient (x:xs) = shorterName x $ minClient xs
+minClient  :: [Client] -> Client
+minClient     []  = error "bad"
+minClient  (x:[]) = x
+minClient  (x:xs) = shorterName x $ minClient xs
 minClient' :: [Client] -> Client
-minClient' = foldr shorterName (GovOrg "BAD")
--- minClient clients
--- minClient' clients
+minClient'    []  = error "bad"
+minClient' (x:xs) = foldr shorterName x xs
 
 alll :: [Bool] -> Bool
 alll [] = True
 alll (x:xs) = x && alll xs
 alll' :: [Bool] -> Bool
 alll' = foldr (&&) True
--- alll  [True,True,True]
--- alll' [True,True,True]
--- alll  [True,False,True]
--- alll' [True,False,True]
+
+-- common structure of explicit recursion
+com :: (a -> a -> a) -> a -> [a] -> a
+com _ s [] = s
+com f s (x:xs) = f x $ com f s xs
+
+cpduct :: Num a => [a] -> a
+cpduct = com (*) 1
+cminClient :: [Client] -> Client
+cminClient [] = error "Bad"
+cminClient (x:[]) = x
+cminClient (x:xs) = com shorterName x xs
+calll :: [Bool] -> Bool
+calll = com (&&) True
 
 -- TODO: In which cases is it true that using foldr and foldl give the same results?
 
--- minimumBy (\x -> -x) [1,2,3] should return 3.
-minimumBy :: (Num b, Ord b) => (a -> b) -> [a] -> b
-minimumBy g = foldr (\x a -> min (g x) a) 0
--- minimumBy (\x -> (-x)) [1,2,3]
+-- example: minimumBy (\x -> -x) [1,2,3] should return 3.
+minimumBy :: (Num b, Ord b) => (a -> b) -> [a] -> a
+minimumBy f xs =
+    let (fResult, mapResult) = foldl (\(acc, accMap) x ->
+                                       let m = min (f x) acc in (m, M.insert m x accMap))
+                               (0, M.fromList [])
+                               xs
+    in mapResult M.! fResult
 
+e33 :: T.Test
+e33 = T.TestList
+    [
+      U.teq "e3310" (pduct  [1,2,3::Int])                   6
+    , U.teq "e3311" (pduct' [1,2,3::Int])                   6
+    , U.teq "e3312" (cpduct [1,2,3::Int])                   6
+    , U.teq "e3320" (minClient  clients)                    (GovOrg "NSA")
+    , U.teq "e3321" (minClient' clients)                    (GovOrg "NSA")
+    , U.teq "e3322" (cminClient clients)                    (GovOrg "NSA")
+    , U.teq "e3330" (alll  [True,True,True])                True
+    , U.teq "e3331" (alll' [True,True,True])                True
+    , U.teq "e3332" (calll [True,True,True])                True
+    , U.teq "e3333" (alll  [True,False,True])               False
+    , U.teq "e3334" (alll' [True,False,True])               False
+    , U.teq "e3335" (calll [True,False,True])               False
+
+    , U.teq "e3350" (minimumBy (\x -> (-x)) [1,2,3::Int])   3
+
+    ]
+
+------------------------------------------------------------------------------
 -- LambdaCase - p. 64
 
 skipUntilGov :: [Client] -> [Client]
@@ -136,8 +186,8 @@ skipUntilGov = dropWhile (\case { GovOrg {} -> False ; _ -> True })
 
 elem' :: Eq a => a -> [a] -> Bool
 elem' x l = case find (==x) l of
-              Just _  -> True
-              Nothing -> False
+                Just _  -> True
+                Nothing -> False
 -- elem' 2 [1,2,3]
 
 -- ordering - p. 66
@@ -223,5 +273,11 @@ enumUnfold n m = unfoldr (\x -> if x > m then Nothing else Just (x, x+1)) n
 minSort :: [Integer] -> [Integer]
 minSort = unfoldr (\case [] -> Nothing
                          xs -> Just (m, delete m xs) where m = minimum xs)
+
+------------------------------------------------------------------------------
+c03 :: IO T.Counts
+c03 = do
+    _ <- T.runTestTT e32
+    T.runTestTT e33
 
 -- End of file.
