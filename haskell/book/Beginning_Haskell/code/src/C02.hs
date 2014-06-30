@@ -4,9 +4,45 @@
 
 module C02 where
 
-firstOrEmpty :: [String] -> String
-firstOrEmpty lst = if not (null lst) then head lst else "empty"
+import qualified Test.HUnit      as T
+import qualified Test.HUnit.Util as U
 
+------------------------------------------------------------------------------
+-- Exercise 2-1 - p 19
+
+-- 2
+
+nullOrFirstIsNull :: [[t]] -> Bool
+nullOrFirstIsNull []     = True
+nullOrFirstIsNull ([]:_) = True
+nullOrFirstIsNull _      = False
+
+-- 3
+
+hasOneEl :: [t] -> Bool
+hasOneEl (_:[]) = True
+hasOneEl _      = False
+
+-- 4
+
+mcc :: [[t]] -> [t]
+mcc []    = []
+mcc (h:t) = h ++ mcc t
+
+e21 :: T.Test
+e21 = T.TestList
+    [
+      U.teq "e2120" (nullOrFirstIsNull [])      True
+    , U.teq "e2121" (nullOrFirstIsNull [[],[]]) True
+    , U.teq "e2130" (hasOneEl [1::Int])         True
+    , U.teq "e2131" (hasOneEl [1,2::Int])       False
+    , U.teq "e2132" (hasOneEl [])               False
+    , U.teq "e2140" (mcc []::[Int])             []
+    , U.teq "e2140" (mcc [[1::Int]])            [1]
+    , U.teq "e2140" (mcc [[1],[2],[3]])         [1,2,3::Int]
+    ]
+
+------------------------------------------------------------------------------
 -- ADT - p. 31
 
             --           name
@@ -36,6 +72,7 @@ data PersonR = PersonR { firstName :: String
 
 data Gender = Male | Female | Unknown deriving (Eq, Ord, Show)
 
+------------------------------------------------------------------------------
 -- pattern matching - p. 33
 
 clientName :: Client -> String
@@ -53,7 +90,8 @@ clientGender (Individual     (Person _ _ gender) _) = Just gender
 clientGender (Company    _ _ (Person _ _ gender) _) = Just gender
 clientGender _                                      = Nothing
 
--- exercise 2-5 - p. 36
+------------------------------------------------------------------------------
+-- Exercise 2-5 - p. 36
 
 numClientsOfGender :: [Client] -> (Integer, Integer, Integer)
 numClientsOfGender = foldr (\x (m,f,u) -> case clientGender x of
@@ -83,19 +121,17 @@ clientsR =
     , GovOrgR     "NSA"
     ]
 
--- numClientsOfGender clients
-
-data Travel = Past | Future | PastAndFuture deriving Show
+data Travel = Past | Future | PastAndFuture deriving (Eq, Show)
 
 --                             manufacturer  model  name    travel  price
-data TimeMachine = TimeMachine String        Int    String  Travel  Float deriving Show
+data TimeMachine = TimeMachine String        Int    String  Travel  Float deriving (Eq, Show)
 
 data TimeMachineR = TimeMachineR { manufacturer :: String
                                  , model        :: Int
                                  , name         :: String
                                  , travel       :: Travel
                                  , price        :: Float
-                                 } deriving Show
+                                 } deriving (Eq, Show)
 
 discountMachines :: Float -> [TimeMachine] -> [TimeMachine]
 discountMachines adjust = foldr (\(TimeMachine man md nam tra pri) a -> (TimeMachine man md nam tra (pri*adjust)):a) []
@@ -107,22 +143,41 @@ timeMachines =
     , TimeMachine "Baz" 3 "Bazzy" PastAndFuture 299.99
     ]
 
--- discountMachines 0.90 timeMachines
+e25 :: T.Test
+e25 = T.TestList
+    [
+      U.teq "e2510" (numClientsOfGender clients)         (2,1,2)
+    , U.teq "e2520" (discountMachines 0.90 timeMachines)
+                    [
+                      TimeMachine "Foo" 1 "Fooey" Past           89.991
+                    , TimeMachine "Bar" 2 "Barry" Future        179.991
+                    , TimeMachine "Baz" 3 "Bazzy" PastAndFuture 269.991
+                    ]
+    ]
 
+------------------------------------------------------------------------------
 -- exercise 2-6 - p. 40
 
-ack :: (Num a1, Num a, Ord a1, Ord a) => a1 -> a -> a
+ack :: (Num a, Ord a) => a -> a -> a
 ack m n
     | m  > 0 && n  > 0 = ack (m - 1) (ack m (n - 1))
     | m  > 0 && n == 0 = ack (m - 1) 1
     | m == 0           = n + 1
 ack _ _                = error "bad args to ack"
 
-unzip' :: [(a, a1)] -> ([a], [a1])
+unzip' :: [(a, b)] -> ([a], [b])
 unzip' = foldr (\(x,y) (a,b) -> (x:a, y:b)) ([],[])
 
--- unzip' [(1,2),(3,4)]
+e26 :: T.Test
+e26 = T.TestList
+    [
+      U.teq "e2610" (ack (0::Integer) (1::Integer))   2
+    , U.teq "e2611" (ack (1::Integer) (0::Integer))   2
+    , U.teq "e2612" (ack (1::Integer) (1::Integer))   3 -- TODO check this result
+    , U.teq "e2620" (unzip' [(1::Int,2),(3,4::Int)])  ([1,3],[2,4])
+    ]
 
+------------------------------------------------------------------------------
 -- view patterns - p. 40
 
 responsibility :: Client -> String
@@ -134,10 +189,14 @@ specialClient (clientName     -> "Mr. Alejandro") = True
 specialClient (responsibility -> "Director")      = True
 specialClient _                                   = False
 
--- specialClient (clients !! 0)
--- specialClient (clients !! 3)
--- specialClient (clients !! 4)
+vp :: T.Test
+vp = T.TestList
+    [
+      U.teq "vp0" (specialClient (clients !! 0)) False
+    , U.teq "vp1" (specialClient (clients !! 5)) True
+    ]
 
+------------------------------------------------------------------------------
 -- records - p. 41
 
 greet :: ClientR -> String
@@ -145,17 +204,30 @@ greet IndividualR { person = PersonR { .. } } = "Hi " ++ firstName
 greet CompanyR    { .. }                      = "Hello " ++ clientRName
 greet GovOrgR     { }                         = "Welcome"
 
--- map greet clients
+rc :: T.Test
+rc = T.TestList
+    [
+      U.teq "rc0" (map greet clientsR)
+                  [
+                    "Hi Harold"
+                  , "Hi Flavia"
+                  , "Hi Suni"
+                  , "Hi Mr."
+                  , "Hello Acme"
+                  , "Welcome"
+                  ]
+    ]
 
+------------------------------------------------------------------------------
 -- default values idiom - p. 43
 
 -- p. 59 : "smart constructors": only export type and default - no way to create others
 -- module Chapter2.DataTypes (ConnOptions(), connDefault) where
 
-data ConnType = TCP | UDP
-data UseProxy = NoProxy | Proxy String
-data TimeOut = NoTimeOut | TimeOut Integer
-data Connection = Connection String ConnOptions
+data ConnType = TCP | UDP deriving (Eq, Show)
+data UseProxy = NoProxy | Proxy String deriving (Eq, Show)
+data TimeOut = NoTimeOut | TimeOut Integer deriving (Eq, Show)
+data Connection = Connection String ConnOptions deriving (Eq, Show)
 
 data ConnOptions = ConnOptions { connType      :: ConnType
                                , connSpeed     :: Integer
@@ -164,13 +236,44 @@ data ConnOptions = ConnOptions { connType      :: ConnType
                                , connKeepAlive :: Bool
                                , connTimeOut   :: TimeOut
                                }
+                   deriving (Eq, Show)
+
 connect :: String -> ConnOptions -> Connection
 connect url options = Connection url options
 
 connDefault :: ConnOptions
 connDefault = ConnOptions TCP 0 NoProxy False False NoTimeOut
 
--- connect "http://apress.com" connDefault
--- connect "http://apress.com" connDefault { connType = UDP }
+dv :: T.Test
+dv = T.TestList
+    [
+      U.teq "dv0" (connect "http://apress.com" connDefault)
+                  (Connection "http://apress.com"
+                   (ConnOptions { connType = TCP
+                                , connSpeed = 0
+                                , connProxy = NoProxy
+                                , connCaching = False
+                                , connKeepAlive = False
+                                , connTimeOut = NoTimeOut}))
+    , U.teq "dv1" (connect "http://apress.com" connDefault { connType = UDP })
+                  (Connection "http://apress.com"
+                   (ConnOptions { connType = UDP
+                                , connSpeed = 0
+                                , connProxy = NoProxy
+                                , connCaching = False
+                                , connKeepAlive = False
+                                , connTimeOut = NoTimeOut}))
+    ]
+
+------------------------------------------------------------------------------
+
+c02 :: IO T.Counts
+c02 = do
+    _ <- T.runTestTT e21
+    _ <- T.runTestTT e25
+    _ <- T.runTestTT e26
+    _ <- T.runTestTT vp
+    _ <- T.runTestTT rc
+    T.runTestTT dv
 
 -- End of file.
