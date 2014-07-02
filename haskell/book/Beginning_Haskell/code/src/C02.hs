@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Feb                   by Harold Carr.
-Last Modified : 2014 Jun 30 (Mon) 02:44:28 by Harold Carr.
+Last Modified : 2014 Jul 02 (Wed) 06:51:35 by Harold Carr.
 -}
 
 {-# LANGUAGE NamedFieldPuns  #-}
@@ -161,7 +161,7 @@ e25 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- exercise 2-6 - p. 40
+-- Exercise 2-6 - p. 40
 
 ack :: (Num a, Ord a) => a -> a -> a
 ack m n

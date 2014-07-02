@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Feb                   by Harold Carr.
-Last Modified : 2014 Jun 30 (Mon) 09:41:31 by Harold Carr.
+Last Modified : 2014 Jul 02 (Wed) 06:51:59 by Harold Carr.
 -}
 
 {-# LANGUAGE LambdaCase        #-}
@@ -21,7 +21,7 @@ import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
 
 ------------------------------------------------------------------------------
--- exercise 3-1 - p. 50
+-- Exercise 3-1 - p. 50
 
 swapTriple :: (a,b,c) -> (b,c,a)
 swapTriple    (x,y,z)  = (y,z,x)
@@ -42,7 +42,7 @@ maybeA :: [a] -> Char
 maybeA    _    = 'a'
 
 ------------------------------------------------------------------------------
--- exercise 3-2 - p. 53
+-- Exercise 3-2 - p. 53
 
 filterOnes :: [Integer] -> [Integer]
 filterOnes = filter (==1)
@@ -97,7 +97,7 @@ prettyRange rng = case rng of
                       (r -> R a b) -> "[" ++ show a ++ "," ++ show b ++ "]"
 
 ------------------------------------------------------------------------------
--- exercise 3-3 - p. 64
+-- Exercise 3-3 - p. 64
 
 -- product       : computes the product of a list of integers
 -- minimumClient : computes the Client with the shortest name
@@ -275,6 +275,7 @@ minSort = unfoldr (\case [] -> Nothing
                          xs -> Just (m, delete m xs) where m = minimum xs)
 
 ------------------------------------------------------------------------------
+
 c03 :: IO T.Counts
 c03 = do
     _ <- T.runTestTT e32

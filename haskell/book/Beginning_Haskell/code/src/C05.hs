@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Feb                   by Harold Carr.
-Last Modified : 2014 Jun 30 (Mon) 02:45:19 by Harold Carr.
+Last Modified : 2014 Jul 02 (Wed) 06:52:50 by Harold Carr.
 -}
 
 {-# LANGUAGE BangPatterns #-}
@@ -38,7 +38,8 @@ fibonacci2 :: [Integer]
 fibonacci2 = map fst $ iterate (\(n,n1) -> (n1,n+n1)) (0,1)
 -- fibonacci2 !! 20
 
--- exercise 5-1 - p. 115
+------------------------------------------------------------------------------
+-- Exercise 5-1 - p. 115
 
 -- http://www.amazon.com/Lambda-Calculus-Types-Perspectives-Logic/dp/0521766141
 -- based on Miranda program by D. Turner
