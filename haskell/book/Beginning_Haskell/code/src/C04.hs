@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Feb                   by Harold Carr.
-Last Modified : 2014 Jul 02 (Wed) 14:48:53 by Harold Carr.
+Last Modified : 2014 Jul 03 (Thu) 14:55:55 by Harold Carr.
 -}
 
 {-# LANGUAGE LambdaCase #-}
@@ -454,10 +454,25 @@ emon = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 4-8 - p. 107
 
+newtype MMaybe a = MMaybe (Maybe a) deriving (Eq, Show)
+
+instance Functor MMaybe where
+    fmap _ (MMaybe Nothing)  = MMaybe Nothing
+    fmap f (MMaybe (Just x)) = MMaybe (Just (f x))
+
+instance Functor BinaryTree2 where
+    fmap f (Node2 v l r) = Node2 (f v) (fmap f l) (fmap f r)
+    fmap _ Leaf2         = Leaf2
+
 e48 :: T.Test
 e48 = T.TestList
     [
---      U.teq "e440" (pricee (TG "foo" 1.1)) 1.1
+      U.teq "e480" (fmap (+(2::Int)) (MMaybe Nothing))
+                                     (MMaybe Nothing)
+    , U.teq "e481" (fmap (+(2::Int)) (MMaybe (Just 2)))
+                                     (MMaybe (Just 4))
+    , U.teq "e482" (fmap (+(2::Int)) (Node2 2 (Node2 4 Leaf2 Leaf2) (Node2 6 Leaf2 Leaf2)))
+                                     (Node2 4 (Node2 6 Leaf2 Leaf2) (Node2 8 Leaf2 Leaf2))
     ]
 
 ------------------------------------------------------------------------------
