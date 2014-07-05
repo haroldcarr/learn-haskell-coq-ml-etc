@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Feb                   by Harold Carr.
-Last Modified : 2014 Jul 03 (Thu) 14:55:55 by Harold Carr.
+Last Modified : 2014 Jul 05 (Sat) 05:47:16 by Harold Carr.
 -}
 
 {-# LANGUAGE LambdaCase #-}
@@ -8,7 +8,7 @@ Last Modified : 2014 Jul 03 (Thu) 14:55:55 by Harold Carr.
 module C04 where
 
 import           C02
-import qualified Data.Foldable   as F (foldr)
+import qualified Data.Foldable   as F
 import qualified Data.Graph      as G
 import           Data.List            (sort)
 import qualified Data.Map        as M
@@ -478,10 +478,21 @@ e48 = T.TestList
 ------------------------------------------------------------------------------
 -- Exercise 4-9 - p. 108
 
+instance F.Foldable MMaybe where
+    foldr _ b (MMaybe Nothing)  = b
+    foldr f b (MMaybe (Just x)) = f x b
+
+instance F.Foldable BinaryTree2 where
+    foldr f b (Node2 v l r) = f v (F.foldr f (F.foldr f b r) l)
+    foldr _ b Leaf2         = b
+
 e49 :: T.Test
 e49 = T.TestList
     [
---      U.teq "e440" (pricee (TG "foo" 1.1)) 1.1
+      U.teq "e490" (F.foldr (+) (2::Int) (MMaybe Nothing))                                        2
+    , U.teq "e491" (F.foldr (+) (2::Int) (MMaybe (Just 2)))                                       4
+    , U.teq "e492" (F.foldr (+) (0::Int) (Node2 2 (Node2 4 Leaf2 Leaf2) (Node2 6 Leaf2 Leaf2)))  12
+    , U.teq "e493" (F.foldr (*) (1::Int) (Node2 2 (Node2 4 Leaf2 Leaf2) (Node2 6 Leaf2 Leaf2)))  48
     ]
 
 ------------------------------------------------------------------------------
