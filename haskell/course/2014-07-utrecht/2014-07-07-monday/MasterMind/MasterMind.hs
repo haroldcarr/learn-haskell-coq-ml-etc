@@ -1,10 +1,11 @@
 {-
 Created       : by Andres Loh
-Last Modified : 2014 Jul 07 (Mon) 11:48:32 by Harold Carr.
+Last Modified : 2014 Jul 07 (Mon) 13:23:10 by Harold Carr.
 -}
 
 module Main where
 
+import           Data.List       (foldl')
 import           Data.Set        as S (empty, insert, size)
 import           System.IO
 import           System.Random
@@ -12,9 +13,12 @@ import           System.Random
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
 
-type Row = [Int]
-type Guess = Row
+type Row      = [Int]
+type Guess    = Row
 type Solution = Row
+
+stopMarker :: Row
+stopMarker = [(-1),(-1),(-1),(-1)]
 
 colors, width :: Int
 colors = 6
@@ -26,7 +30,7 @@ main :: IO ()
 main =
   do
     s <- generateSolution -- initialization
-    loop s                -- game loop
+    loop 1 s              -- game loop
 
 -- The following function is given. It generates a random solution of the
 -- given width, and using the given number of colors.
@@ -40,67 +44,48 @@ generateSolution =
 -- The loop function is supposed to perform a single interaction. It
 -- reads an input, compares it with the solution, produces output to
 -- the user, and if the guess of the player was incorrect, loops.
-loop :: Solution -> IO ()
-loop s =
+loop :: Int -> Solution -> IO ()
+loop l s =
   do
     putStrLn $ show s
     i <- input            -- read (and parse) the user input
-    let a@(_,_,g) = check s i
-    putStrLn $ report a
-    if g
-        then putStrLn "YES"
-        else loop s
-
-black, white :: Solution -> Guess -> Int
-black []           _         = 0
-black (s:ss) (g:gs) = (if s == g then 1 else 0) + black ss gs
-
-white solution0 guess0 = white' solution0 guess0
-  where
-    white' _ [] = 0
-    white' (s:ss) (g:gs) = (if g `elem` solution0 && g /= s then 1 else 0) + white' ss gs
+    if i == stopMarker
+        then putStrLn "GOODBYE"
+        else do let a@(_,_,g) = check s i
+                putStrLn $ report a
+                if g
+                    then putStrLn ("YES in " ++ (show l) ++ " tries")
+                    else loop (l + 1) s
 
 check :: Solution -> Guess -> (Int,   -- number of black points,
                                Int,   -- number of white points
                                Bool)  -- all-correct guess?
-{-
-check solution guess = (black     solution guess,
-                        white     solution guess,
-                        isCorrect solution guess)
+check solution guess = (length blk, S.size wht, length blk == width)
   where
-    isCorrect [] [] = True
-    isCorrect (s:ss) (g:gs) = if s /= g then False else isCorrect ss gs
--}
-check solution guess = (black, white, correct)
-  where
-    (b,w) = foldr go (0, S.empty) (zip solution guess)
-    go (s,g) a@(b, w) | s == g            = (b+1, w)
-                      | g `elem` solution = (b  , insert g w)
-                      | otherwise         = a
-    black = b;
-    white = size w
-    correct = b == width
+    (blk,wht) = foldl' go ([], S.empty) (zip solution guess)
+    go a@(b, w) (s,g) | s == g                                = (s : b,            w)
+                      | g `elem` solution && not (g `elem` b) = (    b, S.insert g w)
+                      | otherwise                             = a
 
 t0 :: T.Test
 t0 = T.TestList
     [
       U.teq "00" (check [3,4,6,6] [1,1,2,2]) (0,0,False)
-    , U.teq "01" (check [3,4,6,6] [3,3,4,4]) (1,1,False) -- 1,2
-    , U.teq "02" (check [3,4,6,6] [3,5,3,6]) (2,0,False) -- 2,1
+    , U.teq "01" (check [3,4,6,6] [3,3,4,4]) (1,1,False)
+    , U.teq "02" (check [3,4,6,6] [3,5,3,6]) (2,0,False)
     , U.teq "03" (check [3,4,6,6] [3,4,6,6]) (4,0,True)
 
     , U.teq "04" (check [5,1,1,4] [1,2,3,4]) (1,1,False)
     , U.teq "05" (check [5,1,1,4] [1,3,5,6]) (0,2,False)
-    , U.teq "06" (check [5,1,1,4] [5,2,1,5]) (2,0,False) -- 2,1
+    , U.teq "06" (check [5,1,1,4] [5,2,1,5]) (2,0,False)
     , U.teq "07" (check [5,1,1,4] [5,2,4,1]) (1,2,False)
-    , U.teq "08" (check [5,1,1,4] [5,4,1,1]) (2,2,False)
+    , U.teq "08" (check [5,1,1,4] [5,4,1,1]) (2,2,False) -- 2,1
     , U.teq "09" (check [5,1,1,4] [5,1,1,4]) (4,0,True)
     ]
 
 -- report is supposed to take the result of calling check, and
 -- produces a descriptive string to report to the player.
 report :: (Int, Int, Bool) -> String
---report a@(black0, white0, correct0) = show a
 report a = show a
 
 -- The function input is supposed to read a single guess from the
@@ -112,7 +97,12 @@ input =
     putStr "? "
     hFlush stdout -- ensure that the prompt is printed
     l <- getLine
-    return (map read (words l)) -- TODO : limit length to width
+    if l == "STOP"
+        then return stopMarker
+        else let g = map readInt (words l)
+             in if valid g
+                    then return g
+                    else do { putStrLn "invalid input"; input }
 
 -- The following function |readInt| is given and parses a single
 -- integer from a string. It produces |-1| if the parse fails. You
@@ -123,18 +113,31 @@ readInt x =
     [(n, "")] -> n
     _         -> -1
 
--- A function that indicates places on which you have to work:
-tODO :: a -> a
-tODO = id
-
 -- The function valid tests a guess for validity. This is a bonus
 -- exercise, so you do not have to implement this function.
 valid :: Guess -> Bool
-valid guess = tODO True
+valid guess | (-1) `elem` guess     = False
+            | length guess /= width = False
+            | not $ validColor guess = False
+            | otherwise             = True
+  where
+    validColor g = and (foldr (\x acc -> (1 <= x && x <= colors) : acc) [] g)
+
+t1 :: T.Test
+t1 = T.TestList
+    [
+      U.teq "t100" (valid [1,2,3,4])    True
+    , U.teq "t101" (valid [1,2,3,(-1)]) False
+    , U.teq "t102" (valid [1,2,3])      False
+    , U.teq "t103" (valid [1,2,3,4,5])  False
+    , U.teq "t103" (valid [0,2,3,4])    False
+    , U.teq "t103" (valid [1,2,3,9])    False
+    ]
 
 ------------------------------------------------------------------------------
 mm :: IO T.Counts
 mm = do
-    T.runTestTT t0
+    _ <- T.runTestTT t0
+    T.runTestTT t1
 
 -- End of file.
