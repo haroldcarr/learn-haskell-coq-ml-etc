@@ -1,9 +1,9 @@
 {-
 Created       : by Andres Loh
-Last Modified : 2014 Jul 07 (Mon) 13:27:37 by Harold Carr.
+Last Modified : 2014 Jul 07 (Mon) 13:50:34 by Harold Carr.
 -}
 
-module Main where
+module MasterMind.MasterMind where
 
 import           Data.List       (foldl')
 import           Data.Set        as S (empty, insert, size)
@@ -26,8 +26,8 @@ width  = 4
 
 -- This is the complete main function. It just initializes the
 -- game by generating a solution and then calls the game loop.
-main :: IO ()
-main =
+mmMain :: IO ()
+mmMain =
   do
     s <- generateSolution -- initialization
     loop 1 s              -- game loop
@@ -135,6 +135,7 @@ t1 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
+
 mm :: IO T.Counts
 mm = do
     _ <- T.runTestTT t0
