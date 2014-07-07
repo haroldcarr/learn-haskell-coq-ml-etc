@@ -1,6 +1,6 @@
 {-
 Created       : by Andres Loh
-Last Modified : 2014 Jul 07 (Mon) 13:23:10 by Harold Carr.
+Last Modified : 2014 Jul 07 (Mon) 13:27:37 by Harold Carr.
 -}
 
 module Main where
@@ -18,7 +18,7 @@ type Guess    = Row
 type Solution = Row
 
 stopMarker :: Row
-stopMarker = [(-1),(-1),(-1),(-1)]
+stopMarker = [-1,-1,-1,-1]
 
 colors, width :: Int
 colors = 6
@@ -47,14 +47,14 @@ generateSolution =
 loop :: Int -> Solution -> IO ()
 loop l s =
   do
-    putStrLn $ show s
+    print s
     i <- input            -- read (and parse) the user input
     if i == stopMarker
         then putStrLn "GOODBYE"
         else do let a@(_,_,g) = check s i
                 putStrLn $ report a
                 if g
-                    then putStrLn ("YES in " ++ (show l) ++ " tries")
+                    then putStrLn ("YES in " ++ show l ++ " tries")
                     else loop (l + 1) s
 
 check :: Solution -> Guess -> (Int,   -- number of black points,
@@ -63,9 +63,9 @@ check :: Solution -> Guess -> (Int,   -- number of black points,
 check solution guess = (length blk, S.size wht, length blk == width)
   where
     (blk,wht) = foldl' go ([], S.empty) (zip solution guess)
-    go a@(b, w) (s,g) | s == g                                = (s : b,            w)
-                      | g `elem` solution && not (g `elem` b) = (    b, S.insert g w)
-                      | otherwise                             = a
+    go a@(b, w) (s,g) | s == g                           = (s : b,            w)
+                      | g `elem` solution && notElem g b = (    b, S.insert g w)
+                      | otherwise                        = a
 
 t0 :: T.Test
 t0 = T.TestList
@@ -86,7 +86,7 @@ t0 = T.TestList
 -- report is supposed to take the result of calling check, and
 -- produces a descriptive string to report to the player.
 report :: (Int, Int, Bool) -> String
-report a = show a
+report = show
 
 -- The function input is supposed to read a single guess from the
 -- player. The first three instructions read a line. You're supposed
@@ -127,7 +127,7 @@ t1 :: T.Test
 t1 = T.TestList
     [
       U.teq "t100" (valid [1,2,3,4])    True
-    , U.teq "t101" (valid [1,2,3,(-1)]) False
+    , U.teq "t101" (valid [1,2,3,-1])   False
     , U.teq "t102" (valid [1,2,3])      False
     , U.teq "t103" (valid [1,2,3,4,5])  False
     , U.teq "t103" (valid [0,2,3,4])    False
