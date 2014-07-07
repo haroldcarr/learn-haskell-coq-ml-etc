@@ -1,10 +1,11 @@
 {-
 Created       : by Andres Loh
-Last Modified : 2014 Jul 07 (Mon) 11:22:27 by Harold Carr.
+Last Modified : 2014 Jul 07 (Mon) 11:48:32 by Harold Carr.
 -}
 
 module Main where
 
+import           Data.Set        as S (empty, insert, size)
 import           System.IO
 import           System.Random
 
@@ -62,24 +63,35 @@ white solution0 guess0 = white' solution0 guess0
 check :: Solution -> Guess -> (Int,   -- number of black points,
                                Int,   -- number of white points
                                Bool)  -- all-correct guess?
+{-
 check solution guess = (black     solution guess,
                         white     solution guess,
                         isCorrect solution guess)
   where
     isCorrect [] [] = True
     isCorrect (s:ss) (g:gs) = if s /= g then False else isCorrect ss gs
+-}
+check solution guess = (black, white, correct)
+  where
+    (b,w) = foldr go (0, S.empty) (zip solution guess)
+    go (s,g) a@(b, w) | s == g            = (b+1, w)
+                      | g `elem` solution = (b  , insert g w)
+                      | otherwise         = a
+    black = b;
+    white = size w
+    correct = b == width
 
 t0 :: T.Test
 t0 = T.TestList
     [
       U.teq "00" (check [3,4,6,6] [1,1,2,2]) (0,0,False)
-    , U.teq "01" (check [3,4,6,6] [3,3,4,4]) (1,1,False)
-    , U.teq "02" (check [3,4,6,6] [3,5,3,6]) (2,0,False)
+    , U.teq "01" (check [3,4,6,6] [3,3,4,4]) (1,1,False) -- 1,2
+    , U.teq "02" (check [3,4,6,6] [3,5,3,6]) (2,0,False) -- 2,1
     , U.teq "03" (check [3,4,6,6] [3,4,6,6]) (4,0,True)
 
     , U.teq "04" (check [5,1,1,4] [1,2,3,4]) (1,1,False)
     , U.teq "05" (check [5,1,1,4] [1,3,5,6]) (0,2,False)
-    , U.teq "06" (check [5,1,1,4] [5,2,1,5]) (2,0,False)
+    , U.teq "06" (check [5,1,1,4] [5,2,1,5]) (2,0,False) -- 2,1
     , U.teq "07" (check [5,1,1,4] [5,2,4,1]) (1,2,False)
     , U.teq "08" (check [5,1,1,4] [5,4,1,1]) (2,2,False)
     , U.teq "09" (check [5,1,1,4] [5,1,1,4]) (4,0,True)
