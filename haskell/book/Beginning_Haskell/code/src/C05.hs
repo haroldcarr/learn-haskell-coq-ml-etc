@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Feb                   by Harold Carr.
-Last Modified : 2014 Jul 02 (Wed) 06:52:50 by Harold Carr.
+Last Modified : 2014 Jul 06 (Sun) 00:45:08 by Harold Carr.
 -}
 
 {-# LANGUAGE BangPatterns #-}
@@ -8,7 +8,12 @@ Last Modified : 2014 Jul 02 (Wed) 06:52:50 by Harold Carr.
 module C05 where
 
 import           Control.DeepSeq
+import           Data.List       (find)
 
+import qualified Test.HUnit      as T
+import qualified Test.HUnit.Util as U
+
+------------------------------------------------------------------------------
 -- p. 111
 
 data TimeMachine = TM { manufacturer :: String, year :: Integer } deriving (Eq, Show)
@@ -18,8 +23,6 @@ timeMachinesFrom m y = TM m y : timeMachinesFrom m (y+1)
 
 timelyIncMachines :: [TimeMachine]
 timelyIncMachines = timeMachinesFrom "Timely Inc." 100
-
--- zip [1 .. ] "abcd"
 
 fibonacci :: [Integer]
 fibonacci = 0 : 1 : zipWith (+) fibonacci (tail fibonacci)
@@ -36,7 +39,25 @@ specialOffer = cycle [TM m 2005, TM m 1994, TM m 908]
 
 fibonacci2 :: [Integer]
 fibonacci2 = map fst $ iterate (\(n,n1) -> (n1,n+n1)) (0,1)
--- fibonacci2 !! 20
+
+lazy :: T.Test
+lazy = T.TestList
+    [
+      U.teq "lazy01" (take 3 timelyIncMachines)
+                     [ TM {manufacturer = "Timely Inc.", year = 100}
+                     , TM {manufacturer = "Timely Inc.", year = 101}
+                     , TM {manufacturer = "Timely Inc.", year = 102}
+                     ]
+    , U.teq "lazy02" (find (\(TM { year = y}) -> y > 2018)  timelyIncMachines)
+                     (Just (TM {manufacturer = "Timely Inc.", year = 2019}))
+
+    , U.teq "lazy03" (zip [(1::Int) .. ] "abcd")
+                     [(1,'a'),(2,'b'),(3,'c'),(4,'d')]
+    , U.teq "lazy04" (fibonacci  !! 20)
+                     6765
+    , U.teq "lazy05" (fibonacci2 !! 20)
+                     6765
+    ]
 
 ------------------------------------------------------------------------------
 -- Exercise 5-1 - p. 115
@@ -53,6 +74,29 @@ primes = sieve [2..]
 primesUpTo :: Integer -> [Integer]
 primesUpTo n = [p | p <- primes, p < n]
 
+e51 :: T.Test
+e51 = T.TestList
+    [
+      U.teq "e510" (take 20 primes) [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71]
+    ]
+
+------------------------------------------------------------------------------
+-- Exercise 5-2 - p. 118
+
+e52 :: [T.Test]
+e52 = U.tt "e52"
+     [ fibonacci !! 3
+     , (      0 : 1 : zipWith (+) fibonacci (tail fibonacci)) !! 3
+     , (head $ tail $ zipWith (+) fibonacci (tail fibonacci))
+     , (head $ tail $ zipWith (+) [0,1,1,2,3] (tail [0,1,1,2,3])) -- shorthand for lots more here
+     , (head $ tail $ zipWith (+) [0,1,1,2,3]         [1,1,2,3])
+     , (head $ tail $             [0+1,1+1,1+2,2+3])
+     , (head $                        [1+1,1+2,2+3])
+     ,                                 1+1
+     ]
+     2
+
+------------------------------------------------------------------------------
 -- p. 120
 
 -- foldl  (+) 0 [1 .. 1000000000] -- Segmentation fault: 11
@@ -71,16 +115,30 @@ sumForce2 xs = sumForce' xs 0
 -- sumForce  [1 .. 1000000000]
 -- sumForce2 [1 .. 1000000000]
 
+------------------------------------------------------------------------------
 -- bang patterns - p. 121
 
+-- !y : make sure following addition is NOT given a thunk.
+-- !s : make addition happen at each step (instead of building a thunk)
 sumYears :: [TimeMachine] -> Integer
 sumYears xs = sumYears' xs 0
     where sumYears' [] z = z
           sumYears' (TM _ !y :ys) z = let !s = z + y in sumYears' ys s
 
+------------------------------------------------------------------------------
+-- irrefutable patten - p. 121
+-- matching on it never fails - so avoid deconstruction in pattern match
+
+junk :: Maybe a
+junk = case longOperation of
+           ~(Just x) -> Just x
+  where
+    longOperation = undefined
+
 foo :: a
 foo = undefined
 
+------------------------------------------------------------------------------
 -- strict field - p. 128
 
 data ListL a = ListL !Integer [a]
@@ -112,5 +170,13 @@ instance NFData ClientU where
     rnf (GovOrgU i n)                  = i `deepseq` n `deepseq` ()
     rnf (CompanyU i n (PersonU f l) r) = i `deepseq` n `deepseq` f `deepseq` l `deepseq` r `deepseq` ()
     rnf (IndividualU i (PersonU f l))  = i `deepseq` f `deepseq` l `deepseq` ()
+
+------------------------------------------------------------------------------
+
+c05 :: IO T.Counts
+c05 = do
+    _ <- T.runTestTT lazy
+    _ <- T.runTestTT e51
+    T.runTestTT $ T.TestList $ e52
 
 -- End of file.
