@@ -1,12 +1,15 @@
 {-
 Created       : by Andres Loh
-Last Modified : 2014 Jul 07 (Mon) 08:37:45 by Harold Carr.
+Last Modified : 2014 Jul 07 (Mon) 11:22:27 by Harold Carr.
 -}
 
 module Main where
 
 import           System.IO
 import           System.Random
+
+import qualified Test.HUnit      as T
+import qualified Test.HUnit.Util as U
 
 type Row = [Int]
 type Guess = Row
@@ -44,8 +47,8 @@ loop s =
     let a@(_,_,g) = check s i
     putStrLn $ report a
     if g
-        then do { putStrLn "YES"; return () }
-        else do loop s
+        then putStrLn "YES"
+        else loop s
 
 black, white :: Solution -> Guess -> Int
 black []           _         = 0
@@ -65,6 +68,22 @@ check solution guess = (black     solution guess,
   where
     isCorrect [] [] = True
     isCorrect (s:ss) (g:gs) = if s /= g then False else isCorrect ss gs
+
+t0 :: T.Test
+t0 = T.TestList
+    [
+      U.teq "00" (check [3,4,6,6] [1,1,2,2]) (0,0,False)
+    , U.teq "01" (check [3,4,6,6] [3,3,4,4]) (1,1,False)
+    , U.teq "02" (check [3,4,6,6] [3,5,3,6]) (2,0,False)
+    , U.teq "03" (check [3,4,6,6] [3,4,6,6]) (4,0,True)
+
+    , U.teq "04" (check [5,1,1,4] [1,2,3,4]) (1,1,False)
+    , U.teq "05" (check [5,1,1,4] [1,3,5,6]) (0,2,False)
+    , U.teq "06" (check [5,1,1,4] [5,2,1,5]) (2,0,False)
+    , U.teq "07" (check [5,1,1,4] [5,2,4,1]) (1,2,False)
+    , U.teq "08" (check [5,1,1,4] [5,4,1,1]) (2,2,False)
+    , U.teq "09" (check [5,1,1,4] [5,1,1,4]) (4,0,True)
+    ]
 
 -- report is supposed to take the result of calling check, and
 -- produces a descriptive string to report to the player.
@@ -100,5 +119,10 @@ tODO = id
 -- exercise, so you do not have to implement this function.
 valid :: Guess -> Bool
 valid guess = tODO True
+
+------------------------------------------------------------------------------
+mm :: IO T.Counts
+mm = do
+    T.runTestTT t0
 
 -- End of file.
