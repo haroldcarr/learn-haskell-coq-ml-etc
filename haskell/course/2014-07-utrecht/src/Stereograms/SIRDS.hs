@@ -1,6 +1,6 @@
 {-
 Created       : by Andres Loh.
-Last Modified : 2014 Jul 08 (Tue) 07:23:18 by Harold Carr.
+Last Modified : 2014 Jul 08 (Tue) 07:36:07 by Harold Carr.
 -}
 
 module Stereograms.SIRDS where
@@ -165,7 +165,14 @@ queryAux q@(x, _) cs =
         Just r  -> Linked x r
 
 link :: Link -> Links -> Links
-link c cs = tODO cs
+link (Unlinked _)   cs = cs
+link l cs =
+    let ql = query l L cs
+        qr = query l R cs
+        bt = l >%> ql && l >%> ql
+    in if not bt
+           then cs
+           else add l (del ql (del qr cs))
 
 tcs :: Links
 tcs = M.fromList [((3,L),4),((4,R),3)]
@@ -204,7 +211,7 @@ d = 3.0            -- "distance" between projection plane and base
                    -- plane of the 3D image
 
 separation :: Double -> Int
-separation z = tODO 0
+separation z = round ( (e * (d - z)) / ((2 * d) - z) )
 
 sirdsLine :: [Height] -> Links
 sirdsLine hs = tODO noLinks

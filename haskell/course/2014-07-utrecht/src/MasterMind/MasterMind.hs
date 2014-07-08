@@ -1,6 +1,6 @@
 {-
 Created       : by Andres Loh
-Last Modified : 2014 Jul 08 (Tue) 07:25:20 by Harold Carr.
+Last Modified : 2014 Jul 08 (Tue) 07:26:39 by Harold Carr.
 -}
 
 module MasterMind.MasterMind where
@@ -57,6 +57,7 @@ loop l s =
                     then putStrLn ("YES in " ++ show l ++ " tries")
                     else loop (l + 1) s
 
+-- TODO : white is NOT correct
 check :: Solution -> Guess -> (Int,   -- number of black points,
                                Int,   -- number of white points
                                Bool)  -- all-correct guess?
