@@ -1,6 +1,6 @@
 {-
 Created       : by Andres Loh
-Last Modified : 2014 Jul 07 (Mon) 13:50:34 by Harold Carr.
+Last Modified : 2014 Jul 08 (Tue) 07:25:20 by Harold Carr.
 -}
 
 module MasterMind.MasterMind where
@@ -116,10 +116,10 @@ readInt x =
 -- The function valid tests a guess for validity. This is a bonus
 -- exercise, so you do not have to implement this function.
 valid :: Guess -> Bool
-valid guess | (-1) `elem` guess     = False
-            | length guess /= width = False
+valid guess | (-1) `elem` guess      = False
+            | length guess /= width  = False
             | not $ validColor guess = False
-            | otherwise             = True
+            | otherwise              = True
   where
     validColor g = and (foldr (\x acc -> (1 <= x && x <= colors) : acc) [] g)
 

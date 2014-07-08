@@ -16,6 +16,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     MasterMind.MasterMind
                        , RaceTrack.SVG
+                       , Stereograms.SIRDS
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
