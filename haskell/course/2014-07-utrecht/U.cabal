@@ -14,7 +14,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     MasterMind
+  exposed-modules:     Assignment1
+                       , MasterMind
                        , RaceTrack.SVG
                        , Stereograms
   -- other-modules:       
