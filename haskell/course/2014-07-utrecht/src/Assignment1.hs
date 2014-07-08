@@ -1,6 +1,6 @@
 {-
 Created       : by Ruud Koot.
-Last Modified : 2014 Jul 08 (Tue) 13:56:12 by Harold Carr.
+Last Modified : 2014 Jul 08 (Tue) 14:00:19 by Harold Carr.
 -}
 
 module Assignment1 where
@@ -39,10 +39,8 @@ parseTable = map words
 
 -- * Exercise 2
 
--- TODO: use foldr
 printLine :: [Int] -> String
-printLine [] = "+"
-printLine (n:ns) = "+" ++ concat (replicate n "-") ++ printLine ns
+printLine = foldr (\n acc -> "+" ++ concat (replicate n "-") ++ acc) "+"
 
 -- * Exercise 3
 
@@ -54,10 +52,9 @@ printField n s =
            else s ++ spaces
 
 -- * Exercise 4
--- TODO : use foldr
+
 printRow :: [(Int, String)] -> String
-printRow [] = "|"
-printRow ((n,s):xs) = "|" ++ printField n s ++ printRow xs
+printRow = foldr (\(n,s) acc -> "|" ++ printField n s ++ acc) "|"
 
 -- * Exercise 5
 
