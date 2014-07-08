@@ -1,9 +1,9 @@
 {-
 Created       : by Andres Loh
-Last Modified : 2014 Jul 08 (Tue) 07:26:39 by Harold Carr.
+Last Modified : 2014 Jul 08 (Tue) 11:45:34 by Harold Carr.
 -}
 
-module MasterMind.MasterMind where
+module MasterMind where
 
 import           Data.List       (foldl')
 import           Data.Set        as S (empty, insert, size)

@@ -1,9 +1,9 @@
 {-
 Created       : by Andres Loh.
-Last Modified : 2014 Jul 08 (Tue) 07:36:07 by Harold Carr.
+Last Modified : 2014 Jul 08 (Tue) 11:45:25 by Harold Carr.
 -}
 
-module Stereograms.SIRDS where
+module Stereograms where
 
 import           Data.Char
 import           Data.Map        (Map (..))
