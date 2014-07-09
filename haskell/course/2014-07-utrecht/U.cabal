@@ -16,6 +16,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Assignment1
                        , Assignment3
+                       , Assignment4
                        , MasterMind
                        , RaceTrack.SVG
                        , Stereograms
