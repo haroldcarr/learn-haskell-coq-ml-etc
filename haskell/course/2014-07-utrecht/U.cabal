@@ -17,6 +17,7 @@ library
   exposed-modules:     Assignment1
                        , Assignment3
                        , Assignment4
+                       , Main
                        , MasterMind
                        , RaceTrack.SVG
                        , Stereograms

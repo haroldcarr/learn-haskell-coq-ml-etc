@@ -1,6 +1,6 @@
 {-
 Created       : by Andres Loh.
-Last Modified : 2014 Jul 08 (Tue) 11:45:25 by Harold Carr.
+Last Modified : 2014 Jul 09 (Wed) 12:56:06 by Harold Carr.
 -}
 
 module Stereograms where
@@ -304,7 +304,7 @@ maxY = 400
 
 -- An example main program. Feel free to change it to print other images
 -- or perform other computations.
-main =
+stereograms =
   do
     writePPM "doubleChessPattern.ppm" (heightMap doubleChess) -- prints the pattern, unencoded
     i <- sirds doubleChess
@@ -359,8 +359,8 @@ circular = toImage (80,80)
 
 ------------------------------------------------------------------------------
 
-ss :: IO T.Counts
-ss = do
+sg :: IO T.Counts
+sg = do
     _ <- T.runTestTT t0
     T.runTestTT t1
 

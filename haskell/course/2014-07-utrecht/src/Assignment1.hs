@@ -1,6 +1,6 @@
 {-
 Created       : by Ruud Koot.
-Last Modified : 2014 Jul 08 (Tue) 14:00:19 by Harold Carr.
+Last Modified : 2014 Jul 09 (Wed) 12:55:20 by Harold Carr.
 -}
 
 module Assignment1 where
@@ -20,9 +20,10 @@ type Row   = [Field]
 type Table = [Row]
 
 -- | Main
-
+{-
 main :: IO ()
 main = interact (lines >>> exercise >>> unlines)
+-}
 
 exercise :: [String] -> [String]
 exercise = parseTable >>> select "gender" "male"
