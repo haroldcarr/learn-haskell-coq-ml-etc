@@ -1,11 +1,12 @@
 {-
 Created       : by Ruud Koot.
-Last Modified : 2014 Jul 09 (Wed) 01:55:21 by Harold Carr.
+Last Modified : 2014 Jul 09 (Wed) 03:30:30 by Harold Carr.
 -}
 
 module Assignment3 where
 
 import           Control.Arrow   ((&&&))
+import           Control.Monad   (guard)
 import           Data.Function   (on)
 import           Data.List       (group, sort, sortBy)
 import           Data.Maybe      (fromJust, isJust)
@@ -13,6 +14,8 @@ import           Data.Set        (Set, empty, insert, size)
 
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
+
+------------------------------------------------------------------------------
 
 -- | Containers
 
@@ -83,10 +86,19 @@ e3_4 = T.TestList
     ]
 
 -- * Exercise 5
-
+-- Note : you could factor this by defining an "unbox" type class to generalize Sum and Product then use here.
 fsum, fproduct :: (Foldable f, Num a) => f a -> a
-fsum     = undefined
-fproduct = undefined
+fsum fa     = let (Sum     result) = foldMap Sum     fa in result
+fproduct fa = let (Product result) = foldMap Product fa in result
+
+e5 :: T.Test
+e5 = T.TestList
+    [
+      U.teq "e500" (fsum     (Rose 2 [Rose 4 [Rose 6 []]]))   (12::Int)
+    , U.teq "e501" (fproduct (Rose 2 [Rose 4 [Rose 6 []]]))   (48::Int)
+    ]
+
+------------------------------------------------------------------------------
 
 -- | Poker
 
@@ -96,7 +108,19 @@ data Rank = R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | J | Q | K | A
 -- * Exercise 6
 
 instance Show Rank where
-    show = undefined
+    show R2  =  "2"
+    show R3  =  "3"
+    show R4  =  "4"
+    show R5  =  "5"
+    show R6  =  "6"
+    show R7  =  "7"
+    show R8  =  "8"
+    show R9  =  "9"
+    show R10 = "10"
+    show J   =  "J"
+    show Q   =  "Q"
+    show K   =  "K"
+    show A   =  "A"
 
 data Suit = S | H | D | C
     deriving (Bounded, Enum, Eq, Ord, Show)
@@ -107,15 +131,18 @@ data Card = Card { rank :: Rank, suit :: Suit }
 -- * Exercise 7
 
 instance Show Card where
-    show (Card { rank = r, suit = s }) = undefined
+    show (Card { rank = r, suit = s }) = show r ++ show s
 
 type Deck = [Card]
 
 -- * Exercise 8
 
 fullDeck, piquetDeck :: Deck
-fullDeck   = undefined
-piquetDeck = undefined
+fullDeck   = mkDeck R2
+piquetDeck = mkDeck R7
+
+mkDeck :: Rank -> Deck
+mkDeck startRank = [ Card r s | r <- [ startRank .. A ], s <- [ S .. C ] ]
 
 newtype Hand = Hand { unHand :: [Card] } deriving (Eq, Show)
 
@@ -134,12 +161,36 @@ data HandCategory
 -- * Exercise 9
 
 sameSuits :: Hand -> Bool
-sameSuits = undefined
+sameSuits h =
+    let ((Card _ s):cs) = unHand h
+    in all (\(Card _ s') -> s' == s) cs
 
 -- * Exercise 10
 
+rankValue :: Rank -> Int
+rankValue = read . show
+
+{-
 isStraight :: [Rank] -> Maybe Rank
-isStraight = undefined
+isStraight rs =
+    let sr = sort rs
+        z  = (zip sr (tail sr))
+    in if foldr (\(x,y) acc -> (abs (rankValue x - rankValue y)) == 1 && acc) True z
+           then Just (last sr)
+           else Nothing
+-}
+isStraight :: [Rank] -> Maybe Rank
+isStraight rs =
+    let sr = sort rs
+    in if all (\(x,y) -> succ x == y) $ zip sr (tail sr)
+           then Just (last sr)
+           else Nothing
+
+isStraight' :: [Rank] -> Maybe Rank
+isStraight' rs = do
+    let sr = sort rs
+    guard $ all (\(x,y) -> succ x == y) $ zip sr (tail sr)
+    return $ last sr
 
 -- * Exercise 11
 
@@ -176,6 +227,18 @@ allHands = undefined
 distinctHands :: Deck -> Set Hand
 distinctHands = undefined
 
+ep :: T.Test
+ep = T.TestList
+    [
+      U.teq "ep00" (sameSuits (Hand [Card R2 D, Card R3 D, Card R4 D, Card R5 D, Card R6 D])) True
+    , U.teq "ep01" (sameSuits (Hand [Card R2 D, Card R3 D, Card R4 D, Card R5 D, Card R6 C])) False
+
+    , U.teq "ep02" (isStraight  [R2, R3, R4, R5, R6]) (Just R6)
+    , U.teq "ep03" (isStraight  [R2, R3, R4, R5, R7]) Nothing
+    , U.teq "ep04" (isStraight' [R2, R3, R4, R5, R6]) (Just R6)
+    , U.teq "ep05" (isStraight' [R2, R3, R4, R5, R7]) Nothing
+    ]
+
 -- * Question 1
 
 {- ANSWER -}
@@ -190,7 +253,9 @@ a3 :: IO T.Counts
 a3 = do
     _ <- T.runTestTT e1
     _ <- T.runTestTT e2
-    T.runTestTT e3_4
+    _ <- T.runTestTT e3_4
+    _ <- T.runTestTT e5
+    T.runTestTT ep
 
 -- End of file.
 
