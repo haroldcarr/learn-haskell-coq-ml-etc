@@ -1,6 +1,6 @@
 {-
 Created       : by Ruud Koot.
-Last Modified : 2014 Jul 09 (Wed) 03:30:30 by Harold Carr.
+Last Modified : 2014 Jul 09 (Wed) 06:28:27 by Harold Carr.
 -}
 
 module Assignment3 where
@@ -9,6 +9,7 @@ import           Control.Arrow   ((&&&))
 import           Control.Monad   (guard)
 import           Data.Function   (on)
 import           Data.List       (group, sort, sortBy)
+import           Data.Map        as M (alter, elems, empty, toList)
 import           Data.Maybe      (fromJust, isJust)
 import           Data.Set        (Set, empty, insert, size)
 
@@ -167,18 +168,6 @@ sameSuits h =
 
 -- * Exercise 10
 
-rankValue :: Rank -> Int
-rankValue = read . show
-
-{-
-isStraight :: [Rank] -> Maybe Rank
-isStraight rs =
-    let sr = sort rs
-        z  = (zip sr (tail sr))
-    in if foldr (\(x,y) acc -> (abs (rankValue x - rankValue y)) == 1 && acc) True z
-           then Just (last sr)
-           else Nothing
--}
 isStraight :: [Rank] -> Maybe Rank
 isStraight rs =
     let sr = sort rs
@@ -195,22 +184,41 @@ isStraight' rs = do
 -- * Exercise 11
 
 ranks :: Hand -> [Rank]
-ranks = undefined
+ranks = reverse . sort . map (\(Card r _) -> r) . unHand
 
 -- * Exercise 12
 
 order :: Hand -> [(Int, Rank)]
-order = undefined
+order h = M.elems $ foldr go M.empty $ unHand h
+  where
+    go (Card r _) acc = M.alter (\x -> case x of
+                                            Nothing    -> Just (  1, r)
+                                            Just (n,_) -> Just (n+1, r))
+                        r
+                        acc
 
 -- * Exercise 13
 
 handCategory :: Hand -> HandCategory
-handCategory = undefined
+handCategory h =
+    let rh = ranks h
+    in case isStraight rh of
+        Just hc -> if sameSuits h then StraightFlush hc else Straight hc
+        Nothing ->
+            case order h of
+                [_     ,_      ,_      ,_      ,_ ] -> if sameSuits h then Flush rh else HighCard    rh
+                [(4,r4),(1,r1) ]                    -> FourOfAKind  r4 r1
+                [(3,r3),(2,r2) ]                    -> FullHouse    r3 r2
+                [(3,r3),(1,r1) ,(1,r1')]            -> ThreeOfAKind r3 r1  r1'
+                [(2,r2),(2,r2'),(1,r1) ]            -> TwoPair      r2 r2' r1
+                [(2,r2),(1,r1) ,(1,r1'),(1,rr)]     -> OnePair      r2 [r1,r1',rr]
 
 -- * Exercise 14
 
 instance Ord Hand where
-    compare = undefined
+    compare h1 h2 = compare (handCategory h1) (handCategory h2)
+
+------------------------------------------------------------------------------
 
 -- * Exercise 15
 
@@ -233,10 +241,19 @@ ep = T.TestList
       U.teq "ep00" (sameSuits (Hand [Card R2 D, Card R3 D, Card R4 D, Card R5 D, Card R6 D])) True
     , U.teq "ep01" (sameSuits (Hand [Card R2 D, Card R3 D, Card R4 D, Card R5 D, Card R6 C])) False
 
-    , U.teq "ep02" (isStraight  [R2, R3, R4, R5, R6]) (Just R6)
-    , U.teq "ep03" (isStraight  [R2, R3, R4, R5, R7]) Nothing
-    , U.teq "ep04" (isStraight' [R2, R3, R4, R5, R6]) (Just R6)
-    , U.teq "ep05" (isStraight' [R2, R3, R4, R5, R7]) Nothing
+    , U.teq "ep02" (isStraight  [R2, R3, R4, R5, R6])   (Just R6)
+    , U.teq "ep03" (isStraight  [R2, R3, R4, R5, R7])   Nothing
+    , U.teq "ep04" (isStraight' [R2, R3, R4, R5, R6])   (Just R6)
+    , U.teq "ep05" (isStraight' [R2, R3, R4, R5, R7])   Nothing
+
+    , U.teq "ep06" (ranks (Hand [Card R2 D, Card R3 D, Card R4 D, Card R5 D, Card R6 C]))         [R6, R5, R4, R3, R2]
+
+    , U.teq "ep07" (order (Hand [Card R7 H, Card R7 D, Card Q S,  Card R7 S, Card Q H]))          [(3, R7),(2, Q)]
+
+    , U.teq "ep08" (handCategory (Hand [Card R7 H, Card R7 D, Card Q S,  Card R7 S, Card Q H]))   (FullHouse R7 Q)
+
+    , U.teq "ep09" (compare (Hand [Card R7 H, Card R7 D, Card Q S,  Card R7 S, Card Q  H])
+                            (Hand [Card R2 D, Card R3 D, Card R4 D, Card R5 D, Card R6 C]))       GT
     ]
 
 -- * Question 1
