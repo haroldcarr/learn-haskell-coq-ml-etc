@@ -1,6 +1,6 @@
 {-
 Created       : by Andres Loh.
-Last Modified : 2014 Jul 09 (Wed) 12:56:06 by Harold Carr.
+Last Modified : 2014 Jul 09 (Wed) 13:14:31 by Harold Carr.
 -}
 
 module Stereograms where
@@ -57,7 +57,6 @@ blue   = RGB 0 0 255
 gray :: Height -> RGB
 gray c = let x = round (c * 255) in RGB x x x
 
--- The classic tODO function.
 tODO :: a -> a
 tODO = id
 
