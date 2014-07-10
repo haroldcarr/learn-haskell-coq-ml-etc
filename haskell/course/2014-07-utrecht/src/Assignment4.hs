@@ -1,6 +1,6 @@
 {-
 Created       : by Ruud Koot.
-Last Modified : 2014 Jul 09 (Wed) 08:57:21 by Harold Carr.
+Last Modified : 2014 Jul 10 (Thu) 07:45:33 by Harold Carr.
 -}
 
 {-# LANGUAGE FlexibleContexts       #-}
@@ -12,11 +12,10 @@ Last Modified : 2014 Jul 09 (Wed) 08:57:21 by Harold Carr.
 module Assignment4 where
 
 import           Control.Monad
-import           Data.Foldable    (Foldable (..))
+-- import           Data.Foldable    (Foldable ())
 import           Data.Monoid      (Monoid (..), Sum (..), (<>))
 import           Data.Ratio
-import           System.Random    (Random (random, randomR), getStdRandom,
-                                   mkStdGen, next, randomIO)
+import           System.Random
 
 import           System.IO.Unsafe (unsafePerformIO)
 import qualified Test.HUnit       as T
@@ -46,9 +45,13 @@ class Monad m => MonadGamble m where
 -- win if num heads of 6 coin tosses <= single roll dice heads (in that order)
 game :: MonadGamble m => m Outcome
 game = do
-    ts <- liftM (filter (== H)) (replicateM 6 toss)
+    ts <- replicateM 6 toss
     d  <- roll
-    return $ if (1 + (fromEnum d)) >= length ts then Win else Lose
+    return $ if (1 + (fromEnum d)) >= count (== H) ts then Win else Lose
+
+count :: (a -> Bool) -> [a] -> Int
+-- count p = foldr (\x acc -> if p x then acc + 1 else acc) 0
+count p = length . filter p
 
 ------------------------------------------------------------------------------
 -- * Simulation
@@ -57,23 +60,17 @@ game = do
 
 instance Random Coin where
 --  random :: (RandomGen g, Random a) => g -> (a, g)
-    random         g = randomR (H,T) g
-
+    random  = randomR (minBound, maxBound)
 --  randomR :: (RandomGen g, Random a) => (a, a) -> g -> (a, g)
-    randomR (_, _) g = let (i,g') = next g in (if even i then H else T, g')
+    randomR = myRandomR
 
 instance Random Dice where
-    random         g = let (i,g') = randomR (fromEnum (minBound :: Dice), fromEnum (maxBound :: Dice)) g
-                       in (toEnum i, g')
+    random  = randomR (minBound, maxBound)
+    randomR = myRandomR
 
-    randomR (_,_) g = let (i,g') = next g in
-        ( if      mod i 6 == 0 then D6
-          else if mod i 5 == 0 then D5
-          else if mod i 4 == 0 then D4
-          else if mod i 3 == 0 then D3
-          else if mod i 2 == 0 then D2
-          else                      D1
-        , g')
+myRandomR :: (Enum a, RandomGen g) => (a, a) -> g -> (a, g)
+myRandomR (l,h) g = let (i,g') = randomR (fromEnum l, fromEnum h) g
+                    in (toEnum i, g')
 
 e :: T.Test
 e = T.TestList
@@ -86,7 +83,7 @@ e = T.TestList
 
 instance MonadGamble IO where
     -- toss :: IO Coin
-    toss = randomIO
+    toss = randomIO -- this connects with above
     -- roll :: IO Dice
     roll = randomIO
 
@@ -95,8 +92,7 @@ instance MonadGamble IO where
 simulate :: IO Outcome -> Integer -> IO Rational
 simulate g n = do
     o <- replicateM (fromIntegral n) g
-    let w = filter (== Win) o
-    return $ toInteger (length w) % toInteger (length o)
+    return $ toInteger (count (== Win) o) % toInteger (length o)
 
 ------------------------------------------------------------------------------
 -- * Decision trees
@@ -109,23 +105,39 @@ data DecisionTree a
 -- Exercise 5
 
 instance Monad DecisionTree where
-
     -- return :: a -> DecisionTree a
-    return = undefined
-
+    return            = Result
     -- (>>=) :: DecisionTree a -> (a -> DecisionTree b) -> DecisionTree b
-    (>>=) = undefined
+    Result   a  >>= f = f a
+    Decision as >>= f = Decision $ map (>>= f) as
 
 -- Exercise 6
 
 instance MonadGamble DecisionTree where
-    toss = undefined
-    roll = undefined
+    toss = Decision [Result  H, Result  T]
+    roll = Decision [Result D1, Result D2, Result D3, Result D4, Result D5, Result D6]
 
 -- Exercise 7
 
+instance Functor DecisionTree where
+    fmap f (Result x)    = Result $ f x
+    fmap f (Decision xs) = Decision $ map (liftM f) xs
+
+class Functor f => Foldable f where
+    fold    :: Monoid m =>             f m -> m
+    foldMap :: Monoid m => (a -> m) -> f a -> m
+    foldMap f fa = fold (fmap f fa)
+
+instance Foldable DecisionTree where
+    fold d = fold (squish d [])
+               where
+                 squish (Decision as) xs = foldr squish xs as
+
 probabilityOfWinning :: DecisionTree Outcome -> Rational
 probabilityOfWinning = undefined
+
+
+-- game :: DecisionTree Outcome
 
 -- | Instrumented State Monad
 
