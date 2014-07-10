@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jul 09 (Wed) 13:18:07 by Harold Carr.
-Last Modified : 2014 Jul 10 (Thu) 00:50:24 by Harold Carr.
+Last Modified : 2014 Jul 10 (Thu) 00:59:30 by Harold Carr.
 -}
 
 module Validation where
@@ -10,6 +10,7 @@ import           HW01_HC
 
 import           Data.List       (intercalate, isPrefixOf)
 import           Data.List.Split (chunksOf)
+import           System.IO
 
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
@@ -33,6 +34,8 @@ showCC i =
 ------------------------------------------------------------------------------
 -- Identifying Credit Card Type
 
+-- Ex. 7.
+
 rawData :: [String]
 rawData = [ "34 15 American Express"
           , "37 15 American Express"
@@ -46,12 +49,26 @@ rawData = [ "34 15 American Express"
           , "417500 16 Visa Electron"
           ]
 
--- lookupIssuer :: Integer -> String
-lookupIssuer cardNum = lu (show cardNum) rawData
+lookupIssuer :: String -> String
+lookupIssuer cardNum = lu cardNum rawData
   where
     lu _ []      = "Unknown"
     lu cn (x:xs) = if check cn (words x) then x else lu cn xs
     check cn (prefix:n:_) = isPrefixOf prefix cn && length cn == read n
+
+-- Ex. 8.
+
+checkCC :: IO ()
+checkCC = do
+    putStr "Enter credit card number: "
+    n <- getLine
+    putStrLn (lookupIssuer n)
+    checkCC
+
+-- Ex. 9.
+
+toDigitsRevG :: (Integral a) => a -> a -> [a]
+toDigitsRevG = undefined
 
 ------------------------------------------------------------------------------
 
@@ -60,7 +77,7 @@ t0 = T.TestList
     [
       U.teq "t000" (readCC "4012 8888 8888 1881") 4012888888881881
     , U.teq "t001" (showCC 4012888888881881) "4012 8888 8888 1881"
-    , U.teq "t002" (lookupIssuer (4012888888881881::Int)) "4 16 Visa"
+    , U.teq "t002" (lookupIssuer "4012888888881881") "4 16 Visa"
     ]
 
 v :: IO T.Counts
