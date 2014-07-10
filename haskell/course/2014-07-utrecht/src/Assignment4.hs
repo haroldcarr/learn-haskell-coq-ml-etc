@@ -1,6 +1,6 @@
 {-
 Created       : by Ruud Koot.
-Last Modified : 2014 Jul 10 (Thu) 07:45:33 by Harold Carr.
+Last Modified : 2014 Jul 10 (Thu) 08:49:01 by Harold Carr.
 -}
 
 {-# LANGUAGE FlexibleContexts       #-}
@@ -11,8 +11,10 @@ Last Modified : 2014 Jul 10 (Thu) 07:45:33 by Harold Carr.
 
 module Assignment4 where
 
+import           Prelude
+
 import           Control.Monad
--- import           Data.Foldable    (Foldable ())
+import           Data.Foldable
 import           Data.Monoid      (Monoid (..), Sum (..), (<>))
 import           Data.Ratio
 import           System.Random
@@ -72,13 +74,6 @@ myRandomR :: (Enum a, RandomGen g) => (a, a) -> g -> (a, g)
 myRandomR (l,h) g = let (i,g') = randomR (fromEnum l, fromEnum h) g
                     in (toEnum i, g')
 
-e :: T.Test
-e = T.TestList
-    [
---      U.teq "e00" (do (i,g) <- randomR (H,T) (mkStdGen 6)
---      U.teq "e00" (do (i,g) <- randomR (D1,D6) (mkStdGen 6)
-    ]
-
 -- Exercise 3
 
 instance MonadGamble IO where
@@ -119,26 +114,25 @@ instance MonadGamble DecisionTree where
 
 -- Exercise 7
 
-instance Functor DecisionTree where
-    fmap f (Result x)    = Result $ f x
-    fmap f (Decision xs) = Decision $ map (liftM f) xs
-
-class Functor f => Foldable f where
-    fold    :: Monoid m =>             f m -> m
-    foldMap :: Monoid m => (a -> m) -> f a -> m
-    foldMap f fa = fold (fmap f fa)
-
-instance Foldable DecisionTree where
-    fold d = fold (squish d [])
-               where
-                 squish (Decision as) xs = foldr squish xs as
+flatten :: DecisionTree a -> [DecisionTree a]
+flatten r@(Result _) = [r]
+flatten (Decision xs) = Prelude.concatMap flatten xs
 
 probabilityOfWinning :: DecisionTree Outcome -> Rational
-probabilityOfWinning = undefined
-
+probabilityOfWinning o =
+    let fl = flatten o
+    in toInteger (count (\(Result x) -> x == Win) fl) % toInteger (length fl)
 
 -- game :: DecisionTree Outcome
+-- probabilityOfWinning (game :: DecisionTree Outcome)
 
+e7 :: T.Test
+e7 = T.TestList
+    [
+      U.teq "e7" (probabilityOfWinning (game :: DecisionTree Outcome)) (85 % 128)
+    ]
+
+------------------------------------------------------------------------------
 -- | Instrumented State Monad
 
 -- Exercise 8
@@ -218,6 +212,6 @@ run = undefined
 
 a4 :: IO T.Counts
 a4 = do
-    T.runTestTT e
+    T.runTestTT e7
 
 -- End of file.
