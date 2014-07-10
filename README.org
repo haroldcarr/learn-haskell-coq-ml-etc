@@ -6,6 +6,7 @@ Haskell
 - [[./haskell/course/upenn/cis194][Solutions to Brent Yorgey's UPenn cis 194 Haskell course]]
 - [[https://github.com/haroldcarr/learn-haskell-coq-ml-etc/tree/master/haskell/course/nicta/src/Course][Solutions and Equational Reasoning to NICTA Haskell course]]
 - [[./haskell/course/coursera-fp-odersky-but-in-haskell][Solutions in Haskell to Martin Odersky's Functional Programming Principles in Scala coursera course]]
+- [[./haskell/course/2014-07-utrecht/src/][Solutions in 2014-07 Utrecht Applied Functional Programming in Haskell course]]
 - [[./haskell/paper/monad-reader/issue22/gadt.org][Type Level Computation in Haskell via GADTs]]
 
 Coq
