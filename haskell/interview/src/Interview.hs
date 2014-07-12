@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Dec 23 (Mon) 23:15:11 by carr.
-Last Modified : 2014 Jan 12 (Sun) 19:03:44 by Harold Carr.
+Last Modified : 2014 Jul 12 (Sat) 13:09:24 by Harold Carr.
 
 TODO:
 - use Shelly to
@@ -13,13 +13,17 @@ TODO:
 - threepenny-gui
 -}
 
-import Control.Monad (unless)
-import Data.RDF.Types (Node(..), LValue(..))
-import Data.String.Utils (replace)
-import Data.Text as T (pack, unpack)
-import Database.HSparql.Connection
-import Database.HSparql.QueryGenerator
-import System.Environment (getArgs)
+{-# LANGUAGE OverloadedStrings #-}
+
+module Interview where
+
+import           Control.Monad                   (unless)
+import           Data.RDF.Types                  (LValue (..), Node (..))
+import           Data.String.Utils               (replace)
+import           Data.Text                       as T (pack, unpack)
+import           Database.HSparql.Connection
+import           Database.HSparql.QueryGenerator
+import           System.Environment              (getArgs)
 
 ------------------------------------------------------------------------------
 -- CLI
