@@ -1,6 +1,6 @@
 {-
 Created       : by Ruud Koot.
-Last Modified : 2014 Jul 10 (Thu) 08:49:01 by Harold Carr.
+Last Modified : 2014 Jul 10 (Thu) 14:12:42 by Harold Carr.
 -}
 
 {-# LANGUAGE FlexibleContexts       #-}
@@ -124,7 +124,6 @@ probabilityOfWinning o =
     in toInteger (count (\(Result x) -> x == Win) fl) % toInteger (length fl)
 
 -- game :: DecisionTree Outcome
--- probabilityOfWinning (game :: DecisionTree Outcome)
 
 e7 :: T.Test
 e7 = T.TestList
@@ -135,18 +134,23 @@ e7 = T.TestList
 ------------------------------------------------------------------------------
 -- | Instrumented State Monad
 
+-- HC: this originall said "MonadState m s" - I reversed them.
+
 -- Exercise 8
 
-class Monad m => MonadState m s | m -> s where
+class Monad m => MonadState s m | m -> s where
 
     get :: m s
-    get = undefined
+    get = modify id
 
+    -- http://stackoverflow.com/questions/19455480/haskell-monadstate-implement-put-with-modify
     put :: s -> m ()
-    put = undefined
 
     modify :: (s -> s) -> m s
-    modify = undefined
+    modify f = do
+                   s <- get
+                   put (f s)
+                   return s
 
 -- * Instrumentation
 
@@ -185,7 +189,7 @@ instance Monad (State' s) where
     -- (>>=) :: State' s a -> (a -> State' s b) -> State' s b
     st >>= k = undefined
 
-instance MonadState (State' s) s where
+instance MonadState s (State' s) where
 
     -- get :: State' s s
     get = undefined
@@ -193,6 +197,7 @@ instance MonadState (State' s) s where
     -- put :: s -> State' s ()
     put = undefined
 
+------------------------------------------------------------------------------
 -- * Tree Labeling
 
 data Tree a = Branch (Tree a) a (Tree a) | Leaf
@@ -200,7 +205,7 @@ data Tree a = Branch (Tree a) a (Tree a) | Leaf
 
 -- Exercise 11
 
-label :: MonadState m Int => Tree a -> m (Tree (Int, a))
+label :: MonadState Int m => Tree a -> m (Tree (Int, a))
 label = undefined
 
 -- Exercise 12
