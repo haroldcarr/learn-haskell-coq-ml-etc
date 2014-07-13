@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Dec 23 (Mon) 23:15:11 by carr.
-Last Modified : 2014 Jul 12 (Sat) 13:09:24 by Harold Carr.
+Last Modified : 2014 Jul 13 (Sun) 06:19:05 by Harold Carr.
 
 TODO:
 - use Shelly to
@@ -13,14 +13,16 @@ TODO:
 - threepenny-gui
 -}
 
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Interview where
 
 import           Control.Monad                   (unless)
 import           Data.RDF.Types                  (LValue (..), Node (..))
+import           Data.String                     (IsString)
 import           Data.String.Utils               (replace)
-import           Data.Text                       as T (pack, unpack)
+import           Data.Text                       as T (Text, pack, unpack)
 import           Database.HSparql.Connection
 import           Database.HSparql.QueryGenerator
 import           System.Environment              (getArgs)
@@ -34,42 +36,49 @@ main = do
     av <- getArgs
     act av
 
+act :: [String] -> IO ()
 act ("new-user"                 : uEmail : [])                       = newUserCLI              uEmail
 act ("add-user-to-group"        : uEmail : gName      :[])           = addUserToGroupCLI       uEmail gName
-act ("rm-user-from-group"       : uEmail : gName      :[])           = do putStrLn "rmUserFromGroup      uEmail gName"
-act ("list-user-groups"         : uEmail : [])                       = do putStrLn "list-user-groups"
-act ("delete-user"              : uEmail : [])                       = do putStrLn "delete-user"
+act ("rm-user-from-group"       : uEmail : gName      :[])           = putStrLn $ "TODO: rmUserFromGroup "  ++ uEmail ++ " " ++ gName
+act ("list-user-groups"         : uEmail : [])                       = putStrLn $ "TODO: list-user-groups " ++ uEmail
+act ("delete-user"              : uEmail : [])                       = putStrLn $ "TODO: delete-user "      ++ uEmail
 act ("list-users"               : [])                                = listUsersCLI
 
 act ("new-group"                : gName  : [])                       = newGroupCLI             gName
 act ("add-permission-to-group"  : gName  : permission : resource:[]) = addPermissionToGroupCLI gName  permission resource
-act ("rm-permission-from-group" : gName  : permission : resource:[]) = do putStrLn "rmPermissionFromGroup gName  permission resource"
-act ("list-group-permissions"   : gName  : [])                       = do putStrLn "list-user-groups"
-act ("delete-group"             : gName  : [])                       = do putStrLn "delete-group"
+act ("rm-permission-from-group" : gName  : permission : resource:[]) = putStrLn $ "TODO: rmPermissionFromGroup " ++ gName  ++ " " ++ permission ++ " " ++ resource
+act ("list-group-permissions"   : gName  : [])                       = putStrLn $ "TODO: list-user-groups "      ++ gName
+act ("delete-group"             : gName  : [])                       = putStrLn $ "TODO: delete-group "          ++ gName
 act ("list-groups"              : [])                                = listGroupsCLI
 
-act x                                                                = do putStrLn $ "unknown: " ++ (show x)
+act x                                                                = putStrLn $ "unknown: " ++ show x
 
+newUserCLI :: String -> IO ()
 newUserCLI uEmail = do
     r <- newUser uEmail
-    putStrLn $ show r
+    print r
 
+listUsersCLI :: IO ()
 listUsersCLI = do
     r <- listUsers
-    putStrLn $ show r
+    print r
 
+newGroupCLI :: String -> IO ()
 newGroupCLI gName = do
     r <- newGroup gName
-    putStrLn $ show r
+    print r
 
+addUserToGroupCLI :: String -> String -> IO ()
 addUserToGroupCLI uEmail gName = do
     r <- addUserToGroup uEmail gName
-    putStrLn $ show r
+    print r
 
+addPermissionToGroupCLI :: String -> String -> String -> IO ()
 addPermissionToGroupCLI gName permission resource = do
     r <- addPermissionToGroup gName permission resource
-    putStrLn $ show r
+    print r
 
+listGroupsCLI :: IO ()
 listGroupsCLI = do
     r <- listGroups
     banner "group"
@@ -77,11 +86,12 @@ listGroupsCLI = do
         Just g  -> mapM_ format g
         Nothing -> putStrLn "no groups"
   where
-    format (_:n:[]) = do
-        (\(Bound v) -> putStrLn $ show $ getValue $ v) n
+    format (_:n:[]) = (\(Bound v) -> print $ getValue v) n
 
+getValue :: Node -> Text
 getValue (Data.RDF.Types.LNode (Data.RDF.Types.PlainL x)) = x
 
+banner :: String -> IO ()
 banner x = do
     putStrLn "--------------------------------------------------"
     putStrLn x
@@ -90,33 +100,39 @@ banner x = do
 -- persistent operations
 -- Note: if these were high-frequency/volume operations then would batch calls where possible
 
+newUser :: String -> IO Bool
 newUser uEmail = do
-    update  id isA          user
-    updateL id emailAddress uEmail
+    update  uid isA          user
+    updateL uid emailAddress uEmail
   where
-    id = ohcP $ emailAddressToId uEmail
+    uid = ohcP $ emailAddressToId uEmail
 
-listUsers = do
+listUsers :: IO (Maybe [[BindingValue]])
+listUsers =
     queryVTT var isA user
 
+newGroup :: String -> IO Bool
 newGroup gName = do
-    update  id isA       group
-    updateL id groupName gName
+    update  uid isA       group
+    updateL uid groupName gName
   where
-    id = ohcP gName
+    uid = ohcP gName
 
-addUserToGroup uEmail gName = do
-    update id memberOf (ohcP gName)
+addUserToGroup :: String -> String -> IO Bool
+addUserToGroup uEmail gName =
+    update uid memberOf (ohcP gName)
   where
-    id = ohcP $ emailAddressToId uEmail
+    uid = ohcP $ emailAddressToId uEmail
 
+addPermissionToGroup :: String -> String -> String -> IO Bool
 addPermissionToGroup gName permission resource =
-    updateL id perm resource
+    updateL uid perm resource
   where
-    id   = ohcP gName
+    uid  = ohcP gName
     perm = pToP permission
 
-listGroups = do
+listGroups :: IO (Maybe [[BindingValue]])
+listGroups =
     queryVTTVTV isA group groupName
 
 ------------------------------------------------------------------------------
@@ -127,7 +143,7 @@ isDBAlreadyPopulated = sendAsk a
   where
     a :: Query AskQuery
     a = do
-        ohc <- openHcOrgPrefix
+        _   <- openHcOrgPrefix
         i   <- initialized
         ask <- askTriple i i i
         return AskQuery { queryAsk = [ask] }
@@ -163,54 +179,62 @@ initializeDB = do
 ------------------------------------------------------------------------------
 -- rdf utilities
 
-update s p o = do sendUpdate u
+-- Note: cannot do top-level types because `TermLike` is not exported.
+
+-- update :: (TermLike a, TermLike b, TermLike c) => Query a -> Query b -> Query c -> IO Bool
+update s p o = sendUpdate u
   where
     u = do
-        ohc <- openHcOrgPrefix
+        _  <- openHcOrgPrefix
         s' <- s;    p' <- p;    o' <- o;
-        u  <- updateTriple s' p' o'
-        return UpdateQuery { queryUpdate = [u] }
+        u'  <- updateTriple s' p' o'
+        return UpdateQuery { queryUpdate = [u'] }
 
-updateL s p o = do sendUpdate u
+-- updateL :: (TermLike a, TermLike b) => Query a -> Query b -> [Char] -> IO Bool
+updateL s p o = sendUpdate u
   where
     u = do
-        ohc <- openHcOrgPrefix
+        _  <- openHcOrgPrefix
         s' <- s;    p' <- p
-        u  <- updateTriple s' p' (T.pack o)
-        return UpdateQuery { queryUpdate = [u] }
+        u'  <- updateTriple s' p' (T.pack o)
+        return UpdateQuery { queryUpdate = [u'] }
 
-queryVTT s p o = do sendQuery q
+-- queryVTT :: (TermLike b, c) => Query Variable -> Query b -> Query c -> IO (Maybe [[BindingValue]])
+queryVTT s p o = sendQuery q
   where
     q = do
-        ohc <- openHcOrgPrefix
+        _  <- openHcOrgPrefix
         s' <- s;    p' <- p;    o' <- o;
         triple s' p' o'
         return SelectQuery { queryVars = [s'] }
 
-queryVTTVTV p1 o1 p2 = do sendQuery q
+-- queryVTTVTV :: (TermLike a, TermLike b, TermLike c) => Query a -> Query b -> Query c -> IO (Maybe [[BindingValue]])
+queryVTTVTV p1 o1 p2 = sendQuery q
   where
     q = do
-        ohc <- openHcOrgPrefix
-        id  <- var;    p1' <- p1;    o1' <- o1
+        _   <- openHcOrgPrefix
+        uid <- var;    p1' <- p1;    o1' <- o1
         p2' <- p2;     o2' <- var
-        triple id p1' o1'
-        triple id p2' o2'
-        return SelectQuery { queryVars = [id,o2'] }
+        triple uid p1' o1'
+        triple uid p2' o2'
+        return SelectQuery { queryVars = [uid,o2'] }
 
 sendUpdate :: Query UpdateQuery -> IO Bool
-sendUpdate u = do r <- updateQuery dbUpdateAddress u; return r
+sendUpdate = updateQuery dbUpdateAddress
 
 sendQuery  :: Query SelectQuery -> IO (Maybe [[BindingValue]])
-sendQuery  q = do r <- selectQuery dbQueryAddress  q; return r
+sendQuery  = selectQuery dbQueryAddress
 
 sendAsk    :: Query AskQuery    -> IO Bool
-sendAsk    a = do r <- askQuery    dbQueryAddress  a; return r
+sendAsk    = askQuery    dbQueryAddress
 
 ------------------------------------------------------------------------------
 -- misc utilities
 
-emailAddressToId uEmail = replace "@" "AT" uEmail
+emailAddressToId :: (Eq a, IsString [a]) => [a] -> [a]
+emailAddressToId = replace "@" "AT"
 
+-- pToP :: String -> Query IRIRef
 pToP x | x == readP  = readPermission
        | x == writeP = writePermission
        | otherwise   = ohcP x -- TODO: restrict
@@ -218,9 +242,16 @@ pToP x | x == readP  = readPermission
 ------------------------------------------------------------------------------
 -- constants
 
+dbAddress, dbQueryAddress, dbUpdateAddress, readP, writeP :: String
 dbAddress         = "http://localhost:3030/ds/"
 dbQueryAddress    = dbAddress ++ "query"
 dbUpdateAddress   = dbAddress ++ "update"
+readP             = "read"
+writeP            = "write"
+
+-- IRIRef not exported
+-- ohcP :: Query IRIRef
+ohcP x = do { ohc <- openHcOrgPrefix ; return (ohc .:. T.pack x) }
 emailAddress      = ohcP "emailAddress"
 group             = ohcP "group"
 groupName         = ohcP "groupName"
@@ -228,26 +259,26 @@ hasPermissions    = ohcP "hasPermissions"
 initialized       = ohcP "initialized"
 isA               = ohcP "isA"
 memberOf          = ohcP "memberOf"
-openHcOrgPrefix   = prefix "openHcOrg" (iriRef "http://openhc.org/")
-readP             = "read"
 readPermission    = ohcP "readPermission"
 user              = ohcP "user"
-writeP            = "write"
 writePermission   = ohcP "writePermission"
 
-ohcP x = do { ohc <- openHcOrgPrefix ; return (ohc .:. (T.pack x)) }
+-- openHcOrgPrefix :: Query Prefix
+openHcOrgPrefix   = prefix "openHcOrg" (iriRef "http://openhc.org/")
 
 ------------------------------------------------------------------------------
 -- Experiments
 
-qAll = do sendQuery q
+qAll :: IO (Maybe [[BindingValue]])
+qAll = sendQuery q
   where
     q = do
         s <- var; p <- var; o <- var
         triple s p o
         return SelectQuery { queryVars = [s, p, o] }
 
-qBook1 = do sendQuery q
+qBook1 :: IO (Maybe [[BindingValue]])
+qBook1 = sendQuery q
   where
     q = do
         dc <- prefix "dc" (iriRef "http://purl.org/dc/elements/1.1/")
@@ -256,7 +287,8 @@ qBook1 = do sendQuery q
         triple (ex .:. "book1")  (dc .:. "title") (T.pack "A new book")
         return SelectQuery { queryVars = [x] }
 
-aBook1 = do sendAsk a
+aBook1 :: IO Bool
+aBook1 = sendAsk a
   where
     a = do
         dc <- prefix "dc" (iriRef "http://purl.org/dc/elements/1.1/")
@@ -265,7 +297,8 @@ aBook1 = do sendAsk a
         return AskQuery { queryAsk = [ask] }
 
 -- PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT DATA {  <http://example/book1> dc:title "A new book" ; dc:creator "A.N.Other" . }
-uhb = do sendUpdate u
+uhb :: IO Bool
+uhb = sendUpdate u
   where
     u = do
         dc <- prefix "dc" (iriRef "http://purl.org/dc/elements/1.1/")
