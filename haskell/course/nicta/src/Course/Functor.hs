@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -31,8 +32,13 @@ infixl 4 <$>
 -- >>> (+1) <$> Id 2
 -- Id 3
 instance Functor Id where
-    (<$>) f (Id x) = Id (f x)
---C (<$>) = mapId
+  (<$>) ::
+    (a -> b)
+    -> Id a
+    -> Id b
+  (<$>) =
+    mapId
+-- HC: (<$>) f (Id x) = Id (f x)
 
 -- | Maps a function on the List functor.
 --
@@ -42,7 +48,12 @@ instance Functor Id where
 -- >>> (+1) <$> (1 :. 2 :. 3 :. Nil)
 -- [2,3,4]
 instance Functor List where
-  (<$>) = map
+  (<$>) ::
+    (a -> b)
+    -> List a
+    -> List b
+  (<$>) =
+    map
 
 -- | Maps a function on the Optional functor.
 --
@@ -52,9 +63,15 @@ instance Functor List where
 -- >>> (+1) <$> Full 2
 -- Full 3
 instance Functor Optional where
-    (<$>) _  Empty   = Empty
-    (<$>) f (Full x) = Full (f x)
---C (<$>) = mapOptional
+  (<$>) ::
+    (a -> b)
+    -> Optional a
+    -> Optional b
+  (<$>) =
+    mapOptional
+-- HC:
+--    (<$>) _  Empty   = Empty
+--    (<$>) f (Full x) = Full (f x)
 
 data HCEither a b = Bad a | Good b deriving Show
 
@@ -84,8 +101,13 @@ instance Functor (HCEither a) where
 -- >>> ((+1) <$> (*2)) 8
 -- 17
 instance Functor ((->) t) where
-    (<$>) f1 f2 = f1 . f2
---C (<$>) = (.)
+  (<$>) ::
+    (a -> b)
+    -> ((->) t a)
+    -> ((->) t b)
+  (<$>) =
+    (.)
+-- HC: (<$>) f1 f2 = f1 . f2
 
 -- | Anonymous map. Maps a constant value on a functor.
 --
@@ -104,21 +126,21 @@ a <$ fb = const a <$> fb
 
 tcl :: [T.Test]
 tcl = U.tt "tcl"
-      [                             7      <$        (1:.2:.Nil)
-      ,                       const 7      <$>       (1:.2:.Nil)
-      , map                  (const 7)               (1:.2:.Nil)
-      , foldRight (\x acc -> (const 7) x :. acc) Nil (1:.2:.Nil)
+      [                            7       <$        ((1::Int):.2:.Nil)
+      ,                       const 7      <$>       ((1::Int):.2:.Nil)
+      , map                  (const 7)               ((1::Int):.2:.Nil)
+      , foldRight (\x acc -> (const 7) x :. acc) Nil ((1::Int):.2:.Nil)
       ]
-      (7:.7:.Nil)
+      ((7::Int):.7:.Nil)
 
 tco :: [T.Test]
 tco = U.tt "tco"
-      [             7 <$  Full 2
-      ,       const 7 <$> Full 2
-      , Full (const 7 2)
+      [             7 <$  Full (2::Int)
+      ,       const 7 <$> Full (2::Int)
+      , Full (const 7 (2::Int))
       , Full        7
       ]
-      (Full 7)
+      (Full (7::Int))
 
 -- | Anonymous map producing unit value.
 --
@@ -138,7 +160,7 @@ void ::
   f a
   -> f ()
 void =
-  error "todo"
+  (<$>) $ const ()
 
 -----------------------
 -- SUPPORT LIBRARIES --

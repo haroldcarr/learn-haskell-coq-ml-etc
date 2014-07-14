@@ -43,8 +43,10 @@ instance Show t => Show (List t) where
   show = show . foldRight (:) []
 
 -- The list of integers from zero to infinity.
-infinity :: List Integer
-infinity = infinityFrom 0
+infinity ::
+  List Integer
+infinity =
+  infinityFrom 0
 
 -- HC : open up so I can use below.
 infinityFrom :: Num t => t -> List t
@@ -77,26 +79,25 @@ headOr ::
   a
   -> List a
   -> a
-headOr a Nil = a
-headOr _ (h:._) = h
-
-headOrC :: a -> List a -> a
-headOrC = foldRight const
+headOr = foldRight const
+-- HC
+-- headOr a Nil = a
+-- headOr _ (h:._) = h
 
 tho1 :: [T.Test]
 tho1 = U.tt "tho1"
-       [ headOrC                    (-1)  infinity
-       ,          foldRight  const  (-1)  infinity             -- def of headOrC
-       , const 0 (foldRight (const) (-1) (infinityFrom (0+1))) -- def of foldRight non-Nil case
+       [ headOr                      (-1)        infinity
+       ,          foldRight  const   (-1)        infinity             -- def of headOr
+       , const 0 (foldRight (const) ((-1)::Int) (infinityFrom (0+1))) -- def of foldRight non-Nil case
        ]
-       0                                                       -- def of const
+       0                                                              -- def of const
 
 tho2 :: [T.Test]
 tho2 = U.tt "tho2"
-       [ headOrC         (-1) Nil
-       , foldRight const (-1) Nil                              -- def of headOrC
+       [ headOr          (-1) Nil
+       , foldRight const (-1) Nil                              -- def of headOr
        ]
-       (-1)                                                    -- def of foldRight Nil case
+       ((-1)::Int)                                             -- def of foldRight Nil case
 
 -- | The product of the elements of a list.
 --
@@ -108,7 +109,8 @@ tho2 = U.tt "tho2"
 product ::
   List Int
   -> Int
-product =  foldRight (*) 1
+product =
+  foldRight (*) 1
 
 productC :: List Int -> Int
 productC = foldLeft (*) 1
@@ -126,11 +128,11 @@ tp1 = U.tt "tp1"
 tp2 :: [T.Test]
 tp2 = U.tt "tp2"
       [ productC (2:.3:.Nil)
-      , (*) 1 2 `seq` foldLeft (*) ((*) 1  2) (3:.Nil)
-      ,               foldLeft (*)      1 (2:. 3:.Nil)
-      ,       2 `seq` foldLeft (*)         2  (3:.Nil)
-      ,       2 `seq` ((*) 2 3) `seq` foldLeft (*) ((*) 2 3) Nil
-      ,       2 `seq` 6         `seq` foldLeft (*) 6         Nil
+      , (*) 1 (2::Int) `seq` foldLeft (*) ((*) 1  2) (3:.Nil)
+      ,                      foldLeft (*)      1 (2:. 3:.Nil)
+      ,       (2::Int) `seq` foldLeft (*)         2  (3:.Nil)
+      ,        2       `seq` ((*) 2 3) `seq` foldLeft (*) ((*) 2 3) Nil
+      ,       (2::Int) `seq` 6         `seq` foldLeft (*) 6         Nil
       ,       2 `seq` 6         `seq`              6                  -- http://www.haskell.org/haskellwiki/Seq
       ]
       6
@@ -147,7 +149,8 @@ tp2 = U.tt "tp2"
 sum ::
   List Int
   -> Int
-sum = foldRight (+) 0
+sum =
+  foldRight (+) 0
 
 sumC :: List Int -> Int
 sumC = foldLeft (+) 0
@@ -161,14 +164,13 @@ sumC = foldLeft (+) 0
 length ::
   List a
   -> Int
-length = foldRight (\_ acc -> acc + 1) 0
-
-lengthC :: List a -> Int
-lengthC = foldLeft (const . succ) 0
+length =
+  foldLeft (const . succ) 0
+-- HC: length = foldRight (\_ acc -> acc + 1) 0
 
 tlc :: [T.Test]
 tlc = U.tt "tlc"
-      [ lengthC                   (10:.                                          20:.Nil)
+      [ length                    (10:.                                          20:.Nil)
       , foldLeft (const . succ) 0 (10:.                                          20:.Nil)
       , (const . succ) 0 10 `seq` foldLeft (const . succ) ((const . succ) 0 10) (20:.Nil)
       , 1                   `seq` foldLeft (const . succ) 1                     (20:.Nil)
@@ -190,7 +192,8 @@ map ::
   (a -> b)
   -> List a
   -> List b
-map f = foldRight (\x acc -> f x :. acc) Nil
+map f =
+  foldRight (\x acc -> f x :. acc) Nil
 
 -- | Return elements satisfying the given predicate.
 --
@@ -206,10 +209,11 @@ filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter f  = foldRight (\x acc -> if f x then  x:.acc else acc) Nil
-
-filterC :: (a -> Bool) -> List a -> List a
-filterC f = foldRight (\a     -> if f a then (a:.)   else id)  Nil -- anon return partially applied cons or id - then applied to acc in foldRight
+filter f =
+  foldRight (\a     -> if f a then (a:.)   else id)  Nil -- anon return partially applied cons or id - then applied to acc in foldRight
+-- HC:
+-- filter f =
+--foldRight (\a acc -> if f a then  a:.acc else acc) Nil
 
 -- | Append two lists to a new list.
 --
@@ -227,11 +231,11 @@ filterC f = foldRight (\a     -> if f a then (a:.)   else id)  Nil -- anon retur
   List a
   -> List a
   -> List a
-(++) xsl xsr = foldRight (:.) xsr xsl
-infixr 5 ++
+(++) =
+  flip (foldRight (:.))
+-- HC: (++) xsl xsr = foldRight (:.) xsr xsl
 
-ppC :: List a -> List a -> List a
-ppC = flip (foldRight (:.))
+infixr 5 ++
 
 -- | Flatten a list of lists to a list.
 --
@@ -246,7 +250,8 @@ ppC = flip (foldRight (:.))
 flatten ::
   List (List a)
   -> List a
-flatten = foldRight (++) Nil
+flatten =
+  foldRight (++) Nil
 
 -- HC: this layout is not completely accurate, but it does give some insight.
 tft :: [T.Test]
@@ -280,7 +285,8 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap g = foldRight (\x acc -> g x ++ acc) Nil
+flatMap g =
+  foldRight (\x acc -> g x ++ acc) Nil
 
 -- HC:
 -- This walks the initial list once to map and then the result list once to flatten.
@@ -303,6 +309,15 @@ tfm = U.tt "tfm"
       ]
       (1:.10:.11:.110:.Nil)
 
+-- | Flatten a list of lists to a list (again).
+-- HOWEVER, this time use the /flatMap/ function that you just wrote.
+--
+-- prop> let types = x :: List (List Int) in flatten x == flattenAgain x
+flattenAgain ::
+  List (List a)
+  -> List a
+flattenAgain =
+  error "todo"
 
 -- | Convert a list of optional values to an optional list of values.
 --

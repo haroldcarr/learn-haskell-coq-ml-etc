@@ -32,13 +32,17 @@ Full a ?? _ = a
 Empty <+> o = o
 k <+> _     = k
 
+applyOptional :: Optional (a -> b) -> Optional a -> Optional b
+applyOptional f a = bindOptional (\f' -> mapOptional (\a' -> f' a') a) f
+
 -- | HC: this is `lift2`
 twiceOptional :: (a -> b -> c) -> Optional a -> Optional b -> Optional c
-twiceOptional f a b = bindOptional (\aa -> mapOptional (f aa) b) a
+twiceOptional f = applyOptional . mapOptional f
 
+-- Note: this reasoning is from an older but similar definition of twiceOptional
 tto :: [T.Test]
 tto = U.tt "tto"
-      [ twiceOptional (+) (Full 2) (Full 3)
+      [ twiceOptional (+) (Full 2) (Full (3::Int))
       , bindOptional (\aa -> mapOptional ((+) aa) (Full 3)) (Full 2)
       ,              (\aa -> mapOptional ((+) aa) (Full 3))       2
       ,                      mapOptional ((+)  2) (Full 3)

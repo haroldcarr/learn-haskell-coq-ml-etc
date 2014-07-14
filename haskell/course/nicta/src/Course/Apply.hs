@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -27,15 +28,25 @@ infixl 4 <*>
 -- >>> Id (+10) <*> Id 8
 -- Id 18
 instance Apply Id where
-  Id f <*> Id x = Id (f x)
+  (<*>) ::
+    Id (a -> b)
+    -> Id a
+    -> Id b
+  (<*>) =
+    mapId . runId
+--  Id f <*> Id x = Id (f x)
 
 -- | Implement @Apply@ instance for @List@.
 --
 -- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
 -- [2,3,4,2,4,6]
 instance Apply List where
-  (<*>) fs xs = foldRight (\f acc -> map f xs ++ acc) Nil fs
---C f <*> a = flatMap (`map` a) f
+  (<*>) ::
+    List (a -> b)
+    -> List a
+    -> List b
+  f <*> a = flatMap (`map` a) f
+-- HC: (<*>) fs xs = foldRight (\f acc -> map f xs ++ acc) Nil fs
 
 -- | Implement @Apply@ instance for @Optional@.
 --
