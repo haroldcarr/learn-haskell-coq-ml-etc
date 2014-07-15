@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jul 15 (Tue) 05:41:40 by Harold Carr.
-Last Modified : 2014 Jul 15 (Tue) 07:57:07 by Harold Carr.
+Last Modified : 2014 Jul 15 (Tue) 08:09:38 by Harold Carr.
 -}
 
 {-# LANGUAGE NoImplicitPrelude   #-}
@@ -57,8 +57,9 @@ $ runhaskell io.hs "files.txt"
 HC:
 $ cd src
 $ runhaskell Course/FileIO.hs
-$ runhaskell Course/FileIO.hs "files.txt"
-$ runhaskell Course/FileIO.hs "one" "two"
+$ runhaskell Course/FileIO.hs "one"
+$ runhaskell Course/FileIO.hs "../share" "files.txt"
+$ runhaskell Course/FileIO.hs "one" "two" "three"
 ============ a.txt
 the contents of a
 
@@ -71,24 +72,26 @@ the contents of c
 -}
 
 -- /Tip:/ use @getArgs@ and @run@
+-- HC: modified to supply directory where files are location and filename of initial file
 main ::
   IO ()
 main =
   getArgs >>= \args ->
   case args of
-      (a:.Nil) -> run a
-      _        -> putStrLn "one and only one arg should be given"
+      (d:.f:.Nil) -> run d f
+      _           -> putStrLn "two and only two args must be given"
 
 type FilePath =
   Chars
 
 -- /Tip:/ Use @getFiles@ and @printFiles@.
 run ::
-  Chars
+  FilePath
+  -> FilePath
   -> IO ()
-run top =
-  readFile top >>= \contents ->
-  getFiles (words contents) >>= printFiles
+run dir top =
+  readFile (dir ++ "/" ++ top) >>= \contents ->
+  getFiles dir (lines contents) >>= printFiles
 
 {-
 [fp1,fp2,fp3]
@@ -97,9 +100,10 @@ getFile <$> [fp1,fp2,fp3] => [IO (fp1,c1), IO (fp2,c2), IO (fp3,c3)]
 -}
 
 getFiles ::
-  List FilePath
+  FilePath
+  -> List FilePath
   -> IO (List (FilePath, Chars))
-getFiles = mapM getFile
+getFiles dir = mapM (getFile dir)
 
 mapM :: Applicative m => (a -> m b) -> List a -> m (List b)
 mapM f Nil     = pure Nil
@@ -114,8 +118,10 @@ mapM' f (x:.xs) = f x        >>= \fx ->
 
 getFile ::
   FilePath
+  -> FilePath
   -> IO (FilePath, Chars)
-getFile fp = pure (fp, Nil)
+getFile dir f = readFile (dir ++ "/" ++ f) >>= \c ->
+                pure (f, c)
 
 printFiles ::
   List (FilePath, Chars)
