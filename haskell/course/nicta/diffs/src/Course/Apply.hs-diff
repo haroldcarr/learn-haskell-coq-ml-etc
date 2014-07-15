@@ -1,0 +1,121 @@
+0a1,6
+> {-
+> Created       : 2014 Jul 15 (Tue) 05:01:37 by Harold Carr.
+> Last Modified : 2014 Jul 15 (Tue) 05:12:37 by Harold Carr.
+> -}
+> 
+> {-# LANGUAGE InstanceSigs        #-}
+3d8
+< {-# LANGUAGE InstanceSigs #-}
+13a19,21
+> import qualified Test.HUnit      as T
+> import qualified Test.HUnit.Util as U
+> 
+32,33c40,41
+<   (<*>) =
+<     error "todo"
+---
+>   (<*>) = mapId . runId
+> --  Id f <*> Id x = Id (f x)
+44,45c52,53
+<   (<*>) =
+<     error "todo"
+---
+>   f <*> a = flatMap (`map` a) f
+> -- HC: (<*>) fs xs = foldRight (\f acc -> map f xs ++ acc) Nil fs
+62,63c70,85
+<   (<*>) =
+<     error "todo"
+---
+>   f <*> a = bindOptional (`mapOptional` a) f
+> {- HC:
+>     (<*>)  Empty    _       = Empty
+>     (<*>)  _        Empty   = Empty
+>     (<*>) (Full f) (Full x) = Full (f x)
+> -}
+> 
+> tao :: [T.Test]
+> tao = U.tt "tao"
+>       [ Full (+8) <*> Full 7
+>       , bindOptional (`mapOptional` (Full 7)) (Full (+8)) -- def of <*> for Optional
+>       ,              (`mapOptional` (Full 7))       (+8)  -- def of bindOptional (removes "container" from second arg)
+>       ,         (+8)  `mapOptional` (Full 7)              -- partial "left" application
+>       ,                             (Full ((+8) 7))       -- definition of mapOptional
+>       ]
+>       (Full 15)
+66a89,94
+> -- (<*>) ::  f       (a -> b)  ->  f      a ->   f      b
+> -- (<*>) :: ((->) t) (a -> b)) -> ((->) t a) -> ((->) t b)
+> -- (<*>) :: (t ->     a -> b)  -> (t  ->  a) -> (t  ->  b)
+> --
+> -- returns a function : t -> b
+> --
+86,87c114
+<   (<*>) =
+<     error "todo"
+---
+>   f1 <*> f2 = \x -> f1 x (f2 x)
+114,115c141
+< lift2 =
+<   error "todo"
+---
+> lift2 f a b = f <$> a <*> b
+117c143
+< -- | Apply a ternary function in the environment.
+---
+> -- | Apply a ternary function in the Monad environment.
+146,147c172,175
+< lift3 =
+<   error "todo"
+---
+> lift3 f a b c = f <$> a <*> b <*> c
+> 
+> lift3C :: Apply f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
+> lift3C f a b c = lift2 f a b <*> c
+179,180c207,210
+< lift4 =
+<   error "todo"
+---
+> lift4 f a b c d = f <$> a <*> b <*> c <*> d
+> 
+> lift4C :: Apply f => (a -> b -> c -> d -> e) -> f a -> f b -> f c -> f d -> f e
+> lift4C f a b c d = lift3 f a b c <*> d
+205,206c235,245
+< (*>) =
+<   error "todo"
+---
+> (*>) = lift2 (const id) -- TODO: understand (especially applied to lists)
+> 
+> tsl :: [T.Test]
+> tsl = U.tt "tsl"
+>       [                      (11:.22:.Nil)  *> (100:.200:.Nil)
+>       , lift2 (const id)     (11:.22:.Nil)     (100:.200:.Nil) -- def of *>
+>       ,       (const id) <$> (11:.22:.Nil) <*> (100:.200:.Nil) -- def of lift2
+>       ,                      (id:.id:.Nil) <*> (100:.200:.Nil) -- def of instance Functor List
+>       ,             foldRight (\f acc -> map f (100:.200:.Nil) ++ acc) Nil (id:.id:.Nil) -- def of instance Apply List
+>       ]
+>       (100:.200:.100:.200:.Nil)
+231,232c270,280
+< (<*) =
+<   error "todo"
+---
+> (<*) = lift2 const -- TODO: understand (especially applied to lists)
+> 
+> tsr :: [T.Test]
+> tsr = U.tt "tsr"
+>       [                 (11:.22:.Nil) <*  (100:.200:.Nil)
+>       , lift2 const     (11:.22:.Nil)     (100:.200:.Nil) -- def of <*
+>       ,       const <$> (11:.22:.Nil) <*> (100:.200:.Nil) -- def of lift2
+>       , ((const 11):.(const 22):.Nil) <*> (100:.200:.Nil) -- def of instance Functor List
+>       ,        foldRight (\f acc -> map f (100:.200:.Nil) ++ acc) Nil ((const 11):.(const 22):.Nil) -- def of instance Apply List
+>       ]
+>       (11:.11:.22:.22:.Nil)
+256a305,312
+> 
+> ------------------------------------------------------------------------------
+> 
+> testApply :: IO T.Counts
+> testApply =
+>     T.runTestTT P.$ T.TestList P.$ tao P.++ tsl P.++ tsr
+> 
+> -- End of file.

@@ -1,3 +1,8 @@
+{-
+Created       : 2014 Jul 15 (Tue) 05:01:37 by Harold Carr.
+Last Modified : 2014 Jul 15 (Tue) 05:12:37 by Harold Carr.
+-}
+
 {-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -32,8 +37,7 @@ instance Apply Id where
     Id (a -> b)
     -> Id a
     -> Id b
-  (<*>) =
-    mapId . runId
+  (<*>) = mapId . runId
 --  Id f <*> Id x = Id (f x)
 
 -- | Implement @Apply@ instance for @List@.
@@ -59,12 +63,16 @@ instance Apply List where
 -- >>> Full (+8) <*> Empty
 -- Empty
 instance Apply Optional where
+  (<*>) ::
+    Optional (a -> b)
+    -> Optional a
+    -> Optional b
+  f <*> a = bindOptional (`mapOptional` a) f
 {- HC:
     (<*>)  Empty    _       = Empty
     (<*>)  _        Empty   = Empty
     (<*>) (Full f) (Full x) = Full (f x)
 -}
-    f <*> a = bindOptional (`mapOptional` a) f
 
 tao :: [T.Test]
 tao = U.tt "tao"
@@ -99,6 +107,10 @@ tao = U.tt "tao"
 -- >>> ((*) <*> (+2)) 3
 -- 15
 instance Apply ((->) t) where
+  (<*>) ::
+    ((->) t (a -> b))
+    -> ((->) t a)
+    -> ((->) t b)
   f1 <*> f2 = \x -> f1 x (f2 x)
 
 -- | Apply a binary function in the environment.

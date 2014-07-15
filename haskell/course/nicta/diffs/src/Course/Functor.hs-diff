@@ -1,0 +1,106 @@
+0a1,6
+> {-
+> Created       : by NICTA.
+> Last Modified : 2014 Jul 15 (Tue) 04:48:53 by Harold Carr.
+> -}
+> 
+> {-# LANGUAGE InstanceSigs        #-}
+3d8
+< {-# LANGUAGE InstanceSigs #-}
+9d13
+< import Course.Optional
+10a15
+> import           Course.Optional
+12a18,20
+> import qualified Test.HUnit      as T
+> import qualified Test.HUnit.Util as U
+> 
+36,37c44,45
+<   (<$>) =
+<     error "todo"
+---
+>   (<$>) =  mapId
+> -- HC: (<$>) f (Id x) = Id (f x)
+51,52c59
+<   (<$>) =
+<     error "todo"
+---
+>   (<$>) = map
+66,69c73,101
+<   (<$>) =
+<     error "todo"
+< 
+< -- | Maps a function on the reader ((->) t) functor.
+---
+>   (<$>) = mapOptional
+> -- HC:
+> --    (<$>) _  Empty   = Empty
+> --    (<$>) f (Full x) = Full (f x)
+> 
+> data HCEither a b = Bad a | Good b deriving Show
+> 
+> -- | Maps a function on the HCEither fuctor.
+> --
+> -- >>> (+1) <$> Bad "x"
+> -- Bad "x"
+> --
+> -- >>> (+1) <$> Good 2
+> -- Good 3
+> --
+> -- Note the partially applied type constructor.
+> instance Functor (HCEither a) where
+>   (<$>) _ (Bad  x) = Bad x
+>   (<$>) f (Good x) = Good (f x)
+> 
+> -- | Maps a function on the "reader" ((->) t) functor.
+> -- Note: a type constructor `t -> a` can be written `(->) t a`
+> -- (just like any "normal" infix function).
+> -- An `instance Functor` declaration requires a type constructor of one argument.
+> -- So this instance is given  `(->) t` : a partially applied type constructor.
+> --
+> -- (<$>) :: (a -> b) ->  f      a  ->  f      b
+> -- (<$>) :: (a -> b) -> ((-> t) a) -> ((-> t) b)
+> -- (<$>) :: (a -> b) -> (t  ->  a) -> (t  ->  b)
+78,79c110,111
+<   (<$>) =
+<     error "todo"
+---
+>   (<$>) = (.)
+> -- HC: (<$>) f1 f2 = f1 . f2
+94,95c126,144
+< (<$) =
+<   error "todo"
+---
+> a <$ fb = const a <$> fb
+> 
+> tcl :: [T.Test]
+> tcl = U.tt "tcl"
+>       [                            7       <$        ((1::Int):.2:.Nil)
+>       ,                       const 7      <$>       ((1::Int):.2:.Nil)
+>       , map                  (const 7)               ((1::Int):.2:.Nil)
+>       , foldRight (\x acc -> (const 7) x :. acc) Nil ((1::Int):.2:.Nil)
+>       ]
+>       ((7::Int):.7:.Nil)
+> 
+> tco :: [T.Test]
+> tco = U.tt "tco"
+>       [             7 <$  Full (2::Int)
+>       ,       const 7 <$> Full (2::Int)
+>       , Full (const 7 (2::Int))
+>       , Full        7
+>       ]
+>       (Full (7::Int))
+114,115c163
+< void =
+<   error "todo"
+---
+> void = (<$>) $ const ()
+135a184,191
+> 
+> --------------------------------------------------
+> 
+> testFunctor :: IO T.Counts
+> testFunctor =
+>     T.runTestTT P.$ T.TestList P.$ tcl P.++ tco
+> 
+> -- End of file.

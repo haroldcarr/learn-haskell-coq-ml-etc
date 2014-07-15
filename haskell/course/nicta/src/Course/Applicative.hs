@@ -1,3 +1,9 @@
+{-
+Created       : by NICTA.
+Last Modified : 2014 Jul 15 (Tue) 05:23:51 by Harold Carr.
+-}
+
+{-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE RebindableSyntax    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -21,7 +27,6 @@ import qualified Prelude         as P
 
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
-
 
 -- HC: http://stackoverflow.com/questions/6570779/why-should-i-use-applicative-functors-in-functional-programming
 -- Applicative functors enable using "normal" function (taking non-functorial arguments) to operate on values in functor contexts.
@@ -52,12 +57,18 @@ class Apply f => Applicative f where
 --
 -- prop> pure x == Id x
 instance Applicative Id where
+  pure ::
+    a
+    -> Id a
   pure = Id
 
 -- | Insert into a List.
 --
 -- prop> pure x == x :. Nil
 instance Applicative List where
+  pure ::
+    a
+    -> List a
   pure x = x :. Nil
 --C pure   =  (:. Nil)
 
@@ -65,12 +76,18 @@ instance Applicative List where
 --
 -- prop> pure x == Full x
 instance Applicative Optional where
+  pure ::
+    a
+    -> Optional a
   pure = Full
 
 -- | Insert into a constant function.
 --
 -- prop> pure x y == x
 instance Applicative ((->) t) where
+  pure ::
+    a
+    -> ((->) t a)
   pure = const
 
 -- | Sequences a list of structures to a structure of list.

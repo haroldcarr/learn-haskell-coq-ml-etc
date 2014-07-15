@@ -1,3 +1,8 @@
+{-
+Created       : by NICTA.
+Last Modified : 2014 Jul 15 (Tue) 04:43:38 by Harold Carr.
+-}
+
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE OverloadedStrings   #-}
@@ -45,8 +50,7 @@ instance Show t => Show (List t) where
 -- The list of integers from zero to infinity.
 infinity ::
   List Integer
-infinity =
-  infinityFrom 0
+infinity = infinityFrom 0
 
 -- HC : open up so I can use below.
 infinityFrom :: Num t => t -> List t
@@ -88,7 +92,7 @@ tho1 :: [T.Test]
 tho1 = U.tt "tho1"
        [ headOr                      (-1)        infinity
        ,          foldRight  const   (-1)        infinity             -- def of headOr
-       , const 0 (foldRight (const) ((-1)::Int) (infinityFrom (0+1))) -- def of foldRight non-Nil case
+       , const 0 (foldRight  const  ((-1)::Int) (infinityFrom (0+1))) -- def of foldRight non-Nil case
        ]
        0                                                              -- def of const
 
@@ -109,8 +113,7 @@ tho2 = U.tt "tho2"
 product ::
   List Int
   -> Int
-product =
-  foldRight (*) 1
+product = foldRight (*) 1
 
 productC :: List Int -> Int
 productC = foldLeft (*) 1
@@ -131,9 +134,9 @@ tp2 = U.tt "tp2"
       , (*) 1 (2::Int) `seq` foldLeft (*) ((*) 1  2) (3:.Nil)
       ,                      foldLeft (*)      1 (2:. 3:.Nil)
       ,       (2::Int) `seq` foldLeft (*)         2  (3:.Nil)
-      ,        2       `seq` ((*) 2 3) `seq` foldLeft (*) ((*) 2 3) Nil
-      ,       (2::Int) `seq` 6         `seq` foldLeft (*) 6         Nil
-      ,       2 `seq` 6         `seq`              6                  -- http://www.haskell.org/haskellwiki/Seq
+      ,        2       `seq` (*) 2 3   `seq` foldLeft (*) ((*) 2 3) Nil
+      ,        2       `seq` 6         `seq` foldLeft (*) 6         Nil
+      ,        2       `seq` 6         `seq`              6                  -- http://www.haskell.org/haskellwiki/Seq
       ]
       6
 
@@ -149,8 +152,7 @@ tp2 = U.tt "tp2"
 sum ::
   List Int
   -> Int
-sum =
-  foldRight (+) 0
+sum = foldRight (+) 0
 
 sumC :: List Int -> Int
 sumC = foldLeft (+) 0
@@ -164,8 +166,7 @@ sumC = foldLeft (+) 0
 length ::
   List a
   -> Int
-length =
-  foldLeft (const . succ) 0
+length = foldLeft (const . succ) 0
 -- HC: length = foldRight (\_ acc -> acc + 1) 0
 
 tlc :: [T.Test]
@@ -192,8 +193,7 @@ map ::
   (a -> b)
   -> List a
   -> List b
-map f =
-  foldRight (\x acc -> f x :. acc) Nil
+map f = foldRight (\x acc -> f x :. acc) Nil
 
 -- | Return elements satisfying the given predicate.
 --
@@ -209,11 +209,10 @@ filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter f =
-  foldRight (\a     -> if f a then (a:.)   else id)  Nil -- anon return partially applied cons or id - then applied to acc in foldRight
+filter f = foldRight (\a     -> if f a then (a:.)   else id)  Nil -- anon return partially applied cons or id - then applied to acc in foldRight
 -- HC:
 -- filter f =
---foldRight (\a acc -> if f a then  a:.acc else acc) Nil
+--         foldRight (\a acc -> if f a then  a:.acc else acc) Nil
 
 -- | Append two lists to a new list.
 --
@@ -231,8 +230,7 @@ filter f =
   List a
   -> List a
   -> List a
-(++) =
-  flip (foldRight (:.))
+(++) = flip (foldRight (:.))
 -- HC: (++) xsl xsr = foldRight (:.) xsr xsl
 
 infixr 5 ++
@@ -250,8 +248,7 @@ infixr 5 ++
 flatten ::
   List (List a)
   -> List a
-flatten =
-  foldRight (++) Nil
+flatten = foldRight (++) Nil
 
 -- HC: this layout is not completely accurate, but it does give some insight.
 tft :: [T.Test]
@@ -285,8 +282,7 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap g =
-  foldRight (\x acc -> g x ++ acc) Nil
+flatMap g = foldRight (\x acc -> g x ++ acc) Nil
 
 -- HC:
 -- This walks the initial list once to map and then the result list once to flatten.
@@ -301,7 +297,7 @@ tfm :: [T.Test]
 tfm = U.tt "tfm"
       [ flatMap                                  testFun               (1 :. 11 :. Nil)
       ,                     foldRight (\x acc -> testFun x ++ acc) Nil (1 :. 11 :. Nil)
-      ,       testFun 1 ++ (foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil))
+      ,       testFun 1 ++  foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil)
       , (++) (testFun 1)   (foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil))
       , foldRight (:.)     (foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil)) (testFun 1)
       , foldRight (:.)     (foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil)) (1:.10:.Nil)
@@ -316,8 +312,7 @@ tfm = U.tt "tfm"
 flattenAgain ::
   List (List a)
   -> List a
-flattenAgain =
-  error "todo"
+flattenAgain = flatMap id
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -347,9 +342,9 @@ seqOptional ::
   -> Optional (List a)
 seqOptional = seqOptional' Nil
   where
-    seqOptional'  _  (Empty   :._) = Empty
+    seqOptional'  _  (Empty  :. _) = Empty
     seqOptional' acc           Nil = Full (reverse acc)  -- TODO: avoid reverse
-    seqOptional' acc ((Full x):.t) = seqOptional' (x :. acc) t
+    seqOptional' acc (Full x :. t) = seqOptional' (x :. acc) t
 
 seqOptionalCannotHandleInfinity :: List (Optional a) -> Optional (List a)
 seqOptionalCannotHandleInfinity xs =
@@ -394,12 +389,12 @@ find ::
   -> List a
   -> Optional a
 find _ Nil    = Empty
-find p (h:.t) = if p h then Full h else find p t -- stop on the first one
+find p (h:.t) = if p h then Full h else find p t -- stop on the first one that satisfies predicate
 
 findC :: (a -> Bool) -> List a -> Optional a
 findC p x =
-  case filter p x of                             -- traverse entire list
-    Nil -> Empty
+  case filter p x of                             -- since pattern match drives evaluations
+    Nil -> Empty                                 -- this also stops on first one that satisfies predicate
     h:._ -> Full h
 
 -- | Determine if the length of the given list is greater than 4.
@@ -421,7 +416,7 @@ lengthGT4 ::
 lengthGT4 = lengthGT4' 0
   where
     lengthGT4' n     Nil = gt4 n
-    lengthGT4' n (_:.xs) = if gt4 n then True else lengthGT4' (n + 1) xs
+    lengthGT4' n (_:.xs) = gt4 n || lengthGT4' (n + 1) xs
     gt4 = (>4)
 
 lengthGT4C :: List a -> Bool
@@ -432,6 +427,9 @@ lengthGT4C _ = False
 --
 -- >>> reverse Nil
 -- []
+--
+-- >>> take 1 (reverse largeList)
+-- [50000]
 --
 -- prop> let types = x :: List Int in reverse x ++ reverse y == reverse (y ++ x)
 --
@@ -489,6 +487,11 @@ notReverse xs = reverse xs
 
 notReverseC :: List a -> List a
 notReverseC = reverse -- impossible
+
+largeList ::
+  List Int
+largeList =
+  listh [1..50000]
 
 hlist ::
   List a
@@ -830,6 +833,13 @@ stringconcat ::
   -> P.String
 stringconcat =
   P.concat
+
+show' ::
+  Show a =>
+  a
+  -> List Char
+show' =
+  listh . show
 
 instance P.Monad List where
   (>>=) =

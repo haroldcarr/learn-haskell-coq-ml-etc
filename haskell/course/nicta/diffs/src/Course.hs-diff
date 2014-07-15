@@ -1,0 +1,3 @@
+17a18,19
+> import           Course.HC           as X
+> import           Course.HCTestAll    as X

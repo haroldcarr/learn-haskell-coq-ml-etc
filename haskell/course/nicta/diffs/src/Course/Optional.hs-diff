@@ -1,0 +1,49 @@
+8a9,11
+> import qualified Test.HUnit      as T
+> import qualified Test.HUnit.Util as U
+> 
+14a18
+> -- | HC: this is `lift1`
+33a38
+> -- | HC: this is `lift2`
+36a42,65
+> -- Note: this reasoning is from an older but similar definition of twiceOptional
+> tto :: [T.Test]
+> tto = U.tt "tto"
+>       [ twiceOptional (+) (Full 2) (Full (3::Int))
+>       , bindOptional (\aa -> mapOptional ((+) aa) (Full 3)) (Full 2)
+>       ,              (\aa -> mapOptional ((+) aa) (Full 3))       2
+>       ,                      mapOptional ((+)  2) (Full 3)
+>       ,                             Full(((+)  2)       3)
+>       ]
+>       (Full 5)
+> 
+> -- |
+> -- >>> contains   3 (Full 3)
+> -- True
+> --
+> -- >>> contains   3 Empty
+> -- False
+> --
+> -- >>> containsHC 3 (Full 3)
+> -- True
+> --
+> -- >>> containsHC 3 Empty
+> -- False
+> --
+40a70,74
+> containsHC :: Eq a => a -> Optional a -> Bool
+> containsHC a o = case mapOptional (a ==) o of
+>                      Empty    -> False
+>                      (Full x) -> x
+> 
+45a80,88
+> 
+> ------------------------------------------------------------------------------
+> 
+> testOptional :: IO T.Counts
+> testOptional =
+>    T.runTestTT P.$ T.TestList P.$ tto
+> 
+> -- End of file.
+> 

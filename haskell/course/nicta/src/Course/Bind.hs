@@ -1,3 +1,9 @@
+{-
+Created       : by NICTA.
+Last Modified : 2014 Jul 15 (Tue) 06:04:14 by Harold Carr.
+-}
+
+{-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE RebindableSyntax    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -79,6 +85,10 @@ infixl 4 <*>
 -- >>> (\x -> Id(x+1)) =<< Id 2
 -- Id 3
 instance Bind Id where
+  (=<<) ::
+    (a -> Id b)
+    -> Id a
+    -> Id b
   (=<<) f = f . runId
 
 -- | Binds a function on a List.
@@ -86,6 +96,10 @@ instance Bind Id where
 -- >>> (\n -> n :. n :. Nil) =<< (1 :. 2 :. 3 :. Nil)
 -- [1,1,2,2,3,3]
 instance Bind List where
+  (=<<) ::
+    (a -> List b)
+    -> List a
+    -> List b
   (=<<) = flatMap
 
 -- | Binds a function on an Optional.
@@ -93,6 +107,10 @@ instance Bind List where
 -- >>> (\n -> Full (n + n)) =<< Full 7
 -- Full 14
 instance Bind Optional where
+  (=<<) ::
+    (a -> Optional b)
+    -> Optional a
+    -> Optional b
   (=<<) _  Empty   = Empty
   (=<<) f (Full x) = (f x)
 
@@ -101,6 +119,10 @@ instance Bind Optional where
 -- >>> ((*) =<< (+10)) 7
 -- 119
 instance Bind ((->) t) where
+  (=<<) ::
+    (a -> ((->) t b))
+    -> ((->) t a)
+    -> ((->) t b)
   f =<< g = \x -> f (g x) x
 
 -- | Flattens a combined structure to a single structure.

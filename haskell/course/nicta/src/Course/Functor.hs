@@ -1,3 +1,8 @@
+{-
+Created       : by NICTA.
+Last Modified : 2014 Jul 15 (Tue) 04:48:53 by Harold Carr.
+-}
+
 {-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -36,8 +41,7 @@ instance Functor Id where
     (a -> b)
     -> Id a
     -> Id b
-  (<$>) =
-    mapId
+  (<$>) =  mapId
 -- HC: (<$>) f (Id x) = Id (f x)
 
 -- | Maps a function on the List functor.
@@ -52,8 +56,7 @@ instance Functor List where
     (a -> b)
     -> List a
     -> List b
-  (<$>) =
-    map
+  (<$>) = map
 
 -- | Maps a function on the Optional functor.
 --
@@ -67,8 +70,7 @@ instance Functor Optional where
     (a -> b)
     -> Optional a
     -> Optional b
-  (<$>) =
-    mapOptional
+  (<$>) = mapOptional
 -- HC:
 --    (<$>) _  Empty   = Empty
 --    (<$>) f (Full x) = Full (f x)
@@ -105,8 +107,7 @@ instance Functor ((->) t) where
     (a -> b)
     -> ((->) t a)
     -> ((->) t b)
-  (<$>) =
-    (.)
+  (<$>) = (.)
 -- HC: (<$>) f1 f2 = f1 . f2
 
 -- | Anonymous map. Maps a constant value on a functor.
@@ -159,8 +160,7 @@ void ::
   Functor f =>
   f a
   -> f ()
-void =
-  (<$>) $ const ()
+void = (<$>) $ const ()
 
 -----------------------
 -- SUPPORT LIBRARIES --

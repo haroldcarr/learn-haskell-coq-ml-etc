@@ -1,0 +1,288 @@
+0a1,6
+> {-
+> Created       : by NICTA.
+> Last Modified : 2014 Jul 15 (Tue) 04:43:38 by Harold Carr.
+> -}
+> 
+> {-# LANGUAGE FlexibleInstances   #-}
+2d7
+< {-# LANGUAGE ScopedTypeVariables #-}
+4c9
+< {-# LANGUAGE FlexibleInstances #-}
+---
+> {-# LANGUAGE ScopedTypeVariables #-}
+17,18d21
+< import qualified System.Environment as E
+< import qualified Prelude as P
+19a23,27
+> import qualified Prelude            as P
+> import qualified System.Environment as E
+> 
+> import qualified Test.HUnit         as T
+> import qualified Test.HUnit.Util    as U
+45,47c53,57
+< infinity =
+<   let inf x = x :. inf (x+1)
+<   in inf 0
+---
+> infinity = infinityFrom 0
+> 
+> -- HC : open up so I can use below.
+> infinityFrom :: Num t => t -> List t
+> infinityFrom x = x :. infinityFrom (x+1)
+53a64
+> -- HC: this is a strict foldLeft (via `seq`).
+75,76c86,104
+< headOr =
+<   error "todo"
+---
+> headOr = foldRight const
+> -- HC
+> -- headOr a Nil = a
+> -- headOr _ (h:._) = h
+> 
+> tho1 :: [T.Test]
+> tho1 = U.tt "tho1"
+>        [ headOr                      (-1)        infinity
+>        ,          foldRight  const   (-1)        infinity             -- def of headOr
+>        , const 0 (foldRight  const  ((-1)::Int) (infinityFrom (0+1))) -- def of foldRight non-Nil case
+>        ]
+>        0                                                              -- def of const
+> 
+> tho2 :: [T.Test]
+> tho2 = U.tt "tho2"
+>        [ headOr          (-1) Nil
+>        , foldRight const (-1) Nil                              -- def of headOr
+>        ]
+>        ((-1)::Int)                                             -- def of foldRight Nil case
+88,89c116,141
+< product =
+<   error "todo"
+---
+> product = foldRight (*) 1
+> 
+> productC :: List Int -> Int
+> productC = foldLeft (*) 1
+> 
+> tp1 :: [T.Test]
+> tp1 = U.tt "tp1"
+>       [ product         (2:.                 3:.Nil)
+>       , foldRight (*) 1 (2:.                 3:.Nil)                  -- def of product
+>       ,           (*)    2 (foldRight (*) 1 (3:.Nil))                 -- def of foldRight non-Nil
+>       ,           (*)    2           ((*)    3 (foldRight (*) 1 Nil)) -- "
+>       ,           (*)    2           ((*)    3                1)      -- def of foldRight Nil
+>       ]
+>       6                                                               -- def of (*)
+> 
+> tp2 :: [T.Test]
+> tp2 = U.tt "tp2"
+>       [ productC (2:.3:.Nil)
+>       , (*) 1 (2::Int) `seq` foldLeft (*) ((*) 1  2) (3:.Nil)
+>       ,                      foldLeft (*)      1 (2:. 3:.Nil)
+>       ,       (2::Int) `seq` foldLeft (*)         2  (3:.Nil)
+>       ,        2       `seq` (*) 2 3   `seq` foldLeft (*) ((*) 2 3) Nil
+>       ,        2       `seq` 6         `seq` foldLeft (*) 6         Nil
+>       ,        2       `seq` 6         `seq`              6                  -- http://www.haskell.org/haskellwiki/Seq
+>       ]
+>       6
+103,104c155,158
+< sum =
+<   error "todo"
+---
+> sum = foldRight (+) 0
+> 
+> sumC :: List Int -> Int
+> sumC = foldLeft (+) 0
+115,116c169,182
+< length =
+<   error "todo"
+---
+> length = foldLeft (const . succ) 0
+> -- HC: length = foldRight (\_ acc -> acc + 1) 0
+> 
+> tlc :: [T.Test]
+> tlc = U.tt "tlc"
+>       [ length                    (10:.                                          20:.Nil)
+>       , foldLeft (const . succ) 0 (10:.                                          20:.Nil)
+>       , (const . succ) 0 10 `seq` foldLeft (const . succ) ((const . succ) 0 10) (20:.Nil)
+>       , 1                   `seq` foldLeft (const . succ) 1                     (20:.Nil)
+>       , 1                   `seq` (const . succ) 1 20 `seq` foldLeft (const . succ) ((const . succ) 1 20) Nil
+>       , 1                   `seq` 2                   `seq` foldLeft (const . succ) 2                     Nil
+>       , 1                   `seq` 2                   `seq`                         2
+>       ]
+>       2
+130,131c196
+< map =
+<   error "todo"
+---
+> map f = foldRight (\x acc -> f x :. acc) Nil
+147,148c212,215
+< filter =
+<   error "todo"
+---
+> filter f = foldRight (\a     -> if f a then (a:.)   else id)  Nil -- anon return partially applied cons or id - then applied to acc in foldRight
+> -- HC:
+> -- filter f =
+> --         foldRight (\a acc -> if f a then  a:.acc else acc) Nil
+166,167c233,234
+< (++) =
+<   error "todo"
+---
+> (++) = flip (foldRight (:.))
+> -- HC: (++) xsl xsr = foldRight (:.) xsr xsl
+184,185c251,265
+< flatten =
+<   error "todo"
+---
+> flatten = foldRight (++) Nil
+> 
+> -- HC: this layout is not completely accurate, but it does give some insight.
+> tft :: [T.Test]
+> tft = U.tt "tft"
+>       [ flatten            ((1 :. Nil) :.                   (6 :. Nil) :. Nil)
+>       , foldRight (++) Nil ((1 :. Nil) :.                   (6 :. Nil) :. Nil)
+>       ,           (++)      (1 :. Nil) (foldRight (++) Nil ((6 :. Nil) :. Nil))
+>       , foldRight (:.)                 (foldRight (++) Nil ((6 :. Nil) :. Nil))                              (1 :. Nil)
+>       , foldRight (:.)                           ((++)      (6 :. Nil) (foldRight (++) Nil Nil))             (1 :. Nil)
+>       , foldRight (:.)                 (foldRight (:.)                 (foldRight (++) Nil Nil)  (6 :. Nil)) (1 :. Nil)
+>       , foldRight (:.)                 (foldRight (:.)                 Nil                       (6 :. Nil)) (1 :. Nil)
+>       , foldRight (:.)                                                                           (6 :. Nil)  (1 :. Nil)
+>       ]
+>       (1:.6:.Nil)
+196a277,280
+> 
+> -- HC:
+> -- This walks the initial list only once.
+> -- But it repeatedly traverses/appends intermediate results.
+201,202c285,306
+< flatMap =
+<   error "todo"
+---
+> flatMap g = foldRight (\x acc -> g x ++ acc) Nil
+> 
+> -- HC:
+> -- This walks the initial list once to map and then the result list once to flatten.
+> -- When flattening result list it repeatedly traverses/appends intermediate results.
+> flatMapC :: (a -> List b) -> List a -> List b
+> flatMapC f = flatten . map f
+> 
+> testFun :: Num t => t -> List t
+> testFun x = x :. x * 10 :. Nil
+> 
+> tfm :: [T.Test]
+> tfm = U.tt "tfm"
+>       [ flatMap                                  testFun               (1 :. 11 :. Nil)
+>       ,                     foldRight (\x acc -> testFun x ++ acc) Nil (1 :. 11 :. Nil)
+>       ,       testFun 1 ++  foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil)
+>       , (++) (testFun 1)   (foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil))
+>       , foldRight (:.)     (foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil)) (testFun 1)
+>       , foldRight (:.)     (foldRight (\x acc -> testFun x ++ acc) Nil      (11 :. Nil)) (1:.10:.Nil)
+>       -- ...
+>       ]
+>       (1:.10:.11:.110:.Nil)
+211,212c315
+< flattenAgain =
+<   error "todo"
+---
+> flattenAgain = flatMap id
+235a339
+> 
+239,240c343,369
+< seqOptional =
+<   error "todo"
+---
+> seqOptional = seqOptional' Nil
+>   where
+>     seqOptional'  _  (Empty  :. _) = Empty
+>     seqOptional' acc           Nil = Full (reverse acc)  -- TODO: avoid reverse
+>     seqOptional' acc (Full x :. t) = seqOptional' (x :. acc) t
+> 
+> seqOptionalCannotHandleInfinity :: List (Optional a) -> Optional (List a)
+> seqOptionalCannotHandleInfinity xs =
+>   let filtered = filter onlyFull xs
+>       onlyFull Empty    = False
+>       onlyFull (Full _) = True
+>   in if length filtered /= length xs -- cannot handle infinite lists
+>      then Empty
+>      else Full $ foldRight (\(Full x) acc -> x :. acc) Nil filtered
+> 
+> seqOptionalC :: List (Optional a) -> Optional (List a)
+> seqOptionalC = foldRight (twiceOptional (:.)) (Full Nil) -- TODO: understand better
+> 
+> tsq :: [T.Test]
+> tsq = U.tt "tsq"
+>       [ seqOptionalC                              (Full 1 :. Full 10 :. Nil)
+>       , foldRight (twiceOptional (:.)) (Full Nil) (Full 1 :. Full 10 :. Nil)
+>       ,           (twiceOptional (:.))            (Full 1)    (foldRight (twiceOptional (:.)) (Full Nil) (Full 10 :. Nil))
+>       , bindOptional            (\aa -> mapOptional ((:.) aa) (foldRight (twiceOptional (:.)) (Full Nil) (Full 10 :. Nil)))  (Full 1)
+>       -- ...
+>       ]
+>       (Full (1:.10:.Nil))
+262,263c391,398
+< find =
+<   error "todo"
+---
+> find _ Nil    = Empty
+> find p (h:.t) = if p h then Full h else find p t -- stop on the first one that satisfies predicate
+> 
+> findC :: (a -> Bool) -> List a -> Optional a
+> findC p x =
+>   case filter p x of                             -- since pattern match drives evaluations
+>     Nil -> Empty                                 -- this also stops on first one that satisfies predicate
+>     h:._ -> Full h
+281,282c416,424
+< lengthGT4 =
+<   error "todo"
+---
+> lengthGT4 = lengthGT4' 0
+>   where
+>     lengthGT4' n     Nil = gt4 n
+>     lengthGT4' n (_:.xs) = gt4 n || lengthGT4' (n + 1) xs
+>     gt4 = (>4)
+> 
+> lengthGT4C :: List a -> Bool
+> lengthGT4C (_:._:._:._:._:._) = True
+> lengthGT4C _ = False
+298,299c440,457
+< reverse =
+<   error "todo"
+---
+> reverse = reverse' Nil
+>   where
+>     reverse' acc Nil    = acc
+>     reverse' acc (h:.t) = reverse' (h:.acc) t -- this version only creates what is used
+> 
+> reverseC :: List a -> List a
+> reverseC = foldLeft (flip (:.)) Nil -- this version creates unused (partial) copies of the result
+> 
+> trv :: [T.Test]
+> trv = U.tt "trv"
+>       [ reverseC (1:.2:.Nil)
+>       , (flip (:.)) Nil 1 `seq` (foldLeft (flip (:.)) ((flip (:.)) Nil 1) (2:.Nil))
+>       ,        (1 :. Nil) `seq` (foldLeft (flip (:.))          (1 :. Nil) (2:.Nil))
+>       ,        (1 :. Nil) `seq` (flip (:.)) (1 :. Nil) 2 `seq` (foldLeft (flip (:.)) ((flip (:.)) (1 :. Nil) 2) Nil)
+>       ,        (1 :. Nil) `seq` (2 :. 1 :. Nil)          `seq` (foldLeft (flip (:.)) (2 :. 1 :. Nil)            Nil)
+>       ,        (1 :. Nil) `seq` (2 :. 1 :. Nil)          `seq`                       (2 :. 1 :. Nil)
+>       ]
+>       (2:.1:.Nil)
+313,314c471
+< produce =
+<   error "todo"
+---
+> produce f a = a:.produce f (f a)
+328,329c485,489
+< notReverse =
+<   error "todo"
+---
+> notReverse l@(_:.Nil) = l  -- unnecessary: this is the same thing as the next line for single item lists
+> notReverse xs = reverse xs
+> 
+> notReverseC :: List a -> List a
+> notReverseC = reverse -- impossible
+688a849,854
+> 
+> testList :: IO T.Counts
+> testList =
+>     T.runTestTT P.$ T.TestList P.$ tho1 P.++ tho2 P.++ tp1 P.++ tp2 P.++ tlc P.++ tfm P.++ tft P.++ tsq P.++ trv
+> 
+> -- End of file.

@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Created       : 2014 Jul 15 (Tue) 01:56:08 by Harold Carr.
+# Last Modified : 2014 Jul 15 (Tue) 05:39:17 by Harold Carr.
+
+base=~/ftptmp/ebooks-music-pics/tech
+
+master=$base/haskell-nicta-course
+slave=$base/programming-language/haskell/course/nicta
+
+diffDir=$slave/diffs
+
+s=src
+sc=src/Course
+
+files="Setup.lhs $s/Course.hs $sc/Core.hs $sc/Id.hs $sc/Optional.hs $sc/Validation.hs $sc/List.hs $sc/Functor.hs $sc/Apply.hs $sc/Applicative.hs $sc/Bind.hs $sc/Monad.hs $sc/FileIO.hs"
+
+outDir=/tmp/NICTA
+mkdir -p $outDir/src/Course
+
+for f in $files
+do
+    echo "--------------------------------------------------"
+    echo -n $f " "
+    diff -b $master/$f $slave/$f > $outDir/$f-$$
+    cmp     $diffDir/$f-diff       $outDir/$f-$$
+    if [ $? -eq 0 ]
+    then echo OK
+    else echo NEEDS UPDATE, do:
+         echo " " diff -b $master/$f $slave/$f
+    fi
+done
+

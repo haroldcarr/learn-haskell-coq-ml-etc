@@ -1,0 +1,145 @@
+1,2c1,5
+< {-# LANGUAGE NoImplicitPrelude #-}
+< {-# LANGUAGE ScopedTypeVariables #-}
+---
+> {-
+> Created       : by NICTA.
+> Last Modified : 2014 Jul 15 (Tue) 05:23:51 by Harold Carr.
+> -}
+> 
+3a7
+> {-# LANGUAGE NoImplicitPrelude   #-}
+4a9
+> {-# LANGUAGE ScopedTypeVariables #-}
+12a18
+> , sequenceC , replicateAC , tsc , trc , tfe , testApplicative -- TODO: to avoid error messages
+15d20
+< import Course.Core
+16a22
+> import           Course.Core
+21a28,34
+> import qualified Test.HUnit      as T
+> import qualified Test.HUnit.Util as U
+> 
+> -- HC: http://stackoverflow.com/questions/6570779/why-should-i-use-applicative-functors-in-functional-programming
+> -- Applicative functors enable using "normal" function (taking non-functorial arguments) to operate on values in functor contexts.
+> -- Corollary: can be used for effectful programming without monads.
+> -- Useful when sequencing needed but don't need to name any intermediate results.
+41,42c54
+< (<$>) =
+<   error "todo"
+---
+> (<$>) f fa = pure f <*> fa
+51,52c63
+<   pure =
+<     error "todo"
+---
+>   pure = Id
+61,62c72,73
+<   pure =
+<     error "todo"
+---
+>   pure x = x :. Nil
+> --C pure   =  (:. Nil)
+71,72c82
+<   pure =
+<     error "todo"
+---
+>   pure = Full
+81,82c91
+<   pure =
+<     error "todo"
+---
+>   pure = const
+99a109,114
+> --
+> -- >>> sequence ((*10) :. Nil) 6
+> -- [60]
+> --
+> -- >>> (pure (:.) <*> (*10) <*> (pure Nil)) 6
+> -- [60]
+104,105c119,132
+< sequence =
+<   error "todo"
+---
+> sequence Nil     = pure Nil
+> sequence (x:.xs) = pure (:.) <*> x <*> (sequence xs)
+> 
+> sequenceC :: Applicative f => List (f a) -> f (List a)
+> sequenceC = foldRight (lift2 (:.)) (pure Nil)
+> 
+> tsc :: [T.Test]
+> tsc = U.tt "tsc"
+>       [ sequenceC ((*10) :. (+2) :. Nil)   6
+>       ,                       foldRight (lift2 (:.)) (pure Nil) ((*10) :. (+2) :. Nil)   6
+>       , lift2 (:.) (*10)     (foldRight (lift2 (:.)) (pure Nil) (         (+2) :. Nil))  6
+>       -- ...
+>       ]
+>       (60:.8:.Nil)
+128,129c155,164
+< replicateA =
+<   error "todo"
+---
+> replicateA i fa = sequence (replicate i fa)
+> 
+> replicateAC :: Applicative f => Int -> f a -> f (List a)
+> replicateAC n = sequence . replicate n
+> 
+> trc :: [T.Test]
+> trc = U.tt "trc"
+>       [ replicateAC 4 (*2) 5
+>       ]
+>       (10:.10:.10:.10:.Nil)
+147,150d181
+< --
+< -- >>> filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
+< -- [[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3]]
+< --
+156,157c187,221
+< filtering =
+<   error "todo"
+---
+> -- NO GOOD: filtering f xs = sequence (foldRight (\x acc -> if f x then pure x :. acc else acc) Nil xs)
+> filtering p = foldRight (\a -> lift2 (\b -> if b then (a:.) else id)
+>                                      (p a))
+>                         (pure Nil)
+> 
+> tfe :: [T.Test]
+> tfe = U.tt
+>  "tfe"
+>  [ filtering                                                   (Id . even)                (5 :. 6 :. Nil)
+> 
+>  , foldRight (\a -> lift2 (\b -> if b then (a:.) else id)     ((Id . even) a)) (pure Nil) (5 :. 6 :. Nil)
+> 
+>  -- first fold
+>  ,           (\a -> lift2 (\b -> if b then (a:.) else id)     ((Id . even) a))             5      (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil) (6 :. Nil))
+>  ,           (\a ->       (\b -> if b then (a:.) else id) <$> ((Id . even) a))             5  <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil) (6 :. Nil))
+>  ,                        (\b -> if b then (5:.) else id) <$> ((Id . even)                 5) <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil) (6 :. Nil))
+>  ,                        (\b -> if b then (5:.) else id) <$>  (Id False)                     <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil) (6 :. Nil))
+>  ,                    Id ((\b -> if b then (5:.) else id)          False)                     <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil) (6 :. Nil))
+>  ,                    Id (                            id)                                     <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil) (6 :. Nil))
+> 
+>  -- second fold
+>  , Id (id)  <*> (\a -> lift2 (\b -> if b then (a:.) else id)     ((Id . even) a)) 6     (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil)  Nil)
+>  , Id (id)  <*> (\a ->       (\b -> if b then (a:.) else id) <$> ((Id . even) a)) 6 <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil)  Nil)
+>  , Id (id)  <*>             ((\b -> if b then (6:.) else id) <$> ((Id . even) 6)    <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil)  Nil))
+>  , Id (id)  <*>             ((\b -> if b then (6:.) else id) <$> (Id True)          <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil)  Nil))
+>  , Id (id)  <*>         (Id ((\b -> if b then (6:.) else id)         True)          <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil)  Nil))
+>  , Id (id)  <*>         (Id                   (6:.))                                <*> (foldRight (\a -> lift2 (\b -> if b then (a:.) else id) ((Id . even) a)) (pure Nil)  Nil)
+> 
+>  -- third fold
+>  , Id (id)  <*>         (Id                   (6:.))                                <*> (pure Nil)
+>  , Id (id                                     (6:.))                                <*> (pure Nil)
+>  , Id                                         (6:.)                                 <*> (pure Nil)
+>  , Id                                         (6:.                                            Nil)
+>  ]
+>  (Id (6:.Nil))
+187a252,259
+> 
+> ------------------------------------------------------------------------------
+> 
+> testApplicative :: IO T.Counts
+> testApplicative =
+>     T.runTestTT P.$ T.TestList P.$ tsc P.++ trc P.++ tfe
+> 
+> -- End of file.
