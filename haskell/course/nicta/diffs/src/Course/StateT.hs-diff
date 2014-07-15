@@ -1,0 +1,218 @@
+1,2c1,5
+< {-# LANGUAGE NoImplicitPrelude #-}
+< {-# LANGUAGE ScopedTypeVariables #-}
+---
+> {-
+> Created       : by NICTA.
+> Last Modified : 2014 Jul 15 (Tue) 12:04:55 by Harold Carr.
+> -}
+> 
+4c7
+< {-# LANGUAGE RebindableSyntax #-}
+---
+> {-# LANGUAGE NoImplicitPrelude   #-}
+5a9,10
+> {-# LANGUAGE RebindableSyntax    #-}
+> {-# LANGUAGE ScopedTypeVariables #-}
+8a14,16
+> import           Course.Applicative
+> import           Course.Apply
+> import           Course.Bind
+9a18
+> import           Course.Functor
+11d19
+< import Course.Optional
+13,16d20
+< import Course.Functor
+< import Course.Apply
+< import Course.Applicative
+< import Course.Bind
+17a22
+> import           Course.Optional
+21a27,29
+> import qualified Test.HUnit         as T
+> import qualified Test.HUnit.Util    as U
+> 
+44,45c52,72
+<   (<$>) =
+<     error "todo"
+---
+>   f <$> StateT k = StateT ((<$>) (first f) . k)
+> -- HC f <$> StateT k = StateT (\ s -> (\ ~(a, s') -> (f a, s')) <$> (k s))
+> 
+> {-
+> :t (pure 3) :: StateT a Optional Int
+> :t (+1) <$> ((pure 3) :: StateT a Optional Int)
+> :t runStateT ((+1) <$> ((pure 3) :: StateT a Optional Int)
+> -}
+> 
+> tstf :: [T.Test]
+> tstf = U.tt "tstf"
+>       [ runStateT                                ((+1)         <$>       ((pure  3) :: StateT a Optional Int)) 0
+>       , runStateT (StateT (\ s -> (\ ~(a, s') -> ((+1) a, s')) <$> ((\s -> pure (3, s)) s)))                   0 -- by Functor StateT
+>       , runStateT (StateT (\ s -> (\ ~(a, s') -> ((+1) a, s')) <$> ((\s -> Full (3, s)) s)))                   0 -- by Applicative StateT
+>       ,                   (\ s -> (\ ~(a, s') -> ((+1) a, s')) <$> ((\s -> Full (3, s)) s))                    0 -- by runStateT
+>       ,                           (\ ~(a, s') -> ((+1) a, s')) <$> ((\s -> Full (3, s)) 0)                       -- by application
+>       ,                           (\ ~(a, s') -> ((+1) a, s')) <$>         Full (3, 0)                           -- by application
+>       ,                     Full ((\ ~(a, s') -> ((+1) a, s'))                  (3, 0))                          -- by Functor Optional
+>       ,                     Full (                (+1) 3, 0 )                                                    -- by application
+>       ]
+>       (Full (4,0))
+60,61c87,89
+<   (<*>) =
+<     error "todo"
+---
+>   StateT f <*> StateT a =
+>     -- StateT (\s -> (\(g, t) -> (\(z, u) -> (g z, u)) <$> a t) =<< f s)
+>     StateT ((\(g, t) -> first g <$> a t) <=< f)
+74,75c102
+<   pure =
+<     error "todo"
+---
+>   pure a = StateT (\s -> pure (a, s))
+87,89c114,118
+<   (=<<) =
+<     error "todo"
+< 
+---
+>   f =<< StateT k = StateT ((=<<) (\(a, t) -> runStateT (f a) t) . k)
+> {-
+>   k =<< m = StateT (\s -> runStateT m s >>= \(a, s') ->
+>                           runStateT (k a) s')
+> -}
+103,105c132,135
+< state' =
+<   error "todo"
+< 
+---
+> state' k = StateT (Id . k)
+> {-
+> state' f = StateT (\s -> Id (f s))
+> -}
+114,116c144,147
+< runState' =
+<   error "todo"
+< 
+---
+> runState' (StateT k) = runId . k
+> {-
+> runState' st s = let (Id p) = runStateT st s in p
+> -}
+123,124c154
+< execT =
+<   error "todo"
+---
+> execT (StateT k) = (<$>) snd . k
+131,133c161,164
+< exec' =
+<   error "todo"
+< 
+---
+> exec' t = runId . execT t
+> {-
+> exec' s' a = snd $ runState' s' a
+> -}
+140,141c171
+< evalT =
+<   error "todo"
+---
+> evalT (StateT k) = (<$>) fst . k
+148,150c178,181
+< eval' =
+<   error "todo"
+< 
+---
+> eval' t = runId . evalT t
+> {-
+> eval' s' a = fst $ runState' s' a
+> -}
+158,159c189
+< getT =
+<   error "todo"
+---
+> getT = StateT (\s -> pure (s, s))
+172,174c202,205
+< putT =
+<   error "todo"
+< 
+---
+> putT = StateT . const . pure . (,) ()
+> {-
+> putT s = StateT $ \s -> pure ((), s)
+> -}
+184,185c215
+< distinct' =
+<   error "todo"
+---
+> distinct' x = eval' (filtering (\a -> state' (S.notMember a &&& S.insert a)) x) S.empty
+202,203c232
+< distinctF =
+<   error "todo"
+---
+> distinctF = error "TODO/distinctF"
+217,218c246
+<   (<$>) =
+<     error "todo"
+---
+>   f <$> OptionalT x = OptionalT ((<$>) f <$> x)
+225,226c253
+<   (<*>) =
+<     error "todo"
+---
+>   (<*>) = error "TODO/Apply/OptionalT"
+230,231c257
+<   pure =
+<     error "todo"
+---
+>   pure =  error "TODO/Applicative/OptionalT"
+238,239c264
+<   (=<<) =
+<     error "todo"
+---
+>   (=<<) = error "TODO/Bind/OptionalT"
+248c273
+< -- | Implement the `Functor` instance for `Logger
+---
+> -- | Implement the `Functor` instance for `Logger`.
+253,254c278
+<   (<$>) =
+<     error "todo"
+---
+>   (<$>) = error "TODO/Functor/Logger"
+257,259d280
+< --
+< -- >>> Logger (listh [1,2]) (+7) <*> Logger (listh [3,4]) 3
+< -- Logger [1,2,3,4] 10
+261,262c282
+<   (<*>) =
+<     error "todo"
+---
+>   (<*>) = error "TODO/Apply/Logger"
+269,270c289
+<   pure =
+<     error "todo"
+---
+>   pure = error "TODO/Applicative/Logger"
+278,279c297
+<   (=<<) =
+<     error "todo"
+---
+>   (=<<) = error "TODO/Bind/Logger"
+291,292c309
+< log1 =
+<   error "todo"
+---
+> log1 = error "TODO/log1"
+312,313c329,337
+< distinctG =
+<   error "todo"
+---
+> distinctG = error "TODO/distinctG"
+> 
+> ------------------------------------------------------------------------------
+> 
+> testStateT :: IO T.Counts
+> testStateT =
+>      T.runTestTT P.$ T.TestList P.$ tstf
+> 
+> -- End of file.

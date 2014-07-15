@@ -1,0 +1,93 @@
+0a1,5
+> {-
+> Created       : 2014 Jul 15 (Tue) 05:41:40 by Harold Carr.
+> Last Modified : 2014 Jul 15 (Tue) 08:29:37 by Harold Carr.
+> -}
+> 
+2d6
+< {-# LANGUAGE ScopedTypeVariables #-}
+4a9
+> {-# LANGUAGE ScopedTypeVariables #-}
+8d12
+< import Course.Core
+11a16
+> import           Course.Core
+50a56,62
+> 
+> HC:
+> $ cd src
+> $ runhaskell Course/FileIO.hs
+> $ runhaskell Course/FileIO.hs "one"
+> $ runhaskell Course/FileIO.hs "../share" "files.txt"
+> $ runhaskell Course/FileIO.hs "one" "two" "three"
+62a75
+> -- HC: modified to supply directory where files are location and filename of initial file
+66c79,82
+<   error "todo"
+---
+>   getArgs >>= \args ->
+>   case args of
+>       (d:.f:.Nil) -> run d f
+>       _           -> putStrLn "two and only two args must be given"
+73c89,90
+<   Chars
+---
+>   FilePath
+>   -> FilePath
+75,76c92,94
+< run =
+<   error "todo"
+---
+> run dir top =
+>   readFile (dir ++ "/" ++ top)  >>= \contents ->
+>   getFiles (map (\x -> dir ++ "/" ++ x) (lines contents)) >>= printFiles
+81,83c99,113
+< getFiles =
+<   error "todo"
+< 
+---
+> getFiles = sequence . (<$>) getFile
+> {- HC : version from Utrecht TA
+> getFiles dir = mapM (getFile dir)
+> 
+> mapM :: Applicative m => (a -> m b) -> List a -> m (List b)
+> mapM f Nil     = pure Nil
+> mapM f (x:.xs) = (:.) <$> f x <*> mapM f xs
+> 
+> mapM' f (x:.xs) = f x        >>= \fx ->
+>                   mapM' f xs >>= \fxs ->
+>                   pure (fx :. fxs)
+> mapM'' f (x:.xs) = do fx  <- f x
+>                       fxs <- mapM'' f xs
+>                       pure (fx :. fxs)
+> -}
+87,89c117,121
+< getFile =
+<   error "todo"
+< 
+---
+> getFile = lift2 (<$>) (,) readFile
+> {- HC
+> getFile dir f = readFile (dir ++ "/" ++ f) >>= \c ->
+>                 pure (f, c)
+> -}
+93,95c125,129
+< printFiles =
+<   error "todo"
+< 
+---
+> printFiles = void . sequence . (<$>) (uncurry printFile)
+> {- HC
+> printFiles xs = mapM (uncurry printFile) xs >>= \_ ->
+>                 pure ()
+> -}
+100,101c134,137
+< printFile =
+<   error "todo"
+---
+> printFile fp c =
+>   putStrLn fp >>
+>   putStrLn c  >>
+>   pure ()
+102a139
+> -- End of file.
