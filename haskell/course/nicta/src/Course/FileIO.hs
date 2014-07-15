@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Jul 15 (Tue) 05:41:40 by Harold Carr.
-Last Modified : 2014 Jul 15 (Tue) 08:09:38 by Harold Carr.
+Last Modified : 2014 Jul 15 (Tue) 08:29:37 by Harold Carr.
 -}
 
 {-# LANGUAGE NoImplicitPrelude   #-}
@@ -90,19 +90,14 @@ run ::
   -> FilePath
   -> IO ()
 run dir top =
-  readFile (dir ++ "/" ++ top) >>= \contents ->
-  getFiles dir (lines contents) >>= printFiles
-
-{-
-[fp1,fp2,fp3]
-getFile <$> [fp1,fp2,fp3] => [IO (fp1,c1), IO (fp2,c2), IO (fp3,c3)]
-??                        => IO [(fp1,c1),    (fp2,c2),    (fp3,c3)]
--}
+  readFile (dir ++ "/" ++ top)  >>= \contents ->
+  getFiles (map (\x -> dir ++ "/" ++ x) (lines contents)) >>= printFiles
 
 getFiles ::
-  FilePath
-  -> List FilePath
+  List FilePath
   -> IO (List (FilePath, Chars))
+getFiles = sequence . (<$>) getFile
+{- HC : version from Utrecht TA
 getFiles dir = mapM (getFile dir)
 
 mapM :: Applicative m => (a -> m b) -> List a -> m (List b)
@@ -112,30 +107,33 @@ mapM f (x:.xs) = (:.) <$> f x <*> mapM f xs
 mapM' f (x:.xs) = f x        >>= \fx ->
                   mapM' f xs >>= \fxs ->
                   pure (fx :. fxs)
--- mapM f (x:.xs) = do fx  <- f x
---                     fxs <- mapM f xs
---                     pure (fx :. fxs)
-
+mapM'' f (x:.xs) = do fx  <- f x
+                      fxs <- mapM'' f xs
+                      pure (fx :. fxs)
+-}
 getFile ::
   FilePath
-  -> FilePath
   -> IO (FilePath, Chars)
+getFile = lift2 (<$>) (,) readFile
+{- HC
 getFile dir f = readFile (dir ++ "/" ++ f) >>= \c ->
                 pure (f, c)
-
+-}
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
+printFiles = void . sequence . (<$>) (uncurry printFile)
+{- HC
 printFiles xs = mapM (uncurry printFile) xs >>= \_ ->
                 pure ()
-
+-}
 printFile ::
   FilePath
   -> Chars
   -> IO ()
 printFile fp c =
-  putStrLn fp >>= \_ ->
-  putStrLn c  >>= \_ ->
+  putStrLn fp >>
+  putStrLn c  >>
   pure ()
 
 -- End of file.
