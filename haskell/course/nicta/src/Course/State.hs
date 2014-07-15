@@ -1,4 +1,11 @@
+{-
+Created       : by NICTA.
+Last Modified : 2014 Jul 15 (Tue) 10:50:57 by Harold Carr.
+-}
+
+{-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE RebindableSyntax    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Course.State where
@@ -11,10 +18,10 @@ import           Course.Functor
 import           Course.List
 import           Course.Monad
 import           Course.Optional
-import qualified Data.Char          as C (digitToInt)
 import qualified Data.Set           as S
 import qualified Prelude            as P
 
+import qualified Data.Char          as C (digitToInt)
 import qualified Test.HUnit         as T
 import qualified Test.HUnit.Util    as U
 
@@ -40,6 +47,10 @@ newtype State s a =
 -- >>> runState ((+1) <$> pure 0) 0
 -- (1,0)
 instance Functor (State s) where
+  (<$>) ::
+    (a -> b)
+    -> State s a
+    -> State s b
   f <$> State k = State (\s -> let (a, t) = k s in (f a, t))
 
 tsf :: [T.Test]
@@ -65,10 +76,20 @@ trs = U.tt "trs"
       (1,0)
 
 -- | Implement the `Apply` instance for `State s`.
--- >>> runState (pure (+1) <*> (pure 1)) 45
--- (2,45)
+-- >>> runState (pure (+1) <*> pure 0) 0
+-- (1,0)
+--
+-- >>> import qualified Prelude as P
+-- >>> runState (State (\s -> ((+3), s P.++ ["apple"])) <*> State (\s -> (7, s P.++ ["banana"]))) []
+-- (10,["apple","banana"])
 instance Apply (State s) where
-  State f <*> State a = State (\s -> let (g, t) = f s; (z, u) = a t in (g z, u))
+  (<*>) ::
+    State s (a -> b)
+    -> State s a
+    -> State s b
+  State f <*> State a = State (\s -> let (g, t) = f s
+                                         (z, u) = a t
+                                     in (g z, u))
 
 tap :: [T.Test]
 tap = U.tt "tap"
@@ -87,9 +108,12 @@ tap = U.tt "tap"
       (2,45)
 
 -- | Implement the `Applicative` instance for `State s`.
--- >>> runState (pure 0) 4
--- (0,4)
+-- >>> runState (pure 2) 0
+-- (2,0)
 instance Applicative (State s) where
+  pure ::
+    a
+    -> State s a
   pure a = State (\s -> (a, s))
 
 -- | Implement the `Bind` instance for `State s`.
@@ -101,6 +125,10 @@ instance Applicative (State s) where
 --
 -- (=<<) :: (a -> f b) -> f a -> f b
 instance Bind (State s) where
+  (=<<) ::
+    (a -> State s b)
+    -> State s a
+    -> State s b
   l =<< State r = State (\s -> let (ra, rs) = r s
                                in  runState (l ra) rs)
 
@@ -164,7 +192,8 @@ exec ::
   State s a
   -> s
   -> s
-exec (State f) s = snd (f s)
+exec (State k) = snd . k
+-- HC: exec (State f) s = snd (f s)
 
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
 --
@@ -173,7 +202,8 @@ eval ::
   State s a
   -> s
   -> a
-eval (State f) s = fst (f s)
+eval (State k) = fst . k
+-- HC: eval (State f) s = fst (f s)
 
 
 -- | A `State` where the state also distributes into the produced value.
@@ -191,7 +221,8 @@ get = State (\s -> (s, s))
 put ::
   s
   -> State s ()
-put p = State (\_ -> ((), p))
+put = State . const . (,) ()
+-- HC: put p = State (\_ -> ((), p))
 
 -- | HC
 modify :: (s -> s) -> State s ()
@@ -235,7 +266,7 @@ findM ::
   -> List a
   -> f (Optional a)
 findM _ Nil = pure Empty
-findM p (h:.t) = (\b -> if b then pure (Full h) else findM p t) =<< (p h)
+findM p (h :. t) = (\b -> if b then pure (Full h) else findM p t) =<< (p h)
 
 tp :: Num s => Char -> State s Bool
 tp x = (\s -> (const $ pure (x == 'a')) =<< put (1+s)) =<< get
@@ -295,14 +326,20 @@ firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat la = eval (findM rp la) S.empty
+firstRepeat = listWithState findM S.member
+
+firstRepeatC :: Ord a => List a -> Optional a
+firstRepeatC x = eval (findM (\a -> State (S.member a &&& S.insert a)) x) S.empty
+
+firstRepeatHC ::
+  Ord a =>
+  List a
+  -> Optional a
+firstRepeatHC la = eval (findM rp la) S.empty
 
 -- Note: the put/insert/s is not the Set seen by the predicate (the next monadic use of the predicate will see it)
 rp :: Ord a => a -> State (S.Set a) Bool
 rp x = (\s -> (const $ pure (S.member x s)) =<< put (S.insert x s)) =<< get
-
-firstRepeatC :: Ord a => List a -> Optional a
-firstRepeatC x = eval (findM (\a -> State (S.member a &&& S.insert a)) x) S.empty
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
@@ -314,16 +351,31 @@ distinct ::
   Ord a =>
   List a
   -> List a
-distinct x = eval (filtering (\a -> State (S.notMember a &&& S.insert a)) x) S.empty
+distinct = listWithState filtering S.notMember
+
+listWithState ::
+  Ord a1 =>
+  ((a1 -> State (S.Set a1) a2)
+  -> t
+  -> State (S.Set a3) a)
+  -> (a1 -> S.Set a1 -> a2)
+  -> t
+  -> a
+listWithState f m x =
+  eval (f (State . lift2 (lift2 (,)) m S.insert) x) S.empty
+
+distinctTwo ::
+  Ord a =>
+  List a
+  -> List a
+distinctTwo x = eval (filtering (\a -> State (S.notMember a &&& S.insert a)) x) S.empty
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
 -- because it results in a recurring sequence.
 --
--- /Tip:/ Use `findM` with `State` and `produce`.
---
--- /Tip:/ Use `flatten` to write a @square@ function.
---
+-- /Tip:/ Use `first` and `produce`.
+----
 -- /Tip:/ Use library functions: @Optional#contains@, @Data.Char#digitToInt@.
 --
 -- >>> isHappy 4
@@ -337,16 +389,54 @@ distinct x = eval (filtering (\a -> State (S.notMember a &&& S.insert a)) x) S.e
 --
 -- >>> isHappy 44
 -- True
+isHappy ::
+  Integer
+  -> Bool
+isHappy =
+  contains 1 .
+    firstRepeat .
+    produce (toInteger .
+             sum .
+             map (join (*) . 
+                  digitToInt) .
+             show')
+
+-- | HC: OLD: A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
+-- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
+-- because it results in a recurring sequence.
+--
+-- /Tip:/ Use `findM` with `State` and `produce`.
+--
+-- /Tip:/ Use `flatten` to write a @square@ function.
+--
+-- /Tip:/ Use library functions: @Optional#contains@, @Data.Char#digitToInt@.
+--
+-- >>> isHappyOld 4
+-- False
+--
+-- >>> isHappyOld 7
+-- True
+--
+-- >>> isHappyOld 42
+-- False
+--
+-- >>> isHappyOld 44
+-- True
 {-
 isHappy :: Integer -> Bool
 isHappy x = case runState (findM ih (produce sumOfSquares x)) S.empty of
                 (Empty , _) -> error "can this happen?"
                 (Full v, _) -> v == 1
 -}
-isHappy ::
+isHappyC :: Integer -> Bool
+isHappyC = contains 1 . (`eval` S.empty) .
+               findM (\j -> State $ \s -> (j == 1 || S.member j s, S.insert j s)) .
+                   produce (P.sum . (<$>) (join (*) . toInteger . digitToInt) . show)
+
+isHappyOld ::
   Integer
   -> Bool
-isHappy x = contains 1 $ eval (findM ih (produce sumOfSquares x)) S.empty
+isHappyOld x = contains 1 $ eval (findM ih (produce sumOfSquares x)) S.empty
 
 ih :: Integer -> State (S.Set Integer) Bool
 ih x = (\s -> (const $ pure (S.member x s)) =<< put (S.insert x s)) =<< get
@@ -356,12 +446,6 @@ sumOfSquares = sumOfSquares' 0 . show
   where
     sumOfSquares' acc [] = P.toInteger acc
     sumOfSquares' acc (x:xs) = sumOfSquares' (((P.^) (C.digitToInt x) 2) + acc) xs
-
-isHappyC :: Integer -> Bool
-isHappyC = contains 1 . (`eval` S.empty) .
-               findM (\j -> State $ \s -> (j == 1 || S.member j s, S.insert j s)) .
-                   produce (P.sum . (<$>) (join (*) . toInteger . digitToInt) . show)
-
 {-
 sumOfSquares 4
 sumOfSquares 16

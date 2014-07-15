@@ -1,5 +1,9 @@
 Created       : 2013 Nov 23 (Sat) 09:55:30 by carr.
-Last Modified : 2014 Mar 28 (Fri) 18:38:27 by Harold Carr.
+Last Modified : 2014 Jul 15 (Tue) 11:04:59 by Harold Carr.
+
+NEXT: StateT
+
+------------------------------------------------------------------------------
 
 diff -rbwB ~/ftptmp/ebooks-music-pics/tech/haskell-nicta-course/ ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/course/nicta/
 

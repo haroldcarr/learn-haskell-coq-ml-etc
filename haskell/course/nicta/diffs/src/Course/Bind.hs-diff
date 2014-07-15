@@ -1,71 +1,73 @@
-0a1,5
+1,2c1,5
+< {-# LANGUAGE NoImplicitPrelude #-}
+< {-# LANGUAGE ScopedTypeVariables #-}
+---
 > {-
 > Created       : by NICTA.
-> Last Modified : 2014 Jul 15 (Tue) 05:32:19 by Harold Carr.
+> Last Modified : 2014 Jul 15 (Tue) 06:04:14 by Harold Carr.
 > -}
 > 
-2,3d6
-< {-# LANGUAGE ScopedTypeVariables #-}
-< {-# LANGUAGE InstanceSigs #-}
-4a8
+3a7
+> {-# LANGUAGE NoImplicitPrelude   #-}
+4a9
 > {-# LANGUAGE ScopedTypeVariables #-}
-10a15
+10a16
 > , testBind
-12a18
+12a19
 > import           Course.Apply    (Apply)
-15d20
+15d21
 < import Course.Apply(Apply)
-20a26,28
+20a27,29
 > import qualified Test.HUnit      as T
 > import qualified Test.HUnit.Util as U
 > 
-31a40,41
+31a41,42
 > {- HC: TODO: this causes ./test.sh Bind to hang (works in ghci)
 > --
-34a45,46
+34a46,47
 > -}
 > --
-66,67c78
+66,67c79
 < (<*>) =
 <   error "todo"
 ---
 > (<*>) f fa =  f <*> fa
-80,81c91
+80,81c92
 <   (=<<) =
 <     error "todo"
 ---
 >   (=<<) f = f . runId
-92,93c102
+92,93c103
 <   (=<<) =
 <     error "todo"
 ---
 >   (=<<) = flatMap
-104,105c113,114
+104,105c114,115
 <   (=<<) =
 <     error "todo"
 ---
 >   (=<<) _  Empty   = Empty
 >   (=<<) f (Full x) = (f x)
-116,117c125
+116,117c126
 <   (=<<) =
 <     error "todo"
 ---
 >   f =<< g = \x -> f (g x) x
-136,137c144
+136,137c145
 < join =
 <   error "todo"
 ---
 > join = (id =<<)
-144a152,154
+144a153,155
 > --
 > -- >>> (Id 2) >>= (\x -> Id(x+1))
 > -- Id 3
-150,151c160
+150,151c161
 < (>>=) =
 <   error "todo"
 ---
 > (>>=) fa a2fb = join (a2fb <$> fa)
-154a164,175
+154a165,176
 > tbf :: [T.Test]
 > tbf = U.tt "tbf"
 >       [        (Id 2) >>= (\x -> Id(x+1))
@@ -78,16 +80,16 @@
 >       ]
 >       (Id 3)
 > 
-159a181,183
+159a182,184
 > --
 > -- >>> (<=<) (\b -> Full (b+1)) (\a -> Full a) 99
 > -- Full 100
-166,167c190
+166,167c191
 < (<=<) =
 <   error "todo"
 ---
 > (<=<) b2fc a2fb a = (a2fb a) >>= b2fc
-185a209,216
+185a210,217
 > 
 > ------------------------------------------------------------------------------
 > 
