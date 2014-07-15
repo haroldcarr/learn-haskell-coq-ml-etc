@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Created       : 2014 Jul 15 (Tue) 01:56:08 by Harold Carr.
-# Last Modified : 2014 Jul 15 (Tue) 10:57:05 by Harold Carr.
+# Last Modified : 2014 Jul 15 (Tue) 12:01:07 by Harold Carr.
 
 base=~/ftptmp/ebooks-music-pics/tech
 
@@ -13,7 +13,7 @@ diffDir=$slave/diffs
 s=src
 sc=src/Course
 
-files="Setup.lhs $s/Course.hs $sc/Core.hs $sc/Id.hs $sc/Optional.hs $sc/Validation.hs $sc/List.hs $sc/Functor.hs $sc/Apply.hs $sc/Applicative.hs $sc/Bind.hs $sc/Monad.hs $sc/FileIO.hs $sc/State.hs"
+files="Setup.lhs $s/Course.hs $sc/Core.hs $sc/Id.hs $sc/Optional.hs $sc/Validation.hs $sc/List.hs $sc/Functor.hs $sc/Apply.hs $sc/Applicative.hs $sc/Bind.hs $sc/Monad.hs $sc/FileIO.hs $sc/State.hs $sc/StateT.hs"
 
 outDir=/tmp/NICTA
 mkdir -p $outDir/src/Course
