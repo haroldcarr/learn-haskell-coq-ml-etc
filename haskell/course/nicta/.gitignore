@@ -18,4 +18,5 @@ src/Course/MoreParser.hs
 src/Course/Parser.hs
 src/Course/Person.hs
 src/Course/Traversable.hs
+src/Course-ordered
 test
