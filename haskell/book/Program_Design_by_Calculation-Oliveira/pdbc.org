@@ -14,7 +14,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2014 Jul 21 (Mon) 10:58:46 by Harold Carr.
+Last Modified : 2014 Jul 21 (Mon) 16:44:19 by Harold Carr.
 
 #+BEGIN_SRC haskell
 import Test.HUnit      as T
@@ -32,7 +32,7 @@ aka "function-arrow chaining"
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#.]]
 
 #+BEGIN_EXAMPLE
-(.)    :: (b -> c) -> (a -> b) -> a -> c
+(.)    :: (b -> c) -> (a -> b) -> a -> c    -- (2.6)
 (.) f g = \x -> f (g x)
 #+END_EXAMPLE
 
@@ -55,7 +55,7 @@ TODO: associative diagram
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#id]]
 
 #+BEGIN_EXAMPLE
-id   :: a -> a
+id   :: a -> a   -- (2.9)
 id x = x
 #+END_EXAMPLE
 
@@ -75,14 +75,14 @@ f . id = id . f = f  -- (2.10)
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#const]]
 
 #+BEGIN_EXAMPLE
-const     :: a -> b -> a
+const     :: a -> b -> a   -- (2.12)
 const x _ =  x
 #+END_EXAMPLE
 
 constant-/fusion/ property
 
 #+BEGIN_SRC haskell
-fusion     :: (b -> c) -> (a -> b) -> a -> c
+fusion     :: (b -> c) -> (a -> b) -> a -> c   -- (2.13)
 fusion c f = c . f
 #+END_SRC
 
@@ -168,15 +168,15 @@ epicConstantFunction = const Single
 ------------------------------------------------------------------------------
 * 2.7 isos
 
-A /bijective/ function is monic (one-to-one) and onto (epic).
+A /isomorphic/ function (aka /bijective/) is one-to-one (monic) and onto (epic).
 
 Isomorphism : [[http://en.wikipedia.org/wiki/Isomorphism]]
 
 Given $f : A \rightarrow B$,
 $f$ has /inverse/
 $f^{\circ} : B \rightarrow A$,
-such that
-$f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$
+such that \\
+$f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$    -- (2.16)
 
 Isomorphisms are important because they convert between "formats"
 without losing information, although the data adopts a different
@@ -248,13 +248,39 @@ p0 = U.t "p0"
 p1 = U.t "p1"
      [ (b,c) | b <- [Sunday, Monday, Tuesday], c <- [One, Two]]
      [(Sunday,One),(Sunday,Two),(Monday,One),(Monday,Two),(Tuesday,One),(Tuesday,Two)]
+#+END_SRC
 
--- projections
+=pair= also notated \\
+$\langle f,g \rangle : C \rightarrow A \times B$       -- (2.18) \\
+$\langle f,g \rangle c = (f c, g c)$
+
+Projections -- (2.19)
+
+#+BEGIN_SRC haskell
 p2 = U.t "p2" (fst (1,2)) 1
 p3 = U.t "p3" (snd (1,2)) 2
 #+END_SRC
 
 [[file:./pair.png]]
+
+When domain do not coincide use "product of $f$ and $g$"
+
+$f \times g = \langle f \circ fst, g \circ snd \rangle$    -- (2.22)
+
+#+BEGIN_SRC haskell
+product0 :: (c -> a) -> (d -> b) -> (c,d) -> (a,b)
+product0 f g cd = (,) ((f . fst) cd) ((g . snd) cd)
+#+END_SRC
+
+[[file:./product.png]]
+
+Composition and pair relate to each other via /product-fusion/
+property (i.e., pair/split is right-distributive with respect to
+composition)
+
+$\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$  -- (2.24)
+
+[[file:./product-fusion.png]]
 
 ------------------------------------------------------------------------------
 
