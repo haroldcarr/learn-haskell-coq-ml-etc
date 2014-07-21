@@ -1,0 +1,127 @@
+#+TITLE:       program design by calculation
+#+AUTHOR:      Harold Carr
+#+DESCRIPTION: program design by calculation
+#+PROPERTY:    tangle pdbc.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+#+BEGIN_HTML
+---
+title: program design by calculation
+tags: haskell, monad
+---
+#+END_HTML
+
+# Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
+Last Modified : 2014 Jul 21 (Mon) 05:08:58 by Harold Carr.
+
+#+BEGIN_SRC haskell
+import Test.HUnit      as T
+import Test.HUnit.Util as U -- https://github.com/haroldcarr/test-hunit-util
+#+END_SRC
+
+------------------------------------------------------------------------------
+* function composition
+
+aka "function-arrow chaining"
+
+[[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#.]]
+
+#+BEGIN_EXAMPLE
+(.)    :: (b -> c) -> (a -> b) -> a -> c
+(.) f g = \x -> f (g x)
+#+END_EXAMPLE
+
+associative:
+
+#+BEGIN_EXAMPLE
+(f . g) . h = f . (g . h)   -- (2.8)
+#+END_EXAMPLE
+
+[[file:./function-composition.png]]
+
+------------------------------------------------------------------------------
+* identity function(s)
+
+[[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#id]]
+
+#+BEGIN_EXAMPLE
+id                      :: a -> a
+id x                    =  x
+#+END_EXAMPLE
+
+=id= does not lose any information
+
+=id= is the /unit/ of composition
+
+#+BEGIN_EXAMPLE
+f . id = id . f = f  -- (2.10)
+#+END_EXAMPLE
+
+[[file:./function-composition-id-is-unit.png]]
+
+------------------------------------------------------------------------------
+* constant function(s)
+
+[[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#const]]
+
+#+BEGIN_EXAMPLE
+const                   :: a -> b -> a
+const x _               =  x
+#+END_EXAMPLE
+
+constant-/fusion/ property
+
+#+BEGIN_SRC haskell
+fusion :: (b -> c) -> (a -> b) -> a -> c
+fusion c f = c . f
+#+END_SRC
+
+- ignores result of =f=
+- output of =f= and input to $const_2$ must be same type
+- output of composition not (necessarily) type related to co/domain of =f=
+
+[[file:./constant-fusion.png]]
+
+constant-/fusion/ example:
+
+#+BEGIN_SRC haskell
+c :: a -> Char
+c = const 'c'
+
+c0 = U.t "c0"
+     (const 'c' . (+1)       $ 45)
+     'c'
+
+c1 = U.t "c1"
+     (const 30  . ("foo" ++) $ "bar")
+     30
+#+END_SRC
+
+*Exercise 2.1*
+
+#+BEGIN_SRC haskell
+fc  :: (c -> a) -> c -> b -> a
+fc  f c = f . const c
+
+fc' :: (c -> a) -> c -> b -> a
+fc' f c = const (f c)
+#+END_SRC
+
+both ignore 2nd arg and return result of applying =f= to first arg
+
+
+:t fc
+fc :: (bc -> ca) -> bc -> ab -> ca
+
+*Main> :t fc'
+fc' :: (tc -> a) -> tc -> b -> a
+
+
+------------------------------------------------------------------------------
+
+#+BEGIN_SRC haskell
+main =
+    T.runTestTT $ T.TestList $ c0 ++ c1
+#+END_SRC
