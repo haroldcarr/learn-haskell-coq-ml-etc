@@ -1,0 +1,21 @@
+% \documentclass[convert={density=300,size=1080x800,outext=.png}]{standalone}
+% \documentclass[convert={density=300,outext=.png}]{standalone}
+\documentclass[convert={density=175,outext=.png}]{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{matrix,arrows}
+
+\begin{document}
+
+\begin{tikzpicture}[descr/.style={fill=white,inner sep=2.5pt}]
+\matrix (m) [matrix of math nodes, row sep=3em, column sep=3em]
+{ C & B & C & A \\
+};
+\path[->,font=\scriptsize]
+(m-1-1) edge node[auto] {$ const_1 $}  (m-1-2)
+(m-1-2) edge node[auto] {$ const_2 $}  (m-1-3)
+(m-1-3) edge node[auto] {$ f       $}  (m-1-4)
+;
+\end{tikzpicture}
+
+\end{document}

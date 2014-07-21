@@ -14,7 +14,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2014 Jul 21 (Mon) 05:08:58 by Harold Carr.
+Last Modified : 2014 Jul 21 (Mon) 10:58:46 by Harold Carr.
 
 #+BEGIN_SRC haskell
 import Test.HUnit      as T
@@ -22,7 +22,10 @@ import Test.HUnit.Util as U -- https://github.com/haroldcarr/test-hunit-util
 #+END_SRC
 
 ------------------------------------------------------------------------------
-* function composition
+* 2.2 function application
+
+------------------------------------------------------------------------------
+* 2.3 function composition
 
 aka "function-arrow chaining"
 
@@ -33,22 +36,27 @@ aka "function-arrow chaining"
 (.) f g = \x -> f (g x)
 #+END_EXAMPLE
 
+[[file:./function-composition.png]]
+
 associative:
 
 #+BEGIN_EXAMPLE
 (f . g) . h = f . (g . h)   -- (2.8)
+
+-- similar to
+(a + b) + c = a + (b + c)
 #+END_EXAMPLE
 
-[[file:./function-composition.png]]
+TODO: associative diagram
 
 ------------------------------------------------------------------------------
-* identity function(s)
+* 2.4 identity function(s)
 
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#id]]
 
 #+BEGIN_EXAMPLE
-id                      :: a -> a
-id x                    =  x
+id   :: a -> a
+id x = x
 #+END_EXAMPLE
 
 =id= does not lose any information
@@ -62,24 +70,26 @@ f . id = id . f = f  -- (2.10)
 [[file:./function-composition-id-is-unit.png]]
 
 ------------------------------------------------------------------------------
-* constant function(s)
+* 2.5 constant function(s)
 
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#const]]
 
 #+BEGIN_EXAMPLE
-const                   :: a -> b -> a
-const x _               =  x
+const     :: a -> b -> a
+const x _ =  x
 #+END_EXAMPLE
 
 constant-/fusion/ property
 
 #+BEGIN_SRC haskell
-fusion :: (b -> c) -> (a -> b) -> a -> c
+fusion     :: (b -> c) -> (a -> b) -> a -> c
 fusion c f = c . f
 #+END_SRC
 
 - ignores result of =f=
+- input to =f= can be any type
 - output of =f= and input to $const_2$ must be same type
+  - but, since polymorphic, can be any type
 - output of composition not (necessarily) type related to co/domain of =f=
 
 [[file:./constant-fusion.png]]
@@ -101,27 +111,154 @@ c1 = U.t "c1"
 
 *Exercise 2.1*
 
+- output is codomain of =f=
+- ignores 2nd arg (can be of any type)
+
 #+BEGIN_SRC haskell
 fc  :: (c -> a) -> c -> b -> a
 fc  f c = f . const c
+#+END_SRC
 
+[[file:./e2-1a.png]]
+
+#+BEGIN_SRC haskell
 fc' :: (c -> a) -> c -> b -> a
 fc' f c = const (f c)
 #+END_SRC
 
-both ignore 2nd arg and return result of applying =f= to first arg
+[[file:./e2-1b.png]]
 
+------------------------------------------------------------------------------
+* 2.6 monics and epics
 
-:t fc
-fc :: (bc -> ca) -> bc -> ab -> ca
+Identity and constant functions are limit points with respect to information preservation
+- identity preserves all information
+- constant loses all information
 
-*Main> :t fc'
-fc' :: (tc -> a) -> tc -> b -> a
+All other functions lose some information (regarded as unneeded in context).
 
+Functional programming: art of transforming or losing information in a controlled manner to fit context.
+
+Functions lose information when
+- give same output for two or more inputs (e.g., constant function)
+- only use one value of codomain (e.g., constant function)
+
+[[http://en.wikipedia.org/wiki/Bijection,_injection_and_surjection]]
+
+Injective functions (aka "one-to-one", "monic") do not lose information
+- each element of domain maps to unique element of codomain
+- (but not all elements of codomain are necessarily mapped to)
+- Categorical generalization of injective functions called "monic"
+  - [[http://en.wikipedia.org/wiki/Monic_morphism]]
+
+Surjective functions (aka "onto", "epic") do not lose information
+- all elements of codomain are mapped to
+- Categorical generalization of surjective functions call "epic" (but converse is not true in all categories)
+  - [[http://en.wikipedia.org/wiki/Epimorphism]]
+
+*Exercise 2.2*
+
+#+BEGIN_SRC haskell
+data Single = Single deriving Show
+
+epicConstantFunction :: b -> Single
+epicConstantFunction = const Single
+#+END_SRC
+
+------------------------------------------------------------------------------
+* 2.7 isos
+
+A /bijective/ function is monic (one-to-one) and onto (epic).
+
+Isomorphism : [[http://en.wikipedia.org/wiki/Isomorphism]]
+
+Given $f : A \rightarrow B$,
+$f$ has /inverse/
+$f^{\circ} : B \rightarrow A$,
+such that
+$f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$
+
+Isomorphisms are important because they convert between "formats"
+without losing information, although the data adopts a different
+“shape” in each of them.
+
+"A is isomorphic to B" is written: $A \cong B$.
+
+Isomorphic data domains are regarded as "abstractly" the same.
+
+*example*
+
+[[http://hackage.haskell.org/package/base-4.7.0.1/docs/Prelude.html#t:Enum]]
+
+#+BEGIN_SRC haskell
+data Weekday = Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday
+             deriving (Enum, Eq, Ord, Show)
+
+data Seven   = One    | Two    | Three   | Four      | Five     | Six    | Seven
+             deriving (Enum, Eq, Ord, Show)
+
+transform :: (Enum a, Ord a, Enum b, Ord b) => a -> b
+transform = toEnum . fromEnum
+
+i0 = U.t "i0"
+     (transform Tuesday)
+     Three
+
+i1 = U.t "i1"
+     (transform Three)
+     Tuesday
+
+transform2 :: (Enum a, Ord a) => Int -> a
+transform2 = toEnum . (`rem` 7)
+
+i2 = U.t "i2"
+     (transform2 15)
+     Two
+
+i3 = U.t "i3"
+     (transform2 15)
+     Monday
+#+END_SRC
+
+Note: constants, identities, epics, monics and isos are closed under
+composition (e.g., the composition of two epics is epic).
+
+------------------------------------------------------------------------------
+* 2.8 gluing functions which do not compose --- products
+
+Not every two functions can be composed, e.g., $f : C \rightarrow A$
+and $g : C \rightarrow B$ (because domain of one is not codomain of other).
+
+But, since $f$ and $g$ share the same domain $C$, their outputs can be paired (aka "split")
+
+[[http://www.haskell.org/ghc/docs/7.4.1/html/libraries/ghc-prim-0.2.0.0/src/GHC-Tuple.html#%28%2C%29]]
+
+[[https://hackage.haskell.org/package/base-4.4.0.0/docs/src/Data-Tuple.html]]
+
+#+BEGIN_SRC haskell
+-- cartesian product of types
+pair :: (c -> a) -> (c -> b) -> c -> (a,b)
+pair f g c = (f c, g c)
+
+p0 = U.t "p0"
+     (pair transform show Sunday)
+     (One, "Sunday")
+
+-- cartesian product of elements
+p1 = U.t "p1"
+     [ (b,c) | b <- [Sunday, Monday, Tuesday], c <- [One, Two]]
+     [(Sunday,One),(Sunday,Two),(Monday,One),(Monday,Two),(Tuesday,One),(Tuesday,Two)]
+
+-- projections
+p2 = U.t "p2" (fst (1,2)) 1
+p3 = U.t "p3" (snd (1,2)) 2
+#+END_SRC
+
+[[file:./pair.png]]
 
 ------------------------------------------------------------------------------
 
 #+BEGIN_SRC haskell
 main =
-    T.runTestTT $ T.TestList $ c0 ++ c1
+    T.runTestTT $ T.TestList $ c0 ++ c1 ++ i0 ++ i1 ++ i2 ++ i3 ++ p0 ++ p1 ++ p2 ++ p3
 #+END_SRC
