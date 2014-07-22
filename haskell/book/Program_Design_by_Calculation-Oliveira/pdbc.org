@@ -14,7 +14,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2014 Jul 21 (Mon) 16:44:19 by Harold Carr.
+Last Modified : 2014 Jul 22 (Tue) 09:24:12 by Harold Carr.
 
 #+BEGIN_SRC haskell
 import Test.HUnit      as T
@@ -23,6 +23,8 @@ import Test.HUnit.Util as U -- https://github.com/haroldcarr/test-hunit-util
 
 ------------------------------------------------------------------------------
 * 2.2 function application
+
+TODO
 
 ------------------------------------------------------------------------------
 * 2.3 function composition
@@ -38,7 +40,7 @@ aka "function-arrow chaining"
 
 [[file:./function-composition.png]]
 
-associative:
+*associative property*
 
 #+BEGIN_EXAMPLE
 (f . g) . h = f . (g . h)   -- (2.8)
@@ -79,7 +81,7 @@ const     :: a -> b -> a   -- (2.12)
 const x _ =  x
 #+END_EXAMPLE
 
-constant-/fusion/ property
+*constant-fusion property*
 
 #+BEGIN_SRC haskell
 fusion     :: (b -> c) -> (a -> b) -> a -> c   -- (2.13)
@@ -94,7 +96,7 @@ fusion c f = c . f
 
 [[file:./constant-fusion.png]]
 
-constant-/fusion/ example:
+constant-fusion example
 
 #+BEGIN_SRC haskell
 c :: a -> Char
@@ -170,7 +172,7 @@ epicConstantFunction = const Single
 
 A /isomorphic/ function (aka /bijective/) is one-to-one (monic) and onto (epic).
 
-Isomorphism : [[http://en.wikipedia.org/wiki/Isomorphism]]
+[[http://en.wikipedia.org/wiki/Isomorphism]]
 
 Given $f : A \rightarrow B$,
 $f$ has /inverse/
@@ -220,8 +222,8 @@ i3 = U.t "i3"
      Monday
 #+END_SRC
 
-Note: constants, identities, epics, monics and isos are closed under
-composition (e.g., the composition of two epics is epic).
+Constants, identities, epics, monics and isos are *closed under
+composition* (e.g., the composition of two epics is epic).
 
 ------------------------------------------------------------------------------
 * 2.8 gluing functions which do not compose --- products
@@ -254,7 +256,7 @@ p1 = U.t "p1"
 $\langle f,g \rangle : C \rightarrow A \times B$       -- (2.18) \\
 $\langle f,g \rangle c = (f c, g c)$
 
-Projections -- (2.19)
+projections (*$\times$-cancellation property*) -- (2.20)
 
 #+BEGIN_SRC haskell
 p2 = U.t "p2" (fst (1,2)) 1
@@ -263,7 +265,7 @@ p3 = U.t "p3" (snd (1,2)) 2
 
 [[file:./pair.png]]
 
-When domain do not coincide use "product of $f$ and $g$"
+When domains do not coincide use "product of $f$ and $g$"
 
 $f \times g = \langle f \circ fst, g \circ snd \rangle$    -- (2.22)
 
@@ -274,17 +276,108 @@ product0 f g cd = (,) ((f . fst) cd) ((g . snd) cd)
 
 [[file:./product.png]]
 
-Composition and pair relate to each other via /product-fusion/
-property (i.e., pair/split is right-distributive with respect to
+Composition and pair relate to each other via
+*product-fusion property* (i.e., pair/split is right-distributive with respect to
 composition)
 
 $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$  -- (2.24)
 
 [[file:./product-fusion.png]]
 
+Left-distributivity does not hold.  But, for $f \circ
+\langle g,h \rangle$ when $f = i \times j$
+
+|        |   | $(i \times j) \circ \langle g,h \rangle$                                                           |
+| (2.22) | = | $\langle i \circ fst, j \circ snd \rangle \circ \langle g,h \rangle$                               |
+| (2.24) | = | $\langle (i \circ fst) \circ \langle g, h \rangle,(j \circ snd) \circ \langle g,h \rangle \rangle$ |
+| (2.8)  | = | $\langle i \circ (fst \circ \langle g, h \rangle),j \circ (snd \circ \langle g,h \rangle) \rangle$ |
+| (2.20) | = | $\langle i \circ g,j \circ h \rangle$                                                              |
+
+Called *$\times$-absorption property* : pair absorbs $\times$ as a kind of fusion -- a
+consequence for $\times$-fusion and $\times$-cancellation.
+
+$(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$  -- (2.25)
+
+[[file:./times-absorption.png]]
+
+#+BEGIN_SRC haskell
+-- non-optimized version
+pcp                        :: (d -> a) -> (e -> b) -> (c -> d) -> (c -> e) -> c -> (a, b)
+pcp                i j g h = (product0 i j) . (pair g h)
+
+-- optimized version
+productComposePair         :: (d -> a) -> (e -> b) -> (c -> d) -> (c -> e) -> c -> (a, b)
+productComposePair i j g h = pair (i . g) (j . h)
+
+p4 = U.tt "p4"
+     [ (pcp                show read (*2) show   4)
+     , (productComposePair show read (*2) show   4)
+     ]
+     ("8",4)
+#+END_SRC
+
+$i \circ fst = fst \circ (i \times j)$ -- (2.26) : given $D \times E$ no need to evaluate $j$ \\
+$j \circ snd = snd \circ (i \times j)$ -- (2.27)
+
+*$\times$-functor property*
+
+$(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$ -- (2.28)
+
+*$\times$-functor-id property*
+
+$id_A \times id_B = id_{A \times B}$  -- (2.29)
+
+2.28 and 2.29 called /functorial properities/.
+
+*$\times$-reflexion property*
+
+$\langle fst,snd \rangle = id_{A \times B}$  -- (2.30)
+
+[[file:./times-reflexion.png]]
+
+*commutative property* of product
+
+$A \times B \cong B \times A$ -- (2.31)
+
+$\langle snd,fst \rangle = swap$
+
+#+BEGIN_SRC haskell
+swap0    :: (a,b) -> (b,a)
+swap0 ab = (,) (snd ab) (fst ab)
+-- swap0 (a,b) = (b,a)
+#+END_SRC
+
+Isomorphic:
+
+|        |   | $swap \circ swap$                                                              |
+|        | = | $\langle snd,fst \rangle \circ swap$                                           |
+| (2.24) | = | $\langle snd \circ swap,fst \circ swap \rangle$                                |
+|        | = | $\langle snd \circ \langle snd,fst \rangle, fst \circ \langle snd,fst \rangle$ |
+| (2.20) | = | $\langle fst,snd \rangle$                                                      |
+|        | = | $id$                                                                           |
+
+Therefore, no information is lost (or gained) when swapping fields in record datatypes.
+
+*associative property of product*
+
+$A \times (B \times C) \cong (A \times B) \times C$ -- (2.32)
+
+
+#+BEGIN_SRC haskell
+assocl           :: (a, (b,c)) -> ((a,b),c)
+assocl (a,(b,c)) = ((a,b),c)
+
+assocr           :: ((a,b),c) -> (a,(b,c))
+-- assocr ((a,b),c) = (a,(b,c))
+assocr  = pair (fst . fst) (pair (snd . fst) snd)
+#+END_SRC
+
 ------------------------------------------------------------------------------
 
 #+BEGIN_SRC haskell
-main =
-    T.runTestTT $ T.TestList $ c0 ++ c1 ++ i0 ++ i1 ++ i2 ++ i3 ++ p0 ++ p1 ++ p2 ++ p3
+main = do
+    T.runTestTT $ T.TestList $ c0 ++ c1 ++ i0 ++ i1 ++ i2 ++ i3 ++ p0 ++ p1 ++ p2 ++ p3 ++ p4
 #+END_SRC
+
+
+

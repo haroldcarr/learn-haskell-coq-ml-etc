@@ -1,6 +1,6 @@
 #
 # Created       : 2014 Jul 20 (Sun) 10:44:43 by Harold Carr.
-# Last Modified : 2014 Jul 21 (Mon) 16:51:02 by Harold Carr.
+# Last Modified : 2014 Jul 22 (Tue) 08:14:05 by Harold Carr.
 #
 
 # http://tex.stackexchange.com/questions/11866/compile-a-latex-document-into-a-png-image-thats-as-short-as-possible/11880#11880
@@ -14,7 +14,9 @@ PNG_FILES = constant-fusion.png \
 	    pair.png \
 	    product-fusion.png \
 	    product.png \
-            test.png
+            test.png \
+            times-absorption.png \
+            times-reflexion.png
 
 %.png : %.tex
 	latex -shell-escape $?
