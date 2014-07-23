@@ -6,6 +6,11 @@
 #+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
 #+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 
+# https://www.gnu.org/software/emacs/manual/html_node/org/CSS-support.html
+#+BEGIN_HTML
+<STYLE> <!-- A{text-decoration:none} --> </STYLE>
+#+END_HTML
+
 #+BEGIN_HTML
 ---
 title: program design by calculation
@@ -14,7 +19,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2014 Jul 22 (Tue) 09:24:12 by Harold Carr.
+Last Modified : 2014 Jul 22 (Tue) 19:03:58 by Harold Carr.
 
 #+BEGIN_SRC haskell
 import Test.HUnit      as T
@@ -27,65 +32,56 @@ import Test.HUnit.Util as U -- https://github.com/haroldcarr/test-hunit-util
 TODO
 
 ------------------------------------------------------------------------------
-* 2.3 function composition
+* 2.3 function composition (2.6) : $\circ = (B \rightarrow C) \rightarrow (A \rightarrow B) \rightarrow A \rightarrow C$
 
 aka "function-arrow chaining"
 
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#.]]
 
 #+BEGIN_EXAMPLE
-(.)    :: (b -> c) -> (a -> b) -> a -> c    -- (2.6)
+(.)    :: (b -> c) -> (a -> b) -> a -> c
 (.) f g = \x -> f (g x)
 #+END_EXAMPLE
 
 [[file:./function-composition.png]]
 
-*associative property*
+** (2.8) associative property of composition : $(f \circ g) \circ h = f \circ (g \circ h)$
 
-#+BEGIN_EXAMPLE
-(f . g) . h = f . (g . h)   -- (2.8)
-
--- similar to
-(a + b) + c = a + (b + c)
-#+END_EXAMPLE
+Similar to $(a + b) + c = a + (b + c)$
 
 TODO: associative diagram
 
 ------------------------------------------------------------------------------
-* 2.4 identity function(s)
+* 2.4 identity function(s) (2.9) : $id \hspace{0.25em} x = x$
 
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#id]]
 
 #+BEGIN_EXAMPLE
-id   :: a -> a   -- (2.9)
+id   :: a -> a
 id x = x
 #+END_EXAMPLE
 
 =id= does not lose any information
 
-=id= is the /unit/ of composition
-
-#+BEGIN_EXAMPLE
-f . id = id . f = f  -- (2.10)
-#+END_EXAMPLE
+** (2.10) =id= is the /unit/ of composition : $f \circ id = id \circ f = f$
 
 [[file:./function-composition-id-is-unit.png]]
 
 ------------------------------------------------------------------------------
-* 2.5 constant function(s)
+* 2.5 constant function(s) (2.12) : $const \hspace{0.25em} x \hspace{0.25em} \_ =  x$
 
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#const]]
 
 #+BEGIN_EXAMPLE
-const     :: a -> b -> a   -- (2.12)
+const     :: a -> b -> a
 const x _ =  x
 #+END_EXAMPLE
 
-*constant-fusion property*
+** (2.13) constant-fusion property : $c \circ f = c$
 
 #+BEGIN_SRC haskell
-fusion     :: (b -> c) -> (a -> b) -> a -> c   -- (2.13)
-fusion c f = c . f
+constantFusion     :: (b -> c) -> (a -> b) -> a -> c
+constantFusion c f = c . f
 #+END_SRC
 
 - ignores result of =f=
@@ -131,7 +127,7 @@ fc' f c = const (f c)
 [[file:./e2-1b.png]]
 
 ------------------------------------------------------------------------------
-* 2.6 monics and epics
+* 2.6 monics (one-to-one/injective) and epics (onto/surjective)
 
 Identity and constant functions are limit points with respect to information preservation
 - identity preserves all information
@@ -168,7 +164,7 @@ epicConstantFunction = const Single
 #+END_SRC
 
 ------------------------------------------------------------------------------
-* 2.7 isos
+* 2.7 isomorphisms (2.16) : $f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$
 
 A /isomorphic/ function (aka /bijective/) is one-to-one (monic) and onto (epic).
 
@@ -177,8 +173,7 @@ A /isomorphic/ function (aka /bijective/) is one-to-one (monic) and onto (epic).
 Given $f : A \rightarrow B$,
 $f$ has /inverse/
 $f^{\circ} : B \rightarrow A$,
-such that \\
-$f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$    -- (2.16)
+such that 2.16 (above) holds.
 
 Isomorphisms are important because they convert between "formats"
 without losing information, although the data adopts a different
@@ -228,6 +223,10 @@ composition* (e.g., the composition of two epics is epic).
 ------------------------------------------------------------------------------
 * 2.8 gluing functions which do not compose --- products
 
+** (2.18) pair def : $\langle f,g \rangle c = (f \hspace{0.25em} c, g \hspace{0.25em} c)$
+
+$\langle f,g \rangle : C \rightarrow A \times B$
+
 Not every two functions can be composed, e.g., $f : C \rightarrow A$
 and $g : C \rightarrow B$ (because domain of one is not codomain of other).
 
@@ -252,11 +251,7 @@ p1 = U.t "p1"
      [(Sunday,One),(Sunday,Two),(Monday,One),(Monday,Two),(Tuesday,One),(Tuesday,Two)]
 #+END_SRC
 
-=pair= also notated \\
-$\langle f,g \rangle : C \rightarrow A \times B$       -- (2.18) \\
-$\langle f,g \rangle c = (f c, g c)$
-
-projections (*$\times$-cancellation property*) -- (2.20)
+** (2.20) $\times$-cancellation property : =fst= / =snd= projections
 
 #+BEGIN_SRC haskell
 p2 = U.t "p2" (fst (1,2)) 1
@@ -265,9 +260,9 @@ p3 = U.t "p3" (snd (1,2)) 2
 
 [[file:./pair.png]]
 
-When domains do not coincide use "product of $f$ and $g$"
+** (2.22) product of two functions def : $f \times g = \langle f \circ fst, g \circ snd \rangle$
 
-$f \times g = \langle f \circ fst, g \circ snd \rangle$    -- (2.22)
+Use when domains do not coincide.
 
 #+BEGIN_SRC haskell
 product0 :: (c -> a) -> (d -> b) -> (c,d) -> (a,b)
@@ -276,16 +271,19 @@ product0 f g cd = (,) ((f . fst) cd) ((g . snd) cd)
 
 [[file:./product.png]]
 
-Composition and pair relate to each other via
-*product-fusion property* (i.e., pair/split is right-distributive with respect to
-composition)
+** (2.24) product-fusion property : $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
 
-$\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$  -- (2.24)
+Pair/split is right-distributive with respect to composition
 
 [[file:./product-fusion.png]]
 
-Left-distributivity does not hold.  But, for $f \circ
-\langle g,h \rangle$ when $f = i \times j$
+Left-distributivity does not hold.
+
+** (2.25) $\times$-absorption property : $(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
+
+pair absorbs $\times$ as a kind of fusion -- a consequence for $\times$-fusion and $\times$-cancellation.
+
+For $f \circ \langle g,h \rangle$ when $f = i \times j$
 
 |        |   | $(i \times j) \circ \langle g,h \rangle$                                                           |
 | (2.22) | = | $\langle i \circ fst, j \circ snd \rangle \circ \langle g,h \rangle$                               |
@@ -293,51 +291,47 @@ Left-distributivity does not hold.  But, for $f \circ
 | (2.8)  | = | $\langle i \circ (fst \circ \langle g, h \rangle),j \circ (snd \circ \langle g,h \rangle) \rangle$ |
 | (2.20) | = | $\langle i \circ g,j \circ h \rangle$                                                              |
 
-Called *$\times$-absorption property* : pair absorbs $\times$ as a kind of fusion -- a
-consequence for $\times$-fusion and $\times$-cancellation.
-
-$(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$  -- (2.25)
-
 [[file:./times-absorption.png]]
 
 #+BEGIN_SRC haskell
 -- non-optimized version
 pcp                        :: (d -> a) -> (e -> b) -> (c -> d) -> (c -> e) -> c -> (a, b)
-pcp                i j g h = (product0 i j) . (pair g h)
+pcp                i j g h = product0 i j . pair g h
 
 -- optimized version
 productComposePair         :: (d -> a) -> (e -> b) -> (c -> d) -> (c -> e) -> c -> (a, b)
 productComposePair i j g h = pair (i . g) (j . h)
 
 p4 = U.tt "p4"
-     [ (pcp                show read (*2) show   4)
-     , (productComposePair show read (*2) show   4)
+     [ pcp                show read (*2) show   4
+     , productComposePair show read (*2) show   4
      ]
      ("8",4)
 #+END_SRC
 
-$i \circ fst = fst \circ (i \times j)$ -- (2.26) : given $D \times E$ no need to evaluate $j$ \\
-$j \circ snd = snd \circ (i \times j)$ -- (2.27)
+** (2.26) : $i \circ fst = fst \circ (i \times j)$
+** (2.27) : $j \circ snd = snd \circ (i \times j)$
 
-*$\times$-functor property*
+- (2.26) : given $D \times E$ no need to evaluate $j$
+- (2.27) : given $D \times E$ no need to evaluate $i$
 
-$(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$ -- (2.28)
+** (2.28) $\times$-functor property : $(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$
 
-*$\times$-functor-id property*
+#+BEGIN_SRC haskell
+timesFunctorLeft          :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
+timesFunctorLeft  g h i j = product0 (g . h) (i . j)
 
-$id_A \times id_B = id_{A \times B}$  -- (2.29)
+timesFunctorRight         :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
+timesFunctorRight g h i j = product0 g i . product0 h j
+#+END_SRC
 
-2.28 and 2.29 called /functorial properities/.
+** (2.29) $\times$-functor-id property : $id_A \times id_B = id_{A \times B}$
 
-*$\times$-reflexion property*
-
-$\langle fst,snd \rangle = id_{A \times B}$  -- (2.30)
+** (2.30) $\times$-reflexion property : $\langle fst,snd \rangle = id_{A \times B}$
 
 [[file:./times-reflexion.png]]
 
-*commutative property* of product
-
-$A \times B \cong B \times A$ -- (2.31)
+** (2.31) commutative property of product : $A \times B \cong B \times A$
 
 $\langle snd,fst \rangle = swap$
 
@@ -358,24 +352,71 @@ Isomorphic:
 
 Therefore, no information is lost (or gained) when swapping fields in record datatypes.
 
-*associative property of product*
+** (2.32) associative property of product : $A \times (B \times C) \cong (A \times B) \times C$
 
-$A \times (B \times C) \cong (A \times B) \times C$ -- (2.32)
-
+$assocr = \langle fst \circ fst, \langle snd \circ fst, snd \rangle \rangle$ \\
+$assocl = \langle \langle fst, fst \circ snd \rangle, snd \circ snd \rangle$
 
 #+BEGIN_SRC haskell
-assocl           :: (a, (b,c)) -> ((a,b),c)
-assocl (a,(b,c)) = ((a,b),c)
-
-assocr           :: ((a,b),c) -> (a,(b,c))
+assocr              :: ((a,b),c) -> (a,(b,c))
 -- assocr ((a,b),c) = (a,(b,c))
-assocr  = pair (fst . fst) (pair (snd . fst) snd)
+assocr              = pair   (fst . fst)             (pair (snd . fst) snd)  -- (2.33)
+
+assocl              :: (a, (b,c)) -> ((a,b),c)
+-- assocl (a,(b,c)) = ((a,b),c)
+assocl              = pair   (pair fst (fst . snd))  (snd . snd)
 #+END_SRC
+
+*Exercise 2.3*
+
+|            | $(assocr \circ assocl) (a, (b,c))$                                                                        |
+| def        | $(assocr \circ \langle \langle fst, fst \circ snd \rangle, snd \circ snd \rangle) (a, (b, c))$            |
+| (2.18)     | $(assocr \circ \langle \langle fst, fst \circ snd \rangle (a, (b, c)), snd \circ snd (a, (b, c))\rangle)$ |
+| (2.20) x 2 | $(assocr \circ \langle \langle fst, fst \circ snd \rangle (a, (b, c)), c \rangle)$                        |
+| (2.18)     | $(assocr \circ \langle \langle fst (a, (b, c)), fst \circ snd (a, (b, c)) \rangle, c \rangle)$            |
+| (2.20) x 3 | $(assocr \circ \langle \langle a, b \rangle, c \rangle)$                                                  |
+|            | ...                                                                                                       |
+|            | $(a, (b,c))$                                                                                              |
+
+*Exercise 2.4*
+
+|      |   | $((g \circ h) \times (i \circ j))$                             |
+| 2.22 | = | $\langle (g \circ h) \circ fst, (i \circ j) \circ snd \rangle$ |
+|      |   | ...                                                            |
+
+
+------------------------------------------------------------------------------
+* 2.9 Gluing functions which do not compose — coproducts
+
+** (2.35) either def : $[f,g] : A + B \rightarrow C$
+
+/coproduct/ of $A$ and $B$ is /disjoint union/ data type that has
+values "stamped" with different tags to indicate whether the value
+came from $A$ or $B$.
+
+[[https://hackage.haskell.org/package/base-4.7.0.0/docs/src/Data-Either.html#either]]
+
+Use =Either= with =Left= / =Right= /injections/.
+
+#+BEGIN_EXAMPLE
+either :: (a -> c) -> (b -> c) -> Either a b -> c
+either f _ (Left  a) = f a
+either _ g (Right b) = g b
+#+END_EXAMPLE
+
+[[file:./either.png]]
+
+/product/ and /coproduct/ are /dual/ mathematical constructs.  Duality
+means everythings said about product $A \times B$ can be rephrased to
+coproduct $A + B$,
+
+** (2.37) sum of two functions def : $f + g = [lft \circ f, rgt \circ g]$
+
 
 ------------------------------------------------------------------------------
 
 #+BEGIN_SRC haskell
-main = do
+main =
     T.runTestTT $ T.TestList $ c0 ++ c1 ++ i0 ++ i1 ++ i2 ++ i3 ++ p0 ++ p1 ++ p2 ++ p3 ++ p4
 #+END_SRC
 
