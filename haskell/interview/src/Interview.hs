@@ -1,6 +1,6 @@
 {-
 Created       : 2013 Dec 23 (Mon) 23:15:11 by carr.
-Last Modified : 2014 Jul 13 (Sun) 06:19:05 by Harold Carr.
+Last Modified : 2014 Jul 30 (Wed) 09:07:30 by Harold Carr.
 
 TODO:
 - use Shelly to
@@ -22,7 +22,7 @@ import           Control.Monad                   (unless)
 import           Data.RDF.Types                  (LValue (..), Node (..))
 import           Data.String                     (IsString)
 import           Data.String.Utils               (replace)
-import           Data.Text                       as T (Text, pack, unpack)
+import           Data.Text                       as T (Text, pack)
 import           Database.HSparql.Connection
 import           Database.HSparql.QueryGenerator
 import           System.Environment              (getArgs)
