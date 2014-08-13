@@ -1,0 +1,54 @@
+Created       : 2014 Aug 13 (Wed) 15:46:49 by Harold Carr.
+Last Modified : 2014 Aug 13 (Wed) 16:09:05 by Harold Carr.
+
+https://groups.google.com/forum/#!forum/lambda-lounge-ut
+
+--------------------------------------------------
+MATERIAL
+
+The ideas for the course are (but I still need to sync up with Levi,
+who is traveling at the moment):
+
+1. Brent Yorgey's "Introduction to Haskell" course :
+   http://www.seas.upenn.edu/~cis194/
+
+   This course has exercises that are typical (e.g, towers-of-hanoi)
+   and practical (e.g., validating credit-card numbers, processing log
+   files).
+
+2. The NICTA course : https://github.com/NICTA/course
+
+   This course is foundational.  The exercises start by building
+   functor, applicative and monad typeclasses from scratch.  It is not
+   easy, but the course is well layed out.  After coming up with my
+   solutions I have then checked the instructors solutions and learned
+   a lot of good Haskell practice as a result.
+
+--------------------------------------------------
+PACE
+
+Each month we could do:
+
+- one of Brent's weekly lectures/homeworks
+- one (or a smaller part of one) of NICTA's sections (which are based on an ordered sequence of files).
+
+--------------------------------------------------
+METHOD
+
+Everyone would read the month's material online and do the exercises
+themselves (discussing it along the way in this google group).
+
+Then, each month, in the Lambda Lounge meetings, in a breakout session
+after the presentation, we would meet to discuss our solutions, what
+we learned, and agree to move forward to the next set of exercises.
+
+--------------------------------------------------
+LOOKING FORWARD
+
+Once we get through Brent's course we could then try David Mazieres'
+and Bryan O'Sullivan's project-based Stanford course:
+http://www.scs.stanford.edu/14sp-cs240h/
+
+Regards,
+Harold
+
