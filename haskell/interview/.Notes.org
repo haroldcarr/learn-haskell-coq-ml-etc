@@ -1,5 +1,5 @@
 Created       : 2013 Dec 23 (Mon) 22:22:50 by carr.
-Last Modified : 2014 Jan 11 (Sat) 16:40:27 by Harold Carr.
+Last Modified : 2014 Aug 24 (Sun) 15:42:08 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * task
@@ -32,6 +32,10 @@ $f/s-put http://localhost:3030/ds/data           default participants.n3
 $f/s-put http://localhost:3030/ds/data           default places.n3
 $f/s-put http://localhost:3030/ds/data           default sponsors.n3
 
+pushd ~/.sync/.esync/java/org/openhc/rdf-triple-browser/data-private/
+$f/s-put http://localhost:3030/ds/data           default hc-x.rdf
+$f/s-put http://localhost:3030/ds/data           default wordnet_glossary-20010201.rdf
+
 ** test update
 
 $f/s-update      --service http://localhost:3030/ds/update 'PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT DATA {  <http://example/book1> dc:title "A new book" ; dc:creator "A.N.Other" . }'
@@ -39,8 +43,12 @@ $f/s-update-form --service http://localhost:3030/ds/update 'PREFIX dc: <http://p
 
 ** test data access
 
+# default output is turtle
 $f/s-get http://localhost:3030/ds/data default
 $f/s-query --service http://localhost:3030/ds/query 'SELECT * {?s ?p ?o}'
+
+# get RDF/XML
+curl -H "Accept: application/xml" http://localhost:3030/ds/data?default
 
 ------------------------------------------------------------------------------
 * hsparql
