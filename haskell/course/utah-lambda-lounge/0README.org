@@ -1,7 +1,16 @@
 Created       : 2014 Aug 13 (Wed) 15:46:49 by Harold Carr.
-Last Modified : 2014 Aug 13 (Wed) 16:09:05 by Harold Carr.
+Last Modified : 2014 Sep 09 (Tue) 20:28:36 by Harold Carr.
 
+For the Haskell study group we will use the following mailing list:
 https://groups.google.com/forum/#!forum/lambda-lounge-ut
+
+We will also use the following wiki:
+https://github.com/LambdaLoungeUT/haskell-course/wiki
+
+Please add your name and a link to your blog or something about you at:
+https://github.com/LambdaLoungeUT/haskell-course/wiki/participants
+
+Let the sharing/questions begin!
 
 --------------------------------------------------
 MATERIAL
