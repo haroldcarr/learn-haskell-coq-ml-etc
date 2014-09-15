@@ -1,6 +1,6 @@
 {-
 Created       : 2014 May 23 (Fri) 14:32:50 by Harold Carr.
-Last Modified : 2014 Sep 15 (Mon) 16:07:43 by Harold Carr.
+Last Modified : 2014 Sep 15 (Mon) 16:14:21 by Harold Carr.
 -}
 
 module HW01_HC where
@@ -51,6 +51,19 @@ e2 = T.TestList
     , U.teq "9" (toDigits       0) []
     , U.teq "0" (toDigits   (-17)) []
     ]
+
+-- https://github.com/gfixler/cis194/blob/master/hw1/creditCardValidator.hs
+
+charToDigitF :: Char -> Integer
+charToDigitF n = head [d | (c,d) <- zip ['0'..'9'] [0..9], c == n]
+
+toDigitsF :: Integer -> [Integer]
+toDigitsF n
+    | n > 0     = map charToDigitF $ show n
+    | otherwise = []
+
+toDigitsRevF :: Integer -> [Integer]
+toDigitsRevF = reverse . toDigitsF
 
 ------------------------------------------------------------------------------
 -- Exercise 3
