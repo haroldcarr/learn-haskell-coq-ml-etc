@@ -1,11 +1,10 @@
 {-
 Created       : 2014 May 23 (Fri) 14:32:50 by Harold Carr.
-Last Modified : 2014 Jun 04 (Wed) 08:18:14 by Harold Carr.
+Last Modified : 2014 Sep 15 (Mon) 16:07:43 by Harold Carr.
 -}
 
 module HW01_HC where
 
--- import           Control.Lens
 import           Data.List       (unfoldr)
 import qualified Test.HUnit      as T
 import qualified Test.HUnit.Util as U
@@ -13,33 +12,48 @@ import qualified Test.HUnit.Util as U
 ------------------------------------------------------------------------------
 -- Exercise 1
 
-toDigits :: Integer -> [Integer]
-toDigits = reverse . toDigitsRev
+lastDigit :: Integer -> Integer
+lastDigit = flip mod 10
 
-tc :: Integer -> Integer
-tc n = truncate ((fromIntegral n / 10)::Double)
-
-toDigitsRev :: Integer -> [Integer]
-toDigitsRev = unfoldr (\n -> if n <= 0 then Nothing else Just (n `mod` 10, tc n))
+dropLastDigit :: Integer -> Integer
+dropLastDigit n = truncate ((fromIntegral n / 10)::Double)
 
 e1 :: T.Test
 e1 = T.TestList
     [
-      U.teq "397mod"   ((397 `mod` 10)::Integer)  7
-    , U.teq "397tru" (tc 397)                    39
-    , U.teq "39mod"    ((39  `mod` 10)::Integer)  9
-    , U.teq "39tru"  (tc 39)                      3
-    , U.teq "3mod"      ((3  `mod` 10)::Integer)  3
-    , U.teq "3tru"   (tc 3)                       0
-      --------------
-    , U.teq "7" (toDigits    1234) [1,2,3,4]
+      U.teq "123last" (lastDigit     123)   3
+    , U.teq "0last"   (lastDigit     0)     0
+    , U.teq "123drop" (dropLastDigit 123)  12
+    , U.teq "5drop"   (dropLastDigit 5)     0
+      ---------------------------------------
+    , U.teq "397last" (lastDigit     397)   7
+    , U.teq "397drop" (dropLastDigit 397)  39
+    , U.teq "39last"  (lastDigit     39)    9
+    , U.teq "39drop"  (dropLastDigit 39)    3
+    , U.teq "3last"   (lastDigit     3)     3
+    , U.teq "3drop"   (dropLastDigit 3)     0
+    ]
+
+------------------------------------------------------------------------------
+-- Exercise 2
+
+toDigits :: Integer -> [Integer]
+toDigits = reverse . toDigitsRev
+
+toDigitsRev :: Integer -> [Integer]
+toDigitsRev = unfoldr (\n -> if n <= 0 then Nothing else Just (lastDigit n, dropLastDigit n))
+
+e2 :: T.Test
+e2 = T.TestList
+    [
+      U.teq "7" (toDigits    1234) [1,2,3,4]
     , U.teq "9" (toDigitsRev 1234) [4,3,2,1]
     , U.teq "9" (toDigits       0) []
     , U.teq "0" (toDigits   (-17)) []
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 2
+-- Exercise 3
 
 -- O(n)
 -- correct type sig is:
@@ -65,45 +79,45 @@ doubleEveryOther3n xs0 = reverse $ deo False (reverse xs0)
 -- http://stackoverflow.com/questions/23842473/what-to-use-instead-of-explicit-recursion-in-haskell
 -- doubleEveryOtherLens = over (elements even) (*2) [8,7,6,5]
 
-
-e2 :: T.Test
-e2 = T.TestList
-    [
-      U.teq "deo1386"   (doubleEveryOther   [1,3,8,6])  [2,3,16,6]
-    , U.teq "deo3n8765" (doubleEveryOther3n [8,7,6,5]) [16,7,12,5]
-    , U.teq "deo8765"   (doubleEveryOther   [8,7,6,5]) [16,7,12,5]
-    , U.teq "deo3n123"  (doubleEveryOther3n   [1,2,3])     [1,4,3]
-    , U.teq "deo123"    (doubleEveryOther     [1,2,3])     [1,4,3]
-    ]
-
-------------------------------------------------------------------------------
--- Exercise 3
-
-sumDigits :: [Integer] -> Integer
-sumDigits = foldr (\x acc -> tc x + x `mod` 10 + acc) 0
-
 e3 :: T.Test
 e3 = T.TestList
     [
-      U.teq "0" (sumDigits [2,3,16,6])  18
-    , U.teq "1" (sumDigits [16,7,12,5]) 22
+      U.teq "deo8765"   (doubleEveryOther   [8,7,6,5]) [16,7,12,5]
+    , U.teq "deo3n8765" (doubleEveryOther3n [8,7,6,5]) [16,7,12,5]
+    , U.teq "deo123"    (doubleEveryOther     [1,2,3])     [1,4,3]
+    , U.teq "deo3n123"  (doubleEveryOther3n   [1,2,3])     [1,4,3]
+      ----------------------
+    , U.teq "deo1386"   (doubleEveryOther   [1,3,8,6])  [2,3,16,6]
     ]
 
 ------------------------------------------------------------------------------
 -- Exercise 4
 
-validate :: Integer -> Bool
-validate n = sumDigits (doubleEveryOther (toDigits n)) `mod` 10 == 0
+sumDigits :: [Integer] -> Integer
+sumDigits = foldr (\x acc -> dropLastDigit x + lastDigit x + acc) 0
 
 e4 :: T.Test
 e4 = T.TestList
+    [
+      U.teq "0" (sumDigits [16,7,12,5]) 22
+    , U.teq "1" (sumDigits [2,3,16,6])  18
+    ]
+
+------------------------------------------------------------------------------
+-- Exercise 5
+
+validate :: Integer -> Bool
+validate n = sumDigits (doubleEveryOther (toDigits n)) `mod` 10 == 0
+
+e5 :: T.Test
+e5 = T.TestList
     [
       U.teq "vt" (validate 4012888888881881) True
     , U.teq "vf" (validate 4012888888881882) False
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 5 - Towers of Hanoi
+-- Exercise 6 - Towers of Hanoi
 
 {-
 0
@@ -167,8 +181,8 @@ h15 = hN 15
 twoToNMinusOne :: Int -> Int
 twoToNMinusOne n= 2^n-1
 
-e5 :: T.Test
-e5 = T.TestList
+e6 :: T.Test
+e6 = T.TestList
     [
       U.teq "h3"                  h3   [(1,"a","c"),(2,"a","b"),(1,"c","b"),(3,"a","c"),(1,"b","a"),(2,"b","c"),(1,"a","c")]
     , U.teq "h3m"  (checkLastMove h3)  True
@@ -186,20 +200,15 @@ e5 = T.TestList
     ]
 
 ------------------------------------------------------------------------------
--- Exercise 6
+-- Exercise 7
 -- TODO
 hanoi4p :: Integer -> Peg -> Peg -> Peg -> Peg -> [Move]
 hanoi4p = undefined
 -- hanoi4p 3 "a" "b" "c" "d"
 
 ------------------------------------------------------------------------------
-hw01 :: IO T.Counts
-hw01 = do
-    T.runTestTT e1
-    T.runTestTT e2
-    T.runTestTT e3
-    T.runTestTT e4
-    T.runTestTT e5
+hw01 :: IO [T.Counts]
+hw01 = mapM T.runTestTT [e1,e2,e3,e4,e5,e6]
 
 -- End of file.
 
