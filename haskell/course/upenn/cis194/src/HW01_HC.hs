@@ -1,6 +1,6 @@
 {-
 Created       : 2014 May 23 (Fri) 14:32:50 by Harold Carr.
-Last Modified : 2014 Sep 15 (Mon) 16:14:21 by Harold Carr.
+Last Modified : 2014 Sep 16 (Tue) 12:51:01 by Harold Carr.
 -}
 
 module HW01_HC where
@@ -16,7 +16,7 @@ lastDigit :: Integer -> Integer
 lastDigit = flip mod 10
 
 dropLastDigit :: Integer -> Integer
-dropLastDigit n = truncate ((fromIntegral n / 10)::Double)
+dropLastDigit = flip div 10
 
 e1 :: T.Test
 e1 = T.TestList
@@ -120,7 +120,7 @@ e4 = T.TestList
 -- Exercise 5
 
 validate :: Integer -> Bool
-validate n = sumDigits (doubleEveryOther (toDigits n)) `mod` 10 == 0
+validate n = (sumDigits . doubleEveryOther . toDigits) n `mod` 10 == 0
 
 e5 :: T.Test
 e5 = T.TestList
