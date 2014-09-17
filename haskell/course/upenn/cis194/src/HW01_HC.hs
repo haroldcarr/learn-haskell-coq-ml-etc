@@ -1,6 +1,6 @@
 {-
 Created       : 2014 May 23 (Fri) 14:32:50 by Harold Carr.
-Last Modified : 2014 Sep 16 (Tue) 12:51:01 by Harold Carr.
+Last Modified : 2014 Sep 17 (Wed) 10:08:02 by Harold Carr.
 -}
 
 module HW01_HC where
@@ -13,10 +13,10 @@ import qualified Test.HUnit.Util as U
 -- Exercise 1
 
 lastDigit :: Integer -> Integer
-lastDigit = flip mod 10
+lastDigit = (`mod` 10)
 
 dropLastDigit :: Integer -> Integer
-dropLastDigit = flip div 10
+dropLastDigit = (`div` 10)
 
 e1 :: T.Test
 e1 = T.TestList
@@ -52,19 +52,6 @@ e2 = T.TestList
     , U.teq "0" (toDigits   (-17)) []
     ]
 
--- https://github.com/gfixler/cis194/blob/master/hw1/creditCardValidator.hs
-
-charToDigitF :: Char -> Integer
-charToDigitF n = head [d | (c,d) <- zip ['0'..'9'] [0..9], c == n]
-
-toDigitsF :: Integer -> [Integer]
-toDigitsF n
-    | n > 0     = map charToDigitF $ show n
-    | otherwise = []
-
-toDigitsRevF :: Integer -> [Integer]
-toDigitsRevF = reverse . toDigitsF
-
 ------------------------------------------------------------------------------
 -- Exercise 3
 
@@ -73,35 +60,19 @@ toDigitsRevF = reverse . toDigitsF
 -- doubleEveryOther :: Num a => [a] -> [a]
 -- but pinning it at Integer to avoid "defaulting to" messages in test
 doubleEveryOther :: [Integer] -> [Integer]
-doubleEveryOther xs0 =
-    let (_,r)   = deo xs0
-        deo xs1 = case xs1 of
-            []     -> (False, [])
-            (x:xs) -> let (b, xs') = deo xs in (not b, (if b then 2*x else x) : xs')
-    in r
-
--- O(3n)
--- doubleEveryOther3n :: Num a => [a] -> [a]
-doubleEveryOther3n :: [Integer] -> [Integer]
-doubleEveryOther3n xs0 = reverse $ deo False (reverse xs0)
-  where deo b xs1 =
-            case xs1 of
-                []     -> []
-                (x:xs) -> (if b then 2*x else x) : deo (not b) xs
-
--- http://stackoverflow.com/questions/23842473/what-to-use-instead-of-explicit-recursion-in-haskell
--- doubleEveryOtherLens = over (elements even) (*2) [8,7,6,5]
+doubleEveryOther = snd . foldr (\n (b,xs) -> (not b, (if b then 2*n else n) : xs)) (False, [])
 
 e3 :: T.Test
 e3 = T.TestList
     [
       U.teq "deo8765"   (doubleEveryOther   [8,7,6,5]) [16,7,12,5]
-    , U.teq "deo3n8765" (doubleEveryOther3n [8,7,6,5]) [16,7,12,5]
     , U.teq "deo123"    (doubleEveryOther     [1,2,3])     [1,4,3]
-    , U.teq "deo3n123"  (doubleEveryOther3n   [1,2,3])     [1,4,3]
       ----------------------
     , U.teq "deo1386"   (doubleEveryOther   [1,3,8,6])  [2,3,16,6]
     ]
+
+-- http://stackoverflow.com/questions/23842473/what-to-use-instead-of-explicit-recursion-in-haskell
+-- doubleEveryOtherLens = over (elements even) (*2) [8,7,6,5]
 
 ------------------------------------------------------------------------------
 -- Exercise 4
@@ -120,7 +91,7 @@ e4 = T.TestList
 -- Exercise 5
 
 validate :: Integer -> Bool
-validate n = (sumDigits . doubleEveryOther . toDigits) n `mod` 10 == 0
+validate = (== 0) . (`mod` 10) . sumDigits . doubleEveryOther . toDigits
 
 e5 :: T.Test
 e5 = T.TestList
