@@ -19,9 +19,11 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2014 Jul 22 (Tue) 19:03:58 by Harold Carr.
+Last Modified : 2014 Oct 22 (Wed) 22:58:17 by Harold Carr.
 
 #+BEGIN_SRC haskell
+module PDBC where
+
 import Test.HUnit      as T
 import Test.HUnit.Util as U -- https://github.com/haroldcarr/test-hunit-util
 #+END_SRC
@@ -77,20 +79,34 @@ const     :: a -> b -> a
 const x _ =  x
 #+END_EXAMPLE
 
+A function that results after apply =const= to =x=
+
+#+BEGIN_SRC haskell
+c' :: a -> Char
+c'  = const 'c'
+#+END_SRC
+
+loses all information (i.e., ignores its argument).
+
 ** (2.13) constant-fusion property : $c \circ f = c$
 
 #+BEGIN_SRC haskell
-constantFusion     :: (b -> c) -> (a -> b) -> a -> c
-constantFusion c f = c . f
+constantFusion  :: (x -> y) -> x -> Char
+constantFusion f = c' . f
 #+END_SRC
 
-- ignores result of =f=
-- input to =f= can be any type
-- output of =f= and input to $const_2$ must be same type
-  - but, since polymorphic, can be any type
-- output of composition not (necessarily) type related to co/domain of =f=
+The following diagram shows
+- c' as the function (=const_2=) that results from applying =const= (here shown as =const_1=) to =Char=
+- =f= applied to =x= resulting in =y=
+- =const_2= applied to =y= resulting in =Char=
 
 [[file:./constant-fusion.png]]
+
+Note
+- input to =f= can be any type
+- result of =f= can be any type
+- ignores result of =f=
+- output of constant-fusion not (necessarily) type related to co/domain of =f=
 
 constant-fusion example
 
@@ -99,7 +115,7 @@ c :: a -> Char
 c = const 'c'
 
 c0 = U.t "c0"
-     (const 'c' . (+1)       $ 45)
+     (c'        . (+1)       $ 45)
      'c'
 
 c1 = U.t "c1"
@@ -109,22 +125,32 @@ c1 = U.t "c1"
 
 *Exercise 2.1*
 
-- output is codomain of =f=
-- ignores 2nd arg (can be of any type)
+These two functions have the same type:
 
 #+BEGIN_SRC haskell
-fc  :: (c -> a) -> c -> b -> a
-fc  f c = f . const c
+fc1 :: (c -> a) -> c -> b -> a
+fc1 f c = f . const c
+
+fc2 :: (c -> a) -> c -> b -> a
+fc2 f c = const (f c)
 #+END_SRC
+
+Regarding the functions that result from applying =fc1= and =fc2= to =f= and =c=
+
+- 1st arg: domain and argument to =f=
+- 2nd arg: ignored
+- output: codomain and result of =f=
+
+From the outside there is no difference.
+
+On the inside
 
 [[file:./e2-1a.png]]
 
-#+BEGIN_SRC haskell
-fc' :: (c -> a) -> c -> b -> a
-fc' f c = const (f c)
-#+END_SRC
-
 [[file:./e2-1b.png]]
+
+- fc1' first "remembers" the first arg, then ignores =b=, then applies =f= to the remembered value.
+- fc2' first applies =f= to the first arg and "remembers" the result, that is returned after ignoring =b=.
 
 ------------------------------------------------------------------------------
 * 2.6 monics (one-to-one/injective) and epics (onto/surjective)
@@ -155,6 +181,8 @@ Surjective functions (aka "onto", "epic") do not lose information
   - [[http://en.wikipedia.org/wiki/Epimorphism]]
 
 *Exercise 2.2*
+
+Under what circumstances is a constant function epic?
 
 #+BEGIN_SRC haskell
 data Single = Single deriving Show
@@ -271,7 +299,7 @@ product0 f g cd = (,) ((f . fst) cd) ((g . snd) cd)
 
 [[file:./product.png]]
 
-** (2.24) product-fusion property : $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
+** (2.24) $\times$-fusion property : $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
 
 Pair/split is right-distributive with respect to composition
 
@@ -291,7 +319,7 @@ For $f \circ \langle g,h \rangle$ when $f = i \times j$
 | (2.8)  | = | $\langle i \circ (fst \circ \langle g, h \rangle),j \circ (snd \circ \langle g,h \rangle) \rangle$ |
 | (2.20) | = | $\langle i \circ g,j \circ h \rangle$                                                              |
 
-[[file:./times-absorption.png]]
+[[file:./product-absorption.png]]
 
 #+BEGIN_SRC haskell
 -- non-optimized version
@@ -319,17 +347,17 @@ p4 = U.tt "p4"
 
 #+BEGIN_SRC haskell
 timesFunctorLeft          :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
-timesFunctorLeft  g h i j = product0 (g . h) (i . j)
+productFunctorLeft  g h i j = product0 (g . h) (i . j)
 
-timesFunctorRight         :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
-timesFunctorRight g h i j = product0 g i . product0 h j
+productFunctorRight         :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
+productFunctorRight g h i j = product0 g i . product0 h j
 #+END_SRC
 
 ** (2.29) $\times$-functor-id property : $id_A \times id_B = id_{A \times B}$
 
 ** (2.30) $\times$-reflexion property : $\langle fst,snd \rangle = id_{A \times B}$
 
-[[file:./times-reflexion.png]]
+[[file:./product-reflexion.png]]
 
 ** (2.31) commutative property of product : $A \times B \cong B \times A$
 
@@ -398,26 +426,60 @@ came from $A$ or $B$.
 
 Use =Either= with =Left= / =Right= /injections/.
 
-#+BEGIN_EXAMPLE
+#+BEGIN_SRC haskell
 either :: (a -> c) -> (b -> c) -> Either a b -> c
 either f _ (Left  a) = f a
 either _ g (Right b) = g b
-#+END_EXAMPLE
+#+END_SRC
 
 [[file:./either.png]]
 
 /product/ and /coproduct/ are /dual/ mathematical constructs.  Duality
-means everythings said about product $A \times B$ can be rephrased to
-coproduct $A + B$,
+means that everythings said about product $A \times B$ can be rephrased to
+coproduct $A + B$.
 
-** (2.37) sum of two functions def : $f + g = [lft \circ f, rgt \circ g]$
+The sum of two functions =f + g= is the dual of the product of two functions =f × g= :
 
+** (2.37) sum of two functions def : $f + g = [Left \circ f, Right \circ g]$
+
+#+BEGIN_SRC haskell
+sum :: (a -> c) -> (b -> d) -> Either a b -> Either c d
+sum f _ (Left  a) = Left  $ f a
+sum _ g (Right b) = Right $ g b
+#+END_SRC
+
+** (2.38) $+$-cancellation property : $[g,h] \circ Left = g$, $[g,h] \circ Right = h$
+
+[[file:./sum-cancellation.png]]
+
+#+BEGIN_SRC haskell
+sc1 = U.t "sc1" ((PDBC.either (+10) (*10) . Left)  10)  20
+sc2 = U.t "sc2" ((PDBC.either (+10) (*10) . Right) 10) 100
+#+END_SRC
+
+** (2.39) $+$-reflexion property : $[ Left, Right ] = id_{A + B}$
+
+[[file:./sum-reflexion.png]]
+
+#+BEGIN_SRC haskell
+sr1 = U.t "sr1" (((PDBC.either Left Right)    (Left   10))
+                 :: (Show a, Num a, Show b, Num b) => Either a b)
+                (id (Left   10))
+sr2 = U.t "sr2" (((PDBC.either Left Right)    (Right 100))
+                 :: (Show a, Num a, Show b, Num b) => Either a b)
+                (id (Right 100))
+#+END_SRC
+
+** (2.40) $+$-fusion property : $f \circ [ g , h ] = [ f \circ g , f \circ h ]$
+
+[[file:./sum-fusion.png]]
 
 ------------------------------------------------------------------------------
 
 #+BEGIN_SRC haskell
 main =
-    T.runTestTT $ T.TestList $ c0 ++ c1 ++ i0 ++ i1 ++ i2 ++ i3 ++ p0 ++ p1 ++ p2 ++ p3 ++ p4
+    T.runTestTT $ T.TestList $ c0 ++ c1 ++ i0 ++ i1 ++ i2 ++ i3 ++ p0 ++ p1 ++ p2 ++ p3 ++ p4 ++
+                               sc1 ++ sc2 ++ sr1 ++ sr2
 #+END_SRC
 
 
