@@ -1,13 +1,13 @@
 {-
 Created       : 2014 Oct 19 (Sun) 21:07:15 by Harold Carr.
-Last Modified : 2014 Oct 20 (Mon) 22:18:36 by Harold Carr.
+Last Modified : 2014 Oct 21 (Tue) 14:50:23 by Harold Carr.
 
 http://www.haskellforall.com/2012/01/haskell-for-mainstream-programmers.html
 -}
 
 {-# LANGUAGE TupleSections #-}
 
-module X_2012_01_haskell_for_mainstream_programmers where
+module X_2012_01_03_ADTs where
 
 {-
 ADTs
