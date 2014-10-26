@@ -19,10 +19,12 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2014 Oct 22 (Wed) 22:58:17 by Harold Carr.
+Last Modified : 2014 Oct 24 (Fri) 20:27:04 by Harold Carr.
 
 #+BEGIN_SRC haskell
 module PDBC where
+
+import Data.Char (digitToInt)
 
 import Test.HUnit      as T
 import Test.HUnit.Util as U -- https://github.com/haroldcarr/test-hunit-util
@@ -34,7 +36,7 @@ import Test.HUnit.Util as U -- https://github.com/haroldcarr/test-hunit-util
 TODO
 
 ------------------------------------------------------------------------------
-* 2.3 function composition (2.6) : $\circ = (B \rightarrow C) \rightarrow (A \rightarrow B) \rightarrow A \rightarrow C$
+* 2.3  (2.6) function composition : $\circ = (B \rightarrow C) \rightarrow (A \rightarrow B) \rightarrow A \rightarrow C$
 
 aka "function-arrow chaining"
 
@@ -47,14 +49,14 @@ aka "function-arrow chaining"
 
 [[file:./function-composition.png]]
 
-** (2.8) associative property of composition : $(f \circ g) \circ h = f \circ (g \circ h)$
+** (2.8) composition is associative : $(f \circ g) \circ h = f \circ (g \circ h)$
 
 Similar to $(a + b) + c = a + (b + c)$
 
-TODO: associative diagram
+[[file:./function-composition-associative.png]]
 
 ------------------------------------------------------------------------------
-* 2.4 identity function(s) (2.9) : $id \hspace{0.25em} x = x$
+* 2.4  (2.9) identity function(s) : $id \hspace{0.25em} x = x$
 
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#id]]
 
@@ -70,7 +72,7 @@ id x = x
 [[file:./function-composition-id-is-unit.png]]
 
 ------------------------------------------------------------------------------
-* 2.5 constant function(s) (2.12) : $const \hspace{0.25em} x \hspace{0.25em} \_ =  x$
+* 2.5  (2.12) constant function(s) : $const \hspace{0.25em} x \hspace{0.25em} \_ =  x$
 
 [[http://hackage.haskell.org/package/base-4.7.0.1/docs/src/GHC-Base.html#const]]
 
@@ -88,7 +90,7 @@ c'  = const 'c'
 
 loses all information (i.e., ignores its argument).
 
-** (2.13) constant-fusion property : $c \circ f = c$
+** (2.13) constant-fusion : $c \circ f = c$
 
 #+BEGIN_SRC haskell
 constantFusion  :: (x -> y) -> x -> Char
@@ -192,7 +194,7 @@ epicConstantFunction = const Single
 #+END_SRC
 
 ------------------------------------------------------------------------------
-* 2.7 isomorphisms (2.16) : $f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$
+* 2.7 (2.16) isomorphisms : $f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$
 
 A /isomorphic/ function (aka /bijective/) is one-to-one (monic) and onto (epic).
 
@@ -249,7 +251,7 @@ Constants, identities, epics, monics and isos are *closed under
 composition* (e.g., the composition of two epics is epic).
 
 ------------------------------------------------------------------------------
-* 2.8 gluing functions which do not compose --- products
+* 2.8 products --- gluing functions which do not compose
 
 ** (2.18) pair def : $\langle f,g \rangle c = (f \hspace{0.25em} c, g \hspace{0.25em} c)$
 
@@ -269,6 +271,8 @@ But, since $f$ and $g$ share the same domain $C$, their outputs can be paired (a
 pair :: (c -> a) -> (c -> b) -> c -> (a,b)
 pair f g c = (f c, g c)
 
+split = pair -- aka
+
 p0 = U.t "p0"
      (pair transform show Sunday)
      (One, "Sunday")
@@ -279,7 +283,7 @@ p1 = U.t "p1"
      [(Sunday,One),(Sunday,Two),(Monday,One),(Monday,Two),(Tuesday,One),(Tuesday,Two)]
 #+END_SRC
 
-** (2.20) $\times$-cancellation property : =fst= / =snd= projections
+** (2.20) $\times$-cancellation : =fst= / =snd= projections
 
 #+BEGIN_SRC haskell
 p2 = U.t "p2" (fst (1,2)) 1
@@ -288,49 +292,60 @@ p3 = U.t "p3" (snd (1,2)) 2
 
 [[file:./pair.png]]
 
-** (2.22) product of two functions def : $f \times g = \langle f \circ fst, g \circ snd \rangle$
+** (2.22) $\times$ of two functions def : $f \times g = \langle f \circ fst, g \circ snd \rangle$
 
 Use when domains do not coincide.
 
 #+BEGIN_SRC haskell
-product0 :: (c -> a) -> (d -> b) -> (c,d) -> (a,b)
-product0 f g cd = (,) ((f . fst) cd) ((g . snd) cd)
+product :: (c -> a) -> (d -> b) -> (c,d) -> (a,b)
+product f g = pair (f . fst) (g . snd)
+
+p4 = U.t "p4" (PDBC.product (*2) (++"bar") (2,"foo"))
+              (4, "foobar")
 #+END_SRC
 
 [[file:./product.png]]
 
-** (2.24) $\times$-fusion property : $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
+** (2.24) $\times$-fusion : $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
 
 Pair/split is right-distributive with respect to composition
 
 [[file:./product-fusion.png]]
 
+#+BEGIN_SRC haskell
+p5 = U.tt "p5"
+     [ (pair (*2) show . digitToInt)                  '3'
+     ,  pair ((*2) . digitToInt) (show . digitToInt)  '3'
+     ]
+     (6,"3")
+#+END_SRC
+
 Left-distributivity does not hold.
 
-** (2.25) $\times$-absorption property : $(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
+** (2.25) $\times$-absorption : $(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
 
 pair absorbs $\times$ as a kind of fusion -- a consequence for $\times$-fusion and $\times$-cancellation.
 
 For $f \circ \langle g,h \rangle$ when $f = i \times j$
 
-|        |   | $(i \times j) \circ \langle g,h \rangle$                                                           |
-| (2.22) | = | $\langle i \circ fst, j \circ snd \rangle \circ \langle g,h \rangle$                               |
-| (2.24) | = | $\langle (i \circ fst) \circ \langle g, h \rangle,(j \circ snd) \circ \langle g,h \rangle \rangle$ |
-| (2.8)  | = | $\langle i \circ (fst \circ \langle g, h \rangle),j \circ (snd \circ \langle g,h \rangle) \rangle$ |
-| (2.20) | = | $\langle i \circ g,j \circ h \rangle$                                                              |
+|        |                         |   | $(i \times j) \circ \langle g,h \rangle$                                                           |
+| (2.22) | product of 2 funs def   | = | $\langle i \circ fst, j \circ snd \rangle \circ \langle g,h \rangle$                               |
+| (2.24) | $\times$-fusion         | = | $\langle (i \circ fst) \circ \langle g, h \rangle,(j \circ snd) \circ \langle g,h \rangle \rangle$ |
+| (2.8)  | associative composition | = | $\langle i \circ (fst \circ \langle g, h \rangle),j \circ (snd \circ \langle g,h \rangle) \rangle$ |
+| (2.20) | $\times$-cancellation   | = | $\langle i \circ g,j \circ h \rangle$                                                              |
 
 [[file:./product-absorption.png]]
 
 #+BEGIN_SRC haskell
 -- non-optimized version
 pcp                        :: (d -> a) -> (e -> b) -> (c -> d) -> (c -> e) -> c -> (a, b)
-pcp                i j g h = product0 i j . pair g h
+pcp                i j g h = PDBC.product i j . pair g h
 
--- optimized version
+-- optimized version via 2.20
 productComposePair         :: (d -> a) -> (e -> b) -> (c -> d) -> (c -> e) -> c -> (a, b)
 productComposePair i j g h = pair (i . g) (j . h)
 
-p4 = U.tt "p4"
+p6 = U.tt "p6"
      [ pcp                show read (*2) show   4
      , productComposePair show read (*2) show   4
      ]
@@ -343,23 +358,53 @@ p4 = U.tt "p4"
 - (2.26) : given $D \times E$ no need to evaluate $j$
 - (2.27) : given $D \times E$ no need to evaluate $i$
 
-** (2.28) $\times$-functor property : $(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$
-
 #+BEGIN_SRC haskell
-timesFunctorLeft          :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
-productFunctorLeft  g h i j = product0 (g . h) (i . j)
-
-productFunctorRight         :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
-productFunctorRight g h i j = product0 g i . product0 h j
+p7 = U.tt "p7"
+     [ (fst . (PDBC.product show show))        (3, 4)
+     , show $ fst                              (3, 4) -- optimized via 2.26
+     ]
+     "3"
 #+END_SRC
 
-** (2.29) $\times$-functor-id property : $id_A \times id_B = id_{A \times B}$
+** (2.28) $\times$-functor : $(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$
 
-** (2.30) $\times$-reflexion property : $\langle fst,snd \rangle = id_{A \times B}$
+#+BEGIN_SRC haskell
+productFunctorLeft  :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
+productFunctorLeft  g h i j = PDBC.product (g . h) (i . j)
+
+productFunctorRight :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
+productFunctorRight g h i j = PDBC.product g i . PDBC.product h j
+
+p8 = U.tt "p8"
+     [ ((productFunctorLeft  (+2) (+4) (+6.0) (+8.0))::(Int,Double)->(Int,Double))        (1,100.0)
+     , ((productFunctorRight (+2) (+4) (+6.0) (+8.0))::(Int,Double)->(Int,Double))        (1,100.0)
+     ]
+     (7,114.0)
+#+END_SRC
+
+** (2.29) $\times$-functor-id : $id_A \times id_B = id_{A \times B}$
+
+#+BEGIN_SRC haskell
+p9 = U.tt "p9"
+     [ PDBC.product id id    ("x", 'y')
+     , id                    ("x", 'y')
+     ]
+     ("x", 'y')
+#+END_SRC
+
+** (2.30) $\times$-reflexion : $\langle fst,snd \rangle = id_{A \times B}$
 
 [[file:./product-reflexion.png]]
 
-** (2.31) commutative property of product : $A \times B \cong B \times A$
+#+BEGIN_SRC haskell
+p10 = U.tt "p10"
+     [ pair fst snd     ("x", 'y')
+     , id               ("x", 'y')
+     ]
+     ("x", 'y')
+#+END_SRC
+
+** (2.31) $\times$ is commutative : $A \times B \cong B \times A$
 
 $\langle snd,fst \rangle = swap$
 
@@ -371,50 +416,62 @@ swap0 ab = (,) (snd ab) (fst ab)
 
 Isomorphic:
 
-|        |   | $swap \circ swap$                                                              |
-|        | = | $\langle snd,fst \rangle \circ swap$                                           |
-| (2.24) | = | $\langle snd \circ swap,fst \circ swap \rangle$                                |
-|        | = | $\langle snd \circ \langle snd,fst \rangle, fst \circ \langle snd,fst \rangle$ |
-| (2.20) | = | $\langle fst,snd \rangle$                                                      |
-|        | = | $id$                                                                           |
+|        |                       |   | $swap \circ swap$                                                              |
+|        | def swap              | = | $\langle snd,fst \rangle \circ swap$                                           |
+| (2.24) | $\times$-fusion       | = | $\langle snd \circ swap,fst \circ swap \rangle$                                |
+|        | def swap              | = | $\langle snd \circ \langle snd,fst \rangle, fst \circ \langle snd,fst \rangle$ |
+| (2.20) | $\times$-cancellation | = | $\langle fst,snd \rangle$                                                      |
+| (2.30) | $\times$-reflexion    | = | $id$                                                                           |
 
 Therefore, no information is lost (or gained) when swapping fields in record datatypes.
 
-** (2.32) associative property of product : $A \times (B \times C) \cong (A \times B) \times C$
+** (2.32) $\times$ is associative : $A \times (B \times C) \cong (A \times B) \times C$
 
-$assocr = \langle fst \circ fst, \langle snd \circ fst, snd \rangle \rangle$ \\
-$assocl = \langle \langle fst, fst \circ snd \rangle, snd \circ snd \rangle$
+$assocl = \langle \langle fst, fst \circ snd \rangle, snd \circ snd \rangle$ \\
+$assocr = \langle fst \circ fst, \langle snd \circ fst, snd \rangle \rangle$
 
 #+BEGIN_SRC haskell
-assocr              :: ((a,b),c) -> (a,(b,c))
--- assocr ((a,b),c) = (a,(b,c))
-assocr              = pair   (fst . fst)             (pair (snd . fst) snd)  -- (2.33)
-
 assocl              :: (a, (b,c)) -> ((a,b),c)
 -- assocl (a,(b,c)) = ((a,b),c)
 assocl              = pair   (pair fst (fst . snd))  (snd . snd)
+
+assocr              :: ((a,b),c) -> (a,(b,c))
+-- assocr ((a,b),c) = (a,(b,c))
+assocr              = pair   (fst . fst)             (pair (snd . fst) snd)  -- (2.33)
+#+END_SRC
+
+#+BEGIN_SRC haskell
+p11 = U.tt "p11"
+      [ (assocr . assocl) ('a', ('b', 'c'))
+      , id                ('a', ('b', 'c'))
+      ]
+      ('a', ('b', 'c'))
 #+END_SRC
 
 *Exercise 2.3*
 
-|            | $(assocr \circ assocl) (a, (b,c))$                                                                        |
-| def        | $(assocr \circ \langle \langle fst, fst \circ snd \rangle, snd \circ snd \rangle) (a, (b, c))$            |
-| (2.18)     | $(assocr \circ \langle \langle fst, fst \circ snd \rangle (a, (b, c)), snd \circ snd (a, (b, c))\rangle)$ |
-| (2.20) x 2 | $(assocr \circ \langle \langle fst, fst \circ snd \rangle (a, (b, c)), c \rangle)$                        |
-| (2.18)     | $(assocr \circ \langle \langle fst (a, (b, c)), fst \circ snd (a, (b, c)) \rangle, c \rangle)$            |
-| (2.20) x 3 | $(assocr \circ \langle \langle a, b \rangle, c \rangle)$                                                  |
-|            | ...                                                                                                       |
-|            | $(a, (b,c))$                                                                                              |
+|            |                       | = | $(assocr \circ assocl) (a, (b, c))$                                                                                |
+|            | assocl def            | = | $(assocr \circ \langle \langle fst      ,  fst \circ snd \rangle            ,  snd \circ snd \rangle) (a, (b, c))$ |
+| (2.18)     | pair def              | = | $(assocr \circ (       \langle fst      ,  fst \circ snd \rangle (a, (b, c)), (snd \circ snd) (a, (b, c))   )$     |
+| (2.20) x 2 | $\times$-cancellation | = | $(assocr \circ (       \langle fst      ,  fst \circ snd \rangle (a, (b, c)),                         c     )$     |
+| (2.18)     | pair def              | = | $(assocr \circ (        (fst (a, (b, c)), (fst \circ snd) (a, (b, c)) ),                              c     )$     |
+| (2.20) x 3 | $\times$-cancellation | = | $(assocr \circ (        (     a         ,                      b      ),                              c     )$     |
+|            |                       | = | ...                                                                                                                |
+|            |                       | = | $(a, (b, c))$                                                                                                      |
 
 *Exercise 2.4*
 
-|      |   | $((g \circ h) \times (i \circ j))$                             |
-| 2.22 | = | $\langle (g \circ h) \circ fst, (i \circ j) \circ snd \rangle$ |
-|      |   | ...                                                            |
+Use (2.22) (product of two functions) to prove (2.28) ($\times$-functor) and (2.29) ($\times$-functor-id).
+
+Prove (2.28):
+
+|      |   |   | $((g \circ h) \times (i \circ j))$                             |
+| 2.22 |   | = | $\langle (g \circ h) \circ fst, (i \circ j) \circ snd \rangle$ |
+|      |   |   | TODO ...                                                       |
 
 
 ------------------------------------------------------------------------------
-* 2.9 Gluing functions which do not compose — coproducts
+* 2.9 coproducts --- gluing functions which do not compose
 
 ** (2.35) either def : $[f,g] : A + B \rightarrow C$
 
@@ -440,47 +497,154 @@ coproduct $A + B$.
 
 The sum of two functions =f + g= is the dual of the product of two functions =f × g= :
 
-** (2.37) sum of two functions def : $f + g = [Left \circ f, Right \circ g]$
+** (2.37) $+$ of two functions def : $f + g = [Left \circ f, Right \circ g]$
 
 #+BEGIN_SRC haskell
 sum :: (a -> c) -> (b -> d) -> Either a b -> Either c d
-sum f _ (Left  a) = Left  $ f a
-sum _ g (Right b) = Right $ g b
+sum f g  = PDBC.either (Left . f) (Right . g)
 #+END_SRC
 
-** (2.38) $+$-cancellation property : $[g,h] \circ Left = g$, $[g,h] \circ Right = h$
+** (2.38) $+$-cancellation : $[g,h] \circ Left = g$, $[g,h] \circ Right = h$
 
 [[file:./sum-cancellation.png]]
 
 #+BEGIN_SRC haskell
-sc1 = U.t "sc1" ((PDBC.either (+10) (*10) . Left)  10)  20
-sc2 = U.t "sc2" ((PDBC.either (+10) (*10) . Right) 10) 100
+sc1 = U.tt "sc1"
+      [ (PDBC.either (+10) (*10) . Left)  10
+      ,              (+10)                10
+      ]
+      20
+sc2 = U.tt "sc2"
+      [ (PDBC.either (+10) (*10) . Right) 10
+      ,                    (*10)          10
+      ]
+      100
 #+END_SRC
 
-** (2.39) $+$-reflexion property : $[ Left, Right ] = id_{A + B}$
+** (2.39) $+$-reflexion : $[ Left, Right ] = id_{A + B}$
 
 [[file:./sum-reflexion.png]]
 
 #+BEGIN_SRC haskell
-sr1 = U.t "sr1" (((PDBC.either Left Right)    (Left   10))
+sr1 = U.tt "sr1"
+      [ (PDBC.either Left Right    (Left   10)
                  :: (Show a, Num a, Show b, Num b) => Either a b)
-                (id (Left   10))
-sr2 = U.t "sr2" (((PDBC.either Left Right)    (Right 100))
+      , id                         (Left   10)
+      ]
+      (Left 10)
+
+sr2 = U.tt "sr2"
+      [ (PDBC.either Left Right    (Right 100)
                  :: (Show a, Num a, Show b, Num b) => Either a b)
-                (id (Right 100))
+      , id                         (Right 100)
+      ]
+      (Right 100)
 #+END_SRC
 
-** (2.40) $+$-fusion property : $f \circ [ g , h ] = [ f \circ g , f \circ h ]$
+** (2.40) $+$-fusion : $f \circ [ g , h ] = [ f \circ g , f \circ h ]$
 
 [[file:./sum-fusion.png]]
 
-------------------------------------------------------------------------------
-
 #+BEGIN_SRC haskell
-main =
-    T.runTestTT $ T.TestList $ c0 ++ c1 ++ i0 ++ i1 ++ i2 ++ i3 ++ p0 ++ p1 ++ p2 ++ p3 ++ p4 ++
-                               sc1 ++ sc2 ++ sr1 ++ sr2
+sumFusionLeft, sumFusionRight :: (c -> d) -> (a -> c) -> (b -> c) -> Either a b -> d
+sumFusionLeft  f g h = f . (PDBC.either g h)
+sumFusionRight f g h = PDBC.either (f . g) (f . h)
 #+END_SRC
 
+** (2.41) $+$-absorption : $[ g , h ] \circ ( i + j ) = [ g \circ i, h \circ j ]$
+
+[[file:./sum-absorption.png]]
+
+#+BEGIN_SRC haskell
+sumAbsorptionLeft, sumAbsorptionRight :: (d -> c) -> (e -> c) -> (a -> d) -> (b -> e) -> Either a b -> c
+sumAbsorptionLeft  g h i j = (PDBC.either g h) . (PDBC.sum i j)
+sumAbsorptionRight g h i j = PDBC.either (g . i) (h . j)
+#+END_SRC
+
+** (2.42) $+$-functor : $(g \circ h) + (i \circ j) = (g + i) \circ (h + j)$
+
+#+CAPTION: left
+[[file:./sum-functor-1m.jpg]]
+
+#+CAPTION: right
+[[file:./sum-functor-2m.png]]
+
+#+BEGIN_SRC haskell
+sumFunctorLeft, sumFunctorRight :: (e -> c) -> (a -> e) -> (f -> d) -> (b -> f) -> Either a b -> Either c d
+sumFunctorLeft  g h i j = PDBC.sum (g . h) (i . j)
+sumFunctorRight g h i j = (PDBC.sum g i) . (PDBC.sum h j)
+#+END_SRC
+
+** (2.43) $+$-functor-id : $id_A + id_B = id_{A+B}$
+
+TODO : diagram
+
+#+BEGIN_SRC haskell
+sumFunctorIdLeft, sumFunctorIdRight :: Either a b -> Either a b
+sumFunctorIdLeft  = PDBC.sum id id
+sumFunctorIdRight = id
+#+END_SRC
+
+*Exercise 2.5*  TODO
+
+*Exercise 2.6*  TODO
+
+------------------------------------------------------------------------------
+* 2.10 mixing products and coproducts
+
+** (2.47) pair/either exchange : $[ \langle f , g \rangle , \langle h , k \rangle ] = \langle [ f , h ], [ g , k ] \rangle$
+
+#+BEGIN_SRC haskell
+{-
+peExchangeLeft, peExchangeRight :: (a -> a') -> (a -> b') -> (b -> a') -> (b -> b') -> Either a b -> (a', b')
+-}
+peExchangeLeft, peExchangeRight :: (a -> b)  -> (a -> d)  -> (c -> b)  -> (c -> d)  -> Either a c -> (b,  d)
+
+peExchangeLeft  f g h k = PDBC.either (pair        f g) (pair        h k)
+peExchangeRight f g h k = pair        (PDBC.either f h) (PDBC.either g k)
+#+END_SRC
+
+** (2.49) undistr def : $undistr = [ id \times first , id \times snd ]$
+
+#+BEGIN_SRC haskell
+undistr :: Either (a,b) (a,c) -> (a, Either b c)
+undistr  = PDBC.either (PDBC.product id Left) (PDBC.product id Right)
+#+END_SRC
+
+undistr shows:
+
+** (2.50) isomorphism: product distributes through coproduct : $(A \times B) + (A \times C) \cong A \times (B + C)$
+
+** motivation for functors
 
 
+|        | given                         |   | $f : A \rightarrow E$                                              |
+|        | given                         |   | $g : B \rightarrow E$                                              |
+|        | given                         |   | $h : C \rightarrow F$                                              |
+| (2.37) | $+$ of two functions def      | = | $g + h : B + C \rightarrow E + F$                                  |
+| (2.22) | $\times$ of two functions def | = | $f \times (g + h) : A \times (B + C) \rightarrow D \times (E + F)$ |
+
+Preserves shape, but changes internal element types.
+
+Combination of products and sums of functions have same shape as the
+expressions that denote their domain and range.
+
+Now abstract
+
+- left of (2.50) as : def G$(a,b,c) = (a \times b) + (a \times c)$
+- right of (2.50) as : def F$(a,b,c) = a \times (b + c)$
+- where $a$, $b$, $c$ denote types
+
+then, with specific types and functions:
+
+[[file:./F-G-undistr.png]]
+
+which instantiates to:
+
+[[file:./F-G-undistr-instantiated.png]]
+
+*Exercise 2.7* TODO
+
+*Exercise 2.8* TODO
+
+*Exercise 2.9* TODO
