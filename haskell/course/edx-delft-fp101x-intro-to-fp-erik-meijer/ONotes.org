@@ -10,3 +10,28 @@ https://courses.edx.org/courses/DelftX/FP101x/3T2014/info
 course github
 https://github.com/fptudelft/FP101x-Content
 
+------------------------------------------------------------------------------
+LAB 1
+
+----------
+GROOVY
+
+brew install groovy
+
+groovy
+groovyConsole
+groovyc
+groovydoc
+groovysh
+
+export GROOVY_HOME=/usr/local/opt/groovy/libexec
+
+----------
+FREGE
+
+hcFrege
+hcFregeC
+hcFregeRepl
+
+# End of file.
+
