@@ -648,3 +648,13 @@ which instantiates to:
 *Exercise 2.8* TODO
 
 *Exercise 2.9* TODO
+
+------------------------------------------------------------------------------
+
+#+BEGIN_SRC haskell
+main =
+    T.runTestTT $ T.TestList $ c0 ++ c1 ++
+                               i0 ++ i1 ++ i2 ++ i3 ++
+                               p0 ++ p1 ++ p2 ++ p3 ++ p4 ++ p5 ++ p6 ++ p7 ++ p8 ++ p9 ++ p10 ++ p11 ++
+                               sc1 ++ sc2 ++ sr1 ++ sr2
+#+END_SRC
