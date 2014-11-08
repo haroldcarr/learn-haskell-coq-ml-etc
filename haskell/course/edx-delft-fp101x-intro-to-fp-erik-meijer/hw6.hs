@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Nov 07 (Fri) 17:05:07 by Harold Carr.
-Last Modified : 2014 Nov 07 (Fri) 21:03:08 by Harold Carr.
+Last Modified : 2014 Nov 08 (Sat) 14:28:05 by Harold Carr.
 -}
 
 import           Test.HUnit      as T
@@ -225,35 +225,76 @@ e10 = U.tt "e10"
 ------------------------------------------------------------------------------
 -- EXERCISE 11
 
--- ***** TODO
+unfold :: (b -> Bool) -> (b -> a) -> (b -> b) -> b -> [a]
+unfold p h t x
+    | p x       = []
+    | otherwise = h x : unfold p h t (t x)
 
-e11 :: [Test]
-e11 = U.tt "e11"
-     [ ()
-     ]
-     ()
+type Bit = Int
+
+int2bin :: Int -> [Bit]
+int2bin 0 = []
+int2bin n = n `mod` 2 : int2bin (n `div` 2)
+
+int2bin' :: Int -> [Bit]
+int2bin' = unfold (== 0) (`mod` 2) (`div` 2)
+
+e11a :: [Test]
+e11a = U.tt "e11a"
+      [ (int2bin  13)
+      , (int2bin' 13)
+      ]
+      [1,0,1,1]
+
+e11b :: [Test]
+e11b = U.tt "e11b"
+      [ (int2bin  (-0))
+      , (int2bin' (-0))
+      ]
+      []
+
+e11c :: [Test]
+e11c = U.tt "e11c"
+      [ (int2bin  2)
+      , (int2bin' 2)
+      ]
+      [0, 1]
+
+chop8 :: [Bit] -> [[Bit]]
+chop8   [] = []
+chop8 bits = take 8 bits : chop8 (drop 8 bits)
+
+e11d :: [Test]
+e11d = U.tt "e11d"
+      [ chop8                         (int2bin 61680)
+      -- 2
+      , unfold null (take 8) (drop 8) (int2bin 61680)
+      ]
+      [[0,0,0,0,1,1,1,1],[0,0,0,0,1,1,1,1]]
 
 ------------------------------------------------------------------------------
 -- EXERCISE 12
 
--- ***** TODO
+f12 = \x -> x * 10 + 1
 
 e12 :: [Test]
 e12 = U.tt "e12"
-     [ ()
+     [ map          f12              [1,2,3::Int]
+     -- 3
+     , unfold null (f12 . head) tail [1,2,3::Int]
      ]
-     ()
+     [11,21,31]
 
 ------------------------------------------------------------------------------
 -- EXERCISE 13
 
--- ***** TODO
-
 e13 :: [Test]
 e13 = U.tt "e13"
-     [ ()
+     [ take 4 (iterate                 (^2) 2)
+     -- 1
+     , take 4 (unfold (const False) id (^2) 2)
      ]
-     ()
+     [2,4,16,256]
 
 ------------------------------------------------------------------------------
 -- EXERCISE 14
@@ -375,20 +416,104 @@ e30 = U.tt "e30"
 ------------------------------------------------------------------------------
 -- EXERCISE 31
 
--- ***** TODO
+--              succ        n
+type Church a = (a -> a) -> a -> a
 
-e31 :: [Test]
-e31 = U.tt "e31"
-     [ ()
-     ]
-     ()
+-- zero,one,two,two2,two3 :: Church Int
+zero,one,two,three :: (Int -> Int) -> Int -> Int
+
+zero  = \s z ->         z
+one   = \s z ->       s z
+two   = \s z ->    s (s z)
+three = \s z -> s (s (s z))
+
+churchToInt,c2i :: (Num a, Num b) => ((a -> a) -> b -> t) -> t
+--              church number   succ   0
+churchToInt x = x               (+1)   0
+c2i           = churchToInt
+
+e31a :: [Test]
+e31a = U.tt "e31a"
+      [ (c2i two)
+      , (\s z -> s    (s    z)) (+1) 0
+      ,          (+1) ((+1) 0)
+      ]
+      2
+
+churchToString,c2s :: ((String -> String) -> String -> t) -> t
+churchToString x = x ('*':) ""
+c2s              = churchToString
+
+twoS :: Church String
+twoS  = \s z -> s (s z)
+
+e31b :: [Test]
+e31b = U.tt "e31b"
+      [ (c2s twoS)
+      , ('*':) ('*':"")
+      ]
+      "**"
+
+add :: (t2 -> t1 -> t) -> (t2 -> t3 -> t1) -> t2 -> t3 -> t
+add  x y = \s z  -> x s (y s z)
+-- http://en.wikipedia.org/wiki/Church_encoding
+-- f^(m+n) x = f^m (f^n x)
+addW     = \m n f x  -> m f   (n f x)
+addWeta  = \m n f    -> m f . (n f)
+
+e31c :: [Test]
+e31c = U.tt "e31c"
+      [ c2i two               + c2i one
+      , two (+1)           0  + c2i one
+      , two (+1)    (c2i one)
+      , two (+1) (one (+1) 0)
+      , (\s z -> two s (one s z)) (+1) 0 -- beta expansion
+      ,      add two    one       (+1) 0
+      , c2i (add two    one)
+      ]
+      3
+
+-- HC
+succ1  x = add x one
+succ2  x = \s z    -> x s (one s z)
+succ3  x = \s z    -> x s ((\s z ->    s z) s z)
+succ4    = \x s z  -> x s (s z)
+-- wikipedia
+succW1    = \n f x  -> f   (n f x)
+succW1eta = \n f    -> f . (n f)
+succW2    = \x s z  -> s   (x s z) -- alpha
+
+-- mult
+-- wikipedia
+-- f^(m*n) x = (f^n)^m x
+multW :: (t1 -> t2 -> t) -> (t3 -> t1) -> t3 -> t2 -> t
+multW    = \m n f x -> m (n f) x
+multWeta :: (t1 -> t) -> (t2 -> t1) -> t2 -> t
+multWeta = \m n f   -> m (n f)
+-- edX
+multEdx  x y = \s z -> (x . y) s z
+
+expW :: (a -> b) -> (b -> c) -> a -> c
+expW     = \m n     -> n . m
+
+e31d :: [Test]
+e31d = U.tt "e31d"
+      [ c2i (addW three three)
+      , c2i (succ4 (succW1 (succW2 three)))
+      , c2i (multW three two)
+      , c2i (expW  two three)
+      ]
+      6
 
 ------------------------------------------------------------------------------
 
 main :: IO Counts
 main =
     T.runTestTT $ T.TestList $ e0 ++ e1 ++ e2 ++ e3 ++ e4 ++ e5 ++ e6 ++ e7 ++ e9 ++
-                              e10 ++e11 ++e12 ++e13 ++            e16 ++
-                              e30 ++e31
+                              e10 ++
+                              e11a ++ e11b ++ e11c ++ e11d ++
+                                          e12 ++e13 ++            e16 ++
+                              e30 ++
+                              e31a ++ e31b ++ e31c ++ e31d
 
 -- End of file.
