@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2014 Jul 12 (Sat) 13:12:49 by Harold Carr.
+# Last Modified : 2014 Nov 10 (Mon) 16:18:04 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -111,18 +111,6 @@ haskell/paper/SimonPJ-Tackling_the_Awkward_Squad.pdf
 haskell/paper/designing_typesafe_haskell_apis-Snoyman.pdf
 haskell/paper/fpcomplete/UserTelBasicLensing.h*
 haskell/paper/fpcomplete/UserTelBasicLensing.md
-
-haskell/paper/haroldcarr/RCS/
-haskell/paper/haroldcarr/.Notes.org
-haskell/paper/haroldcarr/.ghci
-haskell/paper/haroldcarr/2013-concrete-monads-0-notes.org
-haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.hs
-haskell/paper/haroldcarr/2013-12-15-concrete-monads-1-maybe-either-list-io.html
-haskell/paper/haroldcarr/BITLY-CLIENT-JUNK
-haskell/paper/haroldcarr/desugardo
-haskell/paper/haroldcarr/graphviz/2014-02-28-using-graphviz-via-haskell/2014-02-28-using-graphviz-via-haskell.hs
-haskell/paper/haroldcarr/graphviz/2014-02-28-using-graphviz-via-haskell/2014-02-28-using-graphviz-via-haskell.html
-haskell/paper/haroldcarr/tikz-example.*
 
 haskell/paper/haskell-distributed/
 
