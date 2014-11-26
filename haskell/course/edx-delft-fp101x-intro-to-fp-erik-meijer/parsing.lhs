@@ -96,21 +96,35 @@ Derived primitives
 >
 > int                           :: Parser Int
 > int                           =  do char '-'
->                                     i <- nat
->                                     return (-i)
->                                  +++
->                                  do i <- nat
->                                     return i
+>                                     n <- nat
+>                                     return (-n)
+>                                  +++ nat
 > 
 > space                         :: Parser ()
 > space                         =  do many (sat isSpace)
 >                                     return ()
 >
 > comment                       :: Parser ()
-> comment                       = error "You must implement comment"
+> comment                       =  do string "--"
+>                                     many (sat (/= '\n'))
+>                                     char '\n'
+>                                     return ()
 >
 > expr                          :: Parser Int
-> expr                          = error "You must implement expr"
+> expr                          = do n <- nat
+>                                    ns <- many (do symbol "-"
+>                                                   nat)
+>                                    return (foldl (-) n ns)
+> {-
+> expr                          = do n <- nat
+>                                    symbol "-"
+>                                    n' <- nat
+>                                    return (n - n')
+> expr                          = do n <- nat
+>                                    symbol "-"
+>                                    e <- expr
+>                                    return (e - n)
+> -}
 
 Ignoring spacing
 ----------------

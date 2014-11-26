@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Nov 25 (Tue) 18:20:43 by Harold Carr.
-Last Modified : 2014 Nov 25 (Tue) 20:41:36 by Harold Carr.
+Last Modified : 2014 Nov 25 (Tue) 21:29:27 by Harold Carr.
 -}
 
 import           Parsing
@@ -83,11 +83,27 @@ e6n = U.t "e6n"
      [(-1234,"")]
 
 ------------------------------------------------------------------------------
+-- EXERCISE 7
+
+e7 :: [Test]
+e7 = U.t "e7"
+     (parse comment "-- foo bar\nbaz")
+     [((),"baz")]
+
+------------------------------------------------------------------------------
+-- EXERCISE 8
+
+e8 :: [Test]
+e8 = U.t "e8"
+     (parse expr "34 - 3 - 1")
+     [(30,"")]
+
+------------------------------------------------------------------------------
 
 main :: IO Counts
 main =
     T.runTestTT $ T.TestList $ e0 ++ e1 ++ e2 ++ e3 ++ e4 ++ e5t ++ e5f ++
-                               e6p ++ e6n
+                               e6p ++ e6n ++ e7 ++ e8
 
 -- End of file.
 
