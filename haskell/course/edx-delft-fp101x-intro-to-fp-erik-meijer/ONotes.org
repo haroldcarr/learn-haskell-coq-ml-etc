@@ -1,5 +1,5 @@
 Created       : 2014 Oct 26 (Sun) 10:58:54 by Harold Carr.
-Last Modified : 2014 Oct 26 (Sun) 10:58:54 by Harold Carr.
+Last Modified : 2014 Dec 01 (Mon) 18:42:16 by Harold Carr.
 
 top-level public:
 https://www.edx.org/course/delftx/delftx-fp101x-introduction-functional-2126#.VE02sYvF-9w
@@ -12,19 +12,6 @@ https://github.com/fptudelft/FP101x-Content
 
 ------------------------------------------------------------------------------
 LAB 1
-
-----------
-GROOVY
-
-brew install groovy
-
-groovy
-groovyConsole
-groovyc
-groovydoc
-groovysh
-
-export GROOVY_HOME=/usr/local/opt/groovy/libexec
 
 ----------
 FREGE
