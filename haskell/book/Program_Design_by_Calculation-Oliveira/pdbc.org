@@ -19,11 +19,15 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2014 Oct 24 (Fri) 20:27:04 by Harold Carr.
+Last Modified : 2014 Dec 02 (Tue) 19:33:41 by Harold Carr.
 
 #+BEGIN_SRC haskell
+{-# LANGUAGE NoMonomorphismRestriction #-}
+-- for `arr transform`
+
 module PDBC where
 
+import Control.Arrow
 import Data.Char (digitToInt)
 
 import Test.HUnit      as T
@@ -273,8 +277,10 @@ pair f g c = (f c, g c)
 
 split = pair -- aka
 
-p0 = U.t "p0"
-     (pair transform show Sunday)
+p0 = U.tt "p0"
+     [ (    transform `pair`     show) Sunday
+     , (arr transform  &&&   arr show) Sunday
+     ]
      (One, "Sunday")
 
 -- cartesian product of elements
@@ -300,8 +306,11 @@ Use when domains do not coincide.
 product :: (c -> a) -> (d -> b) -> (c,d) -> (a,b)
 product f g = pair (f . fst) (g . snd)
 
-p4 = U.t "p4" (PDBC.product (*2) (++"bar") (2,"foo"))
-              (4, "foobar")
+p4 = U.tt "p4"
+     [ ((    (*2) `PDBC.product`     (++"bar"))   (2,"foo"))
+     , ((arr (*2) ***            arr (++"bar"))   (2,"foo"))
+     ]
+     (4, "foobar")
 #+END_SRC
 
 [[file:./product.png]]
@@ -489,6 +498,16 @@ either f _ (Left  a) = f a
 either _ g (Right b) = g b
 #+END_SRC
 
+#+BEGIN_SRC haskell
+e1 = U.tt "e1"
+     [ ((*11)     `PDBC.either`     (+1))   (Left   9)
+     , ((*11)     `PDBC.either`     (+1))   (Right 98)
+     , (arr (*11)  |||          arr (+1))   (Left   9)
+     , (arr (*11)  |||          arr (+1))   (Right 98)
+     ]
+     99
+#+END_SRC
+
 [[file:./either.png]]
 
 /product/ and /coproduct/ are /dual/ mathematical constructs.  Duality
@@ -502,6 +521,14 @@ The sum of two functions =f + g= is the dual of the product of two functions =f 
 #+BEGIN_SRC haskell
 sum :: (a -> c) -> (b -> d) -> Either a b -> Either c d
 sum f g  = PDBC.either (Left . f) (Right . g)
+#+END_SRC
+
+#+BEGIN_SRC haskell
+su1 = U.tt "su1"
+      [ (    (*11) `PDBC.sum`     (+1))   (Left 9)
+      , (arr (*11)  +++       arr (+1))   (Left 9)
+      ]
+      (Left 99)
 #+END_SRC
 
 ** (2.38) $+$-cancellation : $[g,h] \circ Left = g$, $[g,h] \circ Right = h$
@@ -656,5 +683,7 @@ main =
     T.runTestTT $ T.TestList $ c0 ++ c1 ++
                                i0 ++ i1 ++ i2 ++ i3 ++
                                p0 ++ p1 ++ p2 ++ p3 ++ p4 ++ p5 ++ p6 ++ p7 ++ p8 ++ p9 ++ p10 ++ p11 ++
+                               e1 ++
+                               su1 ++
                                sc1 ++ sc2 ++ sr1 ++ sr2
 #+END_SRC
