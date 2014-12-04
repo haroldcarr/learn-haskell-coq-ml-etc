@@ -103,3 +103,119 @@ genRandom 42   = [71, 71, 17, 14, 16, 91, 18, 71, 58, 75]
 loop :: [Int] -> Concurrent ()
 loop xs = mapM_ (atom . putStr . show) xs
 
+{-
+-- Exercise 0
+action (Concurrent (\a -> Stop))
+=> stop
+
+-- Exercise 1
+:t action (Concurrent (\a -> Stop))
+action (Concurrent (\a -> Stop)) :: Action
+
+-- Exercise 2
+action (Concurrent (\a -> Fork Stop $ Fork Stop Stop))
+=> fork stop fork stop stop
+
+-- Exercise 3
+action (Concurrent (\a -> Atom $ putStr "Haskell"))
+=>  Couldn't match type `()' with `Action'
+    Expected type: IO Action
+      Actual type: IO ()
+
+-- Exercise 4
+action (Concurrent (\a -> Atom $ putStr "Haskell" >> return Stop))
+=> atom
+
+-- Exercise 5
+:t Concurrent (\a -> Atom $ putStr "Haskell" >> return Stop)
+=> Concurrent (\a -> Atom $ putStr "Haskell" >> return Stop) :: Concurrent a
+
+-- Exercise 6
+action stop
+=> stop
+
+-- Exercise 7
+stop
+=> No instance for (Show (Concurrent a0))
+      arising from a use of `print'
+
+-- Exercise 8
+action . atom . putStrLn $ "Haskell"
+=> atom
+
+-- Exercise 9
+action $ atom undefined
+=> atom
+
+-- Exercise 10
+atom . putStrLn $ "Haskell"
+=>   No instance for (Show (Concurrent ()))
+      arising from a use of `print'
+
+-- Exercise 11
+action $ fork stop
+=> fork stop stop
+
+-- Exercise 12
+action (fork (atom (putStr "Hacker")))
+=> fork atom stop
+
+-- Exercise 13
+:t action (fork (atom (putStr "Hacker")))
+=> action (fork (atom (putStr "Hacker"))) :: Action
+
+-- Exercise 14
+action (fork undefined)
+=> fork *** Exception: Prelude.undefined
+
+-- Exercise 15
+action $ par stop stop
+=> fork stop stop
+
+-- Exercise 16
+action (par (atom (putStr "think")) (atom (putStr "hack")))
+=> fork atom atom
+
+-- Exercise 17
+action (par stop $ fork stop)
+=> fork stop fork stop stop
+
+-- Exercise 18
+action $ par (atom $ putChar 'x') (fork stop)
+=> fork atom fork stop stop
+
+-- Exercise 19
+action (stop >>= (\c -> stop))
+=> stop
+
+-- Exercise 20
+action (atom (putStrLn "whatever...") >>= stop)
+=>  Couldn't match expected type `() -> Concurrent a0'
+                with actual type `Concurrent a1'
+    In the second argument of `(>>=)', namely `stop'
+    In the first argument of `action', namely
+
+-- Exercise 21
+stop >>= stop
+=>  Couldn't match expected type `a0 -> Concurrent b0'
+                with actual type `Concurrent a1'
+    In the second argument of `(>>=)', namely `stop'
+
+-- Exercise 22
+:t stop >>= stop
+=>  Couldn't match expected type `a0 -> Concurrent b0'
+                with actual type `Concurrent a1'
+    In the second argument of `(>>=)', namely `stop'
+
+-- Exercise 23
+action (fork stop >>= \_ -> fork stop)
+=> fork stop fork stop stop
+
+-- Exercise 24
+run ex0
+=> 183969836351184424447619541356283739
+
+-- Exercise 25
+run ex1
+Haskell177173719217361422167291191835716587475
+-}
