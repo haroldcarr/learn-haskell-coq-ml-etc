@@ -10,7 +10,7 @@ data Action
     | Stop
 
 instance Show Action where
-    show (Atom x)   = "atom"
+    show (Atom _)   = "atom"
     show (Fork x y) = "fork " ++ show x ++ " " ++ show y
     show Stop       = "stop"
 
@@ -19,44 +19,50 @@ instance Show Action where
 -- ===================================
 
 actionU :: ((a -> Action) -> Action) -> Action
-actionU  f = f (\a -> Stop)
+actionU  f = f (\_ -> Stop)
 
 action :: Concurrent a -> Action
-action (Concurrent f) = f (\a -> Stop)
+action (Concurrent f) = f (\_ -> Stop)
 
 -- ===================================
 -- Ex. 1
 -- ===================================
 
 stop :: Concurrent a
-stop = Concurrent (\a -> Stop)
+stop = Concurrent (\_ -> Stop)
 
 -- ===================================
 -- Ex. 2
 -- ===================================
 
 atomU :: IO a -> ((a -> Action) -> Action)
-atomU ioa = \c -> Atom (ioa >>= \a -> return $ c a)
+atomU ioa =             \c -> Atom (ioa >>= \a -> return $ c a)
 
-atom :: IO a -> Concurrent a
-atom ioa = Concurrent (\c -> Atom (ioa >>= \a -> return $ c a))
+atom  :: IO a -> Concurrent a
+atom  ioa = Concurrent (\c -> Atom (ioa >>= \a -> return $ c a))
 
 -- ===================================
 -- Ex. 3
 -- ===================================
 
 fork :: Concurrent a -> Concurrent ()
-fork = error "You have to implement fork"
+fork (Concurrent f) = Concurrent (\_ -> Fork (f (\_ -> Stop)) Stop)
 
 par :: Concurrent a -> Concurrent a -> Concurrent a
-par = error "You have to implement par"
+par (Concurrent f1) (Concurrent f2) = Concurrent (\a -> Fork (f1 a) (f2 a))
 
 -- ===================================
 -- Ex. 4
 -- ===================================
 
+cb ::       ((a -> Action) -> Action) ->
+      (a -> ((b -> Action) -> Action)) ->
+            ((b -> Action) -> Action)
+cb ma f = let m = ma (\_ -> Stop)
+          in \c -> m
+
 instance Monad Concurrent where
-    (Concurrent f) >>= g = error "You have to implement >>="
+    (Concurrent f) >>= g = undefined
     return x = Concurrent (\c -> c x)
 
 -- ===================================
