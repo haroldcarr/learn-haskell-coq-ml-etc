@@ -1,5 +1,5 @@
 Created       : 2014 Jul 22 (Tue) 17:25:11 by Harold Carr.
-Last Modified : 2015 Jan 30 (Fri) 11:19:16 by Harold Carr.
+Last Modified : 2015 Jan 30 (Fri) 11:46:18 by Harold Carr.
 
 The papers
 
@@ -41,5 +41,6 @@ alternate link:
 
 The (very) raw material of the talk:
 
-    
+    https://github.com/haroldcarr/learn-haskell-coq-ml-etc/tree/master/haskell/book/Program_Design_by_Calculation-Oliveira
+
 
