@@ -1,0 +1,45 @@
+Created       : 2014 Jul 22 (Tue) 17:25:11 by Harold Carr.
+Last Modified : 2015 Jan 30 (Fri) 11:19:16 by Harold Carr.
+
+The papers
+
+- [[file:./Point_free_Program_Transformation.pdf]]
+- [[file:./Program_Comprehension_by_Refactorig.pdf]]
+- [[http://www.researchgate.net/publication/221600606_A_Framework_for_Point-Free_Program_Transformation]]
+- [[https://code.google.com/p/pointfree/wiki/Pointfree]]
+
+define many things used in the paper this directory is about:
+
+- [[file:./Program_Design_by_Calculation-Oliveira.pdf]].
+
+
+------------------------------------------------------------------------------
+
+Abstract for LambdaConf 2015
+
+Programming and Math
+
+Design patterns are a useful way to organize software.  Unfortunately,
+the "gang-of-four" patterns are not composable, due to side-effects.
+In a pure language (e.g., Haskell) functions can be composed.  That
+makes it possible to leverage patterns from mathematics.  This talk is
+a "warm-up" to the "Uber" patterns of Category Theory.  We will show
+an algebra of function composition, identity functions, isomorphisms,
+(co)products (gluing function that do not compose) and end with
+functors.  Knowing these patterns is NOT necessary to get work done in
+a functional language, but this talk should give a glimpse of why they
+may be useful.  The talk will illustrate ideas using Haskell.  It is
+aimed at FP beginners.
+
+Note to review committee:
+
+This is based on chapter 2 of:
+
+    http://www3.di.uminho.pt/~jno/ps/pdbc_part.pdf
+alternate link:
+    https://github.com/haroldcarr/learn-haskell-coq-ml-etc/blob/master/haskell/book/Program_Design_by_Calculation-Oliveira/Program_Design_by_Calculation-Oliveira.pdf
+
+The (very) raw material of the talk:
+
+    
+
