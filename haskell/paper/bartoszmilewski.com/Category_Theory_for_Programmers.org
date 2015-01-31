@@ -1,0 +1,244 @@
+#+TITLE:       Category Theory for Programmers
+#+AUTHOR:      Bartosz Mileshi (notes by Harold Carr)
+#+DESCRIPTION: Category Theory for Programmers
+#+PROPERTY:    tangle ctfp.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+# https://www.gnu.org/software/emacs/manual/html_node/org/CSS-support.html
+#+BEGIN_HTML
+<STYLE> <!-- A{text-decoration:none} --> </STYLE>
+#+END_HTML
+
+#+BEGIN_HTML
+---
+title: category theory for programmers
+tags: haskell, category-theory
+---
+#+END_HTML
+
+# Created       : 2015 Jan 31 (Sat) 08:23:26 by Harold Carr.
+Last Modified : 2015 Jan 31 (Sat) 10:51:08 by Harold Carr.
+
+#+BEGIN_SRC haskell
+module CTFP where
+#+END_SRC
+
+------------------------------------------------------------------------------
+* Preface
+
+[[http://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/]]
+
+Category theory deals with structure --- the kind of structure that makes programs composable.
+
+Composition is at the root of category theory --- and composition is the essence of programming.
+
+FP is about composing functions, algebraic data structures, concurrency (impossible in other programming paradigms).
+
+Multicore revolution : OOP/data hiding, combined with sharing and
+mutation is a recipe for data races.  Locks don’t compose. Lock hiding
+makes deadlocks more likely and harder to debug.
+
+Composing functions that have side effects on top of other functions
+that have side effects is difficult to manage.  Side effects are
+"bad".  But side effects don't scale.
+
+------------------------------------------------------------------------------
+* Category: The Essense of Composition
+
+[[http://bartoszmilewski.com/2014/11/04/category-the-essence-of-composition/]]
+
+#+begin_comment
+#+begin_src ditaa :file composition.png :cmdline -E -s 1.0 :cache yes
+   /---\               /---\
+   | A | ---- f -----> | B |
+   \---/               \---/
+     |                   |
+     |
+   g . f                 g
+     |
+     |                   |
+     |                   v
+     |                 /---\
+     \---------------> | C |
+                       \---/
+#+end_src
+#+end_comment
+
+[[file:composition.png]]
+
+** Arrows as Functions
+
+Thanks of arrows (aka 'morphisms') as functions:
+
+=f :: A -> B= \\
+=g :: B -> C= \\
+=g . f :: A -> C= \\
+
+** Properties of Composition
+
+1. associative
+   - $h \circ (g \circ f) = (h \circ g) \circ f = h \circ g \circ g$
+-  identity is unit of composition
+   - (e.g., =0= is unit of =+=, =1= is unit of =*=)
+   - $f \circ id_A = f$
+   - $id_B \circ f = f$
+
+note, identity is polymorphic: \\
+=id :: a -> a= \\
+=id x = x= \\
+
+Identity is handy as argument/return to/from a higher-order function.
+
+** Composition is the Essence of Programming
+
+Hierarchical (de)composition reflects the limitations of the human
+mind --- it can only deal with a small number of concepts at a time.
+
+What is the right size of functions to make them composable?
+- surface area < volume
+  - analogy: surface area of geometric object grows with the square of its size, whereas volume grows with cube of size.
+- surface area is info needed in order to compose chunks
+- volume is info needed to implement them
+- composition: concentrate on interaction between functions
+  - the types IN/OUT (no side-effects)
+
+Category theory does not look inside objects.  All that is known about
+an object is how it relates to other objects --- how it connects with
+them using arrows.
+
+------------------------------------------------------------------------------
+* Types and Functions
+
+[[http://bartoszmilewski.com/2014/11/24/types-and-functions/]]
+
+** Types Are About Composability
+
+Category theory is about composing arrows. Target object of one arrow
+must be same as source object of the next arrow.  Ends must fit for
+composition to work.
+
+A language's type system can describe in/out.  Compiler can verify.
+
+Even with type inference, type annotations say much about semantics code (and  make compilation errors easier to understand).
+
+Common practice : start project by designing types.
+
+Types good for refactoring.
+
+** What Are Types?
+
+Intuition : types are sets of values
+- finite
+  - =data Bool = True | False=
+- infinite
+  - =type String = [Char]=
+
+Category of sets, *Set*
+- objects are sets
+- morphisms (arrows) are functions
+
+Special category : can peek inside its objects
+- empty set
+- one-element sets
+- functions map elements of one set to elements of another set
+- functions can map two elements to one (but not one element to two)
+- identity function maps each element of a set to itself
+
+But: forget the above and instead express all those notions in purely
+categorical terms, in terms of objects and arrows.
+
+A Haskell function may use recursion to calculate an answer.
+- but recursion may not terminate
+- so every type extended with /bottom/ : =_|_= (meaning it might not terminate)
+
+Treat all runtime errors as bottom, even explicit: =f = undefined=
+
+Function that return bottom are 'partial' as opposed to 'total'
+functions that return valid results for all arguments.
+
+*Hask* : category of Haskell types and functions that include bottom.
+
+Pragmatic : ignore bottom; treat *Hask* as *Set*.
+
+** Why Do We Need a Mathematical Model?
+
+Thousands of years of accumulated math knowledge to tap into.
+
+What’s the mathematical model for reading a character from the
+keyboard or sending a packet across the network?
+- easy to express in operational semantics
+- impossible/hard in denotational semantics, until
+  - breakthrough came category theory.
+    - Eugenio Moggi : computational effect mapped to monads
+
+Mathematical model makes formal proofs of correctness of software possible
+- critical where human life is at stake
+
+** Pure and Dirty Functions
+
+Math function maps values to values (no side-effects).
+
+Call 'pure' in programming languages.
+
+** Examples of Types
+
+Types are sets.
+
+*** empty set?
+
+Haskell =Void= : not inhabited by any values
+
+Can define =absurd :: Void -> a=, but can never call it (because a vale of type =Void= must be provided)
+It can return any type, but never will, because it can’t be called).
+
+In Curry-Howard isomorphism, =Void= represents falsity.  =absurd= is
+statement that from falsity follows anything.
+
+*** singleton set
+
+Haskell : symbol for this value: =()=, pronounced 'unit'
+- same symbol used for type, constructor, and value
+
+=f44 :: () -> Integer= \\
+=f44 () = 44=
+call: \\
+f44 ()
+
+Every function of unit is equivalent to picking a single element from the target type
+(e.g., =Integer 44=).
+
+Example of replacing explicit mention of elements of a set by talking
+about functions (arrows) instead. Functions from unit to any type A
+are in one-to-one correspondence with the elements of that set A.
+
+*Unit return type*
+
+In C++ : used for side effects
+
+Pure function that returns unit does nothing: it discards its argument.
+
+Mathematically, a function from a set A to a singleton set maps every
+element of A to the single element of that singleton set. For every A
+there is exactly one such function, parametrically polymorphic:
+
+=unit :: a -> ()= \\
+=unit _ = ()=
+
+Given anything, it returns unit.
+
+** two-element set
+
+=data Bool = True | False=
+
+Functions to =Bool= are called predicates.
+
+------------------------------------------------------------------------------
+* Categories Great and Small
+
+[[http://bartoszmilewski.com/2014/12/05/categories-great-and-small/]]
+
+
+
+# End of file.
