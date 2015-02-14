@@ -19,11 +19,28 @@ tags: haskell, category-theory
 #+END_HTML
 
 # Created       : 2015 Jan 31 (Sat) 08:23:26 by Harold Carr.
-Last Modified : 2015 Jan 31 (Sat) 10:51:08 by Harold Carr.
+Last Modified : 2015 Feb 01 (Sun) 07:02:26 by Harold Carr.
 
 #+BEGIN_SRC haskell
 module CTFP where
 #+END_SRC
+
+#+BEGIN_COMMENT
+Table of Contents
+
+Category: The Essence of Composition
+Types and Functions
+Categories Great and Small
+Kleisli Categories
+Products and Coproducts
+Simple Algebraic Data Types
+Functors
+Functoriality (in preparation)
+Function Types (planned)
+Natural Transformations (planned)
+Limits and Colimits (planned)
+...
+#+END_COMMENT
 
 ------------------------------------------------------------------------------
 * Preface
