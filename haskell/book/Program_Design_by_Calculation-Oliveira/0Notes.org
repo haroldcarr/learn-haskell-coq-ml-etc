@@ -1,5 +1,5 @@
 Created       : 2014 Jul 22 (Tue) 17:25:11 by Harold Carr.
-Last Modified : 2015 Jan 30 (Fri) 11:46:18 by Harold Carr.
+Last Modified : 2015 Feb 12 (Thu) 06:57:43 by Harold Carr.
 
 The papers
 
@@ -44,3 +44,18 @@ The (very) raw material of the talk:
     https://github.com/haroldcarr/learn-haskell-coq-ml-etc/tree/master/haskell/book/Program_Design_by_Calculation-Oliveira
 
 
+==============================================================================
+
+https://skillsmatter.com/meetups/6957-design-patterns-in-the-21st-century
+
+http://talks.samirtalwar.com/design-patterns-in-the-21st-century.html
+
+Design patterns are guides to clean, simple and practical solutions.
+
+Many of the classic OO Gang of Four's patterns are workarounds for the
+lack of functional programming constructs such as lambdas and
+higher-order functions.
+
+The majority of design patterns can be simplified via FP.
+- using pure functions to reduce the proliferation of classes that are used once and thrown away
+- removing boilerplate, focus on behaviour
