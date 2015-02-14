@@ -1,5 +1,5 @@
 Created       : 2014 Jul 22 (Tue) 17:25:11 by Harold Carr.
-Last Modified : 2015 Feb 12 (Thu) 06:57:43 by Harold Carr.
+Last Modified : 2015 Feb 14 (Sat) 09:06:53 by Harold Carr.
 
 The papers
 
@@ -17,19 +17,46 @@ define many things used in the paper this directory is about:
 
 Abstract for LambdaConf 2015
 
-Programming and Math
+TITLE : Programming and Math
+
+ABSTRACT:
 
 Design patterns are a useful way to organize software.  Unfortunately,
-the "gang-of-four" patterns are not composable, due to side-effects.
-In a pure language (e.g., Haskell) functions can be composed.  That
-makes it possible to leverage patterns from mathematics.  This talk is
-a "warm-up" to the "Uber" patterns of Category Theory.  We will show
-an algebra of function composition, identity functions, isomorphisms,
-(co)products (gluing function that do not compose) and end with
-functors.  Knowing these patterns is NOT necessary to get work done in
-a functional language, but this talk should give a glimpse of why they
-may be useful.  The talk will illustrate ideas using Haskell.  It is
-aimed at FP beginners.
+"gang-of-four"-like patterns are not composable, due to side-effects.
+In a pure (i.e., no side-effects) language, functions can be composed.
+That makes it possible to leverage patterns from mathematics.  This
+talk shows an algebra of function composition, identity functions,
+isomorphisms, (co)products (gluing functions that do not compose) and
+functors.  It shows how this algebra relates to real-world
+programming.  The goal of this talk is to provide an initial intuition
+of how to apply patterns from math to programming and to motivate you
+to continue studying on your own (perhaps by looking at the "uber"
+patterns of Category Theory).  Note: knowing these patterns is NOT
+necessary for getting work done in a functional language, but this
+talk should give a glimpse of why they may be useful.  The talk
+illustrates ideas using Haskell.  It is aimed at FP beginners.
+
+BIO:
+
+Harold Carr is architect of InfiniBand usage in WebLogic Server at
+Oracle.  He also designed and implemented the pluggable transports,
+the asynchronous client and service APIs, and streaming I/O used in
+Oracle's SOAP stack.  At Sun Microsystems he worked on RMI-IIOP
+load-balancing and fail-over, the architecture of Sun's CORBA ORB and
+JAX-WS 2.0, and the scalable NIO communications architecture (aka
+Grizzly).  He worked on distributed Lisp and C++ with Hewlett-Packard
+Research Laboratories and Schlumberger Research Laboratories, was
+Chief Architect of Lisp technology at Autodesk, and did logic
+simulation for Cirrus Logic. He holds a Ph.D., in Computer Science
+from the University of Utah.
+
+WEBSITE: http://haroldcarr.com/
+
+TWITTER: @haroldcarr
+
+PHOTO: attached
+
+------------------------------------------------------------------------------
 
 Note to review committee:
 
@@ -44,7 +71,7 @@ The (very) raw material of the talk:
     https://github.com/haroldcarr/learn-haskell-coq-ml-etc/tree/master/haskell/book/Program_Design_by_Calculation-Oliveira
 
 
-==============================================================================
+------------------------------------------------------------------------------
 
 https://skillsmatter.com/meetups/6957-design-patterns-in-the-21st-century
 
