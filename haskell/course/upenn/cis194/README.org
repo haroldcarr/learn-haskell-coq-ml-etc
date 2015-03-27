@@ -6,7 +6,11 @@
 - =HWNN[_|-][!HC]*.*=  : supplied support files
 
 # Created       : 2014 Jun 19 (Thu) 10:34:36 by Harold Carr.
-Last Modified : 2014 Jun 22 (Sun) 10:21:27 by Harold Carr.
+Last Modified : 2015 Mar 27 (Fri) 13:16:41 by Harold Carr.
+
+http://www.seas.upenn.edu/~cis194/fall14/spring13/index.html
+http://www.seas.upenn.edu/~cis194/fall14/
+http://www.seas.upenn.edu/~cis194/
 
 # End of file.
 
