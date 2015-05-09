@@ -1,0 +1,190 @@
+#+TITLE:     Programming and Math
+#+AUTHOR:    Harold Carr
+#+DATE:      LambdaConf 2015-05
+#+DESCRIPTION: Material from Program Design by Calcultion by Oliveira presentated at LambdaConf 2015
+#+KEYWORDS:  beamer org orgmode
+#+LANGUAGE:  en
+#+PROPERTY:  tangle lc.hs
+
+#+STARTUP: beamer
+#+STARTUP: oddeven
+#+LaTeX_CLASS: beamer
+#+LaTeX_CLASS_OPTIONS: [17pt]
+#+BEAMER_THEME: default
+
+#+OPTIONS:   H:1 toc:nil
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+COLUMNS: %20ITEM %13BEAMER_env(Env) %6BEAMER_envargs(Args) %4BEAMER_col(Col) %7BEAMER_extra(Extra)
+
+#+BEGIN_COMMENT
+# HC
+#+Latex_Header: \definecolor{fore}{RGB}{249,242,215}
+#+Latex_Header: \definecolor{back}{RGB}{51,51,51}
+#+Latex_Header: \definecolor{title}{RGB}{255,0,90}
+#+Latex_Header: \setbeamercolor{normal text}{fg=fore}
+#+Latex_Header: \setbeamercolor{normal text}{bg=back}
+#+Latex_Header: \setbeamercolor{titlelike}{fg=title}
+#+END_COMMENT
+
+# HC : get rid of navigation
+#+Latex_Header: \beamertemplatenavigationsymbolsempty
+
+# ------------------------------------------------------------------------------
+* function definition
+
+*math*
+#+begin_latex
+\[ f(n) = \left\{
+  \begin{array}{l l}
+    1               & \quad \text{if $n = 0$}\\
+    f(n-1) \times n & \quad \text{if $n > 0$}
+  \end{array} \right. \]
+#+end_latex
+
+*haskell*
+#+begin_src haskell
+f :: Integer -> Integer
+f 0 = 1
+f n = f (n - 1) * n
+#+end_src
+
+# ------------------------------------------------------------------------------
+* function application
+
+*math*
+#+begin_latex
+\[ f(5) \]
+#+end_latex
+
+*haskell*
+#+begin_src haskell
+f 5
+#+end_src
+
+# ------------------------------------------------------------------------------
+* function definition/application
+
+example *factorial.hs*
+
+# ------------------------------------------------------------------------------
+* function composition
+
+#+ATTR_LaTeX: :width 3in
+[[file:../function-composition.png]]
+
+# ------------------------------------------------------------------------------
+* function composition
+
+**                                                             :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.5
+:END:
+*math*
+\[ f \circ g \]
+\[ f(g(x)) \]
+
+*haskell*
+#+BEGIN_EXAMPLE
+(.) :: (b -> c) -> (a -> b) -> a -> c
+(.) f g = \x -> f (g x)
+#+END_EXAMPLE
+
+**                                                             :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.5
+:END:
+
+#+ATTR_LaTeX: :width 1.5in
+[[file:../function-composition.png]]
+
+# ------------------------------------------------------------------------------
+* function composition
+
+example *composition.hs*
+
+# ------------------------------------------------------------------------------
+* purity viz application/composition
+
+** TBD
+
+# ------------------------------------------------------------------------------
+* composition is associative
+
+\hspace{1in} $(f \circ g) \circ h = f \circ (g \circ h)$
+
+Similar to $(a + b) + c = a + (b + c)$
+
+[[file:../function-composition-associative.png]]
+
+# ------------------------------------------------------------------------------
+* identity function(s)
+
+=id :: a -> a=\\
+=id x = x=
+
+does not lose any information
+
+/unit/ of composition : $f \circ id = id \circ f = f$
+
+#+ATTR_LaTeX: :width 1.5in
+[[file:../function-composition-id-is-unit.png]]
+
+# ------------------------------------------------------------------------------
+* constant function(s)
+
+#+BEGIN_SRC haskell
+const     :: a -> b -> a
+const x _ =  x
+#+END_SRC
+
+loses all information (i.e., ignores arg)
+
+#+BEGIN_SRC haskell
+c :: a -> Char
+c  = const 'c'
+#+END_SRC
+
+
+# ------------------------------------------------------------------------------
+* constant-fusion
+
+=constantFusion  :: (x->y)->x->Char=\\
+=constantFusion f = c . f=
+
+- input to =f= can be any type
+- result of =f= can be any type
+- ignores result of =f=
+- output of constant-fusion not (necessarily) type related to co/domain of =f=
+
+example *constantfusion.hs*
+
+# ------------------------------------------------------------------------------
+* function composition
+
+** math
+\vspace{0.1in}
+\LaTeX \\
+\vspace{0.1in}
+portable ASCII \\
+\vspace{0.1in}
+Emacs!
+
+# ------------------------------------------------------------------------------
+* Summary
+
+- one
+- two
+- three
+- four
+- five
+- six
+- *seven*
+- eight \LaTeX{}
+- nine
+- ten
+# - eleven
+# - twelve
+# - thirteen
+# - fourteen
+# - fifteen
