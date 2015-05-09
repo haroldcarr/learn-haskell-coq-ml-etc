@@ -227,15 +227,130 @@ $f \times g = \langle f \circ fst, g \circ snd \rangle$ \\
 example *Product.hs*
 
 # ------------------------------------------------------------------------------
-* function composition
+* $\times$-fusion $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
 
-** math
-\vspace{0.1in}
-\LaTeX \\
-\vspace{0.1in}
-portable ASCII \\
-\vspace{0.1in}
-Emacs!
+Pair : right-distributive with rspt to $\circ$
+
+#+ATTR_LaTeX: :width 3.5in
+[[file:../product-fusion.png]]
+
+# ------------------------------------------------------------------------------
+* $\times$-fusion
+
+example *ProductFusion.hs*
+
+# ------------------------------------------------------------------------------
+* $\times$-absorption
+
+left-distributivity does not hold but
+
+for $f \circ \langle g,h \rangle$ when $f = i \times j$ :
+$(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
+
+|                |   | $(i \times j) \circ \langle g,h \rangle$                                                           |
+| $\times$ 2 $f$ | = | $\langle i \circ fst, j \circ snd \rangle \circ \langle g,h \rangle$                               |
+| $\times$-fus   | = | $\langle (i \circ fst) \circ \langle g, h \rangle,(j \circ snd) \circ \langle g,h \rangle \rangle$ |
+| $\circ$ ass    | = | $\langle i \circ (fst \circ \langle g, h \rangle),j \circ (snd \circ \langle g,h \rangle) \rangle$ |
+| $\times$-can   | = | $\langle i \circ g,j \circ h \rangle$                                                              |
+
+# ------------------------------------------------------------------------------
+* $\times$-absorption
+
+#+ATTR_LaTeX: :width 3.5in
+[[file:../product-absorption.png]]
+
+# ------------------------------------------------------------------------------
+* $\times$-absorption
+
+example *ProductAbsorption.hs*
+
+# ------------------------------------------------------------------------------
+* $\times$ and projections
+
+previous diagram shows\\
+\vspace{0.2in}
+$i \circ fst = fst \circ (i \times j)$
+- given $D \times E$ no need to evaluate $j$
+$j \circ snd = snd \circ (i \times j)$
+- given $D \times E$ no need to evaluate $i$ \\
+\vspace{0.2in}
+example *ProductAndProjections.hs*
+
+# ------------------------------------------------------------------------------
+* functorial properties of $\times$
+
+$\times$-functor : $(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$
+- bi-distribution of $\times$ with respect to composition
+- example *ProductFunctor.hs*
+
+$\times$-functor-id : $id_A \times id_B = id_{A \times B}$
+
+#+BEGIN_EXAMPLE
+product id id ("x", 'y') => ("x", 'y')
+        id    ("x", 'y') => ("x", 'y')
+#+END_EXAMPLE
+
+
+# ------------------------------------------------------------------------------
+* $\times$-reflexion : $\langle fst,snd \rangle = id_{A \times B}$
+
+[[file:../product-reflexion.png]]
+
+#+BEGIN_EXAMPLE
+pair fst snd ("x", 'y') => ("x", 'y')
+id           ("x", 'y') => ("x", 'y')
+#+END_EXAMPLE
+
+# ------------------------------------------------------------------------------
+* $\times$ is commutative : $A \times B \cong B \times A$
+
+$\langle snd,fst \rangle = swap$
+
+|                    |   | $swap \circ swap$                                                              |
+| def swap           | = | $\langle snd,fst \rangle \circ swap$                                           |
+| $\times$-fusion    | = | $\langle snd \circ swap,fst \circ swap \rangle$                                |
+| def swap           | = | $\langle snd \circ \langle snd,fst \rangle, fst \circ \langle snd,fst \rangle$ |
+| $\times$-cancel    | = | $\langle fst,snd \rangle$                                                      |
+| $\times$-reflexion | = | $id$                                                                           |
+
+Therefore, no information is lost (or gained) when swapping fields in record datatypes.
+
+# ------------------------------------------------------------------------------
+* $\times$ is associative \hspace{2em} exercise
+
+given
+
+#+BEGIN_EXAMPLE
+al :: (a, (b, c)) -> ((a,  b),c)
+ar :: ((a, b),c)  ->  (a, (b, c))
+#+END_EXAMPLE
+
+prove $A \times (B \times C) \cong (A \times B) \times C$
+
+#+BEGIN_EXAMPLE
+(ar . al)('a',('b','c'))=>('a',('b','c'))
+id       ('a',('b','c'))=>('a',('b','c'))
+#+END_EXAMPLE
+
+# ------------------------------------------------------------------------------
+* $\times$ is associative \hspace{2em} proof
+
+\fontsize{11pt}{11.5}\selectfont
+
+$al = \langle \langle fst, fst \circ snd \rangle, snd \circ snd \rangle$ \\
+$ar = \langle fst \circ fst, \langle snd \circ fst, snd \rangle \rangle$
+
+|              | = | $(ar \circ al) (a, (b, c))$                                                                                    |
+| al def       | = | $(ar \circ \langle \langle fst      ,  fst \circ snd \rangle            ,  snd \circ snd \rangle) (a, (b, c))$ |
+| pair def     | = | $(ar \circ (       \langle fst      ,  fst \circ snd \rangle (a, (b, c)), (snd \circ snd) (a, (b, c))   )$     |
+| $\times$-can | = | $(ar \circ (       \langle fst      ,  fst \circ snd \rangle (a, (b, c)),                         c     )$     |
+| pair def     | = | $(ar \circ (        (fst (a, (b, c)), (fst \circ snd) (a, (b, c)) ),                              c     )$     |
+| $\times$-can | = | $(ar \circ (        (     a         ,                      b      ),                              c     )$     |
+|              | = | ...                                                                                                            |
+|              | = | $(a, (b, c))$                                                                                                  |
+
+# ------------------------------------------------------------------------------
+* next 2.9
 
 # ------------------------------------------------------------------------------
 * Summary

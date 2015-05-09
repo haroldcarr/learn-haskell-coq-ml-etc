@@ -19,7 +19,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2014 Dec 02 (Tue) 19:33:41 by Harold Carr.
+Last Modified : 2015 May 09 (Sat) 12:21:29 by Harold Carr.
 
 #+BEGIN_SRC haskell
 {-# LANGUAGE NoMonomorphismRestriction #-}
@@ -377,6 +377,10 @@ p7 = U.tt "p7"
 
 ** (2.28) $\times$-functor : $(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$
 
+a "functorial" property of $\times$
+
+bi-distribution of $\times$ with respect to composition
+
 #+BEGIN_SRC haskell
 productFunctorLeft  :: (e -> a) -> (c -> e) -> (f -> b) -> (d -> f) -> (c, d) -> (a, b)
 productFunctorLeft  g h i j = PDBC.product (g . h) (i . j)
@@ -392,6 +396,8 @@ p8 = U.tt "p8"
 #+END_SRC
 
 ** (2.29) $\times$-functor-id : $id_A \times id_B = id_{A \times B}$
+
+a "functorial" property of $\times$
 
 #+BEGIN_SRC haskell
 p9 = U.tt "p9"
