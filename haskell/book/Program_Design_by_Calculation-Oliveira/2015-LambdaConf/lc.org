@@ -65,7 +65,7 @@ f 5
 # ------------------------------------------------------------------------------
 * function definition/application
 
-example *factorial.hs*
+example *Factorial.hs*
 
 # ------------------------------------------------------------------------------
 * function composition
@@ -101,7 +101,7 @@ example *factorial.hs*
 # ------------------------------------------------------------------------------
 * function composition
 
-example *composition.hs*
+example *Composition.hs*
 
 # ------------------------------------------------------------------------------
 * purity viz application/composition
@@ -131,6 +131,11 @@ does not lose any information
 [[file:../function-composition-id-is-unit.png]]
 
 # ------------------------------------------------------------------------------
+* identity function(s)
+
+TODO Identity.hs (NICTA example)
+
+# ------------------------------------------------------------------------------
 * constant function(s)
 
 #+BEGIN_SRC haskell
@@ -157,7 +162,69 @@ c  = const 'c'
 - ignores result of =f=
 - output of constant-fusion not (necessarily) type related to co/domain of =f=
 
-example *constantfusion.hs*
+example *ConstantFusion.hs*
+
+# ------------------------------------------------------------------------------
+* id/const functions are limit points
+
+=id= preserves all information\\
+\vspace{0.1in}
+=const= loses all information\\
+\vspace{0.1in}
+others functions lose info\\
+\vspace{0.1in}
+functional programming:
+- transforming or losing info to fit context
+
+# ------------------------------------------------------------------------------
+* isomorphisms \hspace{5em} $A \cong B$
+
+Given $f : A \rightarrow B$,\\
+$f$ has /inverse/ $f^{\circ} : B \rightarrow A$,\\
+such that $f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$ \\
+\vspace{0.1in}
+isomorphisms convert between "formats" without losing info\\
+\vspace{0.1in}
+isomorphic domains regarded as "abstractly" the same\\
+\vspace{0.1in}
+example *Isomorphisms.hs*
+
+# ------------------------------------------------------------------------------
+* products : gluing uncomposable funs
+
+cartesian product of types
+
+#+BEGIN_SRC haskell
+pair :: (c -> a) -> (c -> b)
+        -> c     -> (a, b)
+pair f g c = (f c, g c)
+#+END_SRC
+
+pair def :   $\langle f,g \rangle : C \rightarrow A \times B$ \\
+\hspace{4em} $\langle f,g \rangle c = (f \hspace{0.25em} c, g \hspace{0.25em} c)$ \\
+\vspace{0.1in}
+example *Products.hs*
+
+# ------------------------------------------------------------------------------
+* $\times$-cancellation
+
+[[file:../pair.png]]
+
+#+BEGIN_EXAMPLE
+fst (1,2)  =>  1
+snd (1,2)  =>  2
+#+END_EXAMPLE
+
+# ------------------------------------------------------------------------------
+* $\times$ of two functions
+
+when domains nor ranges do not coincide\\
+\vspace{0.1in}
+$f \times g = \langle f \circ fst, g \circ snd \rangle$ \\
+\vspace{0.1in}
+[[file:../product.png]]
+
+example *Product.hs*
 
 # ------------------------------------------------------------------------------
 * function composition
