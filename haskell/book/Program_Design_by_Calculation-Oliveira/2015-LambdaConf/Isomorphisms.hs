@@ -15,6 +15,8 @@ i0 = transform Tuesday
 i1 :: Weekday
 i1 = transform Three
 
+i0' :: Weekday
+i0' = transform Tuesday
 
 transform2 :: (Enum a, Ord a) => Int -> a
 transform2 = toEnum . (`rem` 7)
@@ -25,4 +27,4 @@ i2 = transform2 15
 i3 :: Seven
 i3 = transform2 15
 
-
+-- End

@@ -19,7 +19,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2015 May 09 (Sat) 12:21:29 by Harold Carr.
+Last Modified : 2015 May 09 (Sat) 13:33:14 by Harold Carr.
 
 #+BEGIN_SRC haskell
 {-# LANGUAGE NoMonomorphismRestriction #-}
@@ -517,7 +517,7 @@ e1 = U.tt "e1"
 [[file:./either.png]]
 
 /product/ and /coproduct/ are /dual/ mathematical constructs.  Duality
-means that everythings said about product $A \times B$ can be rephrased to
+means that everything said about product $A \times B$ can be rephrased to
 coproduct $A + B$.
 
 The sum of two functions =f + g= is the dual of the product of two functions =f × g= :

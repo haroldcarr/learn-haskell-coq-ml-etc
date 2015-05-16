@@ -1,5 +1,5 @@
 Created       : 2013 Dec 23 (Mon) 22:22:50 by carr.
-Last Modified : 2014 Aug 24 (Sun) 15:42:08 by Harold Carr.
+Last Modified : 2015 May 12 (Tue) 12:13:03 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * task
@@ -14,10 +14,13 @@ http://jena.apache.org/documentation/serving_data/
 pushd /tmp
 unzip ~/ftptmp/jena-fuseki-1.0.0-distribution.zip
 pushd /tmp/jena-fuseki-1.0.0
-export f=`pwd`
-
 chmod +x s-*
+export f=`pwd`
+OR:
+pushd /usr/local/hc/java/apache/apache-jena-fuseki-2.0.0/
+export f=`pwd`/bin
 
+# this creates a ./run directory
 ./fuseki-server --update --mem /ds &
 
 java -cp ~/.m2/repository/ws-commons/tcpmon/1.0/tcpmon-1.0.jar  org.apache.ws.commons.tcpmon.TCPMon &

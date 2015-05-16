@@ -4,7 +4,7 @@ import           Control.Arrow
 import           Isomorphisms
 
 -- cartesian product of types
-pair :: (c -> a) -> (c -> b) -> c -> (a,b)
+pair :: (c -> a) -> (c -> b) -> c -> (a, b)
 pair f g c = (f c, g c)
 
 split = pair -- aka
@@ -15,3 +15,5 @@ p1 = arr transform  &&&   arr show
 
 -- p0 Sunday
 -- p1 Sunday
+
+-- End

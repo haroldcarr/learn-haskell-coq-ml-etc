@@ -31,6 +31,18 @@
 #+Latex_Header: \beamertemplatenavigationsymbolsempty
 
 # ------------------------------------------------------------------------------
+* credits
+
+#+begin_center
+Harold Carr\\
+[[mail:harold.carr@gmail.com][harold.carr@gmail.com]]\\
+\vspace{0.3in}
+/Program Design by Calculation/ \\
+J. N. Oliveira\\
+[[http://www4.di.uminho.pt/~jno/][http://www4.di.uminho.pt/~jno/]]
+#+end_center
+
+# ------------------------------------------------------------------------------
 * function definition
 
 *math*
@@ -127,6 +139,8 @@ does not lose any information
 
 /unit/ of composition : $f \circ id = id \circ f = f$
 
+similar to \hspace{4.5em} $n + 0 = 0 + n = n$
+
 #+ATTR_LaTeX: :width 1.5in
 [[file:../function-composition-id-is-unit.png]]
 
@@ -154,7 +168,7 @@ c  = const 'c'
 # ------------------------------------------------------------------------------
 * constant-fusion
 
-=constantFusion  :: (x->y)->x->Char=\\
+=constantFusion :: (a->b) -> a -> c=\\
 =constantFusion f = c . f=
 
 - input to =f= can be any type
@@ -162,7 +176,7 @@ c  = const 'c'
 - ignores result of =f=
 - output of constant-fusion not (necessarily) type related to co/domain of =f=
 
-example *ConstantFusion.hs*
+example *ConstantFusion.hs* (TODO NICTA)
 
 # ------------------------------------------------------------------------------
 * id/const functions are limit points
@@ -179,9 +193,9 @@ functional programming:
 # ------------------------------------------------------------------------------
 * isomorphisms \hspace{5em} $A \cong B$
 
-Given $f : A \rightarrow B$,\\
-$f$ has /inverse/ $f^{\circ} : B \rightarrow A$,\\
-such that $f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$ \\
+Given             \hspace{4em} $f : A \rightarrow B$,\\
+$f$ has /inverse/ \hspace{0.5em} $f^{\circ} : B \rightarrow A$,\\
+such that         \hspace{2em} $f \circ f^{\circ} = id_b \wedge f^{\circ} \circ f = id_a$ \\
 \vspace{0.1in}
 isomorphisms convert between "formats" without losing info\\
 \vspace{0.1in}
@@ -191,6 +205,7 @@ example *Isomorphisms.hs*
 
 # ------------------------------------------------------------------------------
 * products : gluing uncomposable funs
+<<products>>
 
 cartesian product of types
 
@@ -200,14 +215,14 @@ pair :: (c -> a) -> (c -> b)
 pair f g c = (f c, g c)
 #+END_SRC
 
-pair def :   $\langle f,g \rangle : C \rightarrow A \times B$ \\
-\hspace{4em} $\langle f,g \rangle c = (f \hspace{0.25em} c, g \hspace{0.25em} c)$ \\
+$\langle f,g \rangle : C \rightarrow A \times B$ \\
+$\langle f,g \rangle c = (f \hspace{0.25em} c, g \hspace{0.25em} c)$ \\
 \vspace{0.1in}
-example *Products.hs*
+example *Products.hs* \hspace{3em} \fontsize{11pt}{11.5}\selectfont ([[coproducts][goto coproducts]])
 
 # ------------------------------------------------------------------------------
 * $\times$-cancellation
-
+<<product-cancellation>>
 [[file:../pair.png]]
 
 #+BEGIN_EXAMPLE
@@ -215,16 +230,18 @@ fst (1,2)  =>  1
 snd (1,2)  =>  2
 #+END_EXAMPLE
 
+\hspace{3em} \fontsize{11pt}{11.5}\selectfont ([[sum-cancellation][goto $+$ cancellation]])
+
 # ------------------------------------------------------------------------------
 * $\times$ of two functions
-
+<<product-of-two-functions>>
 when domains nor ranges do not coincide\\
 \vspace{0.1in}
 $f \times g = \langle f \circ fst, g \circ snd \rangle$ \\
 \vspace{0.1in}
 [[file:../product.png]]
 
-example *Product.hs*
+example *Product.hs* \fontsize{11pt}{11.5}\selectfont ([[sum-of-two-functions][goto $+$ of two funs]])
 
 # ------------------------------------------------------------------------------
 * $\times$-fusion $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
@@ -254,7 +271,7 @@ $(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
 | $\times$-can   | = | $\langle i \circ g,j \circ h \rangle$                                                              |
 
 # ------------------------------------------------------------------------------
-* $\times$-absorption
+* $\times$-absorption (just derived)
 
 #+ATTR_LaTeX: :width 3.5in
 [[file:../product-absorption.png]]
@@ -280,7 +297,7 @@ example *ProductAndProjections.hs*
 * functorial properties of $\times$
 
 $\times$-functor : $(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$
-- bi-distribution of $\times$ with respect to composition
+- bi-distribution of $\times$ with respect to $\circ$
 - example *ProductFunctor.hs*
 
 $\times$-functor-id : $id_A \times id_B = id_{A \times B}$
@@ -303,6 +320,8 @@ id           ("x", 'y') => ("x", 'y')
 
 # ------------------------------------------------------------------------------
 * $\times$ is commutative : $A \times B \cong B \times A$
+
+\fontsize{15.5pt}{16}\selectfont
 
 $\langle snd,fst \rangle = swap$
 
@@ -327,9 +346,11 @@ ar :: ((a, b),c)  ->  (a, (b, c))
 
 prove $A \times (B \times C) \cong (A \times B) \times C$
 
+\fontsize{15.5pt}{16}\selectfont
+
 #+BEGIN_EXAMPLE
-(ar . al)('a',('b','c'))=>('a',('b','c'))
-id       ('a',('b','c'))=>('a',('b','c'))
+(ar . al) ('a',('b','c')) => ('a',('b','c'))
+id        ('a',('b','c')) => ('a',('b','c'))
 #+END_EXAMPLE
 
 # ------------------------------------------------------------------------------
@@ -350,7 +371,73 @@ $ar = \langle fst \circ fst, \langle snd \circ fst, snd \rangle \rangle$
 |              | = | $(a, (b, c))$                                                                                                  |
 
 # ------------------------------------------------------------------------------
-* next 2.9
+* coproducts : gluing un $\circ$ funs
+<<coproducts>>
+
+/coproduct/ of $A$ and $B$ is /disjoint union/ : values labeled with
+=Left= or =Right= to indicate the value came from $A$ or $B$
+
+#+begin_center
+$[f,g] : A + B \rightarrow C$
+#+end_center
+
+#+begin_latex
+\[ [f,g] x = \left\{
+  \begin{array}{l l}
+    f(a)            & \quad \text{if $x = Left$   $a$}\\
+    b(b)            & \quad \text{if $x = Right$  $b$}
+  \end{array} \right. \]
+#+end_latex
+
+\fontsize{11pt}{11.5}\selectfont ([[products][goto products]])
+
+# ------------------------------------------------------------------------------
+* coproducts
+
+[[file:../either.png]]
+
+example *Either.hs*
+
+# ------------------------------------------------------------------------------
+* /product/ and /coproduct/ are /dual/
+
+Duality means
+- everything said about
+  - product $A \times B$
+- can be rephrased to
+  - coproduct $A + B$.
+
+e.g., : sum of two functions =f + g= \\
+\hspace{0.5em} is dual of \\
+\hspace{1em} product of two functions =f × g=
+
+
+# ------------------------------------------------------------------------------
+* $+$ of two functions
+<<sum-of-two-functions>>
+$f + g = [Left \circ f, Right \circ g]$
+
+TODO : diagram
+
+\vspace{0.5in}
+
+example *Sum.hs* \fontsize{11pt}{11.5}\selectfont ([[product-of-two-functions][goto $\times$ of two funs]])
+
+# ------------------------------------------------------------------------------
+* (2.38) $+$-cancellation
+<<sum-cancellation>>
+$[g,h] \circ Left = g$ \\
+\vspace{0.1in}
+$[g,h] \circ Right = h$
+
+[[file:../sum-cancellation.png]]
+
+TODO : diagram using =Left/Right=
+
+example *SumCancellation.hs* \fontsize{11pt}{11.5}\selectfont ([[product-cancellation][goto $\times$ cancellation]])
+
+# ------------------------------------------------------------------------------
+* next 2.39
 
 # ------------------------------------------------------------------------------
 * Summary
