@@ -253,8 +253,10 @@ Pair : right-distributive with rspt to $\circ$
 
 # ------------------------------------------------------------------------------
 * $\times$-fusion
-
+<<product-fusion>>
 example *ProductFusion.hs*
+
+\fontsize{11pt}{11.5}\selectfont ([[sum-fusion][goto $+$-fusion]])
 
 # ------------------------------------------------------------------------------
 * $\times$-absorption
@@ -272,13 +274,15 @@ $(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
 
 # ------------------------------------------------------------------------------
 * $\times$-absorption (just derived)
+<<product-absorption>>
 
 #+ATTR_LaTeX: :width 3.5in
 [[file:../product-absorption.png]]
 
+\fontsize{11pt}{11.5}\selectfont ([[sum-absorption][goto $+$-absorption]])
+
 # ------------------------------------------------------------------------------
 * $\times$-absorption
-
 example *ProductAbsorption.hs*
 
 # ------------------------------------------------------------------------------
@@ -295,10 +299,10 @@ example *ProductAndProjections.hs*
 
 # ------------------------------------------------------------------------------
 * functorial properties of $\times$
-
+<<product-functor>> <<product-functor-id>>
 $\times$-functor : $(g \circ h) \times (i \circ j) = (g \times i) \circ (h \times j)$
 - bi-distribution of $\times$ with respect to $\circ$
-- example *ProductFunctor.hs*
+- example *ProductFunctor.hs* \fontsize{11pt}{11.5}\selectfont ([[sum-functor][goto $+$-functor]])
 
 $\times$-functor-id : $id_A \times id_B = id_{A \times B}$
 
@@ -307,16 +311,20 @@ product id id ("x", 'y') => ("x", 'y')
         id    ("x", 'y') => ("x", 'y')
 #+END_EXAMPLE
 
+\fontsize{11pt}{11.5}\selectfont ([[sum-functor-id][goto $+$-functor-id]])
+
 
 # ------------------------------------------------------------------------------
 * $\times$-reflexion : $\langle fst,snd \rangle = id_{A \times B}$
-
+<<product-reflexion>>
 [[file:../product-reflexion.png]]
 
 #+BEGIN_EXAMPLE
 pair fst snd ("x", 'y') => ("x", 'y')
 id           ("x", 'y') => ("x", 'y')
 #+END_EXAMPLE
+
+\fontsize{11pt}{11.5}\selectfont ([[sum-reflexion][goto $+$-reflexion]])
 
 # ------------------------------------------------------------------------------
 * $\times$ is commutative : $A \times B \cong B \times A$
@@ -437,7 +445,75 @@ TODO : diagram using =Left/Right=
 example *SumCancellation.hs* \fontsize{11pt}{11.5}\selectfont ([[product-cancellation][goto $\times$ cancellation]])
 
 # ------------------------------------------------------------------------------
-* next 2.39
+* $+$-reflexion
+<<sum-reflexion>>
+$[ Left, Right ] = id_{A + B}$
+
+[[file:../sum-reflexion.png]]
+
+TODO: diagram with Left/Right
+
+example *SumReflexion.hs* \fontsize{11pt}{11.5}\selectfont ([[product-reflexion][goto $\times$-reflexion]])
+
+# ------------------------------------------------------------------------------
+* $+$-fusion
+<<sum-fusion>>
+$f \circ [ g , h ] = [ f \circ g , f \circ h ]$
+
+#+ATTR_LaTeX: :width 3in
+[[file:../sum-fusion.png]]
+
+example *SumFusion.hs*  \fontsize{11pt}{11.5}\selectfont ([[product-fusion][goto $\times$-fusion]])
+
+# ------------------------------------------------------------------------------
+* $+$-absorption
+<<sum-absorption>>
+$[ g , h ] \circ ( i + j ) = [ g \circ i, h \circ j ]$
+
+#+ATTR_LaTeX: :width 3.5in
+[[file:../sum-absorption.png]]
+
+TODO example *SumAbsorption.hs* \fontsize{11pt}{11.5}\selectfont ([[product-absorption][goto $\times$-absorption]])
+
+# ------------------------------------------------------------------------------
+* $+$-functor 1
+<<sum-functor>>
+$(g \circ h) + (i \circ j) = (g + i) \circ (h + j)$
+
+[[file:../sum-functor-1m.jpg]]
+
+# ------------------------------------------------------------------------------
+* $+$-functor 2
+
+$(g \circ h) + (i \circ j) = (g + i) \circ (h + j)$
+
+[[file:../sum-functor-2m.png]]
+
+# ------------------------------------------------------------------------------
+* $+$-functor 3
+
+TODO example *SumFunctor.hs*
+
+\fontsize{11pt}{11.5}\selectfont ([[product-functor][goto $\times$-functor]])
+
+# ------------------------------------------------------------------------------
+* $+$-functor-id
+<<sum-functor-id>>
+$id_A + id_B = id_{A+B}$
+
+TODO : diagram
+
+#+BEGIN_SRC haskell
+sumFunctorIdLeft, sumFunctorIdRight
+       :: Either a b -> Either a b
+sumFunctorIdLeft  = PDBC.sum id id
+sumFunctorIdRight = id
+#+END_SRC
+
+\fontsize{11pt}{11.5}\selectfont ([[product-functor-id][goto $\times$-functor-id]])
+
+# ------------------------------------------------------------------------------
+* next 2.10
 
 # ------------------------------------------------------------------------------
 * Summary
