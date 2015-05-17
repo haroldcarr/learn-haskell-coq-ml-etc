@@ -1,6 +1,6 @@
 #
 # Created       : 2014 Jul 20 (Sun) 10:44:43 by Harold Carr.
-# Last Modified : 2015 May 08 (Fri) 17:40:07 by Harold Carr.
+# Last Modified : 2015 May 17 (Sun) 16:36:08 by Harold Carr.
 #
 
 # http://tex.stackexchange.com/questions/11866/compile-a-latex-document-into-a-png-image-thats-as-short-as-possible/11880#11880
@@ -18,6 +18,7 @@ PNG_FILES = constant-fusion.png \
             product-absorption.png \
 	    product-fusion.png \
             product-reflexion.png \
+	    sum.png \
             test.png
 
 %.png : %.tex

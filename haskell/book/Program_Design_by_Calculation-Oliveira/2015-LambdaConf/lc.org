@@ -425,9 +425,7 @@ e.g., : sum of two functions =f + g= \\
 <<sum-of-two-functions>>
 $f + g = [Left \circ f, Right \circ g]$
 
-TODO : diagram
-
-\vspace{0.5in}
+file:../sum.png
 
 example *Sum.hs* \fontsize{11pt}{11.5}\selectfont ([[product-of-two-functions][goto $\times$ of two funs]])
 
@@ -473,7 +471,7 @@ $[ g , h ] \circ ( i + j ) = [ g \circ i, h \circ j ]$
 #+ATTR_LaTeX: :width 3.5in
 [[file:../sum-absorption.png]]
 
-TODO example *SumAbsorption.hs* \fontsize{11pt}{11.5}\selectfont ([[product-absorption][goto $\times$-absorption]])
+example *SumAbsorption.hs* \fontsize{11pt}{11.5}\selectfont ([[product-absorption][goto $\times$-absorption]])
 
 # ------------------------------------------------------------------------------
 * $+$-functor 1
@@ -482,6 +480,8 @@ $(g \circ h) + (i \circ j) = (g + i) \circ (h + j)$
 
 [[file:../sum-functor-1m.jpg]]
 
+\fontsize{11pt}{11.5}\selectfont ([[product-functor][goto $\times$-functor]])
+
 # ------------------------------------------------------------------------------
 * $+$-functor 2
 
@@ -489,19 +489,12 @@ $(g \circ h) + (i \circ j) = (g + i) \circ (h + j)$
 
 [[file:../sum-functor-2m.png]]
 
-# ------------------------------------------------------------------------------
-* $+$-functor 3
-
-TODO example *SumFunctor.hs*
-
-\fontsize{11pt}{11.5}\selectfont ([[product-functor][goto $\times$-functor]])
+example *SumFunctor.hs*
 
 # ------------------------------------------------------------------------------
 * $+$-functor-id
 <<sum-functor-id>>
 $id_A + id_B = id_{A+B}$
-
-TODO : diagram
 
 #+BEGIN_SRC haskell
 sumFunctorIdLeft, sumFunctorIdRight

@@ -19,7 +19,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2015 May 09 (Sat) 13:33:14 by Harold Carr.
+Last Modified : 2015 May 17 (Sun) 16:44:01 by Harold Carr.
 
 #+BEGIN_SRC haskell
 {-# LANGUAGE NoMonomorphismRestriction #-}
@@ -536,6 +536,8 @@ su1 = U.tt "su1"
       ]
       (Left 99)
 #+END_SRC
+
+file:./sum.png
 
 ** (2.38) $+$-cancellation : $[g,h] \circ Left = g$, $[g,h] \circ Right = h$
 
