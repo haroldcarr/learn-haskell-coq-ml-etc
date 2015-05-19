@@ -80,13 +80,13 @@ f 5
 example *Factorial.hs*
 
 # ------------------------------------------------------------------------------
-* function composition
+* function composition (1/3)
 
-#+ATTR_LaTeX: :width 3in
+#+ATTR_LaTeX: :width 2in
 [[file:../function-composition.png]]
 
 # ------------------------------------------------------------------------------
-* function composition
+* function composition (2/3)
 
 **                                                             :BMCOL:
 :PROPERTIES:
@@ -111,14 +111,18 @@ example *Factorial.hs*
 [[file:../function-composition.png]]
 
 # ------------------------------------------------------------------------------
-* function composition
+* function composition (3/3)
 
 example *Composition.hs*
 
 # ------------------------------------------------------------------------------
 * purity viz application/composition
 
-** TBD
+example *CompositionVizPurity.java*
+
+\vspace{0.2in}
+
+example *CompositionVizPurity.hs*
 
 # ------------------------------------------------------------------------------
 * composition is associative
@@ -130,7 +134,7 @@ Similar to $(a + b) + c = a + (b + c)$
 [[file:../function-composition-associative.png]]
 
 # ------------------------------------------------------------------------------
-* identity function(s)
+* identity function(s) (1/2)
 
 =id :: a -> a=\\
 =id x = x=
@@ -145,9 +149,9 @@ similar to \hspace{4.5em} $n + 0 = 0 + n = n$
 [[file:../function-composition-id-is-unit.png]]
 
 # ------------------------------------------------------------------------------
-* identity function(s)
+* identity function(s) (2/2)
 
-TODO Identity.hs (NICTA example)
+example *Identity.hs*
 
 # ------------------------------------------------------------------------------
 * constant function(s)
@@ -164,6 +168,7 @@ c :: a -> Char
 c  = const 'c'
 #+END_SRC
 
+example *Const.hs*
 
 # ------------------------------------------------------------------------------
 * constant-fusion
@@ -176,7 +181,7 @@ c  = const 'c'
 - ignores result of =f=
 - output of constant-fusion not (necessarily) type related to co/domain of =f=
 
-example *ConstantFusion.hs* (TODO NICTA)
+example *ConstantFusion.hs*
 
 # ------------------------------------------------------------------------------
 * id/const functions are limit points
@@ -245,21 +250,25 @@ example *Product.hs* \fontsize{11pt}{11.5}\selectfont ([[sum-of-two-functions][g
 
 # ------------------------------------------------------------------------------
 * $\times$-fusion $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
+(1/2)
+<<product-fusion>>
 
 Pair : right-distributive with rspt to $\circ$
 
-#+ATTR_LaTeX: :width 3.5in
+#+ATTR_LaTeX: :width 3in
 [[file:../product-fusion.png]]
 
 # ------------------------------------------------------------------------------
-* $\times$-fusion
-<<product-fusion>>
+* $\times$-fusion (2/2)
+
 example *ProductFusion.hs*
+
+\vspace{0.2in}
 
 \fontsize{11pt}{11.5}\selectfont ([[sum-fusion][goto $+$-fusion]])
 
 # ------------------------------------------------------------------------------
-* $\times$-absorption
+* $\times$-absorption (1/3)
 
 left-distributivity does not hold but
 
@@ -273,7 +282,7 @@ $(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
 | $\times$-can   | = | $\langle i \circ g,j \circ h \rangle$                                                              |
 
 # ------------------------------------------------------------------------------
-* $\times$-absorption (just derived)
+* $\times$-absorption (just derived) (2/3)
 <<product-absorption>>
 
 #+ATTR_LaTeX: :width 3.5in
@@ -282,7 +291,8 @@ $(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
 \fontsize{11pt}{11.5}\selectfont ([[sum-absorption][goto $+$-absorption]])
 
 # ------------------------------------------------------------------------------
-* $\times$-absorption
+* $\times$-absorption (3/3)
+
 example *ProductAbsorption.hs*
 
 # ------------------------------------------------------------------------------
@@ -343,7 +353,7 @@ $\langle snd,fst \rangle = swap$
 Therefore, no information is lost (or gained) when swapping fields in record datatypes.
 
 # ------------------------------------------------------------------------------
-* $\times$ is associative \hspace{2em} exercise
+* $\times$ is associative (1/2) \hspace{2em} exercise
 
 given
 
@@ -362,7 +372,7 @@ id        ('a',('b','c')) => ('a',('b','c'))
 #+END_EXAMPLE
 
 # ------------------------------------------------------------------------------
-* $\times$ is associative \hspace{2em} proof
+* $\times$ is associative (2/2) \hspace{2em} proof
 
 \fontsize{11pt}{11.5}\selectfont
 
@@ -379,7 +389,7 @@ $ar = \langle fst \circ fst, \langle snd \circ fst, snd \rangle \rangle$
 |              | = | $(a, (b, c))$                                                                                                  |
 
 # ------------------------------------------------------------------------------
-* coproducts : gluing un $\circ$ funs
+* coproducts : gluing un $\circ$ funs (1/2)
 <<coproducts>>
 
 /coproduct/ of $A$ and $B$ is /disjoint union/ : values labeled with
@@ -400,7 +410,7 @@ $[f,g] : A + B \rightarrow C$
 \fontsize{11pt}{11.5}\selectfont ([[products][goto products]])
 
 # ------------------------------------------------------------------------------
-* coproducts
+* coproducts (2/2)
 
 [[file:../either.png]]
 
@@ -419,7 +429,6 @@ e.g., : sum of two functions =f + g= \\
 \hspace{0.5em} is dual of \\
 \hspace{1em} product of two functions =f × g=
 
-
 # ------------------------------------------------------------------------------
 * $+$ of two functions
 <<sum-of-two-functions>>
@@ -430,7 +439,7 @@ file:../sum.png
 example *Sum.hs* \fontsize{11pt}{11.5}\selectfont ([[product-of-two-functions][goto $\times$ of two funs]])
 
 # ------------------------------------------------------------------------------
-* (2.38) $+$-cancellation
+* $+$-cancellation
 <<sum-cancellation>>
 $[g,h] \circ Left = g$ \\
 \vspace{0.1in}
@@ -474,7 +483,7 @@ $[ g , h ] \circ ( i + j ) = [ g \circ i, h \circ j ]$
 example *SumAbsorption.hs* \fontsize{11pt}{11.5}\selectfont ([[product-absorption][goto $\times$-absorption]])
 
 # ------------------------------------------------------------------------------
-* $+$-functor 1
+* $+$-functor (1/2)
 <<sum-functor>>
 $(g \circ h) + (i \circ j) = (g + i) \circ (h + j)$
 
@@ -483,7 +492,7 @@ $(g \circ h) + (i \circ j) = (g + i) \circ (h + j)$
 \fontsize{11pt}{11.5}\selectfont ([[product-functor][goto $\times$-functor]])
 
 # ------------------------------------------------------------------------------
-* $+$-functor 2
+* $+$-functor (2/2)
 
 $(g \circ h) + (i \circ j) = (g + i) \circ (h + j)$
 
@@ -499,7 +508,7 @@ $id_A + id_B = id_{A+B}$
 #+BEGIN_SRC haskell
 sumFunctorIdLeft, sumFunctorIdRight
        :: Either a b -> Either a b
-sumFunctorIdLeft  = PDBC.sum id id
+sumFunctorIdLeft  = sum id id
 sumFunctorIdRight = id
 #+END_SRC
 
