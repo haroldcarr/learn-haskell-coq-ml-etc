@@ -12,11 +12,11 @@ transform = toEnum . fromEnum
 i0 :: Seven
 i0 = transform Tuesday
 
-i1 :: Weekday
-i1 = transform Three
-
 i0' :: Weekday
 i0' = transform Tuesday
+
+i1 :: Weekday
+i1 = transform Three
 
 transform2 :: (Enum a, Ord a) => Int -> a
 transform2 = toEnum . (`rem` 7)

@@ -13,7 +13,7 @@ p0,p1 :: (Enum c, Ord c, Show c) => c -> (Seven, String)
 p0 =     transform `pair`     show
 p1 = arr transform  &&&   arr show
 
--- p0 Sunday
--- p1 Sunday
+p0' = p0 Sunday
+p1' = p1 Sunday
 
 -- End

@@ -19,7 +19,7 @@ tags: haskell, monad
 #+END_HTML
 
 # Created       : 2014 Jul 20 (Sun) 07:59:14 by Harold Carr.
-Last Modified : 2015 May 17 (Sun) 16:44:01 by Harold Carr.
+Last Modified : 2015 May 19 (Tue) 18:30:04 by Harold Carr.
 
 #+BEGIN_SRC haskell
 {-# LANGUAGE NoMonomorphismRestriction #-}
@@ -431,12 +431,12 @@ swap0 ab = (,) (snd ab) (fst ab)
 
 Isomorphic:
 
-|        |                       |   | $swap \circ swap$                                                              |
-|        | def swap              | = | $\langle snd,fst \rangle \circ swap$                                           |
-| (2.24) | $\times$-fusion       | = | $\langle snd \circ swap,fst \circ swap \rangle$                                |
-|        | def swap              | = | $\langle snd \circ \langle snd,fst \rangle, fst \circ \langle snd,fst \rangle$ |
-| (2.20) | $\times$-cancellation | = | $\langle fst,snd \rangle$                                                      |
-| (2.30) | $\times$-reflexion    | = | $id$                                                                           |
+|        |                       |   | $swap \circ swap$                                                                      |
+|        | def swap              | = | $\langle snd,fst \rangle \circ swap$                                                   |
+| (2.24) | $\times$-fusion       | = | $\langle snd \circ swap,fst \circ swap \rangle$                                        |
+|        | def swap              | = | $\langle snd \circ \langle snd,fst \rangle, fst \circ \langle snd,fst \rangle \rangle$ |
+| (2.20) | $\times$-cancellation | = | $\langle fst,snd \rangle$                                                              |
+| (2.30) | $\times$-reflexion    | = | $id$                                                                                   |
 
 Therefore, no information is lost (or gained) when swapping fields in record datatypes.
 

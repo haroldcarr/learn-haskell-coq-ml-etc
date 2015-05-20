@@ -10,7 +10,7 @@ flatMap g = foldr (\x acc -> g x ++ acc) []
 
 flm0 = flatMap (\x -> [x*2]) [1,2,3]
 
-flm1 = flatMap id [[1],[2],[3]]
+flatten' = flatMap id
 
 foldrr f z []     = z
 foldrr f z (x:xs) = f x (foldr f z xs)

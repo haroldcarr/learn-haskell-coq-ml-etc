@@ -171,6 +171,18 @@ c  = const 'c'
 example *Const.hs*
 
 # ------------------------------------------------------------------------------
+* id/const functions are limit points
+
+=id= preserves all information\\
+\vspace{0.1in}
+=const= loses all information\\
+\vspace{0.1in}
+others functions lose info\\
+\vspace{0.1in}
+functional programming:
+- transforming or losing info to fit context
+
+# ------------------------------------------------------------------------------
 * constant-fusion
 
 =constantFusion :: (a->b) -> a -> c=\\
@@ -182,18 +194,6 @@ example *Const.hs*
 - output of constant-fusion not (necessarily) type related to co/domain of =f=
 
 example *ConstantFusion.hs*
-
-# ------------------------------------------------------------------------------
-* id/const functions are limit points
-
-=id= preserves all information\\
-\vspace{0.1in}
-=const= loses all information\\
-\vspace{0.1in}
-others functions lose info\\
-\vspace{0.1in}
-functional programming:
-- transforming or losing info to fit context
 
 # ------------------------------------------------------------------------------
 * isomorphisms \hspace{5em} $A \cong B$
@@ -343,12 +343,12 @@ id           ("x", 'y') => ("x", 'y')
 
 $\langle snd,fst \rangle = swap$
 
-|                    |   | $swap \circ swap$                                                              |
-| def swap           | = | $\langle snd,fst \rangle \circ swap$                                           |
-| $\times$-fusion    | = | $\langle snd \circ swap,fst \circ swap \rangle$                                |
-| def swap           | = | $\langle snd \circ \langle snd,fst \rangle, fst \circ \langle snd,fst \rangle$ |
-| $\times$-cancel    | = | $\langle fst,snd \rangle$                                                      |
-| $\times$-reflexion | = | $id$                                                                           |
+|                    |   | $swap \circ swap$                                                                      |
+| def swap           | = | $\langle snd,fst \rangle \circ swap$                                                   |
+| $\times$-fusion    | = | $\langle snd \circ swap,fst \circ swap \rangle$                                        |
+| def swap           | = | $\langle snd \circ \langle snd,fst \rangle, fst \circ \langle snd,fst \rangle \rangle$ |
+| $\times$-cancel    | = | $\langle fst,snd \rangle$                                                              |
+| $\times$-reflexion | = | $id$                                                                                   |
 
 Therefore, no information is lost (or gained) when swapping fields in record datatypes.
 
