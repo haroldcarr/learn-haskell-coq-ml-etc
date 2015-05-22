@@ -250,22 +250,13 @@ example *Product.hs* \fontsize{11pt}{11.5}\selectfont ([[sum-of-two-functions][g
 
 # ------------------------------------------------------------------------------
 * $\times$-fusion $\langle g,h \rangle \circ f = \langle g \circ f, h \circ f \rangle$
-(1/2)
 <<product-fusion>>
+example *ProductFusion.hs* \fontsize{11pt}{11.5}\selectfont ([[sum-fusion][goto $+$-fusion]])
 
 Pair : right-distributive with rspt to $\circ$
 
 #+ATTR_LaTeX: :width 3in
 [[file:../product-fusion.png]]
-
-# ------------------------------------------------------------------------------
-* $\times$-fusion (2/2)
-
-example *ProductFusion.hs*
-
-\vspace{0.2in}
-
-\fontsize{11pt}{11.5}\selectfont ([[sum-fusion][goto $+$-fusion]])
 
 # ------------------------------------------------------------------------------
 * $\times$-absorption (1/3)
@@ -447,7 +438,7 @@ $[g,h] \circ Right = h$
 
 [[file:../sum-cancellation.png]]
 
-TODO : diagram using =Left/Right=
+# TODO : diagram using =Left/Right=
 
 example *SumCancellation.hs* \fontsize{11pt}{11.5}\selectfont ([[product-cancellation][goto $\times$ cancellation]])
 
@@ -458,7 +449,7 @@ $[ Left, Right ] = id_{A + B}$
 
 [[file:../sum-reflexion.png]]
 
-TODO: diagram with Left/Right
+# TODO: diagram with Left/Right
 
 example *SumReflexion.hs* \fontsize{11pt}{11.5}\selectfont ([[product-reflexion][goto $\times$-reflexion]])
 
@@ -515,23 +506,26 @@ sumFunctorIdRight = id
 \fontsize{11pt}{11.5}\selectfont ([[product-functor-id][goto $\times$-functor-id]])
 
 # ------------------------------------------------------------------------------
-* next 2.10
+* mixing products and coproducts
+
+pair/either exchange : fun maps coproduct ($A+B$) to product ($A'\timesB'$)
+
+\vspace{0.1in}
+
+$[ \langle f , g \rangle , \langle h , k \rangle ] = \langle [ f , h ], [ g , k ] \rangle$
+
+\vspace{0.1in}
+
+example *pairEitherExchange.hs*
 
 # ------------------------------------------------------------------------------
-* Summary
+* summary
 
-- one
-- two
-- three
-- four
-- five
-- six
-- *seven*
-- eight \LaTeX{}
-- nine
-- ten
-# - eleven
-# - twelve
-# - thirteen
-# - fourteen
-# - fifteen
+- purity
+- application, composition
+- equational reasoning
+- patterns of transformations
+- /lots/ more in the paper
+- [[http://www4.di.uminho.pt/~jno/ps/pdbc_part.pdf]]
+- we made it to p. 30/285 (theorem 2.47)
+
