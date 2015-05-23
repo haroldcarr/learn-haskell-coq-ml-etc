@@ -12,6 +12,7 @@ pf = [
      , pair  (*2)                     show . digitToInt $ '3'
      , pair  (*2)                     show                 3
      ,      ((*2)                3,   show                 3)
+     ,      (                    6,                       "3")
 
      , productFusionRight (*2)        show digitToInt     '3'
      , pair ((*2) . digitToInt)      (show . digitToInt)  '3'

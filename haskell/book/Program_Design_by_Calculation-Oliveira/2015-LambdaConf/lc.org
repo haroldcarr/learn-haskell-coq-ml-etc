@@ -1,7 +1,7 @@
 #+TITLE:     Programming and Math
 #+AUTHOR:    Harold Carr
-#+DATE:      LambdaConf 2015-05
-#+DESCRIPTION: Material from Program Design by Calcultion by Oliveira presentated at LambdaConf 2015
+#+DATE:      LambdaConf 2015-05-23
+#+DESCRIPTION: Material from Program Design by Calculation by Oliveira presentated at LambdaConf 2015
 #+KEYWORDS:  beamer org orgmode
 #+LANGUAGE:  en
 #+PROPERTY:  tangle lc.hs
@@ -35,8 +35,9 @@
 
 #+begin_center
 Harold Carr\\
-[[mail:harold.carr@gmail.com][harold.carr@gmail.com]]\\
-\vspace{0.3in}
+@haroldcarr\\
+[[harold.carr@gmail.com]]\\
+\vspace{0.9in}
 /Program Design by Calculation/ \\
 J. N. Oliveira\\
 [[http://www4.di.uminho.pt/~jno/][http://www4.di.uminho.pt/~jno/]]
@@ -394,7 +395,7 @@ $[f,g] : A + B \rightarrow C$
 \[ [f,g] x = \left\{
   \begin{array}{l l}
     f(a)            & \quad \text{if $x = Left$   $a$}\\
-    b(b)            & \quad \text{if $x = Right$  $b$}
+    g(b)            & \quad \text{if $x = Right$  $b$}
   \end{array} \right. \]
 #+end_latex
 
@@ -508,13 +509,17 @@ sumFunctorIdRight = id
 # ------------------------------------------------------------------------------
 * mixing products and coproducts
 
-pair/either exchange : fun maps coproduct ($A+B$) to product ($A'\timesB'$)
-
+pair/either exchange maps\\
 \vspace{0.1in}
+coproduct ($A + B$) to \\
+\vspace{0.1in}
+\hspace{0.5em} product ($A' \times B'$)
+
+\vspace{0.2in}
 
 $[ \langle f , g \rangle , \langle h , k \rangle ] = \langle [ f , h ], [ g , k ] \rangle$
 
-\vspace{0.1in}
+\vspace{0.2in}
 
 example *pairEitherExchange.hs*
 
@@ -529,3 +534,13 @@ example *pairEitherExchange.hs*
 - [[http://www4.di.uminho.pt/~jno/ps/pdbc_part.pdf]]
 - we made it to p. 30/285 (theorem 2.47)
 
+# ------------------------------------------------------------------------------
+* slides and code
+
+\fontsize{13pt}{13}\selectfont
+[[http://bit.ly/2015-lambda-conf-harold-carr]]
+
+\vspace{0.3in}
+
+\fontsize{6pt}{6}\selectfont
+[[https://github.com/haroldcarr/learn-haskell-coq-ml-etc/tree/master/haskell/book/Program_Design_by_Calculation-Oliveira/2015-LambdaConf]]

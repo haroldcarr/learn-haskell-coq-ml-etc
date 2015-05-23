@@ -3,11 +3,11 @@ module Const where
 length0 [] = 0
 length0 (x:xs) = 1 + length0 xs
 
-length' :: [a] -> Int
-length' = foldl (const . succ) 0
-
 foldll f z []     = z
 foldll f z (x:xs) = foldl f (f z x) xs
+
+length' :: [a] -> Int
+length' = foldl (const . succ) 0
 
 equationalReasoning :: [Int]
 equationalReasoning =
