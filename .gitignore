@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2014 Nov 10 (Mon) 16:18:04 by Harold Carr.
+# Last Modified : 2015 Jul 11 (Sat) 13:50:03 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -68,7 +68,8 @@ cabal-dev
 *.chs.h
 .virthualenv
 
-haskell/.Notes*.org
+haskell/0Notes*.org
+haskell/0Review.org
 
 haskell/book/Beginning_Haskell/.Notes.org
 haskell/book/Beginning_Haskell/Beginning_Haskell.epub
@@ -117,8 +118,6 @@ haskell/paper/haskell-distributed/
 haskell/paper/haskellwiki/.ghci
 haskell/paper/jekor.com/
 
-
-
 haskell/paper/monad-reader/issue22/gadt.hs-save
 haskell/paper/monad-reader/issue22/issue22.pdf
 haskell/paper/monad-reader/issue22/r.hs
@@ -141,5 +140,6 @@ perl
 python
 ruby
 scala
+sterling-raw-latex
 
 # End of file.
