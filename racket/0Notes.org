@@ -1,0 +1,8 @@
+Created       : 2015 Jul 11 (Sat) 15:38:08 by Harold Carr.
+Last Modified : 2015 Jul 11 (Sat) 15:42:38 by Harold Carr.
+
+emacs style keybindings to evaluate program fragments:
+http://docs.racket-lang.org/drracket/Keyboard_Shortcuts.html?q=keybindings#%28part._.Sending_.Program_.Fragments_to_the_.R.E.P.L%29
+
+install keybindings:
+http://docs.racket-lang.org/drracket/Keyboard_Shortcuts.html?q=keybindings#%28part._defining-shortcuts%29
