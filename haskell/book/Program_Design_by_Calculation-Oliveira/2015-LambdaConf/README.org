@@ -1,1 +1,1 @@
-Moved to : ../2015-07-LambdaConf/
+Moved to : [[file:../2015-07-LambdaConf/]]
