@@ -1,7 +1,7 @@
 #+TITLE:     Programming and Math
 #+AUTHOR:    Harold Carr
-#+DATE:      LambdaConf 2015-05-23
-#+DESCRIPTION: Material from Program Design by Calculation by Oliveira presentated at LambdaConf 2015
+#+DATE:      Lambda Lounge Utah 2015-07-14
+#+DESCRIPTION: Material from Program Design by Calculation by Oliveira presentated at Lambda Lounge Utah 2015
 #+KEYWORDS:  beamer org orgmode
 #+LANGUAGE:  en
 #+PROPERTY:  tangle lc.hs
@@ -184,17 +184,7 @@ functional programming:
 - transforming or losing info to fit context
 
 # ------------------------------------------------------------------------------
-* constant-fusion
-
-=constantFusion :: (a->b) -> a -> c=\\
-=constantFusion f = c . f=
-
-- input to =f= can be any type
-- result of =f= can be any type
-- ignores result of =f=
-- output of constant-fusion not (necessarily) type related to co/domain of =f=
-
-example *ConstantFusion.hs*
+# REMOVED : constant-fusion
 
 # ------------------------------------------------------------------------------
 * isomorphisms \hspace{5em} $A \cong B$
@@ -317,7 +307,7 @@ example *Sum.hs* \fontsize{11pt}{11.5}\selectfont ([[product-of-two-functions][g
 <<product-fusion>>
 example *ProductFusion.hs* \fontsize{11pt}{11.5}\selectfont ([[sum-fusion][goto $+$-fusion]])
 
-Pair : right-distributive with rspt to $\circ$
+Pair : right-distributive with respect to $\circ$
 
 #+ATTR_LaTeX: :width 3in
 [[file:../product-fusion.png]]
@@ -361,16 +351,7 @@ $(i \times j) \circ \langle g,h \rangle = \langle i \circ g,j \circ h \rangle$
 example *ProductAbsorption.hs*
 
 # ------------------------------------------------------------------------------
-* $\times$ and projections
-
-previous diagram shows\\
-\vspace{0.2in}
-$i \circ fst = fst \circ (i \times j)$
-- given $D \times E$ no need to evaluate $j$
-$j \circ snd = snd \circ (i \times j)$
-- given $D \times E$ no need to evaluate $i$ \\
-\vspace{0.2in}
-example *ProductAndProjections.hs*
+# REMOVED $\times$ and projections
 
 # ------------------------------------------------------------------------------
 * $+$-absorption
