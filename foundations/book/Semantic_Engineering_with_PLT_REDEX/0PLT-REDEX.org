@@ -1,0 +1,41 @@
+Created       : 2014 Dec 13 (Sat) 18:38:50 by Harold Carr.
+Last Modified : 2015 Jan 02 (Fri) 16:32:27 by Harold Carr.
+
+------------------------------------------------------------------------------
+* Manual
+
+http://docs.racket-lang.org/redex/
+
+http://redex.racket-lang.org/index.html
+
+------------------------------------------------------------------------------
+* Install
+
+- http://download.racket-lang.org/
+- racket-6.1.1-x86_64-macosx.dmg (96M)
+- [[/Applications/Racket v6.1.1/]]
+
+** color schemes
+
+https://github.com/takikawa/drracket-solarized
+
+=raco pkg install drracket-solarized=
+
+#+BEGIN_EXAMPLE
+Resolving "drracket-solarized" via http://download.racket-lang.org/releases/6.1.1/catalog/
+Resolving "drracket-solarized" via http://pkgs.racket-lang.org
+Downloading https://github.com/takikawa/drracket-solarized/tarball/9a90657bb320d4231c85dff96ceaef6a835c5c4f
+raco setup: collects paths:
+raco setup:   /Users/carr/Library/Racket/6.1.1/collects
+raco setup:   /Applications/Racket v6.1.1/collects
+raco setup: pkgs paths:
+raco setup:   /Applications/Racket v6.1.1/share/pkgs
+raco setup:   /Users/carr/Library/Racket/6.1.1/pkgs
+raco setup: links files:
+raco setup:   /Applications/Racket v6.1.1/share/links.rktd
+raco setup:   /Users/carr/Library/Racket/6.1.1/links.rktd
+raco setup: main docs: /Applications/Racket v6.1.1/doc
+raco setup: updating: /Users/carr/Library/Racket/6.1.1/share/info-cache.rktd
+#+END_EXAMPLE
+
+# End of file.
