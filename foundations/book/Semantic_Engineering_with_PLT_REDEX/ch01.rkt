@@ -1,10 +1,7 @@
 ;;
 ;; Created       : 2015 Jan 02 (Fri) 16:15:07 by Harold Carr.
-;; Last Modified : 2015 Jul 18 (Sat) 18:47:23 by Harold Carr.
+;; Last Modified : 2015 Jul 18 (Sat) 19:18:27 by Harold Carr.
 ;;
-
-#lang scheme
-(require redex)
 
 ;;; p 5 1.1 Defining Sets
 

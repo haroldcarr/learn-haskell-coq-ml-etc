@@ -1,6 +1,6 @@
 ;;
 ;; Created       : 2015 Jul 11 (Sat) 20:10:58 by Harold Carr.
-;; Last Modified : 2015 Jul 11 (Sat) 20:11:18 by Harold Carr.
+;; Last Modified : 2015 Jul 18 (Sat) 19:19:23 by Harold Carr.
 ;;
 
 #lang scheme
@@ -12,7 +12,7 @@ Does the evaluator always return the same result for a given input (i.e., is it 
 
 ;;; p 14 2.2 Answers as Theorems
 
-Theorem 2.1: 
+Theorem 2.1:
 forall B0, eval_r^=r B0 = R0 and eval_r^r=r B0 = R1 then R0 = R1
 
 ;;; p 15 Proof:
@@ -47,8 +47,8 @@ Inductive cases:
 - M =r N because M =r L0 and L0 =r N
   By induction, there exists an L1 such that M ->>r L1 and L0 ->>r L1.
   By induction, there exists an L2 such that N ->>r L2 and L0 ->>r L2.
-  Suppose there exists some expression L2 such that L1 ->>r L3 and L2 ->>r L3.
-  Then claim holds.
+  Suppose there exists some expression L3 such that L1 ->>r L3 and L2 ->>r L3.
+  Then claim holds, because M =r L3 and N =r L3.
 QED
 
 ;;; p 17
@@ -87,8 +87,10 @@ or there is a "triangle" style of completion).
 
 Proof:
 
-
+TODO
 
 ;;  p x Exercise 2.1
+
+TODO ...
 
 ;; End of file.

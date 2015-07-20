@@ -1,0 +1,257 @@
+#
+# Created       : 2015 Jul 18 (Sat) 19:19:23 by Harold Carr.
+# Last Modified : 2015 Jul 19 (Sun) 20:45:03 by Harold Carr.
+#
+
+# p 23
+
+B expression language illustrates techniques of a syntactic approach to semantics.
+
+Originated in 20s/30s with Alonzo Church.
+
+λ-calculus : system for defining functions and function application.
+
+* p 23 3.1 Functions and the λ-Calculus.
+
+* p 25 3.2 λ-Calculus: Syntax and Reductions.
+
+grammar:
+
+M,N,L = X
+      | (λX.M)
+      | (M M)
+X,Y,Z = a variable: x, y,...
+
+meaning of exprs with free vars is open to interpretation
+
+closed exprs (no free) is explicable
+
+Function FV maps λ-Calculus expr to its free vars.
+
+# p 26
+
+FV( b )             = ∅
+FV( X )             = {X}
+FV( (λX.M) )        = FV(M) \ {X}
+FV( (M1 M2) )       = FV(M1) U FV(M2)
+FV( (o^n M1 ... Mn) = FV(M1) U ... FV(Mn)
+
+** p 26 Exercise 3.1 : define function : B(ound)V(ariables)
+
+BV( b )             = ∅
+BV( X )             = ∅
+BV( (λX.M) )        = {X}    U BV(M)
+BV( (M1 M2) )       = BV(M1) U BV(M2)
+BV( (o^n M1 ... Mn) = BV(M1) U ... BV(Mn)
+
+** p 26 substitution relation (not a fun) M[X<-N]
+
+X1[X1<-M]        = M
+X2[X1<-M]        = X2, if X1 /= X2
+(λX1.M1)[X1<-M2] = (λX1.M1)
+(λX1.M1)[X2<-M2] = (λX3.M1[X1<-X3][X2<-M2]),
+                    if X1 /= X2
+                       X3 /= X2
+                       X3 not in FV( (λX1.M1) )
+                       X3 not in FV( M2 )
+(M1 M2)[X<-M3]   = (M1[X<-M3] M2[X<-M3])
+
+** p 27 Exercise 3.2
+
+If y is bound to a number what is intent of:
+-   (λx.(λy.(x y)))
+- (((λx.(λy.(x y))) M) N)
+- (     (λy.(M y)      N)
+-           (M N)
+- applies first arg to second arg
+- like Prelude ($) :: (a -> b) -> a -> b
+
+-  (λx.y)
+- ((λx.y) M)
+-      y
+- constant function
+
+** p 27 α β η reductions
+
+(λX1.M)      α (λX2.M[X1<-X2]) : rename arg
+  if X2 not in FV(M)
+
+((λX.M1) M2) β M1[X<-M2]       : fun application
+
+f    g
+(λX.(M X))   η M               : if f takes arg and immediately applies g
+                                 then f is unnecessary
+  if X not in FV(M)
+
+REDUCTION RELATION n for λ-calculus:
+- n = α U β U η
+
+# p 28
+
+- ->n    : compatible closure of n
+- ->>n   : reflexive-transitive closure of ->n
+- =n     : symmetric closure of ->>n
+- ->_n^α : compatible closure of α
+- ->_n^β : compatible closure of β
+- ->_n^η : compatible closure of η
+
+** p 28 Exercise 3.3
+
+(λy.y) α (λx.x[y<-x])
+
+** p 29 Exercise 3.4
+
+(λx.x) α (λy.y[x<-y])
+
+(λx.(λy.y x)) (λy.y)  (λx.x x) α
+(λw.(λx.x w)) (λy.y)  (λz.z z) β
+    (λx.x     (λy.y)) (λz.z z) β
+    (λz.z z)  (λy.y)           β
+    (λy.y)    (λy.y)           α
+    (λy.y)    (λz.z)           β
+              (λz.z)
+
+(λx.(λy.y x)) (λx.x x)  (λx.x x) α
+(λw.(λx.x w)) (λy.y y)  (λz.z z) β
+    (λx.x     (λy.y y)) (λz.z z) β
+    (λz.z z)  (λy.y y)           β
+((λy.y y) (λy.y y)) (λy.y y)     α
+((λx.x x) (λy.y y)) (λz.z z)     β
+((λy.y y) (λy.y y)) (λz.z z)     : loop
+
+** p 29 Exercise 3.5
+
+TODO PROVE
+
+* p 29 3.3 Encoding Booleans
+
+notation: =. defines a macro
+
+true  =. λx.λy.x         : conditional that branches on 1st arg
+false =. λx.λy.y         : conditional that branches on 2nd arg
+if    =. λv.λt.λf.v t f  : unnecessary, just for readability
+
+if true M N = (λv.λt.λf.v         t f) (λx.λy.x) M N ->β
+                 (λt.λf.(λx.λy.x) t f)           M N ->β
+                    (λf.(λx.λy.x) M f)             N ->β
+                        (λx.λy.x) M N                ->β
+                           (λy.M)   N                ->β
+                               M
+
+** p 30 Exercise 3.6
+
+   true M N =                          (λx.λy.x) M N ->β
+                                          (λy.M)   N ->β
+                                              M
+
+** p 30 Exercise 3.7
+
+and =. λm.λn.(m n    false)
+or  =. λm.λn.(m true n)
+
+show: and true M =n M
+
+     (λm.λn.(m         n    false)) true M
+        (λn.( true     n    false))      M
+             (λx.λy.x) M    false
+                (λy.M)      false
+                    M
+
+show: or false M =n M
+
+     (λm.λn.( m        true n)) false M
+        (λn.( false    true n))       M
+            ( false    true M)
+             (λx.λy.y) true M
+                (λy.y)      M
+                    M
+
+* p 30 3.4 Encoding Pairs
+
+notation: <M,N>
+requirements:
+    fst (mkpair M N) =n M
+    snd (mkpair M N) =n N
+
+# p 31
+
+      <M,N> =.       λs.if s M N
+      <M,N> =.       λs.   s M N
+     mkpair =. λx.λy.λs.   s x y
+        fst =. λp.p true
+        snd =. λp.p false
+
+** p 31 Exercise 3.8
+
+show:
+    fst     (mkpair              M N) =n M
+(λp.p true) ((λx.λy.λs.   s x y) M N)
+(λp.p true) (       λs.   s M N)
+    (λs.   s M N) true
+        true M N
+             M
+
+* p 31 3.5 Encoding Numbers
+
+0 =. λf.λx.x                 : f not applied
+1 =. λf.λx.f x               :       applied once
+2 =. λf.λx.f (f x)           :       applied twice
+  ...
+n =. λf.λx.f (... (f x) ...) : applied n times
+
+# p 32
+
+   (n f x) : applies f n     times to x
+ f (n f x) : applies f n + 1 times to x
+
+add1   =. λn.λf.λx.f (n f x)
+add    =. λn.λm.m add1 n
+iszero =. λn.n (λx.false) true
+
+# p 33
+
+wrap f =. λp.<false, if (fst p) (snd p) (f (snd p))>
+sub1   =. λn.λf.λx.snd (n (wrap f) <true, x>)
+
+** p 32 Exercise 3.9 show add1 1 =n 2
+** p 32 Exercise 3.10 show iszero 1 =n false
+** p 32 Exercise 3.11 show sub1 1 =n 0
+** p 32 Exercise 3.12 define mult TODO
+
+* p 33 3.6 Encodings and Errors
+
+Not typed.  Encoding for 0 and false are identical.
+
+** p 33 Exercise 3.13 try (sub1 0); try (iszero true)
+
+* p 34 3.7 Recursion
+
+mult    =.?   λn.λm.if (iszero n) 0 (add m (mult  (sub1 n) m))
+- but definition refers to itself (cannot be macro).
+
+** p 34 Recursion via Self-Application
+
+- At this point, no "named" functions.
+
+Maker of multiplier function:
+
+mkmult0 =. λt.λn.λm.if (iszero n) 0 (add m (t     (sub1 n) m))
+- but needs 't' to be mult function
+
+# p 35
+
+So pass mkmult to itself
+
+mkmult  =. λt.λn.λm.if (iszero n) 0 (add m ((t t) (sub1 n) m))
+mult    =. (mkmult mkmult)
+
+** p 36 Exercise 3.14 define mksum such that sum =.  (mksum mksum)
+
+** p 36 Lifting Out Self-Application
+
+Technique above works but repetitious.
+Factor the self-application pattern into its own abstraction.
+
+... TODO ...
+
+# End of file.
