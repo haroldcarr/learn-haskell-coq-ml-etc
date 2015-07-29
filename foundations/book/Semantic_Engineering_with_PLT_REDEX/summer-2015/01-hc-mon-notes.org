@@ -1,5 +1,7 @@
 Created       : 2015 Jul 27 (Mon) 07:34:11 by Harold Carr.
-Last Modified : 2015 Jul 27 (Mon) 15:53:03 by Harold Carr.
+Last Modified : 2015 Jul 28 (Tue) 09:07:06 by Harold Carr.
+
+http://redex.racket-lang.org/
 
 MORNING:
 

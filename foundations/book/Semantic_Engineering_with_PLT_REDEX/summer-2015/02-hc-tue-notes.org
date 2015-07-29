@@ -1,0 +1,83 @@
+Created       : 2015 Jul 28 (Tue) 07:32:31 by Harold Carr.
+Last Modified : 2015 Jul 28 (Tue) 14:01:28 by Harold Carr.
+
+MORNING:
+
+Online notes are for call-by-name.
+
+Lecture is call-by-value.
+
+1 =β is equational logic
+
+2 but reduction system introduces notion of reduction:
+- relation 'x' on terms without any properties.
+- ->ₓ syntatic compatibility closure (one step reduction)
+- ->>ₓ transtive closure (sometimes reflexive)
+- =ₓ equavelance closure
+
+prove metatheorem : 1 equational logic and 2 reduction system are equivalent
+
+can add 3 term theory and 4 model theory
+
+TODAY: requires values and contexts
+
+How do you develop a reduction relation?
+- work through examples first.
+
+normal form : no redex
+
+semantics : function to final value (if closure you can't see inside)
+
+PL researchers have to evaluate model against reality (the "real" language)
+
+language/("dinosaur")   <-–e–->  model
+                     \         /
+                      v       v
+                     V_d  =? V_m
+
+==============================================================================
+AFTERNOON:
+
+Milner : "typed program can't go wrong"
+
+Matthias : he lied (he did not deal with partial functions)
+
+types are more expressive than contracts
+
+simply-typed λ-calculus
+
+classify is a model of runtime
+model exist to predict what will happen
+predict if program will get (un)stuck
+predict what expressions will yield at runtime
+two kinds of type systems
+- bad (sometimes correct)
+  - c++
+- good (milner)
+  - ML (up to well-known list of exceptions)
+    - rules out certain classes of errors
+
+Γ |- e : t
+Γ is environment
+
+SPECIFICATION of STLC:
+
+———– where Γ(x) = t
+ Γ |- x : t
+
+Γ |- n : int
+
+Γ |- + : int -> (int -> int)
+
+Γ[x<t} |- e :s
+—————————————
+Γ |- (λx:t.e) : t -> s
+
+Γ |- e₁ : t -> s   Γ |- e₂ : t
+—————————————————————————
+Γ |- (e₁ e₂) : s
+
+See REDEX documentation for more details.
+
+------------------------------------------------------------------------------
+
