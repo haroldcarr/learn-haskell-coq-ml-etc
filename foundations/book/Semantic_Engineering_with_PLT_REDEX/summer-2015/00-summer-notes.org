@@ -1,3 +1,16 @@
+Created       : 2015 Jul 27 (Mon) 13:48:40 by Harold Carr.
+Last Modified : 2015 Jul 28 (Tue) 19:54:54 by Harold Carr.
+
+http://redex.racket-lang.org/
+
+Course material: [[http://ccs.neu.edu/home/matthias/redex-workshop]]
+
+Solutions:
+- [[http://ccs.neu.edu/home/matthias/redex-workshop/lab-mon-aft.rkt]]
+- [[http://ccs.neu.edu/home/matthias/redex-workshop/lab-tue-mor.rkt]]
+
+
+
 Paul : GUIX (NixOs configed by Scheme)
 
 Nothing

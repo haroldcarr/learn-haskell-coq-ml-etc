@@ -1,12 +1,7 @@
 Created       : 2015 Jul 27 (Mon) 07:34:11 by Harold Carr.
-Last Modified : 2015 Jul 28 (Tue) 09:07:06 by Harold Carr.
-
-http://redex.racket-lang.org/
+Last Modified : 2015 Jul 28 (Tue) 19:49:10 by Harold Carr.
 
 MORNING:
-
-Course Outline:
-- [[ccs.neu.edu/home/matthias/redex-workshop]]
 
 λ = `^
 
