@@ -1,63 +1,118 @@
 #lang racket
-(require "common.rkt")
 (require redex)
+(require "close.rkt")
+(require "common.rkt")
 
 ;;
 ;; 5 Lab Designing Reductions
 ;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Exercise 4.
-;; Develop a βη reduction relation for Lambda-η.
+;; Given:
 
 (define-extended-language Lambda-η Lambda
   (e ::= .... n)
   (n ::= natural)
   (C ::=
      hole
-     (e ... C e ...)
+     (e ... C e ...)         ; call-by-name
      (lambda (x_!_ ...) C))
-  (v ::=
+  (v ::=                     ; values
      n
      (lambda (x ...) e)))
+
+(define lambda-η? (redex-match? Lambda-η e))
 
 (define -->β
   (reduction-relation
    Lambda-η
-   (--> (in-hole C ((lambda (x_1 ..._n) e) e_1 ..._n))
+   (--> (in-hole C ((lambda (x_1 ..._n) e) e_1 ..._n)) ; call-by-name
         (in-hole C (subst ([e_1 x_1] ...) e))
         β)))
 
+;; HC add tests:
+
+(define e1 (term ((lambda (x) x) 3)))
+(define e2 (term ((lambda (x) x)
+                  ((lambda (y) y) 3))))
+(define e3 (term ((lambda (a) (c a)) 1)))
+
+(module+ test
+  (test--> -->β (term  0                 )     ) ; expect nothing
+  (test--> -->β (term  (lambda (x) x)    )     ) ; expect nothing
+  (test--> -->β (term ((lambda (x) x) 3) )    3) ; β reduction
+  (test--> -->β e1 3)
+  ;; with α equivalence there is just one result
+  (test--> -->β #:equiv =α/racket
+           e2
+           (term ((lambda (x) x) 3)))
+  ;; without α equivalence there are two results
+  (test--> -->β
+           e2
+           (term ((lambda (x) x) 3))
+           (term ((lambda (y) y) 3)))
+  ;; do all redexes
+  (test-->> -->β
+           e2
+           3)
+  ;; application
+  (test--> -->β #:equiv =α/racket
+           e3
+           (term (c 1)))
+  )
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 4.
+;; Develop a βη reduction relation for Lambda-η.
+
+(module+ test
+  ;; see if new reduction handles existing above
+  (test-->> -->β-η
+           e2
+           3)
+  (test--> -->β
+           (term (lambda (a b c) (c a b c)))
+                   ) ; nothing, does not reduce using -->β
+  (test--> -->β-η
+           (term (lambda (a b c) (c a b c)))
+           (term c)) ; the η reduction
+  )
 
 (define -->β-η
   (extend-reduction-relation
    -->β
    Lambda-η
    (--> (in-hole C (lambda (x ..._n) (e e_1 ..._n)))
-        (in-hole C e))))
+        (in-hole C e)
+        β-η)))
 
-(define lambda-η? (redex-match? Lambda-η e))
+;; --------------------------------------------------
+;; Find a term that contains both a β- and an η-redex.
+;; Formulate a Redex test that validates this claim.
+;; Also use trace to graphically validate the claim.
 
 (module+ test
-  (test--> -->β-η #:equiv =α/racket (term ((lambda (x) x) 3)) 3)
+  (define ex (term ((lambda (a b c) (lambda (x y) (z x y)))
+                    1 2 3)))
   (test--> -->β-η #:equiv =α/racket
-           (term ((lambda (x) x)
-                  ((lambda (x) x) 3)))
-           (term ((lambda (x) x) 3)))
-  (test--> -->β-η #:equiv =α/racket
-           (term ((lambda (a) (c a)) 1))
-           (term (c 1)))
-  ;; this fails without handling η correctly
-  (test--> -->β-η #:equiv =α/racket
-           (term (lambda (a) (c a)))
-           (term c))
+            ex
+            (term ((lambda (a b c) z) 1 2 3)) ; η reduction
+            (term (lambda (x y) (z x y))))    ; β reduction
+  (test--> -->β-η
+            (term (lambda (x y) (z x y)))     ; β reduction result from above
+            (term z))
+  (test-->> -->β-η
+            ex
+            (term z))
+;  (traces -->β   ex)
+;  (traces -->β-η ex)
   )
 
-;;; Semantics
+;;--------------------------------------------------
+;; Develop the β and βη STANDARD REDUCTION RELATIONS.
+;; Hint Look up extend-reduction-relation to save some work.
+;; TODO - RESUME RIGHT HERE
 
 (define-extended-language Standard-η Lambda-η
-  (v ::= n (lambda (x ...) e))
   (E ::=
      hole
      (v ... E e ...)))
@@ -65,15 +120,52 @@
 (module+ test
   (define t0
     (term
-     ((lambda (x y) (x y))
-      ((lambda (x) x) (lambda (x) x))
-      ((lambda (x) x) 5))))
+     ((lambda (a b) (a b))
+      ((lambda (d) d) (lambda (e) e))
+      ((lambda (f) f) 5))))
   (define t0-one-step
     (term
-     ((lambda (x y) (x y))
-      (lambda (x) x)
-      ((lambda (x) x) 5))))
+     ((lambda (a b) (a b))
+      (lambda (e) e)
+      ((lambda (f) f) 5))))
 
+  ; yields only one term, leftmost-outermost
+  ; TODO
+;  (test--> -->β-s #:equiv =α/racket t0 t0-one-step)
+  ; but the transitive closure drives it to 5
+  (test-->> -->β-η-s t0 5))
+
+(define -->β-s
+  (extend-reduction-relation
+   -->β
+   Standard-η
+   (--> (in-hole E ((lambda (x_1 ..._n) e) v_1 ..._n))
+        (in-hole E (subst ((v_1 x_1) ...) e)))))
+
+(define -->β-η-s
+  (extend-reduction-relation
+   -->β-η
+   Lambda-η
+   ))
+
+;; TODO
+
+;; --------------------------------------------------
+;; SEMANTICS
+;; Use the standard reduction relations above to formulate a semantics for both variants.
+;; The above test case, reformulated for the standard reduction, must fail.
+;; Why?
+
+;; Note The semantics for βη requires some experimentation.
+
+;; Justify your non-standard definition of the run function.
+
+;; The βη semantics is equivalent to the β variant.
+;; Formulate this theorem as a metafunction. Use redex-check to test your theorem.
+
+;; Note Why does it make no sense to add η to this system?
+
+(module+ test
   (test--> s->βv-η t0 t0-one-step)
   ; but the transitive closure drives it to 5
   (test-->> s->βv-η t0 5)
@@ -112,6 +204,7 @@
   (test-equal (term (eval-value-η
                      (term ((lambda (x) x) (lambda (a) (c a))))))
               1)
+  #;
   (test-equal (term (eval-value-η
                      ((lambda (x) x) (lambda (a) (1 a)))))
               1)
@@ -140,3 +233,11 @@
 ;; Exercise 5.
 ;; Extend the by-value language with an addition operator.
 ;; TODO
+;; Equip both βv reduction system and βv standard reduction with rules
+;; that assign addition the usual semantics.
+;; Finally define a semantics functions for this language.
+;; Hint Your rules need to escape to Racket and use its addition operator.
+
+(module+ test
+  (test-results))
+  
