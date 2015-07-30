@@ -1,18 +1,28 @@
 Created       : 2015 Jul 27 (Mon) 07:34:11 by Harold Carr.
-Last Modified : 2015 Jul 29 (Wed) 20:54:29 by Harold Carr.
+Last Modified : 2015 Jul 30 (Thu) 12:10:00 by Harold Carr.
 
 http://redex.racket-lang.org/
 
-Course material: [[http://ccs.neu.edu/home/matthias/redex-workshop]]
+Course material:
+- [[http://ccs.neu.edu/home/matthias/redex-workshop]]
+- [[https://dvanhorn.github.io/redex-aam-tutorial/tutorial.rkt]]
 
 Solutions:
 - [[http://ccs.neu.edu/home/matthias/redex-workshop/lab-mon-aft.rkt]]
 - [[http://ccs.neu.edu/home/matthias/redex-workshop/lab-tue-mor.rkt]]
 
+Programming Languages and Lambda Calculi - Matthias Felleisen:
+- [[http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.193.6272&rep=rep1&type=pdf]]
+- [[https://www.cs.utah.edu/~mflatt/past-courses/cs7520/public_html/s06/notes.pdf]]
+
 Paul : GUIX (NixOs configed by Scheme)
 
 Nothing
 T = intersection_x:void Void
+
+about 45 students
+4 women (3 of them from asia)
+1 afro-american man
 
 ------------------------------------------------------------------------------
 
@@ -353,10 +363,26 @@ What he showed in these 3 days was his dissertation.
 
 ------------------------------------------------------------------------------
 
+THURSDAY MORNING - DAVID VAN HORN
 
+program analysis : predicting the behavior of programs ("without running it")
+- predict :doesn't crash
+- they are actually "run" in a way that makes the analysis computable
+  - abstract interpretation
+  - contrainsts, type inference
 
+take things we know about interpreters and apply to abstract interpretation
 
+environments are a way of optimizaing substitution
 
+EVAL : decomposing term to find redex
+CONTINUE : plug something into context
+APPLY : apply reduction axiom
 
+don't use imperative features if you need to write mathematical proofs
+
+abstract interpretation can tell you if you have a runtime type error
+
+abstract interpretation : program operation represented as finite grpph
 
 
