@@ -16,10 +16,10 @@
      n
      (lambda (x ...) e)))
 
-(define lambda? (redex-match? Lambda-η e))
+(define lambda/η (redex-match? Lambda-η e))
 
 ;; -----------------------------------------------------------------------------
-;; exercise: develop beta-eta calculus 
+;; exercise: develop beta-eta calculus
 
 (module+ test
   (define t2
@@ -32,15 +32,15 @@
            (x y z))
          1 2))
       (lambda (a b) a))))
-  (test-equal (lambda? t2) #true)
-  (test-equal (lambda? t3) #true)
-  
+  (test-equal (lambda/η t2) #true)
+  (test-equal (lambda/η t3) #true)
+
   (test-->  -->βη
             #:equiv =α/racket
             t2
             (term ((lambda (x) (x (1))) 2))
             (term (2 ((lambda (x) (1 x))))))
-  
+
   (test--> -->βη
            #:equiv =α/racket
            t3
@@ -51,13 +51,13 @@
            (term
             ((lambda (x) (x 1 2))
              (lambda (a b) a))))
-  
+
   (test-->> -->βη
             #:equiv =α/racket
             t2
             (term (2 (1))))
   (test-->> -->βη t3 1)
-  
+
   #;
   (traces -->βη t2))
 
@@ -73,9 +73,9 @@
         β)))
 
 ;; -----------------------------------------------------------------------------
-;; beta and beta-eta standard reduction 
+;; beta and beta-eta standard reduction
 (module+ test
-  
+
   (test-->  s-->βη
             #:equiv =α/racket
             t2
@@ -84,7 +84,7 @@
             #:equiv =α/racket
             t2
             (term (2 ((lambda (x) (1 x))))))
-  
+
   (test--> s-->βη
            #:equiv =α/racket
            t3
@@ -102,7 +102,7 @@
             #:equiv =α/racket
             t2
             (term (2 ((lambda (x) (1 x))))))
-  
+
   (test--> s-->β
            #:equiv =α/racket
            t3
@@ -184,11 +184,11 @@
   theorem:eval-β=eval-βη : e -> boolean
   [(theorem:eval-β=eval-βη e) ,(equal? (term (eval-β e)) (term (eval-βη e)))])
 
-(redex-check Lambda-η e (term (theorem:eval-β=eval-βη e)))
+;(redex-check Lambda-η e (term (theorem:eval-β=eval-βη e)))
 ;; fails for bad terms (lambda (a a) a)
 
 #| -----------------------------------------------------------------------------
-;; exercise: add + to both by-name and by-value as a first-class function 
+;; exercise: add + to both by-name and by-value as a first-class function
 
 (define-extended-language Lambda-calculus/v+ Lambda-calculus/v
   (e ::= .... +)

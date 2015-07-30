@@ -156,9 +156,7 @@
 (define-metafunction Lambda
   let : ((x e) ...) e -> e
   [(let ((x e) ...) e_body)
-   ((lambda (x ...) e_body) e ...)
-   ]
-  )
+   ((lambda (x ...) e_body) e ...)])
 
 (module+ test
   (test-equal (term (let () (lambda (x) x)))
