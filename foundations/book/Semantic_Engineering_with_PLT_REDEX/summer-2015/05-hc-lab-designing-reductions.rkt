@@ -14,7 +14,7 @@
   (n ::= natural)
   (C ::=
      hole
-     (e ... C e ...)         ; call-by-name
+     (e ... C e ...)
      (lambda (x_!_ ...) C))
   (v ::=                     ; values
      n
@@ -25,70 +25,69 @@
 (define -->β
   (reduction-relation
    Lambda-η
-   (--> (in-hole C ((lambda (x_1 ..._n) e) e_1 ..._n)) ; call-by-name
+   ;; call-by-name (because 'e' as args instead of 'v')
+   (--> (in-hole C ((lambda (x_1 ..._n) e) e_1 ..._n))
         (in-hole C (subst ([e_1 x_1] ...) e))
         β)))
 
 ;; HC add tests:
 
-(define e1 (term ((lambda (x) x) 3)))
-(define e2 (term ((lambda (x) x)
-                  ((lambda (y) y) 3))))
-(define e3 (term ((lambda (a) (c a)) 1)))
-
 (module+ test
   (test--> -->β (term  0                 )     ) ; expect nothing
   (test--> -->β (term  (lambda (x) x)    )     ) ; expect nothing
   (test--> -->β (term ((lambda (x) x) 3) )    3) ; β reduction
-  (test--> -->β e1 3)
-  ;; another β reduction
-  (test--> -->β #:equiv =α/racket
-           e3
-           (term (c 1)))
-  ;; β reduction (no futher redexes than above)
-  (test-->> -->β #:equiv =α/racket
-           e3
-           (term (c 1)))
+  (define id-id-of-3 (term ((lambda (x) x)
+                            ((lambda (y) y)
+                             3))))
   ;; with α equivalence there is just one result
   (test--> -->β #:equiv =α/racket
-           e2
+           id-id-of-3
            (term ((lambda (x) x) 3)))
   ;; withOUT α equivalence there are two results
   (test--> -->β
-           e2
+           id-id-of-3
            (term ((lambda (x) x) 3))
            (term ((lambda (y) y) 3)))
   ;; do all redexes
   (test-->> -->β
-           e2
+           id-id-of-3
            3)
+  (define has-β-η (term ((lambda (a b c)
+                           (lambda (x y) (z x y)))
+                         1 2 3)))
+  (test--> -->β #:equiv =α/racket
+           has-β-η
+           (term (lambda (x y) (z x y)))) ; does β
+  (test-->> -->β #:equiv =α/racket
+           has-β-η
+           (term (lambda (x y) (z x y)))) ; ONLY does β
   )
-  
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 4.
 ;; Develop a βη reduction relation for Lambda-η.
 
 (module+ test
   ;; see if new reduction handles examples from above
-  (test-->> -->β-η
-           e2
+  (test-->> -->βη
+           id-id-of-3
            3)
+  ; a possible η reduction
   (test--> -->β
-           (term (lambda (a b c) (c a b c)))
-                   ) ; nothing, does not reduce using -->β
-  ; the η reduction
-  (test--> -->β-η
-           (term (lambda (a b c) (c a b c)))
-           (term c))
+           (term (lambda (a b c) (z a b c)))
+                   ) ; nothing, does NOT reduce using -->β
+  (test--> -->βη
+           (term (lambda (a b c) (z a b c)))
+           (term z)) ;          DOES     reduce using -->βη
   )
 
-(define -->β-η
+(define -->βη
   (extend-reduction-relation
    -->β
    Lambda-η
    (--> (in-hole C (lambda (x ..._n) (e e_1 ..._n)))
         (in-hole C e)
-        β-η)))
+        η)))
 
 ;; --------------------------------------------------
 ;; Find a term that contains both a β and an η redex.
@@ -96,22 +95,19 @@
 ;; Also use trace to graphically validate the claim.
 
 (module+ test
-  (define ex (term ((lambda (a b c)
-                      (lambda (x y) (z x y)))
-                    1 2 3)))
-  (test--> -->β-η #:equiv =α/racket
-            ex
+  (test--> -->βη #:equiv =α/racket
+            has-β-η
             (term ((lambda (a b c) z) 1 2 3)) ; η reduction
             (term (lambda (x y) (z x y))))    ; β reduction
-  (test--> -->β-η
+  (test--> -->βη
             (term (lambda (x y) (z x y)))     ; β reduction result from above
             (term z))
   ; do all redexes
-  (test-->> -->β-η
-            ex
+  (test-->> -->βη
+            has-β-η
             (term z))
-;  (traces -->β   ex)
-;  (traces -->β-η ex)
+;  (traces -->β  has-β-η)
+;  (traces -->βη has-β-η)
   )
 
 ;;--------------------------------------------------
@@ -134,27 +130,37 @@
      ((lambda (a b) (a b))
       (lambda (e) e)
       ((lambda (f) f) 5))))
-
   ; yields only one term, leftmost-outermost
-  ; TODO : this currently returns multiple results
-  (test--> -->β-s #:equiv =α/racket t0 t0-one-step)
-  ; but the transitive closure drives it to final '5' value
-  (test-->> -->β-η-s t0 5))
+  (test--> s->vβ  #:equiv =α/racket t0 t0-one-step)
+  (test--> s->vβη #:equiv =α/racket t0 t0-one-step)
+  ; transitive closure drives it to final '5' value
+  (test-->> s->vβ  t0 5)
+  (test-->> s->vβη t0 5)
+  (test-->> s->vβ  #:equiv =α/racket
+           (term (lambda (a) (c a)))
+           (term (lambda (a) (c a)))) ; no reduction
+  (test-->> s->vβη #:equiv =α/racket
+           (term (lambda (a) (c a)))
+           (term c))                  ; η reduction
+  (test--> s->vβη #:equiv =α/racket
+           (term ((lambda (x) x) (lambda (a) (c a)))) ;; has β and η reductions possible
+           (term (lambda (a) (c a)))  ; β reduction
+           (term ((lambda (x) x) c))) ; η reduction
+  )
 
-(define -->β-s
-  (extend-reduction-relation
-   -->β
+(define s->vβ
+  (reduction-relation
    Standard-η
+   ;; by-value because 'v' as args
    (--> (in-hole E ((lambda (x_1 ..._n) e) v_1 ..._n))
         (in-hole E (subst ((v_1 x_1) ...) e)))))
 
-(define -->β-η-s
+(define s->vβη
   (extend-reduction-relation
-   -->β-η
-   Lambda-η
-   ))
-
-;; TODO
+   s->vβ
+   Standard-η
+   (--> (in-hole E (lambda (x ..._n) (e e_1 ..._n)))
+        (in-hole E e))))
 
 ;; --------------------------------------------------
 ;; SEMANTICS
@@ -166,39 +172,10 @@
 
 ;; Justify your non-standard definition of the run function.
 
-;; The βη semantics is equivalent to the β variant.
-;; Formulate this theorem as a metafunction. Use redex-check to test your theorem.
-
-;; Note Why does it make no sense to add η to this system?
-
-(module+ test
-  (test--> s->βv-η t0 t0-one-step)
-  ; but the transitive closure drives it to 5
-  (test-->> s->βv-η t0 5)
-  (test-->> s->βv-η #:equiv =α/racket
-           (term (lambda (a) (c a)))
-           (term c))
-  (test--> s->βv-η #:equiv =α/racket
-           (term ((lambda (a) (c a)) 1))
-           (term (c 1)))
-  (test--> s->βv-η #:equiv =α/racket
-           (term ((lambda (x) x) (lambda (a) (c a)))) ;; has β and η reductions possible
-           (term (lambda (a) (c a)))
-           (term ((lambda (x) x) c)))
-  )
-
-(define s->βv-η
-  (reduction-relation
-   Standard-η
-   (--> (in-hole E (lambda (x ..._n) (e e_1 ..._n)))
-        (in-hole E e))
-   (--> (in-hole E ((lambda (x_1 ..._n) e) v_1 ..._n))
-        (in-hole E (subst ((v_1 x_1) ...) e)))))
-
 (module+ test
   (test-equal (term (eval-value-η ,t0)) 5)
   (test-equal (term (eval-value-η ,t0-one-step)) 5)
- 
+
   (define t1
     (term ((lambda (x) x) (lambda (x) x))))
   (test-equal (lambda-η? t1) #true)
@@ -215,25 +192,32 @@
                      ((lambda (x) x) (lambda (a) (1 a)))))
               1)
   )
- 
+
 (define-metafunction Standard-η
   eval-value-η : e -> v or closure
   [(eval-value-η e) any_1 (where any_1 (run-value-η e))])
- 
+
 (define-metafunction Standard-η
   run-value-η : e -> v or closure
   [(run-value-η n) n]
   [(run-value-η v) closure]
   [(run-value-η e)
    (run-value-η e_again)
-   ; (v) here means s->βv-η is expected to be a function (i.e., return one result)
+   ; (v) here means s->vβη is expected to be a function (i.e., return one result)
    (where (e_again) ,(begin (display (term e)) (newline)
-                            (apply-reduction-relation s->βv-η (term e))))]
+                            (apply-reduction-relation s->vβη (term e))))]
   [(run-value-η e) stuck])
 
 ;; NOTE: there above 'where' fails because it returns multiple results (i.e., not a function):
 #;
-(apply-reduction-relation  s->βv-η (term ((lambda (x) x) (lambda (a) (1 a)))))
+(apply-reduction-relation  s->vβη (term ((lambda (x) x) (lambda (a) (1 a)))))
+
+;; --------------------------------------------------
+;; The βη semantics is equivalent to the β variant.
+;; Formulate this theorem as a metafunction. Use redex-check to test your theorem.
+
+;; Note Why does it make no sense to add η to this system?
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 5.
@@ -246,4 +230,3 @@
 
 (module+ test
   (test-results))
-  
