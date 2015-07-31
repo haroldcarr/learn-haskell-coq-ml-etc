@@ -130,6 +130,7 @@
      ((lambda (a b) (a b))
       (lambda (e) e)
       ((lambda (f) f) 5))))
+  ;(traces s->vβη t0)
   ; yields only one term, leftmost-outermost
   (test--> s->vβ  #:equiv =α/racket t0 t0-one-step)
   (test--> s->vβη #:equiv =α/racket t0 t0-one-step)
@@ -182,42 +183,44 @@
   (test-equal (redex-match? Standard-η e t1) #true)
   (test-equal (term (eval-value-η ,t1)) 'closure)
 
+  (test-equal (term (eval-value-η
+                     has-β-η))
+              (term stuck)) ;; stuck because multiple results, see below
+
   ;; has β and η reductions possible
-  #;
   (test-equal (term (eval-value-η
-                     (term ((lambda (x) x) (lambda (a) (c a))))))
-              1)
-  #;
-  (test-equal (term (eval-value-η
-                     ((lambda (x) x) (lambda (a) (1 a)))))
-              1)
+                     ((lambda (x) x) (lambda (a) (c a)))))
+              (term stuck)) ;; stuck because multiple results, see below
   )
 
 (define-metafunction Standard-η
-  eval-value-η : e -> v or closure
+  eval-value-η : e -> v or closure or stuck
   [(eval-value-η e) any_1 (where any_1 (run-value-η e))])
 
 (define-metafunction Standard-η
-  run-value-η : e -> v or closure
+  run-value-η : e -> v or closure or stuck
   [(run-value-η n) n]
   [(run-value-η v) closure]
   [(run-value-η e)
    (run-value-η e_again)
    ; (v) here means s->vβη is expected to be a function (i.e., return one result)
-   (where (e_again) ,(begin (display (term e)) (newline)
-                            (apply-reduction-relation s->vβη (term e))))]
+   (where (e_again) ,(let ([result (apply-reduction-relation s->vβη (term e))])
+                       (displayln result)
+                       result))]
   [(run-value-η e) stuck])
 
 ;; NOTE: there above 'where' fails because it returns multiple results (i.e., not a function):
 #;
-(apply-reduction-relation  s->vβη (term ((lambda (x) x) (lambda (a) (1 a)))))
+(apply-reduction-relation  s->vβη (term ((lambda (x) x) (lambda (a) (c a)))))
+;; => ( ((lambda (x) x) c)
+;;      (lambda (a) (c a))
+;;    )
 
 ;; --------------------------------------------------
 ;; The βη semantics is equivalent to the β variant.
 ;; Formulate this theorem as a metafunction. Use redex-check to test your theorem.
 
 ;; Note Why does it make no sense to add η to this system?
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 5.
