@@ -41,11 +41,19 @@
   (test--> -->β (term  (lambda (x) x)    )     ) ; expect nothing
   (test--> -->β (term ((lambda (x) x) 3) )    3) ; β reduction
   (test--> -->β e1 3)
+  ;; another β reduction
+  (test--> -->β #:equiv =α/racket
+           e3
+           (term (c 1)))
+  ;; β reduction (no futher redexes than above)
+  (test-->> -->β #:equiv =α/racket
+           e3
+           (term (c 1)))
   ;; with α equivalence there is just one result
   (test--> -->β #:equiv =α/racket
            e2
            (term ((lambda (x) x) 3)))
-  ;; without α equivalence there are two results
+  ;; withOUT α equivalence there are two results
   (test--> -->β
            e2
            (term ((lambda (x) x) 3))
@@ -54,10 +62,6 @@
   (test-->> -->β
            e2
            3)
-  ;; application
-  (test--> -->β #:equiv =α/racket
-           e3
-           (term (c 1)))
   )
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,16 +69,17 @@
 ;; Develop a βη reduction relation for Lambda-η.
 
 (module+ test
-  ;; see if new reduction handles existing above
+  ;; see if new reduction handles examples from above
   (test-->> -->β-η
            e2
            3)
   (test--> -->β
            (term (lambda (a b c) (c a b c)))
                    ) ; nothing, does not reduce using -->β
+  ; the η reduction
   (test--> -->β-η
            (term (lambda (a b c) (c a b c)))
-           (term c)) ; the η reduction
+           (term c))
   )
 
 (define -->β-η
@@ -86,12 +91,13 @@
         β-η)))
 
 ;; --------------------------------------------------
-;; Find a term that contains both a β- and an η-redex.
+;; Find a term that contains both a β and an η redex.
 ;; Formulate a Redex test that validates this claim.
 ;; Also use trace to graphically validate the claim.
 
 (module+ test
-  (define ex (term ((lambda (a b c) (lambda (x y) (z x y)))
+  (define ex (term ((lambda (a b c)
+                      (lambda (x y) (z x y)))
                     1 2 3)))
   (test--> -->β-η #:equiv =α/racket
             ex
@@ -100,6 +106,7 @@
   (test--> -->β-η
             (term (lambda (x y) (z x y)))     ; β reduction result from above
             (term z))
+  ; do all redexes
   (test-->> -->β-η
             ex
             (term z))
@@ -110,7 +117,6 @@
 ;;--------------------------------------------------
 ;; Develop the β and βη STANDARD REDUCTION RELATIONS.
 ;; Hint Look up extend-reduction-relation to save some work.
-;; TODO - RESUME RIGHT HERE
 
 (define-extended-language Standard-η Lambda-η
   (E ::=
@@ -130,9 +136,9 @@
       ((lambda (f) f) 5))))
 
   ; yields only one term, leftmost-outermost
-  ; TODO
-;  (test--> -->β-s #:equiv =α/racket t0 t0-one-step)
-  ; but the transitive closure drives it to 5
+  ; TODO : this currently returns multiple results
+  (test--> -->β-s #:equiv =α/racket t0 t0-one-step)
+  ; but the transitive closure drives it to final '5' value
   (test-->> -->β-η-s t0 5))
 
 (define -->β-s
