@@ -276,14 +276,29 @@
   )
 
 ;; Note Why does it make no sense to add η to this system?
+;; HC: because
+(module+ test
+  ;; This is OK : 'z' is bound
+  (test-->> -->βη #:equiv =α/racket
+            (term ((lambda (z)
+                     (lambda (a) (z a)))
+                   (lambda (x) x)))
+            (term (lambda (x) x)))
+  ;; But the η reduction does not check that the 'z' is bound.
+  (test-->> -->βη #:equiv =α/racket
+            (term ((lambda (ignore)
+                     (lambda (a) (z a)))
+                   (lambda (x) x)))
+            (term z))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 5.
 ;; Extend the by-value language with an addition operator.
 ;; - Equip both βv reduction system and βv standard reduction with rules
 ;;   that assign addition the usual semantics.
-;; - Finally define a semantics functions for this language.
 ;;   Hint Your rules need to escape to Racket and use its addition operator.
+;; - Finally define a semantics functions for this language.
 
 (define-extended-language Standard-η+ Standard-η
   (e ::= .... +)
