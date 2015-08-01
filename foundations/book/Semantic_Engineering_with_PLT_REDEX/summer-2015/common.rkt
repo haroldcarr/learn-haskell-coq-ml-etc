@@ -170,3 +170,10 @@
 ;; -----------------------------------------------------------------------------
 (module+ test
   (test-results))
+
+;; HC
+
+(define (id-display msg x)
+  (display msg)
+  (display " ")
+  (displayln x))

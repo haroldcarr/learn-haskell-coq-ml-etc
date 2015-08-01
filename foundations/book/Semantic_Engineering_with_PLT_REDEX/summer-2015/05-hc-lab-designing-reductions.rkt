@@ -57,7 +57,7 @@
                          1 2 3)))
   (test--> -->β #:equiv =α/racket
            has-β-η
-           (term (lambda (x y) (z x y)))) ; does β
+           (term (lambda (x y) (z x y)))) ;      does β
   (test-->> -->β #:equiv =α/racket
            has-β-η
            (term (lambda (x y) (z x y)))) ; ONLY does β
@@ -85,7 +85,8 @@
   (extend-reduction-relation
    -->β
    Lambda-η
-   (--> (in-hole C (lambda (x ..._n) (e e_1 ..._n)))
+   #:domain e
+   (--> (in-hole C (lambda (x ...) (e x ...)))
         (in-hole C e)
         η)))
 
@@ -154,13 +155,14 @@
    Standard-η
    ;; by-value because 'v' as args
    (--> (in-hole E ((lambda (x_1 ..._n) e) v_1 ..._n))
-        (in-hole E (subst ((v_1 x_1) ...) e)))))
+        (in-hole E (subst ((v_1 x_1) ...) e))
+        vβ)))
 
 (define s->vβη
   (extend-reduction-relation
    s->vβ
    Standard-η
-   (--> (in-hole E (lambda (x ..._n) (e e_1 ..._n)))
+   (--> (in-hole E (lambda (x ...) (e x ...)))
         (in-hole E e))))
 
 ;; --------------------------------------------------
@@ -169,52 +171,70 @@
 ;; The above test case, reformulated for the standard reduction, must fail.
 ;; Why?
 
-;; Note The semantics for βη requires some experimentation.
+;; Note The semantics for βη requires some experimentation (multiple results for η).
 
 ;; Justify your non-standard definition of the run function.
 
 (module+ test
-  (test-equal (term (eval-value-η ,t0)) 5)
-  (test-equal (term (eval-value-η ,t0-one-step)) 5)
+  (test-equal (term (eval-s->vβ  ,t0)) 5)
+  (test-equal (term (eval-s->vβη ,t0)) 5)
+  (test-equal (term (eval-s->vβ  ,t0-one-step)) 5)
+  (test-equal (term (eval-s->vβη ,t0-one-step)) 5)
 
   (define t1
     (term ((lambda (x) x) (lambda (x) x))))
   (test-equal (lambda-η? t1) #true)
   (test-equal (redex-match? Standard-η e t1) #true)
-  (test-equal (term (eval-value-η ,t1)) 'closure)
+  (test-equal (term (eval-s->vβ  ,t1)) 'closure)
+  (test-equal (term (eval-s->vβη ,t1)) 'closure)
 
-  (test-equal (term (eval-value-η
-                     has-β-η))
-              (term stuck)) ;; stuck because multiple results, see below
-
+  (test-equal (term (eval-s->vβ  ,has-β-η))
+              (term closure))
+  (test-equal (term (eval-s->vβη ,has-β-η))
+              (term closure))
   ;; has β and η reductions possible
-  (test-equal (term (eval-value-η
-                     ((lambda (x) x) (lambda (a) (c a)))))
+  (test-equal (term (eval-s->vβ  ((lambda (x) x) (lambda (a) (c a)))))
+              (term closure))
+  (test-equal (term (eval-s->vβη ((lambda (x) x) (lambda (a) (c a)))))
               (term stuck)) ;; stuck because multiple results, see below
   )
 
 (define-metafunction Standard-η
-  eval-value-η : e -> v or closure or stuck
-  [(eval-value-η e) any_1 (where any_1 (run-value-η e))])
+  eval-s->vβ : e -> v or closure or stuck
+  [(eval-s->vβ e) any_1 (where any_1 (run-s->vβ e))])
 
 (define-metafunction Standard-η
-  run-value-η : e -> v or closure or stuck
-  [(run-value-η n) n]
-  [(run-value-η v) closure]
-  [(run-value-η e)
-   (run-value-η e_again)
-   ; (v) here means s->vβη is expected to be a function (i.e., return one result)
-   (where (e_again) ,(let ([result (apply-reduction-relation s->vβη (term e))])
+  run-s->vβ : e -> v or closure or stuck
+  [(run-s->vβ n) n]
+  [(run-s->vβ v) closure]
+  [(run-s->vβ e)
+   (run-s->vβ e_again)
+   ; (v) here means s->vβ is expected to be a function (i.e., return one result)
+   (where (e_again) ,(let ([result (apply-reduction-relation s->vβ (term e))])
                        (displayln result)
                        result))]
-  [(run-value-η e) stuck])
+  [(run-s->vβ e) stuck])
 
-;; NOTE: there above 'where' fails because it returns multiple results (i.e., not a function):
-#;
-(apply-reduction-relation  s->vβη (term ((lambda (x) x) (lambda (a) (c a)))))
-;; => ( ((lambda (x) x) c)
-;;      (lambda (a) (c a))
-;;    )
+(define-metafunction Standard-η
+  eval-s->vβη : e -> v or closure or stuck
+  [(eval-s->vβη e) any_1 (where any_1 (run-s->vβη e))])
+
+(define-metafunction Standard-η
+  run-s->vβη : e -> v or closure or stuck
+  [(run-s->vβη n) n]
+  [(run-s->vβη v) closure]
+  [(run-s->vβη e)
+   (run-s->vβη e_again)
+   ;; (v va ...) here means s->vβη is expected to return more than one result
+   ;; e.g.,:
+   ;; (apply-reduction-relation  s->vβη (term ((lambda (x) x) (lambda (a) (c a)))))
+   ;; => ( ((lambda (x) x) c)
+   ;;      (lambda (a) (c a))
+   ;;    )
+   (where (e_again eq ...) ,(let ([result (apply-reduction-relation s->vβη (term e))])
+                              (displayln result)
+                              result))]
+  [(run-s->vβη e) stuck])
 
 ;; --------------------------------------------------
 ;; The βη semantics is equivalent to the β variant.
