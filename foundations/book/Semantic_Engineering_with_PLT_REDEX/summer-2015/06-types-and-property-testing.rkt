@@ -65,6 +65,12 @@ articulating the judgment rules:
   (Γ ::= ((x t) ...)))
 
 (module+ test
+  (test-equal (judgment-holds (⊢ () n int))
+              #true)
+  (test-equal (judgment-holds (⊢ ()  (lambda ((i int)) i) (int -> int)))
+              #true)
+  (test-equal (judgment-holds (⊢ () ((lambda ((i int)) i) n) int))
+              #true)
   ;; does it type check?
   (test-equal (judgment-holds (⊢ () ,e1 t))
               #true)
@@ -135,7 +141,9 @@ articulating the judgment rules:
   [(lookup ((x_1 t_1) ... (x t) (x_2 t_2) ...) x)
    t
    (side-condition (not (member (term x) (term (x_1 ...)))))]
-  [(lookup any_1 any_2) ,(error 'lookup "not found: ~e" (term x))])
+  [(lookup any_1 any_2)
+   ;; TODO: '(term x)' here always prints 'x, not the actual term
+   ,(error 'lookup "not found: ~e" (term x))])
 
 #|
 6.3 Subjection Reduction
@@ -161,19 +169,12 @@ reduction graph do not preserve types:
   (traces ->
           (term (lambda ((i int)) i))
           #:pred judge)
-  ;; TODO contract mismatch
-  #;
-  (traces ->
-          (term ((lambda ((i int)) i)
-                 1))
-          #:pred judge)
-  ;; TODO contract mismatch
   #;
   (traces ->
           (term (((lambda ((f (int -> int)))
                     f)
                   (lambda ((i int)) i))
-                 1))
+                 n))
           #:pred judge)
   )
 
