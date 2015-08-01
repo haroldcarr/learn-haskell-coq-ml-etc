@@ -18,7 +18,7 @@
      (lambda (x_!_ ...) C))
   (v ::=                     ; values
      n
-     (lambda (x ...) e)))
+     (lambda (x_!_ ...) e)))
 
 (define lambda-η? (redex-match? Lambda-η e))
 
@@ -163,7 +163,8 @@
    s->vβ
    Standard-η
    (--> (in-hole E (lambda (x ...) (e x ...)))
-        (in-hole E e))))
+        (in-hole E e)
+        η)))
 
 ;; --------------------------------------------------
 ;; SEMANTICS
@@ -171,11 +172,22 @@
 ;; The above test case, reformulated for the standard reduction, must fail.
 ;; Why?
 
-;; Note The semantics for βη requires some experimentation (multiple results for η).
+;; Note The semantics for βη requires some experimentation
+;; HC: because of multiple results for η.
 
 ;; Justify your non-standard definition of the run function.
+;; HC: just pick one of two results.  One will result in 'closure the other 'stuck.
 
 (module+ test
+  (test-equal (term (eval-s->vβ    0)) 0)
+  (test-equal (term (eval-s->vβη   0)) 0)
+  (test-equal (term (eval-s->vβ    x)) (term stuck)) ; by definition
+  (test-equal (term (eval-s->vβη   x)) (term stuck)) ; by definition
+  (test-equal (term (eval-s->vβ  (lambda (x) x)))
+              (term closure))
+  (test-equal (term (eval-s->vβη (lambda (x) x)))
+              (term closure))
+  (test-equal (term (eval-s->vβη   0)) 0)
   (test-equal (term (eval-s->vβ  ,t0)) 5)
   (test-equal (term (eval-s->vβη ,t0)) 5)
   (test-equal (term (eval-s->vβ  ,t0-one-step)) 5)
@@ -210,9 +222,7 @@
   [(run-s->vβ e)
    (run-s->vβ e_again)
    ; (v) here means s->vβ is expected to be a function (i.e., return one result)
-   (where (e_again) ,(let ([result (apply-reduction-relation s->vβ (term e))])
-                       (displayln result)
-                       result))]
+   (where (e_again) ,(id-display "run-s->vβ" (apply-reduction-relation s->vβ (term e))))]
   [(run-s->vβ e) stuck])
 
 (define-metafunction Standard-η
@@ -224,32 +234,73 @@
   [(run-s->vβη n) n]
   [(run-s->vβη v) closure]
   [(run-s->vβη e)
-   (run-s->vβη e_again)
+   (run-s->vβη e_again) ;; NOTE: if 'ea' is used, fails in different way
    ;; (v va ...) here means s->vβη is expected to return more than one result
    ;; e.g.,:
    ;; (apply-reduction-relation  s->vβη (term ((lambda (x) x) (lambda (a) (c a)))))
    ;; => ( ((lambda (x) x) c)
    ;;      (lambda (a) (c a))
    ;;    )
-   (where (e_again eq ...) ,(let ([result (apply-reduction-relation s->vβη (term e))])
-                              (displayln result)
-                              result))]
+   (where (e_again ea ...) ,(id-display "run-s->vβη" (apply-reduction-relation s->vβη (term e))))]
   [(run-s->vβη e) stuck])
 
 ;; --------------------------------------------------
 ;; The βη semantics is equivalent to the β variant.
 ;; Formulate this theorem as a metafunction. Use redex-check to test your theorem.
 
+(define-metafunction Standard-η
+  theorem:evalβ=evalβη : e -> e or (e)
+  [(theorem:evalβ=evalβη e)
+   ,(letrec ([rβ  (term (eval-s->vβ  e))]
+             [rβη (term (eval-s->vβη e))])
+      (if (equal? rβ rβη)
+          rβ
+          (list rβ rβη)))])
+
+(module+ test
+  (test-equal (term (theorem:evalβ=evalβη  0))
+              (term 0))
+  (test-equal (term (theorem:evalβ=evalβη  x))
+              (term stuck)) ; by definition
+  (test-equal (term (theorem:evalβ=evalβη (lambda (x) x)))
+              (term closure))
+  (test-equal (term (theorem:evalβ=evalβη ((lambda (x) x) 3)))
+              (term 3))
+  ;; NOT EQUIVALENT:
+  (test-equal (term (theorem:evalβ=evalβη ((lambda (x) x) (lambda (a) (c a)))))
+              (term (closure stuck)))
+  ;; generates stuff like: (lambda (a a) a)
+  ;; need to filter that out
+  #;
+  (redex-check Standard-η e (term (theorem:evalβ=evalβη e)))
+  )
+
 ;; Note Why does it make no sense to add η to this system?
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 5.
 ;; Extend the by-value language with an addition operator.
-;; TODO
-;; Equip both βv reduction system and βv standard reduction with rules
-;; that assign addition the usual semantics.
-;; Finally define a semantics functions for this language.
-;; Hint Your rules need to escape to Racket and use its addition operator.
+;; - Equip both βv reduction system and βv standard reduction with rules
+;;   that assign addition the usual semantics.
+;; - Finally define a semantics functions for this language.
+;;   Hint Your rules need to escape to Racket and use its addition operator.
+
+(define-extended-language Standard-η+ Standard-η
+  (e ::= .... +)
+  (v ::= .... +))
+
+(module+ test
+  (test-->> -->vβ+ (term ((lambda (x) (+ x 1)) 2)) 3)
+  (test-->> -->vβ+ (term ((lambda (x) (x 2 1)) +)) 3)
+  (test-->> -->vβ+ (term (+ (+ 1 1) 1)) 3)
+  )
+
+(define -->vβ+
+  (extend-reduction-relation
+   -->β
+   Standard-η+
+   (--> (in-hole C (+ n_1 n_2))
+        (in-hole C ,(+ (term n_1) (term n_2))))))
 
 (module+ test
   (test-results))

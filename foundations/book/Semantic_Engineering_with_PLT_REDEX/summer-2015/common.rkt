@@ -24,7 +24,10 @@
  ;; (subs ((e_1 x_1) ...) e) substitures e_1 for x_1 ... in e
  ;; e_1, ... e are in Lambda or extensions of Lambda that 
  ;; do not introduce binding constructs beyond lambda 
- subst)
+ subst
+
+ id-display
+ )
 
 ;; -----------------------------------------------------------------------------
 (require redex)
