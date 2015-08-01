@@ -176,4 +176,5 @@
 (define (id-display msg x)
   (display msg)
   (display " ")
-  (displayln x))
+  (displayln x)
+  x)
