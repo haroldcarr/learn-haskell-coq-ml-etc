@@ -1,10 +1,12 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2015 Jul 11 (Sat) 13:50:03 by Harold Carr.
+# Last Modified : 2015 Aug 04 (Tue) 18:51:28 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
 
 # CUSTOM:
+
+.stack-work
 
 .DS_Store
 .DS_Store?
