@@ -1,5 +1,5 @@
 Created       : 2015 Aug 04 (Tue) 18:03:11 by Harold Carr.
-Last Modified : 2015 Aug 04 (Tue) 18:47:17 by Harold Carr.
+Last Modified : 2015 Aug 04 (Tue) 19:07:17 by Harold Carr.
 
 install stack
 - https://github.com/commercialhaskell/stack
@@ -19,6 +19,8 @@ stack build
 
 src/Lib.hs
 - put scotty code and imports
+- https://github.com/scotty-web/scotty
+
 app/Main.hs
 - use Lib
 
