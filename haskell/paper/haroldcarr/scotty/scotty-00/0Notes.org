@@ -1,0 +1,32 @@
+Created       : 2015 Aug 04 (Tue) 18:03:11 by Harold Carr.
+Last Modified : 2015 Aug 04 (Tue) 18:47:17 by Harold Carr.
+
+install stack
+- https://github.com/commercialhaskell/stack
+
+mkdir <my-scotty>
+cd <my-scotty>
+
+stack update
+stack new
+stack build
+
+rename new-template.cabal to <my-scotty>.cabal (and similar rename inside that cabal file).
+
+*.cabal
+- Library/build-depends: scotty
+stack build
+
+src/Lib.hs
+- put scotty code and imports
+app/Main.hs
+- use Lib
+
+stack exec hc-scotty-exe
+OR
+stack ghci
+- scottyMain
+
+THEN
+http://localhost:3000/foo
+
