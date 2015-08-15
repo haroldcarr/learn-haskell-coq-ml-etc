@@ -1,12 +1,12 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2015 Aug 04 (Tue) 18:51:28 by Harold Carr.
+# Last Modified : 2015 Aug 15 (Sat) 13:14:02 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
 
 # CUSTOM:
 
-.stack-work
+*_flymake.*
 
 .DS_Store
 .DS_Store?
@@ -69,6 +69,8 @@ cabal-dev
 *.chi
 *.chs.h
 .virthualenv
+
+.stack-work
 
 haskell/0Notes*.org
 haskell/0Review.org
