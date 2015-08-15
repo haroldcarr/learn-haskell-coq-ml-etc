@@ -5,7 +5,7 @@
 
 EXERCISES
 Created       : 2015 Aug 15 (Sat) 11:51:48 by Harold Carr.
-Last Modified : 2015 Aug 15 (Sat) 12:31:21 by Harold Carr.
+Last Modified : 2015 Aug 15 (Sat) 13:34:10 by Harold Carr.
 -}
 
 import           Control.Monad      (MonadPlus (..))
@@ -40,31 +40,15 @@ maternalGrandfather :: Sheep -> Maybe Sheep
 maternalGrandfather s = do m <- mother s
                            father m
 
-{-
-5.1 Exercise 1: Do notation
-
-Rewrite maternalGrandfather, fathersMaternalGrandmother, and mothersPaternalGrandfather
-using return and >>= (do not use do)
--}
-
-maternalGrandfatherNoDo :: Sheep -> Maybe Sheep
-maternalGrandfatherNoDo s = mother s >>= father
-
 fathersMaternalGrandmother :: Sheep -> Maybe Sheep
 fathersMaternalGrandmother s = do f  <- father s
                                   gm <- mother f
 				  mother gm
 
-fathersMaternalGrandmotherNoDo :: Sheep -> Maybe Sheep
-fathersMaternalGrandmotherNoDo s = father s >>= mother >>= mother
-
 mothersPaternalGrandfather :: Sheep -> Maybe Sheep
 mothersPaternalGrandfather s = do m  <- mother s
                                   gf <- father m
 				  father gf
-
-mothersPaternalGrandfatherNoDo :: Sheep -> Maybe Sheep
-mothersPaternalGrandfatherNoDo s = mother s >>= father >>= father
 
 -- this builds our sheep family tree
 breedSheep :: Sheep
@@ -77,6 +61,22 @@ breedSheep = let adam   = Sheep "Adam" Nothing Nothing
 	         roger  = Sheep "Roger" (Just eve) (Just kronos)
 	         molly  = Sheep "Molly" (Just holly) (Just roger)
 	     in Sheep "Dolly" (Just molly) Nothing
+
+{-
+5.1 Exercise 1: Do notation
+
+Rewrite maternalGrandfather, fathersMaternalGrandmother, and mothersPaternalGrandfather
+using return and >>= (do not use do)
+-}
+
+maternalGrandfatherNoDo :: Sheep -> Maybe Sheep
+maternalGrandfatherNoDo s = mother s >>= father
+
+fathersMaternalGrandmotherNoDo :: Sheep -> Maybe Sheep
+fathersMaternalGrandmotherNoDo s = father s >>= mother >>= mother
+
+mothersPaternalGrandfatherNoDo :: Sheep -> Maybe Sheep
+mothersPaternalGrandfatherNoDo s = mother s >>= father >>= father
 
 {-
 5.2 Exercise 2: Combining monadic values
@@ -133,14 +133,14 @@ main = do
     print [mother dolly, father dolly]
     print (parent dolly)
     print (parentL dolly)
-    print ((parentMP dolly) >>= show)
+    print (parentMP dolly >>= show)
     print [mother dolly >>= mother
           ,father dolly >>= mother
           ,mother dolly >>= father
           ,father dolly >>= father]
     print (grandparent dolly)
     print (grandparentL dolly)
-    print ((grandparentMP dolly) >>= show)
+    print (grandparentMP dolly >>= show)
 
 -- END OF FILE
 
