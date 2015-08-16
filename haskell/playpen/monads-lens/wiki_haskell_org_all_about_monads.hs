@@ -7,8 +7,8 @@ module Wiki_haskell_org_all_about_monads
 where
 
 import           Control.Monad      (MonadPlus (..), ap, foldM, liftM, liftM2,
-                                     mapM, mapM_, sequence, sequence_, zipWithM,
-                                     zipWithM_)
+                                     mapM, mapM_, msum, sequence, sequence_,
+                                     zipWithM, zipWithM_)
 import           Control.Monad.Plus (mfromMaybe)
 import           Data.Char          (isSpace)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
@@ -17,7 +17,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 15 (Sat) 17:50:04 by Harold Carr.
+Last Modified : 2015 Aug 15 (Sat) 19:42:25 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -431,7 +431,38 @@ apEx1 = apEx 2 "double square decr negate"
 {-
 6.2.5 Functions for use with MonadPlus
 
+Used with monads that have a zero and a plus
+
+- like sum function on lists of integers
+msum :: MonadPlus m => [m a] -> m a
+msum xs = foldr mplus mzero xs
+
+List monad: msum==concat
+Maybe monad: msum==returns the first non-Nothing value from a list
 -}
+
+type Variable = String
+type Value = String
+type EnvironmentStack = [[(Variable,Value)]]
+
+lookupVar :: Variable -> EnvironmentStack -> Maybe Value
+lookupVar var stack = msum $ map (lookup var) stack
+
+{-
+instead of:
+
+lookupVar :: Variable -> EnvironmentStack -> Maybe Value
+lookupVar var []     = Nothing
+lookupVar var (e:es) = let val = lookup var e
+                       in maybe (lookupVar var es) Just val
+-}
+
+ms1 = lookupVar "depth" [[("name","test"),("depth","2")]
+                        ,[("depth","1")]]
+ms2 = lookupVar "width" [[("name","test"),("depth","2")]
+                        ,[("depth","1")]]
+ms3 = lookupVar "var2"  [[("var1","value1"),("var2","value2*")]
+                        ,[("var2","value2"),("var3","value3")]]
 
 ------------------------------------------------------------------------------
 
@@ -458,6 +489,7 @@ test = do
     print [getName "John", getName "Mike", getName "Harold"]
     print [ac1,ac2,ac3]
     print apEx1
+    print [ms1,ms2,ms3]
     return ()
 
 -- End of file.
