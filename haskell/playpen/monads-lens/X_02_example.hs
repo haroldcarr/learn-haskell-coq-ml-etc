@@ -1,3 +1,6 @@
+module X_02_example
+where
+
 {- Author:     Jeff Newbern
    Maintainer: Jeff Newbern <jnewbern@nomaware.com>
    Time-stamp: <Mon Nov 10 11:58:21 2003>
@@ -5,7 +8,7 @@
 
 EXERCISES
 Created       : 2015 Aug 15 (Sat) 11:51:48 by Harold Carr.
-Last Modified : 2015 Aug 15 (Sat) 13:34:10 by Harold Carr.
+Last Modified : 2015 Aug 15 (Sat) 16:42:39 by Harold Carr.
 -}
 
 import           Control.Monad      (MonadPlus (..))
@@ -52,15 +55,15 @@ mothersPaternalGrandfather s = do m  <- mother s
 
 -- this builds our sheep family tree
 breedSheep :: Sheep
-breedSheep = let adam   = Sheep "Adam" Nothing Nothing
-                 eve    = Sheep "Eve" Nothing Nothing
-		 uranus = Sheep "Uranus" Nothing Nothing
-		 gaea   = Sheep "Gaea" Nothing Nothing
-		 kronos = Sheep "Kronos" (Just gaea) (Just uranus)
-                 holly  = Sheep "Holly" (Just eve) (Just adam)
-	         roger  = Sheep "Roger" (Just eve) (Just kronos)
-	         molly  = Sheep "Molly" (Just holly) (Just roger)
-	     in Sheep "Dolly" (Just molly) Nothing
+breedSheep = let adam   = Sheep "Adam"   Nothing      Nothing
+                 eve    = Sheep "Eve"    Nothing      Nothing
+		 uranus = Sheep "Uranus" Nothing      Nothing
+		 gaea   = Sheep "Gaea"   Nothing      Nothing
+		 kronos = Sheep "Kronos" (Just gaea)  (Just uranus)
+                 holly  = Sheep "Holly"  (Just eve)   (Just adam)
+	         roger  = Sheep "Roger"  (Just eve)   (Just kronos)
+	         molly  = Sheep "Molly"  (Just holly) (Just roger)
+	     in           Sheep "Dolly"  (Just molly) Nothing
 
 {-
 5.1 Exercise 1: Do notation
