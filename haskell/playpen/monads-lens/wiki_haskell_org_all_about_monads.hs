@@ -20,7 +20,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 16 (Sun) 19:33:54 by Harold Carr.
+Last Modified : 2015 Aug 16 (Sun) 19:49:10 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -781,28 +781,22 @@ Hex overlaps decimal and alphanumeric: ambiguous grammar.
 
 data Parsed = Digit Integer | Hex Integer | Word String deriving Show
 
+parseCommon :: (Char -> Bool) -> Char -> Parsed -> [Parsed]
+parseCommon test c ret = if test c then return ret else mzero
+
 -- try to add char to parsed rep of hex digit
 parseHexDigt :: Parsed -> Char -> [Parsed]
-parseHexDigt (Hex n) c = if isHexDigit c then
-                            return (Hex ((n*16) + toInteger (digitToInt c)))
-		          else
-                            mzero
+parseHexDigt (Hex n) c = parseCommon isHexDigit c (Hex ((n*16) + toInteger (digitToInt c)))
 parseHexDigt _       _ = mzero
 
 -- try to add char to parsed rep of decimal digit
 parseDigit :: Parsed -> Char -> [Parsed]
-parseDigit (Digit n) c = if isDigit c then
-                            return (Digit ((n*10) + toInteger (digitToInt c)))
-                         else
-                            mzero
+parseDigit (Digit n) c = parseCommon isDigit    c (Digit ((n*10) + toInteger (digitToInt c)))
 parseDigit _         _ = mzero
 
 -- try to add a char to parsed rep of word
 parseWord :: Parsed -> Char -> [Parsed]
-parseWord (Word s) c   = if isAlpha c then
-                            return (Word (s ++ [c]))
-                         else
-                           mzero
+parseWord (Word s) c   = parseCommon isAlpha    c (Word (s ++ [c]))
 parseWord _        _   = mzero
 
 -- tries to parse input as hex, decimal and word
