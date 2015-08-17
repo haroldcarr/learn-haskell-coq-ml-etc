@@ -6,22 +6,26 @@
 module Wiki_haskell_org_all_about_monads
 where
 
-import           Control.Monad      (MonadPlus (..), ap, foldM, liftM, liftM2,
-                                     mapM, mapM_, msum, sequence, sequence_,
-                                     zipWithM, zipWithM_)
+import           Control.Arrow      ((&&&))
+import           Control.Monad      (MonadPlus (..), ap, foldM, guard, liftM,
+                                     liftM2, mapM, mapM_, msum, sequence,
+                                     sequence_, zipWithM, zipWithM_)
+import           Control.Monad.Except
 import           Control.Monad.Plus (mfromMaybe)
-import           Data.Char          (isSpace)
+import           Data.Char          (digitToInt, isAlpha, isDigit, isHexDigit, isSpace)
+import           Data.Maybe         (mapMaybe)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
                                           foldr, map, tail, words)
 import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 15 (Sat) 19:42:25 by Harold Carr.
+Last Modified : 2015 Aug 16 (Sun) 19:33:54 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
 
+------------------------------------------------------------------------------
 1.1 What is a monad?
 
 Monads
@@ -42,6 +46,7 @@ Monads : useful for structuring functional programs.
 - Isolation
   - imperative-style structures isolated from main program.
 
+------------------------------------------------------------------------------
 2 Meet the Monads
 
 -- the type of monad m
@@ -97,6 +102,7 @@ Maybe monad
 [] monad
 - combining computations that can return 0, 1, or more values
 
+------------------------------------------------------------------------------
 3.2 The Monad class
 
 class Monad m where
@@ -130,6 +136,7 @@ dadsMaternalGF3 s = mfromMaybe (father s) >>= mfromMaybe . mother >>= mfromMaybe
 'do' notation resembles imperative language
 - computation built from sequence of computations
 
+------------------------------------------------------------------------------
 4 The monad laws
 
 Monad laws not enforced by Haskell compiler: programmer must ensure.
@@ -189,10 +196,12 @@ parent :: Sheep -> [Sheep]
 parent s = mfromMaybe (mother s) `mplus` mfromMaybe (father s)
 
 {-
+------------------------------------------------------------------------------
 5 Exercises
 
 ./X_02_example.hs
 
+------------------------------------------------------------------------------
 6 Monad support in Haskell
 
 6.1.2 The sequencing functions
@@ -323,7 +332,7 @@ zipWithMHC :: Maybe [(Int,Char)]
 zipWithMHC  = zipWithM  (curry Just)  [1,2,3] "abc"
 
 zipWithM_HC :: IO ()
-zipWithM_HC = zipWithM_ (curry print) [1,2,3] ['a','b','c']
+zipWithM_HC = zipWithM_ (curry print) [1,2,3] ("abc"::String)
 
 {-
 6.2.3 Conditional monadic computations
@@ -445,6 +454,8 @@ type Variable = String
 type Value = String
 type EnvironmentStack = [[(Variable,Value)]]
 
+-- leverages lazyness : the map only does first element, then feeds results to msum
+--                      next element only looked at if first results in Nothing
 lookupVar :: Variable -> EnvironmentStack -> Maybe Value
 lookupVar var stack = msum $ map (lookup var) stack
 
@@ -463,6 +474,361 @@ ms2 = lookupVar "width" [[("name","test"),("depth","2")]
                         ,[("depth","1")]]
 ms3 = lookupVar "var2"  [[("var1","value1"),("var2","value2*")]
                         ,[("var2","value2"),("var3","value3")]]
+
+{-
+guard :: MonadPlus m => Bool -> m ()
+guard p = if p then return () else mzero
+
+Recall MonadPlus law : mzero >>= f == mzero.
+Placing guard in monad sequence will force any execution in which guard is False to be mzero.
+Like guard predicates in list comprehensions cause values that fail to become [].
+-}
+
+data Record = Rec {name::String, age::Int} deriving Show
+type DB = [Record]
+
+-- return records less than specified age.
+-- Uses guard to eliminate records at or over limit.
+-- Real code would be clearer using a filter except guard more useful when filter is complex.
+-- mapMaybe : eliminates Nothing/mzero from results
+-- guard returning mzero in causes do to skip 'return r'
+getYoungerThan :: Int -> DB -> [Record]
+getYoungerThan limit = mapMaybe (\r -> do { guard (age r < limit); return r })
+
+gytDB = [Rec "Marge" 37, Rec "Homer" 38, Rec "Bart" 11, Rec "Lisa" 8, Rec "Maggie" 2]
+gyt1 = getYoungerThan  3 gytDB
+gyt2 = getYoungerThan 38 gytDB
+
+{-
+------------------------------------------------------------------------------
+7 Introduction
+
+Monad
+- Computation
+- Combination strategy (>>= behavoir)
+
+Identity
+- N/A — Used with monad transformers
+- bound function applied to input value
+
+Maybe
+- computations with 0 or 1 result
+- Nothing input gives Nothing output
+- Just x input uses x as input to bound function
+
+Error
+- computations that can fail (e.g., "throw" exceptions)
+- binding passes failure info on without executing bound function
+  or uses successful values as input to bound function
+
+[] (List)
+- computations that can return multiple possible results
+- Maps bound function across input list, concatenates resulting lists
+
+IO
+- Computations which perform I/O
+- Sequential execution of I/O actions in the order of binding.
+
+State
+- Computations which maintain state
+- bound function applied to input value
+  produces state transition function that is applied to input state
+
+Reader
+- Computations that read from shared environment
+- bound function applied to input using the same environment
+
+Writer
+- Computations that write data in addition to computing values
+- Written data maintained separately from values.
+  bound function applied to input
+  anything it writes is appended to write data stream
+
+Cont
+- Computations that can be interrupted and restarted
+- bound function inserted into continuation chain
+
+------------------------------------------------------------------------------
+8 The Identity monad
+
+Computation: Simple function application
+Binding: bound function applied to input.: Identity x >>= f == Identity (f x)
+Use:  Monads derived from monad transformers applied to Identity monad.
+Zero/plus: None.
+Example: Identity a
+
+8.2 Motivation
+
+Does not embody a computation.
+Purpose is its role in monad transformers:
+- a monad transformer applied to Identity yields a non-transformer version of that monad.
+
+8.3 Definition
+
+newtype Identity a = Identity { runIdentity :: a }
+
+instance Monad Identity where
+    return a           = Identity a
+    (Identity x) >>= f = f x
+
+'runIdentity' follows style of monad definition that represents monad values as computations:
+- a monadic computation built up using monadic operators
+- value of computation extracted using run*
+
+8.4 Example
+
+-- derive the State monad using the StateT monad transformer
+type State s a = StateT s Identity a
+
+------------------------------------------------------------------------------
+9 The Maybe monad
+
+Computation: may return Nothing
+Binding: Nothing bypasses bound function, Just given as input to bound function.
+Use: sequences of computations that may return Nothing (e.g., database queries, dictionary lookups)
+Zero/plus: Nothing/zero. Plus returns first non-Nothing value or Nothing if both Nothing.
+Example: Maybe a
+
+9.2 Motivation
+
+combining a chain of Maybe computations: end chain early if any produces Nothing as output.
+
+9.3 Definition
+
+data Maybe a = Nothing | Just a
+
+instance Monad Maybe where
+    return         = Just
+    fail           = Nothing
+    Nothing  >>= f = Nothing
+    (Just x) >>= f = f x
+
+instance MonadPlus Maybe where
+    mzero             = Nothing
+    Nothing `mplus` x = x
+    x `mplus` _       = x
+
+9.4 Example
+
+Combining dictionary lookups.
+
+Given dictionaries : full name     -> email address
+                     nicknames     -> email address
+                     email address -> email preferences
+find email prefs given full or nick name.
+-}
+
+type EmailAddr = String
+data MailPref = HTML | Plain deriving Show
+
+data MailSystem = MS { fullNameDB::[(String,EmailAddr)],
+                       nickNameDB::[(String,EmailAddr)],
+		       prefsDB   ::[(EmailAddr,MailPref)] }
+
+data UserInfo = User { msName::String,
+                       nick::String,
+		       email::EmailAddr,
+		       prefs::MailPref }
+
+makeMailSystem :: [UserInfo] -> MailSystem
+makeMailSystem users = let fullLst = map (msName &&& email) users
+                           nickLst = map (nick   &&& email) users
+			   prefLst = map (email  &&& prefs) users
+		       in MS fullLst nickLst prefLst
+
+-- skips next steps if any returns Nothing
+getMailPrefs :: MailSystem -> String -> Maybe MailPref
+getMailPrefs sys name = do
+    addr <- lookup name (fullNameDB sys) `mplus` lookup name (nickNameDB sys)
+    lookup addr (prefsDB sys)
+
+mailSystem = makeMailSystem
+                 [ User "Bill Gates"      "billy"       "billg@microsoft.com" HTML
+                 , User "Bill Clinton"    "slick willy" "bill@hope.ar.us"     Plain
+                 , User "Michael Jackson" "jacko"       "mj@wonderland.org"   HTML
+                 ]
+
+mail1 = getMailPrefs mailSystem "billy"
+mail2 = getMailPrefs mailSystem "Bill Gates"
+mail3 = getMailPrefs mailSystem "Bill Clinton"
+mail4 = getMailPrefs mailSystem "foo"
+
+{-
+------------------------------------------------------------------------------
+10 The Control.Monad.Except monad
+
+10.1 Overview
+
+Computation: computations which may fail or throw exceptions
+Binding: Failure values bypass bound function. Success values are inputs to bound function.
+Use: Sequences of functions that may fail.
+Zero/plus: Zero/empty error. Plus executes 2nd arg if first fails.
+Example type: Either String a
+
+10.2 Motivation
+
+Except monad (aka Exception monad) combining computations that may
+throw exceptions by bypassing bound functions from point of exception
+to point handled.
+
+MonadError parameterized error type of error and monad type constructor.
+Common: Either String as monad type constructor. In this case (and others)
+the resulting monad is already defined as an instance of the MonadError class.
+
+Can also define custom error type and/or use monad type constructor other
+than Either String or Either IOError. These cases need instance definitions of
+Error and/or MonadError classes.
+
+10.3 Definition
+
+uses multi-parameter type classes and funDeps
+
+newtype ExceptT e m a :: * -> (* -> *) -> * -> *
+
+type Except e = ExceptT e Identity
+
+class (Monad m) => MonadError e m | m -> e where
+    throwError :: e -> m a
+    catchError :: m a -> (e -> m a) -> m a
+
+throwError used in monadic computation to begin exception processing
+catchError provides a handler function to handle previous errors and return to normal execution.
+
+Common idiom:
+
+do { action1; action2; action3 } `catchError` handler
+
+Handler and do-block must have same return type.
+
+10.4 Example
+
+Custom Error with ErrorMonad's throwError and catchError.
+
+Parse hexadecimal numbers.
+Throws exception on invalid character.
+Error records location of error.
+-}
+
+data ParseError = Err {location::Int, reason::String}
+
+-- Monad type constructor
+-- - failure : Left ParseError
+-- - success : Right a
+type ParseMonad = Either ParseError
+
+-- idx is current location in parse
+parseHexDigit :: Char -> Int -> ParseMonad Integer
+parseHexDigit c idx = if isHexDigit c then
+                        return (toInteger (digitToInt c))
+		      else
+		        throwError (Err idx ("Invalid character '" ++ [c] ++ "'"))
+
+-- idx is current location in parse
+parseHex :: String -> ParseMonad Integer
+parseHex s = parseHex' s 0 1
+  where parseHex' []      val _   = return val
+        parseHex' (c:cs)  val idx = do d <- parseHexDigit c idx
+	                               parseHex' cs ((val * 16) + d) (idx + 1)
+
+toString :: Integer -> ParseMonad String
+toString n = return $ show n
+
+-- convert hex String rep to decimal String rep
+convert :: String -> String
+convert s = let (Right str) = do { n <- parseHex s; toString n } `catchError` printError
+            in str
+  where printError e = return $ "At index " ++ show (location e) ++ ":" ++ reason e
+
+p1 = convert "FF"
+p2 = convert "FFFF"
+p3 = convert "FFFFxF"
+
+{-
+------------------------------------------------------------------------------
+11 The List monad
+
+Computation: return 0, 1, or more results.
+Binding: bound function applied to all inputs, resulting lists concatenated
+Use: Sequences of non-deterministic operations. Parsing ambiguous grammars is a common example.
+Zero/plus: []/zero ++/plus
+Example: [a]
+
+11.2 Motivation
+
+Useful when computations must deal with ambiguity.
+Enables all possibilities to be explored until ambiguity resolved.
+
+11.3 Definition
+
+instance Monad [] where
+    m >>= f  = concatMap f m
+    return x = [x]
+    fail s   = []
+
+instance MonadPlus [] where
+    mzero = []
+    mplus = (++)
+
+11.4 Example
+
+Parsing ambiguous grammars.
+
+Parse data into hex, decimal or alphanumeric words.
+Hex overlaps decimal and alphanumeric: ambiguous grammar.
+- "dead" is both a valid hex value and a word
+- "10" is both a decimal value of 10 and a hex value of 16
+-}
+
+data Parsed = Digit Integer | Hex Integer | Word String deriving Show
+
+-- try to add char to parsed rep of hex digit
+parseHexDigt :: Parsed -> Char -> [Parsed]
+parseHexDigt (Hex n) c = if isHexDigit c then
+                            return (Hex ((n*16) + toInteger (digitToInt c)))
+		          else
+                            mzero
+parseHexDigt _       _ = mzero
+
+-- try to add char to parsed rep of decimal digit
+parseDigit :: Parsed -> Char -> [Parsed]
+parseDigit (Digit n) c = if isDigit c then
+                            return (Digit ((n*10) + toInteger (digitToInt c)))
+                         else
+                            mzero
+parseDigit _         _ = mzero
+
+-- try to add a char to parsed rep of word
+parseWord :: Parsed -> Char -> [Parsed]
+parseWord (Word s) c   = if isAlpha c then
+                            return (Word (s ++ [c]))
+                         else
+                           mzero
+parseWord _        _   = mzero
+
+-- tries to parse input as hex, decimal and word
+-- result is list of possible parses
+parse :: Parsed -> Char -> [Parsed]
+parse p c = parseHexDigt p c `mplus` parseDigit p c `mplus` parseWord p c
+
+-- parse an entire String and return list of possible parsed values
+parseArg :: String -> [Parsed]
+parseArg s = do init <- return (Hex 0) `mplus` return (Digit 0) `mplus` return (Word "")
+                foldM parse init s
+
+-- show original input and all parses
+showResult :: String -> IO ()
+showResult s = do putStr s
+                  putStr ": "
+                  print (parseArg s)
+
+sr1 = showResult "dead"
+sr2 = showResult "10"
+sr3 = showResult "foo"
+
+{-
+------------------------------------------------------------------------------
+12 The IO monad
+-}
 
 ------------------------------------------------------------------------------
 
@@ -490,6 +856,10 @@ test = do
     print [ac1,ac2,ac3]
     print apEx1
     print [ms1,ms2,ms3]
+    print [gyt1,gyt2]
+    print [mail1,mail2,mail3,mail4]
+    print [p1,p2,p3]
+    sequence_ [sr1,sr2,sr3]
     return ()
 
 -- End of file.
