@@ -20,7 +20,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 16 (Sun) 19:49:10 by Harold Carr.
+Last Modified : 2015 Aug 16 (Sun) 20:17:09 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -786,18 +786,18 @@ parseCommon test c ret = if test c then return ret else mzero
 
 -- try to add char to parsed rep of hex digit
 parseHexDigt :: Parsed -> Char -> [Parsed]
-parseHexDigt (Hex n) c = parseCommon isHexDigit c (Hex ((n*16) + toInteger (digitToInt c)))
-parseHexDigt _       _ = mzero
+parseHexDigt (Hex   n) c = parseCommon isHexDigit c (Hex ((n*16) + toInteger (digitToInt c)))
+parseHexDigt _         _ = mzero
 
 -- try to add char to parsed rep of decimal digit
-parseDigit :: Parsed -> Char -> [Parsed]
-parseDigit (Digit n) c = parseCommon isDigit    c (Digit ((n*10) + toInteger (digitToInt c)))
-parseDigit _         _ = mzero
+parseDigit   :: Parsed -> Char -> [Parsed]
+parseDigit   (Digit n) c = parseCommon isDigit    c (Digit ((n*10) + toInteger (digitToInt c)))
+parseDigit   _         _ = mzero
 
 -- try to add a char to parsed rep of word
-parseWord :: Parsed -> Char -> [Parsed]
-parseWord (Word s) c   = parseCommon isAlpha    c (Word (s ++ [c]))
-parseWord _        _   = mzero
+parseWord    :: Parsed -> Char -> [Parsed]
+parseWord    (Word  s) c = parseCommon isAlpha    c (Word (s ++ [c]))
+parseWord _            _ = mzero
 
 -- tries to parse input as hex, decimal and word
 -- result is list of possible parses
@@ -822,6 +822,110 @@ sr3 = showResult "foo"
 {-
 ------------------------------------------------------------------------------
 12 The IO monad
+
+Computation: perform I/O
+Binding: I/O actions executed in order in which they are bound.
+         Failures throw I/O errors which can be caught and handled.
+Use: I/O
+Zero/plus: None.
+Example: IO a
+
+12.2 Motivation
+
+I/O not pure.  IO monad confines I/O computations
+
+12.3 Definition
+
+Definition platform-specific.
+No data constructors are exported and no functions to remove data from IO monad.
+IO monad is a one-way monad: essential to ensuring safety.
+Isolates side-effects and non-referentially transparent actions within
+ imperative-style computations of the IO monad.
+
+Monadic values usually known as computations.
+Balues in IO monad are called I/O actions.
+
+Functions exported from IO module do not perform I/O.
+They return I/O actions that describe an I/O operation to be performed.
+
+I/O actions combined within IO monad (in a purely functional manner)
+to create more complex I/O actions, resulting in final I/O action that is main value of program.
+
+IO type constructor is a Monad class and MonadError class.
+
+instance Monad IO where
+    return a = ...   -- function from a -> IO a
+    m >>= k  = ...   -- executes the I/O action m and binds the value to k's input
+    fail s   = ioError (userError s)
+
+data IOError = ...
+
+ioError :: IOError -> IO a
+ioError = ...
+
+userError :: String -> IOError
+userError = ...
+
+catch :: IO a -> (IOError -> IO a) -> IO a
+catch = ...
+
+try :: IO a -> IO (Either IOError a)
+try f = catch (do r <- f
+                  return (Right r))
+              (return . Left)
+
+instance Error IOError where
+  ...
+
+instance MonadError IO where
+    throwError = ioError
+    catchError = catch
+
+IO exports 'try' that executes I/O action
+- returns Right on success
+- Left IOError if I/O error caught
+
+12.4 Example
+
+Partial impl of "tr"
+-}
+
+-- translate char in set1 to corresponding char in set2
+translate :: String -> String -> Char -> Char
+translate []     _      c = c
+translate (x:xs) []     c = if x == c then ' ' else translate xs []  c
+translate (x:xs) [y]    c = if x == c then  y  else translate xs [y] c
+translate (x:xs) (y:ys) c = if x == c then  y  else translate xs ys  c
+
+-- translate an entire string
+translateString :: String -> String -> String -> String
+translateString set1 set2 str = map (translate set1 set2) str
+
+usage :: IOError -> IO ()
+usage e = do putStrLn "Usage: ex14 set1 set2"
+             putStrLn "Translates characters in set1 on stdin to the corresponding"
+             putStrLn "characters from set2 and writes the translation to stdout."
+
+-- translates stdin to stdout based on commandline arguments
+-- main2
+-- abcdefghijklmnopqrstuvwxyz
+-- ABCDEFGHIJKLMNOPQRSTUVWXYZ
+-- thegeekstuff
+-- => THEGEEKSTUFF
+main2 :: IO ()
+main2 = (do putStr "Enter set1: "
+            set1 <- getLine
+            putStr "Enter set2: "
+            set2 <- getLine
+            putStr "Enter contents: "
+            contents <- getLine
+            putStrLn $ translateString set1 set2 contents)
+        `catchError` usage
+
+{-
+------------------------------------------------------------------------------
+13 The State monad
+
 -}
 
 ------------------------------------------------------------------------------
