@@ -22,7 +22,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 17 (Mon) 21:29:44 by Harold Carr.
+Last Modified : 2015 Aug 18 (Tue) 07:04:24 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -957,7 +957,6 @@ State monad puts threading of state inside (>>=).
 
 Uses multi-parameter type classes and funDeps.
 
-Newtype definition:
 - State monad values are transition funs from initial state to (value,newState) pair.
 - State s a
   - value of type a
@@ -996,8 +995,7 @@ getRan bounds = do g      <- get
                    put g'
                    return x
 
--- State monad with StdGen as the state
--- no manually threading of random generator states
+-- State monad with StdGen as state, no manually threading of random generator states
 makeRandomValueST :: StdGen -> (RandomResults, StdGen)
 makeRandomValueST = runState (do n <- getRan (1  ,1000)
                                  c <- getRan ('a', 'z')
