@@ -17,12 +17,12 @@ import           Data.Char          (digitToInt, isAlpha, isDigit, isHexDigit, i
 import           Data.Maybe         (mapMaybe)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
                                           foldr, map, tail, words)
-import           System.Random
+import           System.Random      (Random(..), getStdGen, randomR, StdGen)
 import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 17 (Mon) 21:04:19 by Harold Carr.
+Last Modified : 2015 Aug 17 (Mon) 21:29:44 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -899,9 +899,9 @@ translate (x:xs) []     c = if x == c then ' ' else translate xs []  c
 translate (x:xs) [y]    c = if x == c then  y  else translate xs [y] c
 translate (x:xs) (y:ys) c = if x == c then  y  else translate xs ys  c
 
--- translate an entire string
+-- translate an entire string           this
 translateString :: String -> String -> String -> String
-translateString set1 set2 str = map (translate set1 set2) str
+translateString set1 set2 = map (translate set1 set2)
 
 usage :: IOError -> IO ()
 usage e = do putStrLn "Usage: ex14 set1 set2"
@@ -941,15 +941,14 @@ Pure language cannot update in place: violates referential transparency.
 Instead, simulate state.
 -}
 
-data MyType = MT Int Bool Char Int deriving Show
+data RandomResults = RR Int Char Int deriving Show
 
 -- Without state, thread by hand:
-makeRandomValue :: StdGen -> (MyType, StdGen)
-makeRandomValue g = let (n,g1) = randomR (1,100) g
-                        (b,g2) = random g1
-                        (c,g3) = randomR ('a','z') g2
-                        (m,g4) = randomR (-n,n) g3
-                    in (MT n b c m, g4)
+makeRandomValue :: StdGen -> (RandomResults, StdGen)
+makeRandomValue g = let (n,g1) = randomR (1  ,1000) g
+                        (c,g2) = randomR ('a', 'z') g1
+                        (m,g3) = randomR (-n ,   n) g2
+                    in (RR n c m, g3)
 
 {-
 State monad puts threading of state inside (>>=).
@@ -990,35 +989,50 @@ MonadState : interface for State monads
 thread random generator state through multiple calls to generation function.
 -}
 
--- returns random value and updates random generator state
-getAny :: (Random a) => State StdGen a
-getAny        = do g      <- get
-                   (x,g') <- return $ random g
-	           put g'
-	           return x
-
--- like getAny, but bounds random value
-getOne :: (Random a) => (a,a) -> State StdGen a
-getOne bounds = do g      <- get
+-- bounds random value
+getRan :: (Random a) => (a,a) -> State StdGen a
+getRan bounds = do g      <- get
                    (x,g') <- return $ randomR bounds g
                    put g'
                    return x
 
 -- State monad with StdGen as the state
 -- no manually threading of random generator states
-makeRandomValueST :: StdGen -> (MyType, StdGen)
-makeRandomValueST = runState (do n <- getOne (1,100)
-                                 b <- getAny
-                                 c <- getOne ('a','z')
-                                 m <- getOne (-n,n)
-                                 return (MT n b c m))
+makeRandomValueST :: StdGen -> (RandomResults, StdGen)
+makeRandomValueST = runState (do n <- getRan (1  ,1000)
+                                 c <- getRan ('a', 'z')
+                                 m <- getRan (-n ,   n)
+                                 return (RR n c m))
 
--- print a random value of MyType, showing the two implementations
+-- print a random value of RandomResults, showing the two implementations
 -- are equivalent
 rg = do
     g <- getStdGen
     print $ fst $ makeRandomValue   g
     print $ fst $ makeRandomValueST g
+
+{-
+getRan :: (Random a) => (a, a) -> State StdGen a
+getRan bounds =
+    get >>= \g ->
+    return $ randomR bounds g >>= \dummy ->
+    case dummy of
+        (x, g') -> put g' >> return x
+        _ -> fail "pattern match failure"
+
+makeRandomValueST :: StdGen -> (RandomResults, StdGen)
+makeRandomValueST =
+    runState
+      (getRan (1, 1000)  >>= \n ->
+       getRan ('a', 'z') >>= \c ->
+       getRan (- n, n)   >>= \m ->
+       return (RR n c m))
+
+rg =
+    getStdGen >>= \g ->
+    print $ fst $ makeRandomValue g >>
+    print $ fst $ makeRandomValueST g
+-}
 {-
 ------------------------------------------------------------------------------
 14 The Reader monad
