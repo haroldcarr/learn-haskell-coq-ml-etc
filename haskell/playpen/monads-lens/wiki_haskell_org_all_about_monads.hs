@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, PackageImports #-}
 {-
 :set -XOverloadedStrings
 -}
@@ -12,15 +12,17 @@ import           Control.Monad      (MonadPlus (..), ap, foldM, guard, liftM,
                                      sequence_, zipWithM, zipWithM_)
 import           Control.Monad.Except
 import           Control.Monad.Plus (mfromMaybe)
+import "mtl"     Control.Monad.State
 import           Data.Char          (digitToInt, isAlpha, isDigit, isHexDigit, isSpace)
 import           Data.Maybe         (mapMaybe)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
                                           foldr, map, tail, words)
+import           System.Random
 import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 16 (Sun) 20:17:09 by Harold Carr.
+Last Modified : 2015 Aug 17 (Mon) 21:04:19 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -926,6 +928,101 @@ main2 = (do putStr "Enter set1: "
 ------------------------------------------------------------------------------
 13 The State monad
 
+Computation: maintain state.
+Binding: threads state parameter through sequence of bound functions
+         so that same state value is never used twice, giving the illusion of in-place update.
+Use: sequences of operations that require a shared state.
+Zero/plus: None.
+Example:  State st a
+
+13.2 Motivation
+
+Pure language cannot update in place: violates referential transparency.
+Instead, simulate state.
+-}
+
+data MyType = MT Int Bool Char Int deriving Show
+
+-- Without state, thread by hand:
+makeRandomValue :: StdGen -> (MyType, StdGen)
+makeRandomValue g = let (n,g1) = randomR (1,100) g
+                        (b,g2) = random g1
+                        (c,g3) = randomR ('a','z') g2
+                        (m,g4) = randomR (-n,n) g3
+                    in (MT n b c m, g4)
+
+{-
+State monad puts threading of state inside (>>=).
+
+13.3 Definition
+
+Uses multi-parameter type classes and funDeps.
+
+Newtype definition:
+- State monad values are transition funs from initial state to (value,newState) pair.
+- State s a
+  - value of type a
+  - inside the State monad with state of type s.
+newtype State s a = State { runState :: (s -> (a,s)) }
+
+- return : creates state transition fun that sets value but leaves state unchanged.
+- binding: creates state transition fun that applies right arg to val
+           and new state from its left-hand argument.
+instance Monad (State s) where
+    return a        = State $ \s -> (a,s)
+    (State x) >>= f = State $ \s -> let (v,s') = x s in runState (f v) s'
+
+class MonadState m s | m -> s where
+    get :: m s
+    put :: s -> m ()
+
+instance MonadState (State s) s where
+    get   = State $ \s -> (s,s)
+    put s = State $ \_ -> ((),s)
+
+MonadState : interface for State monads
+- get : retrieves state by copying it as the value
+- put : sets state of monad and does not yield a value
+- gets: retrieves function of the state.
+
+13.4 Example
+
+thread random generator state through multiple calls to generation function.
+-}
+
+-- returns random value and updates random generator state
+getAny :: (Random a) => State StdGen a
+getAny        = do g      <- get
+                   (x,g') <- return $ random g
+	           put g'
+	           return x
+
+-- like getAny, but bounds random value
+getOne :: (Random a) => (a,a) -> State StdGen a
+getOne bounds = do g      <- get
+                   (x,g') <- return $ randomR bounds g
+                   put g'
+                   return x
+
+-- State monad with StdGen as the state
+-- no manually threading of random generator states
+makeRandomValueST :: StdGen -> (MyType, StdGen)
+makeRandomValueST = runState (do n <- getOne (1,100)
+                                 b <- getAny
+                                 c <- getOne ('a','z')
+                                 m <- getOne (-n,n)
+                                 return (MT n b c m))
+
+-- print a random value of MyType, showing the two implementations
+-- are equivalent
+rg = do
+    g <- getStdGen
+    print $ fst $ makeRandomValue   g
+    print $ fst $ makeRandomValueST g
+{-
+------------------------------------------------------------------------------
+14 The Reader monad
+
 -}
 
 ------------------------------------------------------------------------------
@@ -958,6 +1055,7 @@ test = do
     print [mail1,mail2,mail3,mail4]
     print [p1,p2,p3]
     sequence_ [sr1,sr2,sr3]
+    rg
     return ()
 
 -- End of file.
