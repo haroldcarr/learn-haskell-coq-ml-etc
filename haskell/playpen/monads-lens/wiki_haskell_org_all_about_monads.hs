@@ -16,13 +16,15 @@ import "mtl"     Control.Monad.State
 import           Data.Char          (digitToInt, isAlpha, isDigit, isHexDigit, isSpace)
 import           Data.Maybe         (mapMaybe)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
-                                          foldr, map, tail, words)
+                                          foldr, head, map, tail, words)
 import           System.Random      (Random(..), getStdGen, randomR, StdGen)
+import qualified Test.HUnit         as T
+import qualified Test.HUnit.Util    as U
 import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 18 (Tue) 07:04:24 by Harold Carr.
+Last Modified : 2015 Aug 19 (Wed) 09:25:41 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -83,6 +85,12 @@ momsPaternalGF1 s = case mother s of
                         Just m  -> case father m of
                                        Nothing -> Nothing
                                        Just gf -> father gf
+
+mom1 = U.t "mom1" (show (mother $ breedSheep)) (show (Just "Molly"))
+dad1 = U.t "dad1" (show (father $ breedSheep)) (show (Nothing::Maybe Sheep))
+mgf1 = U.t "mgf1" (show (maternalGF1 $ breedSheep)) (show (Just "Roger"))
+mpgf1 = U.t "mpgf1" (show (momsPaternalGF1 $ breedSheep)) (show (Just "Kronos"))
+
 {-
 2.4 List is also a monad
 
@@ -93,8 +101,9 @@ List monad enables computations that can return 0, 1, or more values.
 concatMap ::            (a -> [b]) -> [a] -> [b]
 -}
 
-listEx = [1,2,3] >>= \x -> [x + 1]
--- => [2,3,4]
+listEx = U.t "listEx"
+         ([1,2,3] >>= \x -> [x + 1])
+         [2,3,4]
 
 {-
 2.5 Summary
@@ -131,6 +140,11 @@ maternalGF3 s = mfromMaybe (mother s) >>= mfromMaybe . father
 
 dadsMaternalGF3 :: Sheep -> [Sheep]
 dadsMaternalGF3 s = mfromMaybe (father s) >>= mfromMaybe . mother >>= mfromMaybe . mother
+
+mgf2 = U.t "mgf2" (show (maternalGF2 $ breedSheep)) (show $ Just "Roger")
+dmgf2 = U.t "dmgf2" (show (dadsMaternalGF2 $ breedSheep)) (show (Nothing::Maybe Sheep))
+mgf3 = U.t "mgf3" (show (maternalGF3 $ breedSheep)) (show ["Roger"])
+dmgf3 = U.t "dmgf3" (show (dadsMaternalGF3 $ breedSheep)) (show ([]::[String]))
 
 {-
 3.4 Do notation
@@ -197,6 +211,9 @@ Adding two Maybe values gives first value that is not Nothing
 parent :: Sheep -> [Sheep]
 parent s = mfromMaybe (mother s) `mplus` mfromMaybe (father s)
 
+prnt1 = U.t "prnt1" (show (parent $ breedSheep)) (show ["Molly"])
+prnt2 = U.t "prnt1" (show (parent (head (parent $ breedSheep)))) (show ["Holly","Roger"])
+
 {-
 ------------------------------------------------------------------------------
 5 Exercises
@@ -217,11 +234,8 @@ sequence = foldr mcons (return [])
   where mcons p q = p >>= \x -> q >>= \y -> return (x:y)
 -}
 
-seqExM :: Maybe [Integer]
-seqExM = sequence [Just 1, Just 2]
-
-seqExL :: [[Integer]]
-seqExL = sequence [[     1], [     2]]
+seqExM = U.t "seqExM" (sequence [Just 1,  Just 2]) (Just [1,2])
+seqExL = U.t "seqExL" (sequence [[    1], [    2]])     [[1,2]]
 
 {-          mcons
            /     \
@@ -269,8 +283,7 @@ map  ::            (a ->   b) -> [a] ->   [b]
 mapM :: Monad m => (a -> m b) -> [a] -> m [b]
 -}
 
-mapMExM :: Maybe [Integer]
-mapMExM = mapM Just [1,2,3]
+mapMExM = U.t "mapMExM" (mapM Just [1,2,3]) (Just [1,2,3])
 
 mapM_ExM :: IO ()
 mapM_ExM = mapM_ print [1,2,3]
@@ -303,8 +316,8 @@ traceFamily :: Monad m => Sheep -> [ Sheep -> m Sheep ] -> m Sheep
 traceFamily = foldM getParent
   where getParent s f = f s
 
-paternalGrandmotherEx        s = traceFamily s [father, mother]
-mothersPaternalGrandfatherEx s = traceFamily s [mother, father, father]
+paternalGrandmotherEx        = U.t "pgm"  (show (traceFamily (breedSheep) [father, mother])) (show (Nothing::Maybe Sheep))
+mothersPaternalGrandfatherEx = U.t "mpgf" (show (traceFamily (breedSheep) [mother, father, father])) (show (Just "Kronos"))
 
 {-
 Typical use of foldM is within a do block.
@@ -964,24 +977,18 @@ Uses multi-parameter type classes and funDeps.
 newtype State s a = State { runState :: (s -> (a,s)) }
 
 - return : creates state transition fun that sets value but leaves state unchanged.
-- binding: creates state transition fun that applies right arg to val
+- bind   : creates state transition fun that applies right arg to val
            and new state from its left-hand argument.
 instance Monad (State s) where
     return a        = State $ \s -> (a,s)
     (State x) >>= f = State $ \s -> let (v,s') = x s in runState (f v) s'
 
-class MonadState m s | m -> s where
-    get :: m s
-    put :: s -> m ()
-
 instance MonadState (State s) s where
-    get   = State $ \s -> (s,s)
-    put s = State $ \_ -> ((),s)
-
-MonadState : interface for State monads
-- get : retrieves state by copying it as the value
-- put : sets state of monad and does not yield a value
-- gets: retrieves function of the state.
+--  get  :: m s
+    get   = State $ \s -> (s,s)    -- retrieves state by copying it as the value
+--  put  :: s -> m ()
+    put s = State $ \_ -> ((),s)   -- sets state of monad and does not yield a value
+--  gets                           -- retrieves function of the state
 
 13.4 Example
 
@@ -1011,25 +1018,21 @@ rg = do
 
 {-
 getRan :: (Random a) => (a, a) -> State StdGen a
-getRan bounds =
-    get >>= \g ->
-    return $ randomR bounds g >>= \dummy ->
-    case dummy of
-        (x, g') -> put g' >> return x
-        _ -> fail "pattern match failure"
+getRan bounds = get                       >>= \g       ->
+                return $ randomR bounds g >>= \(x, g') ->
+                put g'                    >>
+                return x
 
 makeRandomValueST :: StdGen -> (RandomResults, StdGen)
-makeRandomValueST =
-    runState
-      (getRan (1, 1000)  >>= \n ->
-       getRan ('a', 'z') >>= \c ->
-       getRan (- n, n)   >>= \m ->
-       return (RR n c m))
+makeRandomValueST = runState
+                      (getRan (1, 1000)   >>= \n ->
+                       getRan ('a', 'z')  >>= \c ->
+                       getRan (- n, n)    >>= \m ->
+                       return (RR n c m))
 
-rg =
-    getStdGen >>= \g ->
-    print $ fst $ makeRandomValue g >>
-    print $ fst $ makeRandomValueST g
+rg = getStdGen                            >>= \g ->
+     print $ fst $ makeRandomValue   g    >>
+     print $ fst $ makeRandomValueST g
 -}
 {-
 ------------------------------------------------------------------------------
@@ -1039,23 +1042,16 @@ rg =
 
 ------------------------------------------------------------------------------
 
+testing =
+    T.runTestTT $ T.TestList $
+        mom1 ++ dad1 ++ mgf1 ++ mpgf1 ++ listEx ++ mgf2 ++ dmgf2 ++ mgf3 ++ dmgf3 ++ prnt1 ++ prnt2 ++
+        seqExM ++ seqExL ++ mapMExM ++ paternalGrandmotherEx ++ mothersPaternalGrandfatherEx
+
 test :: IO ()
 test = do
     let dolly = breedSheep
-    print (mother dolly)
-    print [maternalGF1 dolly, maternalGF2 dolly]
-    print (maternalGF3 dolly)
-    print (momsPaternalGF1 dolly)
-    print (dadsMaternalGF2 dolly)
-    print (dadsMaternalGF3 dolly)
-    print (parent dolly)
-    print seqExM
-    print seqExL
     seq_ExM
-    print mapMExM
     mapM_ExM
-    print (paternalGrandmotherEx dolly)
-    print (mothersPaternalGrandfatherEx dolly)
     print (traceFamily dolly [mother,mother,mother])
     print zipWithMHC
     _ <- zipWithM_HC

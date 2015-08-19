@@ -8,7 +8,7 @@ where
 
 EXERCISES
 Created       : 2015 Aug 15 (Sat) 11:51:48 by Harold Carr.
-Last Modified : 2015 Aug 15 (Sat) 16:42:39 by Harold Carr.
+Last Modified : 2015 Aug 19 (Wed) 09:25:33 by Harold Carr.
 -}
 
 import           Control.Monad      (MonadPlus (..))
@@ -24,7 +24,7 @@ Usage: Compile the code and execute the resulting program.
 -}
 
 -- everything you need to know about sheep
-data Sheep = Sheep {name::String, mother::Maybe Sheep, father::Maybe Sheep}
+data Sheep = Sheep {name::String, mother::Maybe Sheep, father::Maybe Sheep} deriving Eq
 
 -- we show sheep by name
 instance Show Sheep where
