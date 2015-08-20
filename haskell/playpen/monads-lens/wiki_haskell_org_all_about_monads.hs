@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 19 (Wed) 17:04:15 by Harold Carr.
+Last Modified : 2015 Aug 19 (Wed) 17:14:14 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -86,10 +86,10 @@ momsPaternalGF1 s = case mother s of
                                        Nothing -> Nothing
                                        Just gf -> father gf
 
-mom1 = U.t "mom1" (show (mother $ breedSheep)) (show (Just "Molly"))
-dad1 = U.t "dad1" (show (father $ breedSheep)) (show (Nothing::Maybe Sheep))
-mgf1 = U.t "mgf1" (show (maternalGF1 $ breedSheep)) (show (Just "Roger"))
-mpgf1 = U.t "mpgf1" (show (momsPaternalGF1 $ breedSheep)) (show (Just "Kronos"))
+mom1  = U.t "mom1"  (show (mother breedSheep))           (show (Just "Molly"))
+dad1  = U.t "dad1"  (show (father breedSheep))           (show (Nothing::Maybe Sheep))
+mgf1  = U.t "mgf1"  (show (maternalGF1 breedSheep))      (show (Just "Roger"))
+mpgf1 = U.t "mpgf1" (show (momsPaternalGF1 breedSheep))  (show (Just "Kronos"))
 
 {-
 2.4 List is also a monad
@@ -141,14 +141,10 @@ maternalGF3 s = mfromMaybe (mother s) >>= mfromMaybe . father
 dadsMaternalGF3 :: Sheep -> [Sheep]
 dadsMaternalGF3 s = mfromMaybe (father s) >>= mfromMaybe . mother >>= mfromMaybe . mother
 
-mgf2  = U.t "mgf2"  (show (maternalGF2 $ breedSheep))
-                    (show $ Just "Roger")
-dmgf2 = U.t "dmgf2" (show (dadsMaternalGF2 $ breedSheep))
-                    (show (Nothing::Maybe Sheep))
-mgf3  = U.t "mgf3"  (show (maternalGF3 $ breedSheep))
-                    (show ["Roger"])
-dmgf3 = U.t "dmgf3" (show (dadsMaternalGF3 $ breedSheep))
-                    (show ([]::[String]))
+mgf2  = U.t "mgf2"  (show (maternalGF2 breedSheep))           (show $ Just "Roger")
+dmgf2 = U.t "dmgf2" (show (dadsMaternalGF2 breedSheep))       (show (Nothing::Maybe Sheep))
+mgf3  = U.t "mgf3"  (show (maternalGF3 breedSheep))           (show ["Roger"])
+dmgf3 = U.t "dmgf3" (show (dadsMaternalGF3 breedSheep))       (show ([]::[String]))
 
 {-
 3.4 Do notation
@@ -215,10 +211,8 @@ Adding two Maybe values gives first value that is not Nothing
 parent :: Sheep -> [Sheep]
 parent s = mfromMaybe (mother s) `mplus` mfromMaybe (father s)
 
-prnt1 = U.t "prnt1" (show (parent $ breedSheep))
-                    (show ["Molly"])
-prnt2 = U.t "prnt1" (show (parent (head (parent $ breedSheep))))
-                    (show ["Holly","Roger"])
+prnt1 = U.t "prnt1" (show (parent breedSheep))                     (show ["Molly"])
+prnt2 = U.t "prnt1" (show (parent (head (parent breedSheep))))     (show ["Holly","Roger"])
 
 {-
 ------------------------------------------------------------------------------
@@ -325,12 +319,9 @@ traceFamily :: Monad m => Sheep -> [ Sheep -> m Sheep ] -> m Sheep
 traceFamily = foldM getParent
   where getParent s f = f s
 
-fm  = U.t "fm"  (show (traceFamily (breedSheep) [father, mother]))
-                (show (Nothing::Maybe Sheep))
-mff = U.t "mff" (show (traceFamily (breedSheep) [mother, father, father]))
-                (show (Just "Kronos"))
-mmm = U.t "mmm" (show (traceFamily (breedSheep) [mother,mother,mother]))
-                (show (Just "Eve"))
+fm  = U.t "fm"  (show (traceFamily breedSheep [father, mother]))         (show (Nothing::Maybe Sheep))
+mff = U.t "mff" (show (traceFamily breedSheep [mother, father, father])) (show (Just "Kronos"))
+mmm = U.t "mmm" (show (traceFamily breedSheep [mother,mother,mother]))   (show (Just "Eve"))
 
 {-
 Typical use of foldM is within a do block.
@@ -414,8 +405,8 @@ getName name = do let db = [("John", "Smith, John"), ("Mike", "Caine, Michael")]
 The difference is even greater when lifting functions with more arguments.
 -}
 
-gn = U.t "gn" ([getName "John", getName "Mike", getName "Harold"])
-              [Just "John Smith",Just "Michael Caine",Nothing]
+gn = U.t "gn" [   getName "John",      getName "Mike", getName "Harold"]
+              [Just "John Smith",Just "Michael Caine", Nothing         ]
 
 {-
 Lifting enables  concise higher-order functions.
@@ -455,10 +446,8 @@ Useful when working with higher-order functions and monads.
 Effect of ap depends on the monad in which it is used.
 -}
 
-apEx1 = U.t "apEx1" ([(*2),(+3)] `ap` [0,1,2])
-                    [0,2,4,3,4,5]
-apEx2 = U.t "apEx2" ((Just (*2)) `ap` (Just 3))
-                    (Just 6)
+apEx1 = U.t "apEx1" ([(*2),(+3)] `ap` [0,1,2])        [0,2,4,3,4,5]
+apEx2 = U.t "apEx2" (Just (*2)   `ap` Just 3)         (Just 6)
 
 -- lookup the commands and fold ap into the command list to
 -- compute a result.
