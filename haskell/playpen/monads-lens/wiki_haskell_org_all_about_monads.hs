@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 19 (Wed) 09:25:41 by Harold Carr.
+Last Modified : 2015 Aug 19 (Wed) 17:04:15 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -141,10 +141,14 @@ maternalGF3 s = mfromMaybe (mother s) >>= mfromMaybe . father
 dadsMaternalGF3 :: Sheep -> [Sheep]
 dadsMaternalGF3 s = mfromMaybe (father s) >>= mfromMaybe . mother >>= mfromMaybe . mother
 
-mgf2 = U.t "mgf2" (show (maternalGF2 $ breedSheep)) (show $ Just "Roger")
-dmgf2 = U.t "dmgf2" (show (dadsMaternalGF2 $ breedSheep)) (show (Nothing::Maybe Sheep))
-mgf3 = U.t "mgf3" (show (maternalGF3 $ breedSheep)) (show ["Roger"])
-dmgf3 = U.t "dmgf3" (show (dadsMaternalGF3 $ breedSheep)) (show ([]::[String]))
+mgf2  = U.t "mgf2"  (show (maternalGF2 $ breedSheep))
+                    (show $ Just "Roger")
+dmgf2 = U.t "dmgf2" (show (dadsMaternalGF2 $ breedSheep))
+                    (show (Nothing::Maybe Sheep))
+mgf3  = U.t "mgf3"  (show (maternalGF3 $ breedSheep))
+                    (show ["Roger"])
+dmgf3 = U.t "dmgf3" (show (dadsMaternalGF3 $ breedSheep))
+                    (show ([]::[String]))
 
 {-
 3.4 Do notation
@@ -211,8 +215,10 @@ Adding two Maybe values gives first value that is not Nothing
 parent :: Sheep -> [Sheep]
 parent s = mfromMaybe (mother s) `mplus` mfromMaybe (father s)
 
-prnt1 = U.t "prnt1" (show (parent $ breedSheep)) (show ["Molly"])
-prnt2 = U.t "prnt1" (show (parent (head (parent $ breedSheep)))) (show ["Holly","Roger"])
+prnt1 = U.t "prnt1" (show (parent $ breedSheep))
+                    (show ["Molly"])
+prnt2 = U.t "prnt1" (show (parent (head (parent $ breedSheep))))
+                    (show ["Holly","Roger"])
 
 {-
 ------------------------------------------------------------------------------
@@ -234,8 +240,10 @@ sequence = foldr mcons (return [])
   where mcons p q = p >>= \x -> q >>= \y -> return (x:y)
 -}
 
-seqExM = U.t "seqExM" (sequence [Just 1,  Just 2]) (Just [1,2])
-seqExL = U.t "seqExL" (sequence [[    1], [    2]])     [[1,2]]
+seqExM = U.t "seqExM" (sequence [Just 1,  Just 2])
+                      (Just [1,2])
+seqExL = U.t "seqExL" (sequence [[    1], [    2]])
+                           [[1,2]]
 
 {-          mcons
            /     \
@@ -283,7 +291,8 @@ map  ::            (a ->   b) -> [a] ->   [b]
 mapM :: Monad m => (a -> m b) -> [a] -> m [b]
 -}
 
-mapMExM = U.t "mapMExM" (mapM Just [1,2,3]) (Just [1,2,3])
+mapMExM = U.t "mapMExM" (mapM Just [1,2,3])
+                        (Just [1,2,3])
 
 mapM_ExM :: IO ()
 mapM_ExM = mapM_ print [1,2,3]
@@ -316,8 +325,12 @@ traceFamily :: Monad m => Sheep -> [ Sheep -> m Sheep ] -> m Sheep
 traceFamily = foldM getParent
   where getParent s f = f s
 
-paternalGrandmotherEx        = U.t "pgm"  (show (traceFamily (breedSheep) [father, mother])) (show (Nothing::Maybe Sheep))
-mothersPaternalGrandfatherEx = U.t "mpgf" (show (traceFamily (breedSheep) [mother, father, father])) (show (Just "Kronos"))
+fm  = U.t "fm"  (show (traceFamily (breedSheep) [father, mother]))
+                (show (Nothing::Maybe Sheep))
+mff = U.t "mff" (show (traceFamily (breedSheep) [mother, father, father]))
+                (show (Just "Kronos"))
+mmm = U.t "mmm" (show (traceFamily (breedSheep) [mother,mother,mother]))
+                (show (Just "Eve"))
 
 {-
 Typical use of foldM is within a do block.
@@ -343,8 +356,9 @@ zipWithM_ f xs ys = sequence_ (zipWith f xs ys)
 
 -}
 
-zipWithMHC :: Maybe [(Int,Char)]
-zipWithMHC  = zipWithM  (curry Just)  [1,2,3] "abc"
+zipWithMHC = U.t "zipWithMHC"
+             (zipWithM  (curry Just)  [1,2,3] "abc")
+             (Just [(1,'a'),(2,'b'),(3,'c')])
 
 zipWithM_HC :: IO ()
 zipWithM_HC = zipWithM_ (curry print) [1,2,3] ("abc"::String)
@@ -398,24 +412,32 @@ getName name = do let db = [("John", "Smith, John"), ("Mike", "Caine, Michael")]
 	          return (swapNames tempName)
 
 The difference is even greater when lifting functions with more arguments.
+-}
 
+gn = U.t "gn" ([getName "John", getName "Mike", getName "Harold"])
+              [Just "John Smith",Just "Michael Caine",Nothing]
+
+{-
 Lifting enables  concise higher-order functions.
-
 -}
 
 -- returns list containing result of folding the given binary operator
 -- through all combinations of elements of the given lists.
--- e.g., allCombinations (+) [[0,1],[1,2,3]]
---   => [0+1,0+2,0+3,1+1,1+2,1+3], or [1,2,3,2,3,4]
---       allCombinations (*) [[0,1],[1,2],[3,5]] would be
---   => [0*1*3,0*1*5,0*2*3,0*2*5,1*1*3,1*1*5,1*2*3,1*2*5], or [0,0,0,0,3,5,6,10]
 allCombinations :: (a -> a -> a) -> [[a]] -> [a]
 allCombinations fn []     = []
 allCombinations fn (l:ls) = foldl (liftM2 fn) l ls
 
-ac1 = allCombinations (+) [[0,1],[1,2,3]]
-ac2 = allCombinations (*) [[0,1],[1,2],[3,5]]
-ac3 = allCombinations div [[100, 45, 365], [3, 5], [2, 4], [2]]
+-- e.g., allCombinations (+) [[0,1],[1,2,3]]
+--   => [0+1,0+2,0+3,1+1,1+2,1+3], or [1,2,3,2,3,4]
+--       allCombinations (*) [[0,1],[1,2],[3,5]] would be
+--   => [0*1*3,0*1*5,0*2*3,0*2*5,1*1*3,1*1*5,1*2*3,1*2*5], or [0,0,0,0,3,5,6,10]
+
+ac1 = U.t "ac1" (allCombinations (+) [[0,1],[1,2,3]])
+                [1,2,3,2,3,4]
+ac2 = U.t "ac2" (allCombinations (*) [[0,1],[1,2],[3,5]])
+                [0,0,0,0,3,5,6,10]
+ac3 = U.t "ac3" (allCombinations div [[100, 45, 365], [3, 5], [2, 4], [2]])
+                [8,4,5,2,3,1,2,1,30,15,18,9]
 
 {-
 related function : 'ap' : sometimes more lift.
@@ -431,10 +453,12 @@ and so on for functions of more arguments.
 Useful when working with higher-order functions and monads.
 
 Effect of ap depends on the monad in which it is used.
-
-[(*2),(+3)] `ap` [0,1,2] == [0,2,4,3,4,5]
-(Just (*2)) `ap` (Just 3) == Just 6
 -}
+
+apEx1 = U.t "apEx1" ([(*2),(+3)] `ap` [0,1,2])
+                    [0,2,4,3,4,5]
+apEx2 = U.t "apEx2" ((Just (*2)) `ap` (Just 3))
+                    (Just 6)
 
 -- lookup the commands and fold ap into the command list to
 -- compute a result.
@@ -450,7 +474,8 @@ apEx val cmds0 =
         cmds = map (`lookup` fns) (words cmds0)
      in foldl (flip ap) (Just val) cmds
 
-apEx1 = apEx 2 "double square decr negate"
+apEx3 = U.t "apEx3" (apEx 2 "double square decr negate")
+                    (Just (-15))
 
 {-
 6.2.5 Functions for use with MonadPlus
@@ -483,12 +508,15 @@ lookupVar var (e:es) = let val = lookup var e
                        in maybe (lookupVar var es) Just val
 -}
 
-ms1 = lookupVar "depth" [[("name","test"),("depth","2")]
-                        ,[("depth","1")]]
-ms2 = lookupVar "width" [[("name","test"),("depth","2")]
-                        ,[("depth","1")]]
-ms3 = lookupVar "var2"  [[("var1","value1"),("var2","value2*")]
-                        ,[("var2","value2"),("var3","value3")]]
+ms1 = U.t "ms1" (lookupVar "depth" [[("name","test"),("depth","2")]
+                                   ,[("depth","1")]])
+                (Just "2")
+ms2 = U.t "ms2" (lookupVar "width" [[("name","test"),("depth","2")]
+                                   ,[("depth","1")]])
+                Nothing
+ms3 = U.t "ms3" (lookupVar "var2"  [[("var1","value1"),("var2","value2*")]
+                                   ,[("var2","value2"),("var3","value3")]])
+                (Just "value2*")
 
 {-
 guard :: MonadPlus m => Bool -> m ()
@@ -499,7 +527,7 @@ Placing guard in monad sequence will force any execution in which guard is False
 Like guard predicates in list comprehensions cause values that fail to become [].
 -}
 
-data Record = Rec {name::String, age::Int} deriving Show
+data Record = Rec {nameR::String, age::Int} deriving (Eq, Show)
 type DB = [Record]
 
 -- return records less than specified age.
@@ -511,8 +539,15 @@ getYoungerThan :: Int -> DB -> [Record]
 getYoungerThan limit = mapMaybe (\r -> do { guard (age r < limit); return r })
 
 gytDB = [Rec "Marge" 37, Rec "Homer" 38, Rec "Bart" 11, Rec "Lisa" 8, Rec "Maggie" 2]
-gyt1 = getYoungerThan  3 gytDB
-gyt2 = getYoungerThan 38 gytDB
+
+gyt1 = U.t "gyt1" (getYoungerThan  3 gytDB)
+                  [Rec {nameR = "Maggie", age = 2}]
+gyt2 = U.t "gyt2" (getYoungerThan 38 gytDB)
+                  [Rec {nameR = "Marge", age = 37}
+                  ,Rec {nameR = "Bart", age = 11}
+                  ,Rec {nameR = "Lisa", age = 8}
+                  ,Rec {nameR = "Maggie", age = 2}
+                  ]
 
 {-
 ------------------------------------------------------------------------------
@@ -634,7 +669,7 @@ find email prefs given full or nick name.
 -}
 
 type EmailAddr = String
-data MailPref = HTML | Plain deriving Show
+data MailPref = HTML | Plain deriving (Eq, Show)
 
 data MailSystem = MS { fullNameDB::[(String,EmailAddr)],
                        nickNameDB::[(String,EmailAddr)],
@@ -663,10 +698,14 @@ mailSystem = makeMailSystem
                  , User "Michael Jackson" "jacko"       "mj@wonderland.org"   HTML
                  ]
 
-mail1 = getMailPrefs mailSystem "billy"
-mail2 = getMailPrefs mailSystem "Bill Gates"
-mail3 = getMailPrefs mailSystem "Bill Clinton"
-mail4 = getMailPrefs mailSystem "foo"
+mail1 = U.t "mail1" (getMailPrefs mailSystem "billy")
+                    (Just HTML)
+mail2 = U.t "mail2" (getMailPrefs mailSystem "Bill Gates")
+                    (Just HTML)
+mail3 = U.t "mail3" (getMailPrefs mailSystem "Bill Clinton")
+                    (Just Plain)
+mail4 = U.t "mail4" (getMailPrefs mailSystem "foo")
+                    Nothing
 
 {-
 ------------------------------------------------------------------------------
@@ -754,9 +793,9 @@ convert s = let (Right str) = do { n <- parseHex s; toString n } `catchError` pr
             in str
   where printError e = return $ "At index " ++ show (location e) ++ ":" ++ reason e
 
-p1 = convert "FF"
-p2 = convert "FFFF"
-p3 = convert "FFFFxF"
+p1 = U.t "p1" (convert "FF")      "255"
+p2 = U.t "p2" (convert "FFFF")    "65535"
+p3 = U.t "p3" (convert "FFFFxF")  "At index 5:Invalid character 'x'"
 
 {-
 ------------------------------------------------------------------------------
@@ -794,7 +833,7 @@ Hex overlaps decimal and alphanumeric: ambiguous grammar.
 - "10" is both a decimal value of 10 and a hex value of 16
 -}
 
-data Parsed = Digit Integer | Hex Integer | Word String deriving Show
+data Parsed = Digit Integer | Hex Integer | Word String deriving (Eq, Show)
 
 parseCommon :: (Char -> Bool) -> Char -> Parsed -> [Parsed]
 parseCommon test c ret = if test c then return ret else mzero
@@ -824,15 +863,9 @@ parseArg :: String -> [Parsed]
 parseArg s = do init <- return (Hex 0) `mplus` return (Digit 0) `mplus` return (Word "")
                 foldM parse init s
 
--- show original input and all parses
-showResult :: String -> IO ()
-showResult s = do putStr s
-                  putStr ": "
-                  print (parseArg s)
-
-sr1 = showResult "dead"
-sr2 = showResult "10"
-sr3 = showResult "foo"
+sr1 = U.t "sr1" (parseArg "dead") [Hex 57005,Word "dead"]
+sr2 = U.t "sr2" (parseArg   "10") [Hex 16,Digit 10]
+sr3 = U.t "sr3" (parseArg  "foo") [Word "foo"]
 
 {-
 ------------------------------------------------------------------------------
@@ -1045,24 +1078,17 @@ rg = getStdGen                            >>= \g ->
 testing =
     T.runTestTT $ T.TestList $
         mom1 ++ dad1 ++ mgf1 ++ mpgf1 ++ listEx ++ mgf2 ++ dmgf2 ++ mgf3 ++ dmgf3 ++ prnt1 ++ prnt2 ++
-        seqExM ++ seqExL ++ mapMExM ++ paternalGrandmotherEx ++ mothersPaternalGrandfatherEx
+        seqExM ++ seqExL ++ mapMExM ++ fm ++ mff ++ mff ++ zipWithMHC ++ gn ++ ac1 ++ ac2 ++ ac3 ++
+        apEx1 ++ apEx2 ++ apEx3 ++ ms1 ++ ms2 ++ ms3 ++ gyt1 ++ gyt2 ++
+        mail1 ++ mail2 ++ mail3 ++ mail4 ++ p1 ++ p2 ++ p3 ++ sr1 ++ sr2 ++ sr3
 
 test :: IO ()
 test = do
+    testing
     let dolly = breedSheep
     seq_ExM
     mapM_ExM
-    print (traceFamily dolly [mother,mother,mother])
-    print zipWithMHC
     _ <- zipWithM_HC
-    print [getName "John", getName "Mike", getName "Harold"]
-    print [ac1,ac2,ac3]
-    print apEx1
-    print [ms1,ms2,ms3]
-    print [gyt1,gyt2]
-    print [mail1,mail2,mail3,mail4]
-    print [p1,p2,p3]
-    sequence_ [sr1,sr2,sr3]
     rg
     return ()
 
