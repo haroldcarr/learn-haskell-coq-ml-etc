@@ -2,24 +2,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( scottyMain
-    ) where
+( scottyMain
+)
+where
 
 import           Data.Aeson   (FromJSON, ToJSON)
 import           Data.Monoid  (mconcat)
 import           GHC.Generics
 import           Web.Scotty
 
-data User = User { userId :: Int, userName :: String } deriving (Generic, Show)
-bob       = User { userId = 1, userName = "bob" }
-jenny     = User { userId = 2, userName = "jenny" }
+data User = User { userId :: Int, userName :: String } deriving (Eq, Generic, Show)
+bob       = User 1 "bob"
+jenny     = User 2 "jenny"
 allUsers  = [bob, jenny]
 
-instance ToJSON User
+instance ToJSON   User
 instance FromJSON User
-
-matchesId :: Int -> User -> Bool
-matchesId id user = userId user == id
 
 scottyMain :: IO ()
 scottyMain = scotty 3000 $ do
@@ -27,19 +25,18 @@ scottyMain = scotty 3000 $ do
         json allUsers
     get "/users/:id" $ do
         id <- param "id"
-        json $ filter (matchesId id) allUsers
-    post "/reg" reg
+        json $ filter ((==id) . userId) allUsers
+    post "/reg" $ do
+        e <- param "email" `rescue` (const next)
+        html $ mconcat [ "ok ", e ]
     get "/:word" $ do
         beam <- param "word"
         html $ mconcat ["<h1>Scotty, ", beam, " me up!</h1>"]
 
-reg :: ActionM ()
-reg = do
-    e <- param "email" `rescue` (const next)
-    html $ mconcat [ "ok ", e ]
-
 {-
 curl http://127.0.0.1:3000/users
+curl http://127.0.0.1:3000/users/1
 curl -X POST http://127.0.0.1:3000/reg?email=foo
+curl http://127.0.0.1:3000/JUNK
 -}
 

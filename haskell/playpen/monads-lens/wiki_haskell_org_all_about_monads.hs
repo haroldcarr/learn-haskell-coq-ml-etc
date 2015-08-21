@@ -17,7 +17,7 @@ import           Data.Char          (digitToInt, isAlpha, isDigit, isHexDigit, i
 import           Data.Maybe         (mapMaybe)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
                                           foldr, head, map, tail, words)
-import           System.Random      (Random(..), getStdGen, randomR, StdGen)
+import           System.Random      (Random(..), StdGen, getStdGen, mkStdGen, randomR)
 import qualified Test.HUnit         as T
 import qualified Test.HUnit.Util    as U
 import           X_02_example       hiding (parent)
@@ -976,7 +976,7 @@ Pure language cannot update in place: violates referential transparency.
 Instead, simulate state.
 -}
 
-data RandomResults = RR Int Char Int deriving Show
+data RandomResults = RR Int Char Int deriving (Eq, Show)
 
 -- Without state, thread by hand:
 makeRandomValue :: StdGen -> (RandomResults, StdGen)
@@ -989,8 +989,6 @@ makeRandomValue g = let (n,g1) = randomR (1  ,1000) g
 State monad puts threading of state inside (>>=).
 
 13.3 Definition
-
-Uses multi-parameter type classes and funDeps.
 
 - State monad values are transition funs from initial state to (value,newState) pair.
 - State s a
@@ -1031,30 +1029,46 @@ makeRandomValueST = runState (do n <- getRan (1  ,1000)
                                  m <- getRan (-n ,   n)
                                  return (RR n c m))
 
--- print a random value of RandomResults, showing the two implementations
--- are equivalent
+-- showing implementations equivalent
 rg = do
     g <- getStdGen
     print $ fst $ makeRandomValue   g
     print $ fst $ makeRandomValueST g
 
-{-
-getRan :: (Random a) => (a, a) -> State StdGen a
-getRan bounds = get                       >>= \g       ->
-                return $ randomR bounds g >>= \(x, g') ->
-                put g'                    >>
-                return x
-
-makeRandomValueST :: StdGen -> (RandomResults, StdGen)
-makeRandomValueST = runState
+-- (runState $ getRan (1,10)) gen
+gen = mkStdGen 1000
+ranT = U.tt "ranT"
+       (map fst [makeRandomValueST gen
+                ,(runState
+                  (do n <- getRan (1  ,1000)
+                      c <- getRan ('a', 'z')
+                      m <- getRan (-n ,   n)
+                      return (RR n c m))) gen
+                ,(runState
                       (getRan (1, 1000)   >>= \n ->
                        getRan ('a', 'z')  >>= \c ->
                        getRan (- n, n)    >>= \m ->
-                       return (RR n c m))
+                       return (RR n c m))) gen
+                ])
+       (RR 884 'h' 411)
 
-rg = getStdGen                            >>= \g ->
-     print $ fst $ makeRandomValue   g    >>
-     print $ fst $ makeRandomValueST g
+
+-- getRan' :: (Random a) => (a, a) -> State StdGen a
+getRan' bounds = get                       >>= \g       ->
+                 return $ randomR bounds g >>= \(x, g') ->
+                 put g'                    >>
+                 return x
+{-
+makeRandomValueST' :: StdGen -> (RandomResults, StdGen)
+makeRandomValueST' = runState
+                      (getRan' (1, 1000)   >>= \n ->
+                       getRan' ('a', 'z')  >>= \c ->
+                       getRan' (- n, n)    >>= \m ->
+                       return  (RR n c m))
+
+rg' = getStdGen                            >>= \g ->
+      print $ fst $ makeRandomValue   g    >>
+      print $ fst $ makeRandomValueST g
 -}
 {-
 ------------------------------------------------------------------------------
@@ -1069,7 +1083,8 @@ testing =
         mom1 ++ dad1 ++ mgf1 ++ mpgf1 ++ listEx ++ mgf2 ++ dmgf2 ++ mgf3 ++ dmgf3 ++ prnt1 ++ prnt2 ++
         seqExM ++ seqExL ++ mapMExM ++ fm ++ mff ++ mff ++ zipWithMHC ++ gn ++ ac1 ++ ac2 ++ ac3 ++
         apEx1 ++ apEx2 ++ apEx3 ++ ms1 ++ ms2 ++ ms3 ++ gyt1 ++ gyt2 ++
-        mail1 ++ mail2 ++ mail3 ++ mail4 ++ p1 ++ p2 ++ p3 ++ sr1 ++ sr2 ++ sr3
+        mail1 ++ mail2 ++ mail3 ++ mail4 ++ p1 ++ p2 ++ p3 ++ sr1 ++ sr2 ++ sr3 ++
+        ranT
 
 test :: IO ()
 test = do

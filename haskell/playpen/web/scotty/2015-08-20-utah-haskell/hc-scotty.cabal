@@ -3,8 +3,8 @@ version:             0.1.0.0
 synopsis:            Initial project template from stack
 description:         Please see README.md
 homepage:            http://github.com/name/project
-license:             BSD3
-license-file:        LICENSE
+-- license:             BSD3
+-- license-file:        LICENSE
 author:              Your name here
 maintainer:          your.address@example.com
 -- copyright:           
