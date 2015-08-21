@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 19 (Wed) 17:14:14 by Harold Carr.
+Last Modified : 2015 Aug 19 (Wed) 17:16:42 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -34,19 +34,19 @@ http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/in
 
 Monads
 - sequential computations
-- monad determines how combined computations form a new computation
-- frees programmer coding the combination manually
+- determine how combined computations form a new computation
+- frees programmer coding combination manually
 
 1.2 Why should I make the effort to understand monads?
 
-Monads : useful for structuring functional programs.
+Monads : structuring functional programs
 - Modularity
   - computations composed from other computations
   - separate combination strategy from computations
 - Flexibility
-  - programs more adaptable than programs written without monads.
-  - because monad puts computational strategy in a single
-    place (instead of distributed in entire program)
+  - programs more adaptable than programs written without monads
+  - monad puts computational strategy in single place
+    (instead of distributed in entire program)
 - Isolation
   - imperative-style structures isolated from main program.
 
@@ -68,8 +68,8 @@ Container analogy
 - 'm a' is container holding value of type 'a'
 - 'return' puts value into monad container
 - >>= takes value from monad container, passes it a function
-  to produce a monad container containing a new value, possibly of a different type.
-  - binding function can implement strategy for combining computations in the monad.
+  to produce a monad container containing a new value, possibly of a different type
+  - binding function can implement strategy for combining computations in the monad
 
 2.3 An example
 -}
@@ -103,7 +103,7 @@ concatMap ::            (a -> [b]) -> [a] -> [b]
 
 listEx = U.t "listEx"
          ([1,2,3] >>= \x -> [x + 1])
-         [2,3,4]
+          [2,3,4]
 
 {-
 2.5 Summary
@@ -155,8 +155,8 @@ dmgf3 = U.t "dmgf3" (show (dadsMaternalGF3 breedSheep))       (show ([]::[String
 ------------------------------------------------------------------------------
 4 The monad laws
 
-Monad laws not enforced by Haskell compiler: programmer must ensure.
-Laws ensures semantics of do-notation consistent.
+Not enforced by Haskell compiler: programmer must ensure.
+Ensure semantics of do-notation consistent.
 - (return x) >>= f == f x
   - return is left-identity for >>=
 - m >>= return     == m
@@ -203,7 +203,7 @@ instance MonadPlus Maybe where
 Identifies Nothing as the zero value.
 Adding two Maybe values gives first value that is not Nothing
 
-[] monad : mzero/empty list, mplus/++
+[] monad : mzero/empty-list, mplus/++
 
 'mplus' combines two monadic values into single monadic value
 -}
@@ -225,7 +225,7 @@ prnt2 = U.t "prnt1" (show (parent (head (parent breedSheep))))     (show ["Holly
 
 6.1.2 The sequencing functions
 
--- givenlist of monadic computations
+-- given list of monadic computations
 -- executes each one in turn
 -- returns list of results
 -- If any computation fails, then the whole function fails:
@@ -247,8 +247,8 @@ seqExL = U.t "seqExL" (sequence [[    1], [    2]])
 
 -- same behavior but does not return list of results
 -- useful for side-effects
-sequence_HC :: Monad m => [m a] -> m ()
-sequence_HC = foldr (>>) (return ())
+sequence_ :: Monad m => [m a] -> m ()
+sequence_ = foldr (>>) (return ())
 -}
 
 seq_ExM :: IO ()
@@ -267,8 +267,8 @@ seq_ExM = sequence_ [print 1, print 2]
 
 -- maps monadic computation over list of values
 -- returns list of results
-mapM :: Monad m => (a -> m b) -> [a] -> m [b]
-mapM f as = sequence (map f as)
+mapM  :: Monad m => (a -> m b) -> [a] -> m [b]
+mapM  f as = sequence  (map f as)
 
 mapM_ :: Monad m => (a -> m b) -> [a] -> m ()
 mapM_ f as = sequence_ (map f as)
@@ -280,7 +280,7 @@ putString s = mapM_ putChar s
 
 Common pattern: mapM used in a do block, similar to map on lists.
 
--- compare the non-monadic and monadic signatures
+-- compare non-monadic and monadic signatures
 map  ::            (a ->   b) -> [a] ->   [b]
 mapM :: Monad m => (a -> m b) -> [a] -> m [b]
 -}
@@ -307,7 +307,7 @@ foldM f a1 [x1,x2,...,xn] = do a2 <- f a1 x1
                                ...
                                f an xn
 
-Right-to-left : reverse input before calling foldM.
+If right-to-left needed: reverse input before calling foldM.
 
 Example 3:
 -}
@@ -338,11 +338,11 @@ filterM p (x:xs) = do b  <- p x
 See example5.hs
 
 -- zipWithM : monadic zipWith function on lists
-zipWithM ::(Monad m) => (a -> b -> m c) -> [a] -> [b] -> m [c]
-zipWithM f xs ys = sequence (zipWith f xs ys)
+zipWithM  :: (Monad m) => (a -> b -> m c) -> [a] -> [b] -> m [c]
+zipWithM  f xs ys = sequence  (zipWith f xs ys)
 
 -- discards output
-zipWithM_ ::(Monad m) => (a -> b -> m c) -> [a] -> [b] -> m ()
+zipWithM_ :: (Monad m) => (a -> b -> m c) -> [a] -> [b] -> m ()
 zipWithM_ f xs ys = sequence_ (zipWith f xs ys)
 
 -}
@@ -357,8 +357,8 @@ zipWithM_HC = zipWithM_ (curry print) [1,2,3] ("abc"::String)
 {-
 6.2.3 Conditional monadic computations
 
-when :: (Monad m) => Bool -> m () -> m ()
-when p s = if p then s else return ()
+when   :: (Monad m) => Bool -> m () -> m ()
+when   p s = if p then s else return ()
 
 unless :: (Monad m) => Bool -> m () -> m ()
 unless p s = when (not p) s
@@ -367,11 +367,11 @@ unless p s = when (not p) s
 
 Lifting : converts a non-monadic function to work monadic values.
 
-Useful for operating on monad values outside of a do block.
-Or cleaner code within a do block.
+Use: operating on monad values outside of a do block.
+Use: cleaner code in a do block.
 
-liftM :: (Monad m) => (a -> b) -> (m a -> m b)
-liftM f = \a -> do
+liftM  :: (Monad m) => (a -> b)      -> (m a -> m b)
+liftM  f = \a -> do
     a' <- a
     return (f a')
 
@@ -383,7 +383,7 @@ liftM2 f = \a b ->
 
 up to liftM5 defined in Monad module.
 
-example 6: To make code more concise:
+example 6: more concise code:
 -}
 
 -- converts "Smith, John" into "John Smith"
@@ -402,14 +402,14 @@ getName name = do let db = [("John", "Smith, John"), ("Mike", "Caine, Michael")]
                   tempName <- lookup name db
 	          return (swapNames tempName)
 
-The difference is even greater when lifting functions with more arguments.
+Difference even greater when lifting functions with more args.
 -}
 
 gn = U.t "gn" [   getName "John",      getName "Mike", getName "Harold"]
               [Just "John Smith",Just "Michael Caine", Nothing         ]
 
 {-
-Lifting enables  concise higher-order functions.
+Lifting enables concise higher-order functions.
 -}
 
 -- returns list containing result of folding the given binary operator
@@ -443,22 +443,22 @@ and so on for functions of more arguments.
 
 Useful when working with higher-order functions and monads.
 
-Effect of ap depends on the monad in which it is used.
+Effect of ap depends on specific monad.
 -}
 
 apEx1 = U.t "apEx1" ([(*2),(+3)] `ap` [0,1,2])        [0,2,4,3,4,5]
 apEx2 = U.t "apEx2" (Just (*2)   `ap` Just 3)         (Just 6)
 
--- lookup the commands and fold ap into the command list to
--- compute a result.
-
+-- lookup commands
+-- fold ap into resulting command list
+-- to compute a result
 apEx val cmds0 =
-    let fns  = [("double",(2*))
-               ,("halve",(`div`2))
-               ,("square",\x->x*x)
-               ,("negate", negate)
-               ,("incr",(+1))
-               ,("decr",(+(-1)))
+    let fns  = [("double" ,    (2*))
+               ,("halve"  ,(`div`2))
+               ,("square" , \x->x*x)
+               ,("negate" ,  negate)
+               ,("incr"   ,    (+1))
+               ,("decr"   , (+(-1)))
                ]
         cmds = map (`lookup` fns) (words cmds0)
      in foldl (flip ap) (Just val) cmds
