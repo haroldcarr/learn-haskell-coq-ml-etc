@@ -13,7 +13,7 @@ import           Control.Monad      (MonadPlus (..), ap, foldM, guard, liftM,
 import           Control.Monad.Except
 import           Control.Monad.Plus (mfromMaybe)
 import "mtl"     Control.Monad.State
-import           Data.Char          (digitToInt, isAlpha, isDigit, isHexDigit, isSpace)
+import           Data.Char          (chr, digitToInt, isAlpha, isDigit, isHexDigit, isSpace)
 import           Data.Maybe         (mapMaybe)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
                                           foldr, head, map, tail, words)
@@ -1072,60 +1072,61 @@ rg' = getStdGen                            >>= \g ->
 -}
 -- HC example : Same structure but simpler state
 
-inc :: Int -> State Int Int
+inc :: Int -> State Int Char
 inc x = do
     i <- get
     put (i + x)
-    return i
+    return (chr i)
 
+incB :: Int -> State Int Char
 incB x =
     get         >>= \i ->
     put (i + x) >>
-    return i
+    return (chr i)
 
-incer :: Int -> ((Int,Int,Int), Int)
+incer :: Int -> ((Char,Char,Char), Int)
 incer = runState
     (do i1 <- inc 10
         i2 <- inc 40
         i3 <- inc 8
         return (i1, i2, i3))
 
-incerB :: Int -> ((Int, Int, Int), Int)
+incerB :: Int -> ((Char,Char,Char), Int)
 incerB = runState
-       (inc 10 >>= \i1 ->
-        inc 40 >>= \i2 ->
-        inc 8  >>= \i3 ->
+       (incB 10 >>= \i1 ->
+        incB 40 >>= \i2 ->
+        incB 8  >>= \i3 ->
         return (i1, i2, i3))
 
-incer' :: Int -> ((Int,Int,Int), Int)
-incer' = runState (do i1 <- (\x -> do
+incer' :: Int -> ((Char,Char,Char), Int)
+incer' = runState (do i1 <- ((\x -> do
                                    -- i <- get
                                    i <- state (\s -> (s, s))
                                    -- put (i + x)
                                    state (\_ -> ((), i + x))
                                    -- return i
-                                   state (\s -> (i,s))
-                            ) 10
+                                   state (\s -> (chr i,s))
+                             ) :: Int -> State Int Char) 10
                       i2 <- inc 40
                       i3 <- inc 8
                       return (i1, i2, i3))
 
-incerB' :: Int -> ((Int, Int, Int), Int)
-incerB' = runState ((\x ->
+incerB' :: Int -> ((Char,Char,Char), Int)
+incerB' = runState (((\x ->
                        state (\s -> (s, s))      >>= \i ->
                        state (\_ -> ((), i + x)) >>
-                       state (\ s -> (i, s))
-                    ) 10   >>= \i1 ->
+                       state (\ s -> (chr i, s))
+                     ) :: Int -> State Int Char) 10   >>= \i1 ->
                     inc 40 >>= \i2 ->
                     inc 8  >>= \i3 ->
                     return (i1, i2, i3))
 
-ri = U.tt "ri" [ (incer   1)
-               , (incer'  1)
-               , (incerB  1)
-               , (incerB' 1)
+ri = U.tt "ri" [ (incer   45)
+               , (incer'  45)
+               , (incerB  45)
+               , (incerB' 45)
                ]
-               ((1,11,51),59)
+               (('-','7','_'),103)
 
 {-
 ------------------------------------------------------------------------------
