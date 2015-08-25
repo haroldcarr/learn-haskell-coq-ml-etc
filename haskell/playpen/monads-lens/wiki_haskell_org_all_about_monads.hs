@@ -1116,9 +1116,27 @@ incerB' = runState (((\x ->
                        state (\s -> (s, s))      >>= \i ->
                        state (\_ -> ((), i + x)) >>
                        state (\ s -> (chr i, s))
-                     ) :: Int -> State Int Char) 10   >>= \i1 ->
-                    inc 40 >>= \i2 ->
-                    inc 8  >>= \i3 ->
+                     ) :: Int -> State Int Char) 10         >>= \i1 ->
+                    inc 40                                  >>= \i2 ->
+                    inc 8                                   >>= \i3 ->
+                    return (i1, i2, i3))
+{-
+TWO VIEWS OF BIND:
+
+    (State x) >>= f = State $ \s -> let (v,s') = x s in runState (f v) s'
+
+  m >>= k  = StateT $ \s -> do
+        ~(a, s') <- runStateT m s
+        runStateT (k a) s'
+-}
+incerB'' :: Int -> ((Char,Char,Char), Int)
+incerB'' = runState (((\x ->
+                       state (\s -> (s, s))      >>= \i ->
+                       state (\_ -> ((), i + x)) >>
+                       state (\ s -> (chr i, s))
+                      ) :: Int -> State Int Char) 10        >>= \i1 ->
+                    inc 40                                  >>= \i2 ->
+                    inc 8                                   >>= \i3 ->
                     return (i1, i2, i3))
 
 ri = U.tt "ri" [ (incer   45)
