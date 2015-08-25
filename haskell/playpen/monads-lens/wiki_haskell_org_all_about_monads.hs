@@ -1078,11 +1078,24 @@ inc x = do
     put (i + x)
     return i
 
+incB x =
+    get         >>= \i ->
+    put (i + x) >>
+    return i
+
 incer :: Int -> ((Int,Int,Int), Int)
-incer = runState (do i1 <- inc 10
-                     i2 <- inc 40
-                     i3 <- inc 8
-                     return (i1, i2, i3))
+incer = runState
+    (do i1 <- inc 10
+        i2 <- inc 40
+        i3 <- inc 8
+        return (i1, i2, i3))
+
+incerB :: Int -> ((Int, Int, Int), Int)
+incerB = runState
+       (inc 10 >>= \i1 ->
+        inc 40 >>= \i2 ->
+        inc 8  >>= \i3 ->
+        return (i1, i2, i3))
 
 incer' :: Int -> ((Int,Int,Int), Int)
 incer' = runState (do i1 <- (\x -> do
@@ -1097,8 +1110,20 @@ incer' = runState (do i1 <- (\x -> do
                       i3 <- inc 8
                       return (i1, i2, i3))
 
-ri = U.tt "ri" [ (incer 1)
-               , (incer' 1)
+incerB' :: Int -> ((Int, Int, Int), Int)
+incerB' = runState ((\x ->
+                       state (\s -> (s, s))      >>= \i ->
+                       state (\_ -> ((), i + x)) >>
+                       state (\ s -> (i, s))
+                    ) 10   >>= \i1 ->
+                    inc 40 >>= \i2 ->
+                    inc 8  >>= \i3 ->
+                    return (i1, i2, i3))
+
+ri = U.tt "ri" [ (incer   1)
+               , (incer'  1)
+               , (incerB  1)
+               , (incerB' 1)
                ]
                ((1,11,51),59)
 
