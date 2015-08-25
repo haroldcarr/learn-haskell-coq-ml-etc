@@ -1070,6 +1070,38 @@ rg' = getStdGen                            >>= \g ->
       print $ fst $ makeRandomValue   g    >>
       print $ fst $ makeRandomValueST g
 -}
+-- HC example : Same structure but simpler state
+
+inc :: Int -> State Int Int
+inc x = do
+    i <- get
+    put (i + x)
+    return i
+
+incer :: Int -> ((Int,Int,Int), Int)
+incer = runState (do i1 <- inc 10
+                     i2 <- inc 40
+                     i3 <- inc 8
+                     return (i1, i2, i3))
+
+incer' :: Int -> ((Int,Int,Int), Int)
+incer' = runState (do i1 <- (\x -> do
+                                   -- i <- get
+                                   i <- state (\s -> (s, s))
+                                   -- put (i + x)
+                                   state (\_ -> ((), i + x))
+                                   -- return i
+                                   state (\s -> (i,s))
+                            ) 10
+                      i2 <- inc 40
+                      i3 <- inc 8
+                      return (i1, i2, i3))
+
+ri = U.tt "ri" [ (incer 1)
+               , (incer' 1)
+               ]
+               ((1,11,51),59)
+
 {-
 ------------------------------------------------------------------------------
 14 The Reader monad
@@ -1084,7 +1116,7 @@ testing =
         seqExM ++ seqExL ++ mapMExM ++ fm ++ mff ++ mff ++ zipWithMHC ++ gn ++ ac1 ++ ac2 ++ ac3 ++
         apEx1 ++ apEx2 ++ apEx3 ++ ms1 ++ ms2 ++ ms3 ++ gyt1 ++ gyt2 ++
         mail1 ++ mail2 ++ mail3 ++ mail4 ++ p1 ++ p2 ++ p3 ++ sr1 ++ sr2 ++ sr3 ++
-        ranT
+        ranT ++ ri
 
 test :: IO ()
 test = do
