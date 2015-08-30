@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 30 (Sun) 12:07:01 by Harold Carr.
+Last Modified : 2015 Aug 30 (Sun) 16:15:21 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1084,6 +1084,19 @@ incB x =
     put (i + x) >>
     return (chr i)
 
+incB' :: Int -> State Int Char
+incB' x =
+    state (\g -> (    g,     g)) >>= \i ->
+    state (\_ -> (   (), i + x)) >>
+    state (\s -> (chr i,     s))
+
+-- incB'' :: Int -> State Int Char
+incB'' x =
+    state (\g -> (    g,     g)) >>= \i ->
+    state $ \s -> let (v,s') = ((\_ -> (   (), i + x)) s)
+                  in runState ((\_ -> state (\s -> (chr i,     s))) v) s'
+
+
 incer :: Int -> ((Char,Char,Char), Int)
 incer = runState
     (do i1 <- inc 10
@@ -1113,9 +1126,9 @@ incer' = runState (do i1 <- ((\x -> do
 
 incerB' :: Int -> ((Char,Char,Char), Int)
 incerB' = runState (((\x ->
-                       state (\s -> (s, s))      >>= \i ->
-                       state (\_ -> ((), i + x)) >>
-                       state (\ s -> (chr i, s))
+                       state (\s -> (s, s))      >>= \i ->  -- get
+                       state (\_ -> ((), i + x)) >>         -- put
+                       state (\s -> (chr i, s))             -- return
                      ) :: Int -> State Int Char) 10         >>= \i1 ->
                     inc 40                                  >>= \i2 ->
                     inc 8                                   >>= \i3 ->
@@ -1132,10 +1145,10 @@ TWO VIEWS OF BIND:
 incerB'' :: Int -> ((Char,Char,Char), Int)
 incerB'' = runState (((\x ->
                        -- definition of 'inc' expanded
-                       state $ \s -> let (v,s') = (\s -> (s, s)) s
+                       state $ \s -> let (v,s') = (\s -> (s, s)) s              -- get
                                      in runState ((\i ->
-                                                  state (\_ -> ((), i + x)) >>
-                                                  state (\s -> (chr i, s)))
+                                                  state (\_ -> ((), i + x)) >>  -- put
+                                                  state (\s -> (chr i, s)))     -- return
                                                   v) s'
                       ) :: Int -> State Int Char) 10        >>= \i1 ->
                     inc 40                                  >>= \i2 ->
@@ -1144,6 +1157,13 @@ incerB'' = runState (((\x ->
                                   in runState ((\i3 ->
                                                   return (i1, i2, i3))
                                                v) s')
+
+rinc = U.tt "rinc"
+               [ runState (inc    1) 45
+               , runState (incB'  1) 45
+               , runState (incB'' 1) 45
+               ]
+               ('-',46)
 
 ri = U.tt "ri" [ (incer    45)
                , (incer'   45)
@@ -1167,7 +1187,7 @@ testing =
         seqExM ++ seqExL ++ mapMExM ++ fm ++ mff ++ mff ++ zipWithMHC ++ gn ++ ac1 ++ ac2 ++ ac3 ++
         apEx1 ++ apEx2 ++ apEx3 ++ ms1 ++ ms2 ++ ms3 ++ gyt1 ++ gyt2 ++
         mail1 ++ mail2 ++ mail3 ++ mail4 ++ p1 ++ p2 ++ p3 ++ sr1 ++ sr2 ++ sr3 ++
-        ranT ++ ri
+        ranT ++ rinc ++ ri
 
 test :: IO ()
 test = do
