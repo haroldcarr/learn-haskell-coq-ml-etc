@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 30 (Sun) 16:29:42 by Harold Carr.
+Last Modified : 2015 Aug 30 (Sun) 16:43:35 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1039,16 +1039,16 @@ rg = do
 gen = mkStdGen 1000
 ranT = U.tt "ranT"
        (map fst [makeRandomValueST gen
-                ,(runState
+                ,runState
                   (do n <- getRan (1  ,1000)
                       c <- getRan ('a', 'z')
                       m <- getRan (-n ,   n)
-                      return (RR n c m))) gen
-                ,(runState
+                      return (RR n c m)) gen
+                ,runState
                       (getRan (1, 1000)   >>= \n ->
                        getRan ('a', 'z')  >>= \c ->
                        getRan (- n, n)    >>= \m ->
-                       return (RR n c m))) gen
+                       return (RR n c m)) gen
                 ])
        (RR 884 'h' 411)
 
@@ -1093,16 +1093,16 @@ incB' x =
 incB'' :: Int -> State Int Char
 incB'' x =
     state $ \s ->
-      let (v,s') = ((\g -> (g, g)) s)
-      in runState ((\i -> state $ \s -> let (v,s') = ((\_ -> ((), i + x)) s)
+      let (v,s') = (\g -> (g, g)) s
+      in runState ((\i -> state $ \s -> let (v,s') = (\_ -> ((), i + x)) s
                                         in runState ((\_ -> state (\r -> (chr i, r))) v) s')
                    v) s'
 
 incB''' :: Int -> (Int -> (Char, Int))
 incB''' x =
     \s ->
-      let (v,s') = ((\g -> (g, g)) s)
-      in ((\i -> \s -> let (v,s') = ((\_ -> (   (), i + x)) s)
+      let (v,s') = (\g -> (g, g)) s
+      in ((\i -> \s -> let (v,s') = (\_ -> ((), i + x)) s
                        in ((\_ -> (\r -> (chr i, r))) v) s')
           v) s'
 
@@ -1175,11 +1175,11 @@ rinc = U.tt "rinc"
                ]
                ('-',46)
 
-ri = U.tt "ri" [ (incer    45)
-               , (incer'   45)
-               , (incerB   45)
-               , (incerB'  45)
-               , (incerB'' 45)
+ri = U.tt "ri" [ incer    45
+               , incer'   45
+               , incerB   45
+               , incerB'  45
+               , incerB'' 45
                ]
                (('-','7','_'),103)
 
