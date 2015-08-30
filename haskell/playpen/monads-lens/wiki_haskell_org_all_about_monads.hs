@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 19 (Wed) 17:16:42 by Harold Carr.
+Last Modified : 2015 Aug 30 (Sun) 12:07:01 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1131,6 +1131,7 @@ TWO VIEWS OF BIND:
 -}
 incerB'' :: Int -> ((Char,Char,Char), Int)
 incerB'' = runState (((\x ->
+                       -- definition of 'inc' expanded
                        state $ \s -> let (v,s') = (\s -> (s, s)) s
                                      in runState ((\i ->
                                                   state (\_ -> ((), i + x)) >>
@@ -1138,8 +1139,11 @@ incerB'' = runState (((\x ->
                                                   v) s'
                       ) :: Int -> State Int Char) 10        >>= \i1 ->
                     inc 40                                  >>= \i2 ->
-                    inc 8                                   >>= \i3 ->
-                    return (i1, i2, i3))
+                    -- last call to inc expanded
+                    state $ \s -> let (v,s') = runState (inc 8) s
+                                  in runState ((\i3 ->
+                                                  return (i1, i2, i3))
+                                               v) s')
 
 ri = U.tt "ri" [ (incer    45)
                , (incer'   45)
