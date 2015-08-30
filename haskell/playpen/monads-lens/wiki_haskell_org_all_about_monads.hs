@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 30 (Sun) 16:15:21 by Harold Carr.
+Last Modified : 2015 Aug 30 (Sun) 16:21:08 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1090,11 +1090,13 @@ incB' x =
     state (\_ -> (   (), i + x)) >>
     state (\s -> (chr i,     s))
 
--- incB'' :: Int -> State Int Char
+incB'' :: Int -> State Int Char
 incB'' x =
-    state (\g -> (    g,     g)) >>= \i ->
-    state $ \s -> let (v,s') = ((\_ -> (   (), i + x)) s)
-                  in runState ((\_ -> state (\s -> (chr i,     s))) v) s'
+    state $ \s ->
+      let (v,s') = ((\g -> (    g,     g)) s)
+      in runState ((\i -> state $ \s -> let (v,s') = ((\_ -> (   (), i + x)) s)
+                                        in runState ((\_ -> state (\s -> (chr i,     s))) v) s')
+                   v) s'
 
 
 incer :: Int -> ((Char,Char,Char), Int)
