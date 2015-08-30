@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 30 (Sun) 16:21:08 by Harold Carr.
+Last Modified : 2015 Aug 30 (Sun) 16:29:42 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1093,11 +1093,18 @@ incB' x =
 incB'' :: Int -> State Int Char
 incB'' x =
     state $ \s ->
-      let (v,s') = ((\g -> (    g,     g)) s)
-      in runState ((\i -> state $ \s -> let (v,s') = ((\_ -> (   (), i + x)) s)
-                                        in runState ((\_ -> state (\s -> (chr i,     s))) v) s')
+      let (v,s') = ((\g -> (g, g)) s)
+      in runState ((\i -> state $ \s -> let (v,s') = ((\_ -> ((), i + x)) s)
+                                        in runState ((\_ -> state (\r -> (chr i, r))) v) s')
                    v) s'
 
+incB''' :: Int -> (Int -> (Char, Int))
+incB''' x =
+    \s ->
+      let (v,s') = ((\g -> (g, g)) s)
+      in ((\i -> \s -> let (v,s') = ((\_ -> (   (), i + x)) s)
+                       in ((\_ -> (\r -> (chr i, r))) v) s')
+          v) s'
 
 incer :: Int -> ((Char,Char,Char), Int)
 incer = runState
@@ -1161,9 +1168,10 @@ incerB'' = runState (((\x ->
                                                v) s')
 
 rinc = U.tt "rinc"
-               [ runState (inc    1) 45
-               , runState (incB'  1) 45
-               , runState (incB'' 1) 45
+               [ runState (inc     1) 45
+               , runState (incB'   1) 45
+               , runState (incB''  1) 45
+               ,           incB''' 1  45
                ]
                ('-',46)
 
