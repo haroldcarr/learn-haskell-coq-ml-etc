@@ -4,7 +4,7 @@
 -}
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 30 (Sun) 17:30:28 by Harold Carr.
+Last Modified : 2015 Aug 31 (Mon) 13:47:06 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -19,9 +19,11 @@ import           Control.Monad      (MonadPlus (..), ap, foldM, guard, liftM,
                                      sequence_, zipWithM, zipWithM_)
 import           Control.Monad.Except
 import           Control.Monad.Plus (mfromMaybe)
+import "mtl"     Control.Monad.Reader
 import "mtl"     Control.Monad.State
 import           Data.Char          (chr, digitToInt, isAlpha, isDigit, isHexDigit, isSpace)
-import           Data.Maybe         (mapMaybe)
+import qualified Data.Map     as Map
+import           Data.Maybe         (fromJust, mapMaybe)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
                                           foldr, head, map, tail, words)
 import           System.Random      (Random(..), StdGen, getStdGen, mkStdGen, randomR)
@@ -1053,7 +1055,6 @@ ranT = U.tt "ranT"
                 ])
        (RR 884 'h' 411)
 
-
 -- getRan' :: (Random a) => (a, a) -> State StdGen a
 getRan' bounds = get                       >>= \g       ->
                  return $ randomR bounds g >>= \(x, g') ->
@@ -1196,6 +1197,93 @@ ri = U.tt "ri" [ incer    45
 {-
 ------------------------------------------------------------------------------
 14 The Reader monad
+
+Computation: read values from shared env.
+Binding: bound fun applied to bound value; both have access to shared env.
+Use: Maintaining variable bindings, or other shared environment (e.g., configuration)
+Zero/plus: None.
+Example: Reader [(String,Value) a]
+
+14.2 Motivation
+
+Sometimes shared env needed (e.g., config).
+Read vals from env and sometimes execute sub-computations in modified env
+(with new or shadowing bindings)
+Does not require full generality of State monad (often clearer and easier than using State).
+
+14.3 Definition
+
+Use multi-parameter type classes and funDeps.
+
+-- fun from env to value
+newtype Reader e a = Reader { runReader :: (e -> a) }
+
+instance Monad (Reader e) where
+    -- creates Reader that ignores given env, produces given value
+    return a         = Reader $ \e -> a
+    -- produces Reader that uses env to extract value of its left-hand side,
+    -- then applies bound function to that value in same env
+    (Reader r) >>= f = Reader $ \e -> runReader (f (r e)) e
+
+class MonadReader e m | m -> e where
+    -- retrieves env
+    -- often used with a selector or lookup fun
+    ask   :: m e
+    -- executes computation in modified env
+    local :: (e -> e) -> m a -> m a
+
+instance MonadReader (Reader e) where
+    ask       = Reader id
+    local f c = Reader $ \e -> runReader c (f e)
+
+asks :: (MonadReader e m) => (e -> a) -> m a
+asks sel = ask >>= return . sel
+
+14.4 Example
+
+Instantiating templates that contain var substitutions and included templates.
+Using Reader: maintain env of templates and var bindings.
+When var substitution encountered, use 'asks' to lookup.
+When new template included, use 'local' to resolve in modified env that contains additional var bindings.
+
+see example16.hs
+
+HC : example from monads step-by-step
+-}
+-- variable names
+type Name   =  String
+-- expressions
+data Exp    =  Lit  Integer |  Var  Name |  Plus Exp  Exp |  Abs  Name Exp |  App  Exp  Exp
+            deriving (Eq, Show)
+
+-- values
+data EValue =  IntVal Integer |  FunVal Env Name Exp
+            deriving (Eq, Show)
+
+-- names to values
+type Env    =  Map.Map Name EValue
+
+eval3             :: Exp -> Reader Env EValue
+eval3 (Lit  i)     = return $ IntVal i
+eval3 (Var  n)     = do { env <- ask; return $ fromJust (Map.lookup n env) }
+eval3 (Plus e1 e2) = do (IntVal i1) <- eval3 e1
+                        (IntVal i2) <- eval3 e2
+                        return $ IntVal (i1 + i2)
+eval3 (Abs  n  e)  = do { env <- ask; return $ FunVal env n e }
+eval3 (App  e1 e2) = do (FunVal env' n body)  <- eval3 e1
+                        val2  <- eval3 e2
+                        local (const (Map.insert n val2 env')) (eval3 body)
+
+exampleExp = Plus (Lit 12) (App (Abs "x" (Var "x")) (Plus (Lit 4) (Lit 2)))
+t30 = U.t "t30"
+     (runReader (eval3 exampleExp) Map.empty)
+     (IntVal 18)
+
+{-
+------------------------------------------------------------------------------
+The Writer monad
+
+15 The Writer monad
 
 -}
 
