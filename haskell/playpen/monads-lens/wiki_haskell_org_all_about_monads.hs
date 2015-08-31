@@ -24,7 +24,7 @@ import           X_02_example       hiding (parent)
 
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 30 (Sun) 16:43:35 by Harold Carr.
+Last Modified : 2015 Aug 30 (Sun) 17:18:44 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1106,6 +1106,14 @@ incB''' x =
                        in ((\_ -> (\r -> (chr i, r))) v) s')
           v) s'
 
+-- COMPLETELY REDUCED
+incB'''' :: Int -> (Int -> (Char, Int))
+incB'''' x =
+    \s0 ->
+      ((\(i, s) -> ((\(v2,r) -> (chr i, r))    -- return
+                    ((\_ -> ((), i + x)) s)))  -- put
+       ((\g -> (g, g)) s0))                    -- get
+
 incer :: Int -> ((Char,Char,Char), Int)
 incer = runState
     (do i1 <- inc 10
@@ -1168,10 +1176,11 @@ incerB'' = runState (((\x ->
                                                v) s')
 
 rinc = U.tt "rinc"
-               [ runState (inc     1) 45
-               , runState (incB'   1) 45
-               , runState (incB''  1) 45
-               ,           incB''' 1  45
+               [ runState (inc      1) 45
+               , runState (incB'    1) 45
+               , runState (incB''   1) 45
+               ,           incB'''  1  45
+               ,           incB'''' 1  45
                ]
                ('-',46)
 
