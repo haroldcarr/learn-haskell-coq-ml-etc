@@ -2,6 +2,13 @@
 {-
 :set -XOverloadedStrings
 -}
+{-
+Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
+Last Modified : 2015 Aug 30 (Sun) 17:30:28 by Harold Carr.
+
+https://wiki.haskell.org/All_About_Monads
+http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
+-}
 
 module Wiki_haskell_org_all_about_monads
 where
@@ -23,12 +30,6 @@ import qualified Test.HUnit.Util    as U
 import           X_02_example       hiding (parent)
 
 {-
-Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 30 (Sun) 17:18:44 by Harold Carr.
-
-https://wiki.haskell.org/All_About_Monads
-http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
-
 ------------------------------------------------------------------------------
 1.1 What is a monad?
 
