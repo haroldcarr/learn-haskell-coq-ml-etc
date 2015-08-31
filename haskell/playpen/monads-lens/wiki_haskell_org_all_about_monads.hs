@@ -4,7 +4,7 @@
 -}
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 31 (Mon) 16:01:41 by Harold Carr.
+Last Modified : 2015 Aug 31 (Mon) 16:06:21 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1442,12 +1442,12 @@ fun n = (`runCont` id) $ do
           when (n < 10) (exit1 (show n))
           let ns = map digitToInt (show (n `div` 2))
           n' <- callCC $ \exit2 -> do    -- define "exit2"
-            when ((length ns) < 3) (exit2 (length ns))
-            when ((length ns) < 5) (exit2 n)
-            when ((length ns) < 7) $ do let ns' = map intToDigit (reverse ns)
-                                        exit1 (dropWhile (=='0') ns')  --escape 2 levels
+            when (length ns < 3) (exit2 (length ns))
+            when (length ns < 5) (exit2 n)
+            when (length ns < 7) $ do let ns' = map intToDigit (reverse ns)
+                                      exit1 (dropWhile (=='0') ns')  --escape 2 levels
             return $ sum ns
-          return $ "(ns = " ++ (show ns) ++ ") " ++ (show n')
+          return $ "(ns = " ++ show ns ++ ") " ++ show n'
         return $ "Answer: " ++ str
 
 exCont = U.t "exCont"
