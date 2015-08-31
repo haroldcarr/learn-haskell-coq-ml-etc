@@ -4,7 +4,7 @@
 -}
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 31 (Mon) 16:06:21 by Harold Carr.
+Last Modified : 2015 Aug 31 (Mon) 16:16:26 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -27,7 +27,7 @@ import           Data.Char          (chr, digitToInt, intToDigit, isAlpha, isDig
 import qualified Data.Map     as Map
 import           Data.Maybe         (fromJust, mapMaybe)
 import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
-                                          foldr, length, head, map, reverse, tail, words)
+                                          foldr, length, head, map, reverse, tail, words, zip)
 import           System.Random      (Random(..), StdGen, getStdGen, mkStdGen, randomR)
 import qualified Test.HUnit         as T
 import qualified Test.HUnit.Util    as U
@@ -1450,19 +1450,16 @@ fun n = (`runCont` id) $ do
           return $ "(ns = " ++ show ns ++ ") " ++ show n'
         return $ "Answer: " ++ str
 
+z = [(0,"Answer: 0"),(7,"Answer: 7"),(9,"Answer: 9")
+    ,(10,"Answer: (ns = [5]) 1"),(19,"Answer: (ns = [9]) 1"),(20,"Answer: (ns = [1,0]) 2"),(68,"Answer: (ns = [3,4]) 2"),(199,"Answer: (ns = [9,9]) 2")
+    ,(200,"Answer: (ns = [1,0,0]) 200"),(684,"Answer: (ns = [3,4,2]) 684"),(19999,"Answer: (ns = [9,9,9,9]) 19999")
+    ,(20000,"Answer: 1"),(20002,"Answer: 10001"),(340000,"Answer: 71"),(837364,"Answer: 286814"),(1999997,"Answer: 899999"),(1999999,"Answer: 999999")
+    ,(2000000,"Answer: (ns = [1,0,0,0,0,0,0]) 1"),(2000001,"Answer: (ns = [1,0,0,0,0,0,0]) 1"),(2000002,"Answer: (ns = [1,0,0,0,0,0,1]) 2"),(2000003,"Answer: (ns = [1,0,0,0,0,0,1]) 2"),(2000004,"Answer: (ns = [1,0,0,0,0,0,2]) 3"),(7001001,"Answer: (ns = [3,5,0,0,5,0,0]) 13"),(746392736,"Answer: (ns = [3,7,3,1,9,6,3,6,8]) 46")
+    ]
+
 exCont = U.t "exCont"
-         (map fun
-         [ 0,  7,  9
-         ,  10,  19,  20,  68,  199
-         ,  200,  684,  19999
-         ,  20000,  20002,  340000,  837364,  1999997,  1999999
-         ,  2000000,  2000001,  2000002,  2000003,  2000004,  7001001,  746392736
-         ])
-         ["Answer: 0", "Answer: 7", "Answer: 9"
-         ,"Answer: (ns = [5]) 1", "Answer: (ns = [9]) 1", "Answer: (ns = [1,0]) 2", "Answer: (ns = [3,4]) 2", "Answer: (ns = [9,9]) 2"
-         ,"Answer: (ns = [1,0,0]) 200","Answer: (ns = [3,4,2]) 684","Answer: (ns = [9,9,9,9]) 19999"
-         ,"Answer: 1","Answer: 10001","Answer: 71","Answer: 286814","Answer: 899999","Answer: 999999"
-         ,"Answer: (ns = [1,0,0,0,0,0,0]) 1","Answer: (ns = [1,0,0,0,0,0,0]) 1","Answer: (ns = [1,0,0,0,0,0,1]) 2","Answer: (ns = [1,0,0,0,0,0,1]) 2","Answer: (ns = [1,0,0,0,0,0,2]) 3","Answer: (ns = [3,5,0,0,5,0,0]) 13","Answer: (ns = [3,7,3,1,9,6,3,6,8]) 46"]
+         (map (fun . fst) z)
+         (map        snd  z)
 
 ------------------------------------------------------------------------------
 
