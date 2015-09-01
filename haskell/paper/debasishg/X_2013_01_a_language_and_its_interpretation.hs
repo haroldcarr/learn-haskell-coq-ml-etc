@@ -6,7 +6,7 @@ where
 http://debasishg.blogspot.ca/2013/01/a-language-and-its-interpretation.html
 
 Created       : 2015 Sep 01 (Tue) 10:51:58 by Harold Carr.
-Last Modified : 2015 Sep 01 (Tue) 14:19:00 by Harold Carr.
+Last Modified : 2015 Sep 01 (Tue) 14:31:36 by Harold Carr.
 -}
 
 import           Control.Monad.Free
@@ -145,7 +145,7 @@ data JoyError = NotEnoughParamsOnStack | NotEmptyOnEnd | NoEnd deriving Show
 -- | interpreter takes free monad as input
 runProgram :: Joy n -> Either JoyError Int
 runProgram = joy []
-  where joy stack           (Free (Push v cont)) = joy (v : stack) cont
+  where joy stack           (Free (Push v cont)) = joy (v     : stack) cont
         joy (a : b : stack) (Free (Add    cont)) = joy (a + b : stack) cont
         joy (a : b : stack) (Free (Mult   cont)) = joy (a * b : stack) cont
         joy (a : stack)     (Free (Dup    cont)) = joy (a : a : stack) cont
