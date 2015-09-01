@@ -4,7 +4,7 @@
 -}
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 31 (Mon) 17:12:15 by Harold Carr.
+Last Modified : 2015 Aug 31 (Mon) 21:48:02 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1516,36 +1516,172 @@ Code available in [[../examples/example20.hs|example20.hs]]
 -}
 
 toIO :: a -> IO a
-toIO x = return x
+toIO = return
 
 funIO :: IO String
-funIO = do n <- (readLn::IO Int)         -- this is an IO monad block
+funIO = do n <- readLn::IO Int         -- this is an IO monad block
            convertIO n
 
 convertIO :: Int -> IO String
-convertIO n = (`runCont` id) $ do        -- this is a Cont monad block
-              str <- callCC $ \exit1 -> do    -- str has type IO String
-                when (n < 10) (exit1 $ toIO (show n))
-                let ns = map digitToInt (show (n `div` 2))
-                n' <- callCC $ \exit2 -> do   -- n' has type IO Int
-                  when ((length ns) < 3) (exit2 (toIO (length ns)))
-                  when ((length ns) < 5) (exit2 $ do putStrLn "Enter a number:"
-                                                     x <- (readLn::IO Int)
-                                                     return x)
-                  when ((length ns) < 7) $ do let ns' = map intToDigit (reverse ns)
-                                              exit1 $ toIO (dropWhile (=='0') ns')
-                  return (toIO (sum ns))
-                return $ do num <- n'  -- this is an IO monad block
-                            return $ "(ns = " ++ (show ns) ++ ") " ++ (show num)
-              return $ do s <- str -- this is an IO monad block
-                          return $ "Answer: " ++ s
+convertIO n = (`runCont` id) $        -- this is a Cont monad block
+    callCC $ \exit1 -> do    -- type IO String
+        when (n < 10) (exit1 $ toIO (show n ++ " exit1"))
+        s2 <- callCC $ \exit2 -> do   -- type IO String
+            when (n  < 20) (exit2 (toIO (show n ++ " exit2")))
+            when (n == 50) (exit1 $ do putStrLn "Enter a number:"
+                                       x <- readLn::IO Int
+                                       return (show n ++ " " ++ show x ++ " readline/exit1 from within exit2"))
+            return (toIO $ show n ++ " return from exit1/exit2")
+        return $ do s2' <- s2; return ("return from exit1: " ++ s2')
 
 {-
+to run in ghci:
+
+    funIO
+
 Works, but isn't pretty.
 
 ------------------------------------------------------------------------------
 19 Monad transformers
 
+Variants of standard monads that facilitate combining monads.
+Type constructors parameterized over a monad type constructor: produce combined monadic types.
+
+19.1 Transformer type constructors
+
+'Reader r a' : environment of type r, values of type a.
+Type constructor 'Reader r' is Monad class instance.
+'runReader::(r->a)' : performs computation in Reader monad, returns result of type a.
+
+Transformer version, 'ReaderT', adds a monad type constructor as an addition parameter.
+
+'ReaderT r m a' is type of values of combined monad in which Reader is base monad
+and m is inner monad.
+
+'ReaderT r m' is monad class instance.
+'runReaderT::(r -> m a)' performs computation in combined monad, returns result of type m a.
+
+'ReaderT r IO' is combined Reader+IO monad.
+
+Generate non-transformer version of a monad from transformer version
+by applying it to the Identity monad:
+  'ReaderT r Identity' same 'Reader r'
+
+19.2 Lifting
+
+Instead of creating additional do-blocks in a computation to manipulate values in inner monad,
+use lifting operations to bring functions from inner monad into the combined monad.
+
+Each monad transformer provides lift function to lift a monadic
+computation into a combined monad.
+
+Many transformers also provide a liftIO.
+
+Code available in [[../examples/example21.hs|example21.hs]]
+-}
+
+funIOCT :: IO String
+funIOCT = (`runContT` return) $ do
+    n   <- liftIO (readLn::IO Int)
+    callCC $ \exit1 -> do
+        when (n < 10) (exit1 (show n ++ " exit1"))
+        s2 <- callCC $ \exit2 -> do
+            when (n  < 20) (exit2  (show n ++ " exit2"))
+            when (n == 50) $ do liftIO $ putStrLn "Enter a number:"
+                                x <- liftIO (readLn::IO Int)
+                                exit1 (show n ++ " " ++ show x ++ " readline/exit1 from within exit2")
+            return $ show n ++ " return from exit1/exit2"
+        return $ "return from exit1: " ++ s2
+
+{-
+Compare 'funIOCT' with 'convertIO'
+
+------------------------------------------------------------------------------
+20 Standard monad transformers
+
+Haskell has classes which represent monad transformers and transformer versions of standard monads.
+
+20.1 The MonadTrans and MonadIO classes
+
+The (Control.Monad.Trans) MonadTrans class provides 'lift'.
+- lifts monadic computation in inner monad into combined monad.
+
+class MonadTrans t where
+    lift :: (Monad m) => m a -> t m a
+
+MonadIO defines liftIO:
+
+class (Monad m) => MonadIO m where
+    liftIO :: IO a -> m a
+
+20.2 Transformer versions of standard monads
+
+It is not the case the all monad transformers apply the same transformation.
+
+E.g.:
+
+ContT turns (a->r)->r into (a->m r)->m r.
+StateT turns s->(a,s) into s->m (a,s).
+
+No magic formula to create transformer version of a monad — depends on
+what makes sense in its context.
+
+Standard   Transformer   Original Type   Combined Type
+Error      ErrorT        Either e a      m (Either e a)
+State      StateT        s -> (a,s)      s -> m (a,s)
+Reader     ReaderT       r -> a          r -> m a
+Writer     WriterT       (a,w)           m (a,w)
+Cont       ContT         (a -> r) -> r   (a -> m r) -> m r
+
+Order important when combining monads.
+
+StateT s (Error e) different than ErrorT e (State s).
+- 1st : s -> Error e (a,s) : computation can either return a new state or generate an error.
+- 2nd : s -> (Error e a,s) : computation always returns a new state; value can be error or normal value.
+
+Anatomy of a monad transformer
+
+21 Anatomy of a monad transformer
+
+Detailed look at StateT.
+
+21.1 Combined monad definition
+
+newtype State  s   a = State  { runState  :: (s ->   (a,s)) }
+
+newtype StateT s m a = StateT { runStateT :: (s -> m (a,s)) }
+
+State s    : instance of Monad and MonadState s classes.
+StateT s m : ditto
+- if m is an instance of MonadPlus, StateT s m should also be a member of MonadPlus.
+
+instance (Monad m) => Monad (StateT s m) where
+    return a          = StateT $ \s -> return (a,s)
+    (StateT x) >>= f  = StateT $ \s -> do -- get new value, state
+                                          (v,s')      <- x s
+                                          -- apply bound function to get new state transformation fn
+                                          (StateT x') <- return $ f v
+                                          -- apply state transformation fn to the new state
+                                          x' s'
+
+
+Compare to definition for State s.
+- 'return'  makes use of 'return' inner monad
+- binding uses 'do' to perform computation in inner monad.
+
+Combined monads that use StateT transformer must be instaces of MonadState:
+
+instance (Monad m) => MonadState s (StateT s m) where
+    get   = StateT $ \s -> return (s,s)
+    put s = StateT $ \_ -> return ((),s)
+
+And
+
+instance (MonadPlus m) => MonadPlus (StateT s m) where
+    mzero = StateT $ \s -> mzero
+    (StateT x1) `mplus` (StateT x2) = StateT $ \s -> (x1 s) `mplus` (x2 s)
+
+21.2 Defining the lifting function
 -}
 
 ------------------------------------------------------------------------------
