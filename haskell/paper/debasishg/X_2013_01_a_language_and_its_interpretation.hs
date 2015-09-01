@@ -1,5 +1,4 @@
-{-# LANGUAGE DeriveFunctor  #-}
-{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module X_2013_01_a_language_and_its_interpretation
 where
@@ -7,7 +6,7 @@ where
 http://debasishg.blogspot.ca/2013/01/a-language-and-its-interpretation.html
 
 Created       : 2015 Sep 01 (Tue) 10:51:58 by Harold Carr.
-Last Modified : 2015 Sep 01 (Tue) 12:12:50 by Harold Carr.
+Last Modified : 2015 Sep 01 (Tue) 14:19:00 by Harold Carr.
 -}
 
 import           Control.Monad.Free
@@ -64,7 +63,7 @@ p = do push 5
        end
 {-
 > p
-Free (Push 5 (Free (Push 6 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Dup (Free (Mult (Free (Dup (Free (Dup (Free (Mult (Free (Mult (Free End))))))))))))))))))))))))))))))
+Free (Push 5 (Free (Push 6 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Dup (Free (Mult (Free End))))))))))))))))))))))
 
 Building the pure data (aka Builder)
 
@@ -111,40 +110,31 @@ retract :: Monad f => Free f a -> f a
 retract . liftF = id
 -}
 
--- | Push an integer to the stack
 push :: Int -> Joy ()
 push n = liftF $ Push n ()
 
--- |
-dup :: Joy ()
-dup = liftF $ Dup ()
-
--- |
-end :: Joy ()
-end = liftF $ End
-
--- | Add the top two numbers of the stack and push the sum
 add :: Joy ()
 add = liftF $ Add ()
 
--- |
 mult :: Joy ()
 mult = liftF $ Mult ()
 
--- can also combine operators
--- Since monads, can use 'do'
+dup :: Joy ()
+dup = liftF $ Dup ()
 
--- | adds 1 to a number.
+end :: Joy ()
+end = liftF End
+
+-- can also combine operators (since monads, can use 'do')
+
 incr :: Joy ()
-incr = do {push 1; add}
+incr = do push 1; add
 
--- | increments twice
 add2 :: Joy ()
-add2 = do {incr; incr}
+add2 = do incr; incr
 
--- | squares a number
 square :: Joy ()
-square = do {dup; mult}
+square = do dup; mult
 
 {-
 An Interpreter (aka Visitor)
@@ -152,19 +142,19 @@ An Interpreter (aka Visitor)
 
 data JoyError = NotEnoughParamsOnStack | NotEmptyOnEnd | NoEnd deriving Show
 
--- | interpreter takes free monad as input.
+-- | interpreter takes free monad as input
 runProgram :: Joy n -> Either JoyError Int
-runProgram program = joy [] program
+runProgram = joy []
   where joy stack           (Free (Push v cont)) = joy (v : stack) cont
-        joy (a : b : stack) (Free (Add cont))    = joy (a + b : stack) cont
-        joy (a : b : stack) (Free (Mult cont))   = joy (a * b : stack) cont
-        joy (a : stack)     (Free (Dup cont))    = joy (a : a : stack) cont
+        joy (a : b : stack) (Free (Add    cont)) = joy (a + b : stack) cont
+        joy (a : b : stack) (Free (Mult   cont)) = joy (a * b : stack) cont
+        joy (a : stack)     (Free (Dup    cont)) = joy (a : a : stack) cont
         joy _               (Free Add {})        = Left NotEnoughParamsOnStack
         joy _               (Free Dup {})        = Left NotEnoughParamsOnStack
         joy []              (Free End)           = Left NotEnoughParamsOnStack
         joy [result]        (Free End)           = Right result
         joy _               (Free End)           = Left NotEmptyOnEnd
-        joy _               Pure {}              = Left NoEnd
+        joy _               (Pure {})            = Left NoEnd
 
 {-
 runProgram p
