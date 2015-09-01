@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Apr 28 (Mon) 16:13:48 by Harold Carr.
-Last Modified : 2014 Apr 28 (Mon) 19:20:21 by Harold Carr.
+Last Modified : 2015 Sep 01 (Tue) 09:39:54 by Harold Carr.
 -}
 
 {-# LANGUAGE FlexibleContexts      #-}
@@ -20,32 +20,34 @@ import           Test.HUnit.Util        as T
 ------------------------------------------------------------------------------
 
 {-
+decouple a data representation from processing of that data
 
-- decompose data processing of data
-- e.g., compiler/interpreter AST
-  - compile to executable
-  - run/interpret
-  - pretty print
-  - compress/archive
-  - error check
+example ways to process
+- compile to executable
+- run/interpret
+- pretty print
+- compress/archive
+- error check
 -}
 
+Example:
+
 -- syntax tree of commands with link to next command
-data Toy b next = Output b next -- prints a "b" to the console
-                | Bell next     -- rings the computer's bell
+data Toy b next = Output b next -- prints something of type b to console
+                | Bell next     -- rings computer's bell
                 | Done          -- end of execution
                 deriving (Eq, Show)
 
 example_command  =       Output 'A' Done  ::        Toy Char (Toy a next)
 
--- but different type for every command combination
+-- Problem: different type for every command combination
 
 example_command2 = Bell (Output 'A' Done) :: Toy a (Toy Char (Toy b next))
 
 {-
-Can remedy by using:
+Remedy using:
 
--- named Fix because it is "the fixed point of a functor"
+-- named Fix because it is "fixed point of a functor"
 :i Fix
 newtype Fix f = Fix {unFix :: f (Fix f)}
 instance   Eq (f (Fix f)) =>   Eq (Fix f)
@@ -53,14 +55,15 @@ instance  Ord (f (Fix f)) =>  Ord (Fix f)
 instance Show (f (Fix f)) => Show (Fix f)
 -}
 
-example_command_fp  =            Fix (Output 'A' (Fix Done))   :: Fix (Toy Char)
-example_command2_fp = Fix (Bell (Fix (Output 'A' (Fix Done)))) :: Fix (Toy Char)
+example_command_fp1 =            Fix (Output 'A' (Fix Done))   :: Fix (Toy Char)
+example_command_fp2 = Fix (Bell (Fix (Output 'A' (Fix Done)))) :: Fix (Toy Char)
 
 {-
-- but requires Done constructor to terminate chain
+- Problem: requires Done constructor to terminate chain
 - Fix does not support subroutines that operate on part of the chain
 
-Hack : when subroutine finished but not calling Done, throw exception with continuation where catcher resumes
+Hack : when subroutine finished but not calling Done,
+       throw exception with continuation where catcher resumes
 -}
 
 data FixE f e = Fix' (f (FixE f e))
@@ -76,7 +79,7 @@ instance Functor (Toy b) where
     fmap f (Bell     next) = Bell     (f next)
     fmap f  Done           = Done
 
--- Now we can write code that can be caught and resumed:
+-- Now code can be caught and resumed:
 data IncompleteException = IncompleteException
 
 -- output 'A'
