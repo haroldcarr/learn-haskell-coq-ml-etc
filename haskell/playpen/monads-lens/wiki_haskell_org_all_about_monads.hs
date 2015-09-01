@@ -4,7 +4,7 @@
 -}
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 31 (Mon) 16:47:45 by Harold Carr.
+Last Modified : 2015 Aug 31 (Mon) 17:12:15 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -1445,6 +1445,108 @@ z = [(0,"0 exit1"),(9,"9 exit1")
 exCont = U.t "exCont"
          (map (fun . fst) z)
          (map        snd  z)
+
+{-
+------------------------------------------------------------------------------
+Part III - Monad Transformers
+
+17 Introduction
+
+Part I  : monad concept
+Part II : "standard" monads
+
+Need to combine monads.
+
+When one computation is a strict subset of the other, it is possible
+to perform the monad computations separately, unless the
+sub-computation is performed in a one-way monad.
+
+When computations can't be performed in isolation, then need
+monad that combines the features of the two+ monads into single computation.
+
+Combine standard monads via monad transformers.
+
+------------------------------------------------------------------------------
+18 Combining monads the hard way
+
+Exercise: combine monads without using transformers.
+
+Why: develop insights into issues.
+
+18.1 Nested Monads
+
+Example of separate monads:
+
+Code available in [[../examples/example19.hs|example19.hs]]
+
+fun :: IO String
+fun = do n <- (readLn::IO Int)         -- this is an IO monad block
+         return $ (`runCont` id) $ do  -- this is a Cont monad block
+           str <- callCC $ \exit1 -> do
+             when (n < 10) (exit1 (show n))
+             let ns = map digitToInt (show (n `div` 2))
+             n' <- callCC $ \exit2 -> do
+               when ((length ns) < 3) (exit2 (length ns))
+               when ((length ns) < 5) (exit2 n)
+               when ((length ns) < 7) $ do let ns' = map intToDigit (reverse ns)
+                                           exit1 (dropWhile (=='0') ns')
+               return $ sum ns
+             return $ "(ns = " ++ (show ns) ++ ") " ++ (show n')
+           return $ "Answer: " ++ str
+
+18.2 Combined Monads
+
+When nesting pattern (above) cannot be used, do computations within a
+monad in which the values are themselves monadic values in another monad. E.g:
+- Cont (IO String) : I/O in Continuation monad.
+- State (Either Err a)
+
+Example: require additional IO in middle of Continuation monad.
+- user specify part of output value when input value satisfies predicate.
+
+Cannot nest, because
+- IO depends on part of Continuation compuation
+- Continuation depends on the result of IO
+
+Insead, make Continuation use values IO.
+What used to be Int/String now IO Int/IO String.
+Can't extract values from IO.
+
+Code available in [[../examples/example20.hs|example20.hs]]
+-}
+
+toIO :: a -> IO a
+toIO x = return x
+
+funIO :: IO String
+funIO = do n <- (readLn::IO Int)         -- this is an IO monad block
+           convertIO n
+
+convertIO :: Int -> IO String
+convertIO n = (`runCont` id) $ do        -- this is a Cont monad block
+              str <- callCC $ \exit1 -> do    -- str has type IO String
+                when (n < 10) (exit1 $ toIO (show n))
+                let ns = map digitToInt (show (n `div` 2))
+                n' <- callCC $ \exit2 -> do   -- n' has type IO Int
+                  when ((length ns) < 3) (exit2 (toIO (length ns)))
+                  when ((length ns) < 5) (exit2 $ do putStrLn "Enter a number:"
+                                                     x <- (readLn::IO Int)
+                                                     return x)
+                  when ((length ns) < 7) $ do let ns' = map intToDigit (reverse ns)
+                                              exit1 $ toIO (dropWhile (=='0') ns')
+                  return (toIO (sum ns))
+                return $ do num <- n'  -- this is an IO monad block
+                            return $ "(ns = " ++ (show ns) ++ ") " ++ (show num)
+              return $ do s <- str -- this is an IO monad block
+                          return $ "Answer: " ++ s
+
+{-
+Works, but isn't pretty.
+
+------------------------------------------------------------------------------
+19 Monad transformers
+
+-}
 
 ------------------------------------------------------------------------------
 
