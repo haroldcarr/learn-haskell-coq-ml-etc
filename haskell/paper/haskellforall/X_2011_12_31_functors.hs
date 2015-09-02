@@ -1,6 +1,8 @@
+module X_2011_12_31_functors
+where
 {-
 Created       : 2014 Oct 07 (Tue) 08:53:35 by Harold Carr.
-Last Modified : 2014 Oct 07 (Tue) 20:28:34 by Harold Carr.
+Last Modified : 2015 Sep 01 (Tue) 14:44:47 by Harold Carr.
 
 2011-12-31
 http://www.haskellforall.com/2011/12/haskell-for-mainstream-programmers-code.html

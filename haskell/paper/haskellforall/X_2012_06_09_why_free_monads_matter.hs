@@ -1,10 +1,11 @@
-{-
-Created       : 2014 Apr 28 (Mon) 16:13:48 by Harold Carr.
-Last Modified : 2015 Sep 01 (Tue) 09:39:54 by Harold Carr.
--}
-
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+
+module X_2012_06_09_why_free_monads_matter where
+{-
+Created       : 2014 Apr 28 (Mon) 16:13:48 by Harold Carr.
+Last Modified : 2015 Sep 01 (Tue) 18:43:44 by Harold Carr.
+-}
 
 -- http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
 
@@ -18,7 +19,6 @@ import           Test.HUnit
 import           Test.HUnit.Util        as T
 
 ------------------------------------------------------------------------------
-
 {-
 decouple a data representation from processing of that data
 
@@ -30,18 +30,17 @@ example ways to process
 - error check
 -}
 
-Example:
+-- Example:
 
 -- syntax tree of commands with link to next command
 data Toy b next = Output b next -- prints something of type b to console
-                | Bell next     -- rings computer's bell
+                | Bell     next -- rings computer's bell
                 | Done          -- end of execution
                 deriving (Eq, Show)
 
-example_command  =       Output 'A' Done  ::        Toy Char (Toy a next)
-
 -- Problem: different type for every command combination
 
+example_command  =       Output 'A' Done  ::        Toy Char (Toy a next)
 example_command2 = Bell (Output 'A' Done) :: Toy a (Toy Char (Toy b next))
 
 {-
@@ -49,7 +48,7 @@ Remedy using:
 
 -- named Fix because it is "fixed point of a functor"
 :i Fix
-newtype Fix f = Fix {unFix :: f (Fix f)}
+newtype   Fix f = Fix {unFix :: f (Fix f)}
 instance   Eq (f (Fix f)) =>   Eq (Fix f)
 instance  Ord (f (Fix f)) =>  Ord (Fix f)
 instance Show (f (Fix f)) => Show (Fix f)
@@ -60,14 +59,14 @@ example_command_fp2 = Fix (Bell (Fix (Output 'A' (Fix Done)))) :: Fix (Toy Char)
 
 {-
 - Problem: requires Done constructor to terminate chain
-- Fix does not support subroutines that operate on part of the chain
+- 'Fix' does not support subroutines that operate on part of chain
 
 Hack : when subroutine finished but not calling Done,
        throw exception with continuation where catcher resumes
 -}
 
-data FixE f e = Fix' (f (FixE f e))
-              | Throw e
+data FixE f a = Fix' (f (FixE f a))
+              | Throw a
 
 catch :: (Functor f) => FixE f e1 -> (e1 -> FixE f e2) -> FixE f e2
 catch (Fix'  x) f = Fix' (fmap (flip catch f) x)
@@ -98,7 +97,8 @@ program = subroutine `catch` (\_ -> Fix' (Bell (Fix' Done)))
 ------------------------------------------------------------------------------
 
 {-
-data Free f a = Pure a | Free (f (Free f a))
+data Free f a = Free (f (Free f a))
+              | Pure  a
 
 instance (Functor f) => Monad (Free f) where
     return = Pure
@@ -119,7 +119,7 @@ subroutine' :: Free (Toy Char) ()
 subroutine' = output 'A'
 
 -- can use `do` notation since using Free MONAD
--- program' just builds a data type instance (no effects)
+-- just builds a data type instance (no effects)
 program' :: Free (Toy Char) r
 program' = do
     subroutine'
@@ -136,7 +136,7 @@ program' = do
 
 showProgram :: (Show a, Show r) => Free (Toy a) r -> String
 showProgram (Free (Output a x)) = "output " ++ show a ++ "\n" ++ showProgram x
-showProgram (Free (Bell x))     = "bell\n"  ++ showProgram x
+showProgram (Free (Bell     x)) = "bell\n"  ++ showProgram x
 showProgram (Free Done)         = "done\n"
 showProgram (Pure r)            = "return " ++ show r ++ "\n"
 
@@ -164,7 +164,7 @@ t3 = T.tt "t3"
      "output 'A'\ndone\n"
 
 {-
-Note: `Done` swallows all commands after it whereas `Pure` resuming.
+Note: `Done` swallows all commands after it, whereas `Pure` resumes.
 Many cases do not need Done-like constructor in functor.
 Some cases may need Done's "abort" semantics.
 -}
@@ -204,7 +204,7 @@ atomic m = Atomic $ liftM Return m
 -- FAKE sequencing
 -- keeping atomic steps separate
 -- later interleave them with other threads
-
+{-
 instance (Monad m) => Monad (Thread m) where
     return = Return
     (Atomic m) >>= f = Atomic (liftM (>>= f) m)
@@ -237,7 +237,7 @@ runThread (Return r) = return r
 t5 = T.t "t5"
      (unsafePerformIO (runThread (interleave thread1 thread2)))
      ()
-
+-}
 ------------------------------------------------------------------------------
 
 -- Free Monads - Part 2
@@ -288,7 +288,7 @@ interleave' :: (Monad m, Functor m, MonadFree m (Thread m)) => Thread m b -> Thr
 interleave' (Atomic m1) (Atomic m2) = do
     next1 <- liftF m1
     next2 <- liftF m2
-    interleave next1 next2
+    interleave' next1 next2
 interleave' a1 (Return _) = a1
 interleave' (Return _) a2 = a2
 
@@ -298,7 +298,7 @@ interleave' (Return _) a2 = a2
 
 
 ------------------------------------------------------------------------------
-
+{-
 -- Interpreters - Revisited
 
 -- player-programmable game
@@ -338,16 +338,16 @@ interpret' :: Program r -> Game r
 interpret' prog = case prog of
     Free (Look dir g) -> do
         img <- collectImage dir
-        interpret (g img)
+        interpret' (g img)
     Free (Fire dir next) -> do
         sendBullet dir
-        interpret next
+        interpret' next
     Free (ReadLine g) -> do
         str <- getChatLine
-        interpret (g str)
+        interpret' (g str)
     Free (WriteLine s g) ->
         putChatLine s
-        interpret (g True)
+        interpret' (g True)
     Pure r -> return r
 
 collectImage dir = Game Image
@@ -375,11 +375,11 @@ easyToAnger' = forever $ do
         fire Forward
         _ <- writeLine "Take that!"
         return ()
-
+-}
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
-runTests = runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5
+runTests = runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 {- ++ t5 -}
 
 -- End of file.
 

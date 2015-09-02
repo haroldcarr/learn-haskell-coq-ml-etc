@@ -14,12 +14,23 @@ build-type:          Simple
 cabal-version:       >=1.18
 
 library
-  exposed-modules:     X_2012_01_01_loops
+  exposed-modules:     X_2011_12_31_functors
+                     , X_2012_01_01_loops
+                     , X_2012_01_03_ADTs
+                     -- , X_2012_01_04_state
+                     -- , X_2012_01_28_lenses
+                     , X_2012_01_29_unicode
+                     , X_2012_06_09_why_free_monads_matter
+                     -- , X_2013_05_program_imperatively_using_haskell
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.8 && <4.9
                      , data-lens >= 2.10.7
+                     , data-fix >= 0.0.1
+                     , free >= 4.11
                      , mtl >= 2.1.3.1
                      , pipes
+                     , HUnit >= 1.2.5.2
+                     , test-hunit-util >= 0.1
   -- hs-source-dirs:      
   default-language:    Haskell2010

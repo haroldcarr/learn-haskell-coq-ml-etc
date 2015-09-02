@@ -1,6 +1,8 @@
+module X_2013_05_program_imperatively_using_haskell
+where
 {-
 Created       : 2013 Oct 05 (Sat) 18:42:23 by carr.
-Last Modified : 2013 Oct 05 (Sat) 18:59:15 by carr.
+Last Modified : 2015 Sep 01 (Tue) 14:49:40 by Harold Carr.
 
 http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html
 -}

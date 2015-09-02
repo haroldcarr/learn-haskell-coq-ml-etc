@@ -1,6 +1,8 @@
+module X_2012_01_04_state
+where
 {-
 Created       : 2014 Oct 21 (Tue) 14:51:28 by Harold Carr.
-Last Modified : 2014 Oct 21 (Tue) 15:25:03 by Harold Carr.
+Last Modified : 2015 Sep 01 (Tue) 14:46:08 by Harold Carr.
 
 http://www.haskellforall.com/2012/01/haskell-for-mainstream-programmers_04.html
 -}

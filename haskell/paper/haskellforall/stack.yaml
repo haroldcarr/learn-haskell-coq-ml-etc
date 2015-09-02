@@ -1,5 +1,8 @@
 flags: {}
 packages:
 - '.'
-extra-deps: [data-lens-2.10.7]
+- /Users/carr/.sync/.esync/openhc/test-hunit-util
+extra-deps: [ data-fix-0.0.1
+            , data-lens-2.10.7
+            ]
 resolver: nightly-2015-08-06
