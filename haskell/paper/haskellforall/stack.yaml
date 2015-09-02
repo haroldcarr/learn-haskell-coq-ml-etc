@@ -5,4 +5,4 @@ packages:
 extra-deps: [ data-fix-0.0.1
             , data-lens-2.10.7
             ]
-resolver: nightly-2015-08-06
+resolver: lts-2.14

@@ -4,7 +4,7 @@
 module X_2012_06_09_why_free_monads_matter where
 {-
 Created       : 2014 Apr 28 (Mon) 16:13:48 by Harold Carr.
-Last Modified : 2015 Sep 01 (Tue) 18:43:44 by Harold Carr.
+Last Modified : 2015 Sep 01 (Tue) 19:19:35 by Harold Carr.
 -}
 
 -- http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
@@ -204,7 +204,7 @@ atomic m = Atomic $ liftM Return m
 -- FAKE sequencing
 -- keeping atomic steps separate
 -- later interleave them with other threads
-{-
+
 instance (Monad m) => Monad (Thread m) where
     return = Return
     (Atomic m) >>= f = Atomic (liftM (>>= f) m)
@@ -237,7 +237,7 @@ runThread (Return r) = return r
 t5 = T.t "t5"
      (unsafePerformIO (runThread (interleave thread1 thread2)))
      ()
--}
+
 ------------------------------------------------------------------------------
 
 -- Free Monads - Part 2
@@ -296,9 +296,8 @@ interleave' (Return _) a2 = a2
 
 -- category theory : free monads and lists: both free objects, lists are free monoids, and free monads are free monads.
 
-
 ------------------------------------------------------------------------------
-{-
+
 -- Interpreters - Revisited
 
 -- player-programmable game
@@ -333,7 +332,7 @@ easyToAnger = Free $ ReadLine $ \s -> case s of
     _    -> easyToAnger
 
 data Game r = Game r
-
+{-
 interpret' :: Program r -> Game r
 interpret' prog = case prog of
     Free (Look dir g) -> do
@@ -345,7 +344,7 @@ interpret' prog = case prog of
     Free (ReadLine g) -> do
         str <- getChatLine
         interpret' (g str)
-    Free (WriteLine s g) ->
+    Free (WriteLine s g) -> do
         putChatLine s
         interpret' (g True)
     Pure r -> return r
@@ -379,7 +378,7 @@ easyToAnger' = forever $ do
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
-runTests = runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 {- ++ t5 -}
+runTests = runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5
 
 -- End of file.
 

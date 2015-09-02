@@ -24,7 +24,7 @@ library
                      -- , X_2013_05_program_imperatively_using_haskell
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.8 && <4.9
+  build-depends:       base >= 4.7.0.2
                      , data-lens >= 2.10.7
                      , data-fix >= 0.0.1
                      , free >= 4.11
