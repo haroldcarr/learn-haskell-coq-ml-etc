@@ -8,7 +8,7 @@ import           Test.QuickCheck
 
 {-
 Created       : 2015 Sep 02 (Wed) 11:56:37 by Harold Carr.
-Last Modified : 2015 Sep 02 (Wed) 14:11:54 by Harold Carr.
+Last Modified : 2015 Sep 02 (Wed) 17:06:59 by Harold Carr.
 
 http://www.haskellforall.com/2012/07/purify-code-using-free-monads.html
 
@@ -33,7 +33,7 @@ main = do x <- getLine
 -- REPRESENTATION
 
 data TeletypeF x
-  = PutStrLn String x       -- putStrLn    :: String -> IO ()
+  = PutStrLn String    x    -- putStrLn    :: String -> IO ()
   | GetLine (String -> x)   -- getLine     :: IO String
   | ExitSuccess             -- exitSuccess :: IO a
   deriving Functor
@@ -57,7 +57,7 @@ exitSuccess' = liftF ExitSuccess
 -- IMPURE INTERPRETER OF REPRESENTATION
 
 run :: Teletype r -> IO r
-run (Pure r) = return r
+run (Pure                r) = return r
 run (Free (PutStrLn str t)) = putStrLn str >>  run t
 run (Free (GetLine  f    )) = getLine      >>= run . f
 run (Free  ExitSuccess    ) = exitSuccess
@@ -117,12 +117,14 @@ Can't prove free monad with above interpreter either since interpreter uses putS
 Can prove using pure interpreter: runPure echo = take 1
 -}
 
+-- PURE INTERPRETER OF REPRESENTATION
+
 runPure :: Teletype r -> [String] -> [String]
-runPure (Pure r)                  xs  = []
-runPure (Free (PutStrLn y  t))    xs  = y:runPure t xs
-runPure (Free (GetLine     k))    []  = []
-runPure (Free (GetLine     k)) (x:xs) = runPure (k x) xs
-runPure (Free  ExitSuccess   )    xs  = []
+runPure (Pure                r)    xs  = []
+runPure (Free (PutStrLn str t))    xs  = str:runPure t     xs
+runPure (Free (GetLine  f    ))    []  = []
+runPure (Free (GetLine  f    )) (x:xs) =     runPure (f x) xs
+runPure (Free  ExitSuccess    )    xs  = []
 
 {-
 TODO : PROOF
