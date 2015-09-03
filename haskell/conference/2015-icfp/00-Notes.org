@@ -1,0 +1,278 @@
+GIT-ANNEX (with other git repos "underneath")
+DEVONTHINK
+NIX/HASKELL/EMACS
+
+
+Created       : 2015 Aug 30 (Sun) 08:56:30 by Harold Carr.
+Last Modified : 2015 Sep 03 (Thu) 14:01:51 by Harold Carr.
+
+SSDI: hyatt_meetings
+login: icfp
+password: 2015
+
+------------------------------------------------------------------------------
+* PEOPLE:
+
+** Saturday night
+
+Valerie Aurora - did not meet her - sat near her at bar
+Gershom Bazerman - at bar
+
+** Sunday
+
+*** Hallway before first meetings:
+Ryan Newton (indiana): talking about infiniband, ParSci, Compact serialization
+Adam Foltzer (Galois)
+
+*** LUNCH TABLE:
+Michael Sloan (FP) at lunch
+other FP guy
+Siraaj Khandkar (sent him emacs align) at lunch
+
+*** AFTERNOON BREAK:
+Matthias in hallway
+
+*** DINNER:
+Ryan Trinkle, Obsidian Systems
+Paul Liu (intel labs, hillsboro, oregon: compiler technology)
+Neil Klew (google, flum - replacement for map/reduce)
+UPenn postdoc, got PhD at Yale with Paul Hudak
+Michael Sloan
+other FP guy
+
+** Monday
+
+*** Morning break
+Neil Klew (google)
+
+*** Morning sessions and lunch
+Jesse Franklin - monsanto - he heard me speak at LambdaConf both times
+- In a room full of about 500 people I sat down to hear the morning speakers.
+- After I sat down, the person (Jesse) in the next chair asked me if I had spoken
+  at LambdaConf in Boulder, Colorado the last two years.  I said yes.
+  He said he attended both of my presentations. What a coincidence!
+  He said they were useful for him.
+Paul Liu
+
+*** Evening reception
+
+Marc Feeley
+
+** Tuesday
+
+*** morning before sessions
+
+Lee Pike, Galois : Halvm is same space as Mirage : use: spin up large N as honeypots
+Ronald Garcia
+- mentioned LogicBlox as place to work
+
+*** morning break
+
+Alan Zimmerman : uses spacemacs (just works with ghc-mod in path)
+
+*** lunch table
+
+Edward Kmett
+Simon Marlow
+Simon Peyton-Jones : talk about Cloud Haskell
+
+*** lunch hallway
+
+Jeff Polackaw (previous with PivotMail) : talk about Halvm, free
+monads, music (he plays bassoon, clarinet, saxophone - knows Bob
+Keller)
+
+*** afternoon hallway
+
+William Byrd (miniKanran)
+
+*** banquet
+
+Gershom
+Bartoz (pigs/category theory)
+John Weigley
+- DevonThink
+- 1 minute GIT snapshots of current branch working on in emacs
+Ryan Trinkle
+right: greek guy that is starting "Inhabited Type" IT
+left: ?
+Joey Hess : wrote https://git-annex.branchable.com/
+
+** Wednesday
+
+*** morning break
+
+Will Byrd on creativity in CS and music
+
+*** lunch
+
+Alan Zimmerman
+
+*** afternoon  break
+
+Carter Schonwald : JMMorgan - energetic young gig : person to contact on advanced haskell
+
+*** evening walking to Unbounce/Polyglot meeting
+
+Anil M (mirage/Ocaml guy)
+
+** Thursday
+
+** morning before tutorials
+
+french guy that is a professor in Santiago, Chile for 15+ years
+John Launchbury : Darpa/Galois
+
+** lunch table
+
+right : Gershom, Joey Hass, Simon PJ, Simon Marlow,  Bryan O'Sullivan,
+left  : Adam Gundry, Duncan Couts, John Weigley, Eric Seidlger, Adam Foltzer, Ryan Trinkle,
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
+* Programming Lanaguage Mentoring Workshop (PLMW@ICFP15)
+
+Ronald Garcia, BC
+Stephanie Weirich, UPenn
+
+# --------------------------------------------------
+** Kathleen Fisher, Tufts
+
+target attending 30-50%
+skim papers in advance
+http://icfpconference.org/icfp2015/toc.html
+after listening to talk, write a few sentences analysis/summarieze: good/bad/missing
+
+# --------------------------------------------------
+** (Embedded) Domain-Specific Languages : Lee Pike, Galois  @pike7464
+
+DSLs: Excel, MATLAB, awk, Make, LaTex, SQL
+non-DSLs: Java, Haskell, C
+Embedded DSLs: DSL as a library with underlying system available
+- FeldSpar : visual signal proessing
+- Lava : hardware design language
+- Ivory : secure embedded-systems
+- Atom : by Eden Corp : hydraulic controlers for garbage trucks
+- Copilot : monitor airline sensor systems to prevent faults
+
+Good intro papers:
+
+https://queue.acm.org/detail.cfm?id=
+                                    2617811
+                                    2626374
+
+reactive programming : react to stimulus from outside world
+- mouse clicks, network messages, interrupts
+
+Not-FRP:
+var clicks = 0;
+function clickHandler() { clicks ++; }
+element.addEventListener("click", clickHandler);
+function onClick() { ...}
+
+FRP (Elm):
+
+Mouse.clicks : Signal () // thinks of Signal as infinite list of values
+Signal.map : (a ->) -> Signal a -> Signal b
+Signal.foldp : ...
+
+countClick : Signal Int
+countClick = Signal.foldp (\clk count -> cout + 1) 0 Mouse.clocks
+...
+
+eDSL unsolved problems/challenges
+- sharing and recursion
+- syntax
+- types
+
+# --------------------------------------------------
+** Type Inference, Francois Pottier, Inria
+
+pascal, c: type of expr inferred bottom-up
+c++/Java : infers type params to method calls and new
+scala: local type infer, bidirectional
+sml, ocaml, haskell: non-local (based on unification / constraint solving)
+haskell, ocaml, agda, cog:  not just typees, also terms  (i.e., code)
+
+history
+- 70s: milner(78) invents type inference and ML polymorphism
+  - rediscovery of result by Hindley (69)
+  - but no definition of unification
+    - Robinson (69?) had exponential unifiction
+- 80s: Cardelli (87), Want (87) : two-stage process: generate/solve equations
+- 90s: Kirchner/Jounannaud (90), Remy (92)
+  - contraint solving as rewriting; vars as memory addresses
+  - new vars as existential quantification
+    - machine addresses/sharing : avoids Robinson's exponential unification
+
+Contraints are intermediate language for describing type inference problems
+- generator transforms program into a constraints
+- solver determines if satisfyable
+
+No longer a hot topic, but needed.
+
+Open problems
+- more powerful/complex type systems
+ - universal/existential types
+  - linear/affine types
+...
+
+pitfalls
+- often undecidable
+- explaining type errors
+
+# --------------------------------------------------
+** Contracts, Boundaries and Blame, Robby Findler, Northwestern & PLT
+
+Contracts are NOT types.
+- no proof obligation
+- executed at runtime : can depend on values
+
+# --------------------------------------------------
+** How to write a great research paper, Simon Peyton-Jones, MSR
+
+# --------------------------------------------------
+** FP Implemenation, Simon Marlow, FB
+
+papers
+- compiling to spineless, tagless
+- making a fast curry: push/enter via eval/apply
+- faster laziness using dynamic pointer tagging
+
+------------------------------------------------------------------------------
+* MONDAY
+
+** Functional Pearl: A SQL to C Compiler in 500 Lines of Code : scala-lms.github.io
+
+** An Optimizing Compiler for a Purely Functional Web-Application Language
+
+Adam Chlipala, MIT
+
+Ur/Web : www.impredicative.com/ur/
+
+** http://www.mpi-sws.org/~rossberg/1ml/
+
+------------------------------------------------------------------------------
+* TUESDAY
+
+Keynote: Mary Sheeran, Chalmers University of Technology (Sweden)
+Functional Programming and Hardware Design: Still Interesting after All These Years
+
+Verilog and VHDL (25 year old languages) still dominate.
+
+----
+
+Ryan Newton : LVish : Haskell library for parallel programming with LVars
+
+------------------------------------------------------------------------------
+* WEDNESDAY
+
+Paul Hudak tribute
+
