@@ -1,5 +1,6 @@
 Created       : 2015 Sep 03 (Thu) 09:45:07 by Harold Carr.
-Last Modified : 2015 Sep 03 (Thu) 14:11:26 by Harold Carr.
+Last Modified : 2015 Sep 03 (Thu) 17:01:04 by Harold Carr.
 
 Andres:
+https://github.com/kosmikus/cufp-gp-tutorial-2015
 
