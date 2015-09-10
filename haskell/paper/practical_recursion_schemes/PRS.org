@@ -14,15 +14,13 @@ tags: haskell, recursion
 #+END_HTML
 
 ------------------------------------------------------------------------------
-* intro
-
-Edward Kmett’s recursion-schemes library
+* intro : Edward Kmett’s recursion-schemes library
 
 key patterns
-- factoring recursion out of your data types using pattern functors and a fixed-point wrapper
+- factoring recursion out of data types using pattern functors and a fixed-point wrapper
   - benefits: ability to reason about recursion and base structures separately
-- using the ‘Foldable’ & ‘Unfoldable’ classes
-- navigating the ‘Base’ type family
+- using ‘Foldable’ & ‘Unfoldable’ classes
+- understanding the ‘Base’ type family
 
 ‘hacking understanding’ : help see similarities in structure between domains
 
@@ -44,42 +42,38 @@ import Prelude hiding (Foldable, succ)
 applicable to data types that have a recursive structure (e.g., Lists, trees, nats)
 
 #+BEGIN_SRC haskell
-data Natural =
-    Zero
-  | Succ Natural
+data Natural = Zero
+             | Succ Natural
 #+END_SRC
 
-‘factor out’ recursion by defining some base structure
-- create a different, parameterized type
-- new parameter takes place of all recursive points in original
+‘factor out’ recursion by defining base structure
+- then create a different, parameterized type
+  - new parameter takes place of recursive points in original
 
 #+BEGIN_SRC haskell
-data NatF r =
-    ZeroF
-  | SuccF r
-  deriving (Show, Functor)
+data NatF r = ZeroF
+            | SuccF r
+            deriving (Show, Functor) -- must be a functor
 #+END_SRC
 
-must be a functor - type often called a ‘pattern functor’ for some other type
+new type often called a ‘pattern functor’ for some other type
 
-personal notation ‘<Constructor>F’ for pattern functors constructors
+personal notation: ‘<Constructor>F’ for pattern functors constructors
 
 example lists and trees:
 
 #+BEGIN_SRC haskell
-data ListF a r =
-    NilF
-  | ConsF a r
-  deriving (Show, Functor)
+data ListF a r = NilF
+               | ConsF a r
+               deriving (Show, Functor)
 
-data TreeF a r =
-    EmptyF
-  | LeafF a
-  | NodeF r r
-  deriving (Show, Functor)
+data TreeF a r = EmptyF
+               | LeafF a
+               | NodeF r r
+               deriving (Show, Functor)
 #+END_SRC
 
-to add recursion to pattern functors via a recursive 'Fix' wrapper type
+add recursion to pattern functors via recursive 'Fix' wrapper type
 
 #+BEGIN_SRC haskell
 type Nat    = Fix NatF
@@ -87,18 +81,21 @@ type List a = Fix (ListF a)
 type Tree a = Fix (TreeF a)
 #+END_SRC
 
-‘Fix’ from ‘Data.Functor.Foldable’ (recursion-schemes).
+‘Fix’ from ‘Data.Functor.Foldable’ (recursion-schemes)
 
 personal style: use smart constructors:
 
 #+BEGIN_SRC haskell
 zero :: Nat
-zero = Fix ZeroF
+zero  = Fix ZeroF
+
 succ :: Nat -> Nat
-succ = Fix . SuccF
+succ  = Fix . SuccF
+
 nil :: List a
-nil = Fix NilF
-cons :: a -> List a -> List a
+nil  = Fix NilF
+
+cons     :: a -> List a -> List a
 cons x xs = Fix (ConsF x xs)
 #+END_SRC
 
@@ -109,13 +106,15 @@ enables:
 Fix (SuccF (Fix (SuccF (Fix (SuccF (Fix ZeroF))))))
 #+END_EXAMPLE
 
-Fix definition
+'Fix' definition
 
 #+BEGIN_EXAMPLE
 newtype Fix f = Fix (f (Fix f))
+
 fix :: f -> Fix f
-fix = Fix
-unfix :: Fix f -> f (Fix f)
+fix  = Fix
+
+unfix        :: Fix f -> f (Fix f)
 unfix (Fix f) = f
 #+END_EXAMPLE
 
@@ -147,10 +146,10 @@ project :: Foldable t   => t -> Base t t
 embed   :: Unfoldable t => Base t t -> t
 #+END_EXAMPLE
 
-‘Base’ appears frequently in type signatures of various recursion schemes
-
 ------------------------------------------------------------------------------
 * ‘Base’ and Basic Type Families
+
+‘Base’ appears frequently in type signatures of various recursion schemes.
 
 Type families are type-level functions
 - types as input
@@ -167,13 +166,13 @@ Implementation of this function is called an instance of the family (e.g., insta
 type instance Base (Fix f) = f
 #+END_EXAMPLE
 
-Type family (like ‘Base’) is a synonym for instances of the family.
+A Type family (like ‘Base’) is a synonym for instances of the family.
 - e.g., mentally replace ‘Base (Fix f)’ with ‘f’
 
 Instances of ‘Base’ type family have structure like ‘Fix’
 - using ‘Base’ enables recursion-schemes to work for types other than ‘Fix’ alone
   - without needing to manually write any instances for your own data types
-  - you can leverage typeclasses & type families to get by without using ‘Fix’ at all
+  - leverage typeclasses & type families to get by without using ‘Fix’ at all
     - e.g., Danny Gratzer’s recursion-schemes post
       - [[http://jozefg.bitbucket.org/posts/2014-05-19-like-recursion-but-cooler.html]]
 - Kmettian flavour
@@ -198,13 +197,14 @@ Instances of ‘Base’ type family have structure like ‘Fix’
 # --------------------------------------------------
 ** Catamorphisms
 
+# -------------------------
 *** Use catamorphism to represent ‘Nat’ as ‘Int’ via summing
 
 #+BEGIN_SRC haskell
 natsum :: Nat -> Int
 natsum = cata alg where
-  alg ZeroF     = 0
-  alg (SuccF n) = n + 1
+    alg  ZeroF    = 0
+    alg (SuccF n) = n + 1
 #+END_SRC
 
 ‘alg’ (i.e., ‘algebra’) is local fun to define reduction semantics.
@@ -221,8 +221,8 @@ Another way to express:
 {-# LANGUAGE LambdaCase #-}
 natsum :: Nat -> Int
 natsum = cata $ \case ->
-  ZeroF   -> 0
-  SuccF n -> n + 1
+    ZeroF   -> 0
+    SuccF n -> n + 1
 #+END_EXAMPLE
 
 #+BEGIN_EXAMPLE
@@ -246,28 +246,28 @@ Base Nat Int :: *
 
 For the ‘natsum’ example, algebra used with ‘cata’ is ‘NatF Int -> Int’.
 
+# -------------------------
 *** catamorphism to implement ‘filter’ for list type
 
 #+BEGIN_SRC haskell
 filterL :: (a -> Bool) -> List a -> List a
 filterL p = cata alg where
-  alg NilF = nil
-  alg (ConsF x xs)
-    | p x       = cons x xs
-    | otherwise = xs
+    alg  NilF                    = nil
+    alg (ConsF x xs) | p x       = cons x xs
+                     | otherwise = xs
 #+END_SRC
 
 # --------------------------------------------------
 ** Anamorphisms
 
+# -------------------------
 *** anamorphism to build ‘Nat’ from ‘Int’
 
 #+BEGIN_SRC haskell
 nat :: Int -> Nat
 nat = ana coalg where
-  coalg n
-    | n <= 0    = ZeroF
-    | otherwise = SuccF (n - 1)
+    coalg n | n <= 0    = ZeroF
+            | otherwise = SuccF (n - 1)
 #+END_SRC
 
 ‘coalg’ (i.e., ‘coalgebra’)
@@ -277,6 +277,7 @@ Recursion is not part of the semantics.
 # --------------------------------------------------
 ** Paramorphisms
 
+# -------------------------
 *** factorial on nat in terms of ‘cata’
 
 paramorphism operates on algebra that provides access to input arg
@@ -301,8 +302,8 @@ now implement algebra for the required type:
 #+BEGIN_SRC haskell
 natfac :: Nat -> Int
 natfac = para alg where
-  alg  ZeroF         = 1
-  alg (SuccF (n, f)) = natsum (succ n) * f
+    alg  ZeroF         = 1
+    alg (SuccF (n, f)) = natsum (succ n) * f
 #+END_SRC
 
 - type of algebra is ‘NatF (Nat, Int) -> Int’
@@ -322,15 +323,17 @@ For factorial defined as
 To compute factorial of successor to ‘n’
 - convert ‘succ n’ to an integer (via ‘natsum’) and multiply it by ‘f’
 
+# -------------------------
 *** ‘pred’ on natural numbers via ‘para’:
 
 #+BEGIN_SRC haskell
 natpred :: Nat -> Nat
 natpred = para alg where
-  alg ZeroF          = zero
-  alg (SuccF (n, _)) = n
+    alg  ZeroF         = zero
+    alg (SuccF (n, _)) = n
 #+END_SRC
 
+# -------------------------
 *** ‘tail’ on lists
 
 type of required algebra:
@@ -347,8 +350,8 @@ therefore:
 #+BEGIN_SRC haskell
 tailL :: List a -> List a
 tailL = para alg where
-  alg NilF             = nil
-  alg (ConsF _ (l, _)) = l
+    alg  NilF            = nil
+    alg (ConsF _ (l, _)) = l
 #+END_SRC
 
 # --------------------------------------------------
@@ -365,6 +368,7 @@ Does not require the full structure built up for i.e. ‘cata’ and ‘ana’.
 
 A simple F-{co}algebras.
 
+# -------------------------
 *** hylomorphism implementation of mergesort
 
 - input : list containing orderable type
@@ -375,13 +379,13 @@ A simple F-{co}algebras.
 #+BEGIN_SRC haskell
 mergeSort :: Ord a => [a] -> [a]
 mergeSort = hylo alg coalg where
-  alg EmptyF      = []
-  alg (LeafF c)   = [c]
-  alg (NodeF l r) = merge l r
-  coalg []  = EmptyF
-  coalg [x] = LeafF x
-  coalg xs  = NodeF l r where
-    (l, r) = splitAt (length xs `div` 2) xs
+    alg EmptyF      = []
+    alg (LeafF c)   = [c]
+    alg (NodeF l r) = merge l r
+    coalg []        = EmptyF
+    coalg [x]       = LeafF x
+    coalg xs        = NodeF l r where
+       (l, r)       = splitAt (length xs `div` 2) xs
 #+END_SRC
 
 Note the fusion.
