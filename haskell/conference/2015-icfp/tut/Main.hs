@@ -1,3 +1,0 @@
-import           XTurtle
-
-main = turtle
