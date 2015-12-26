@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2015 Aug 15 (Sat) 13:14:02 by Harold Carr.
+# Last Modified : 2015 Dec 26 (Sat) 08:50:20 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -84,6 +84,7 @@ haskell/book/Beginning_Haskell/eclipse-workspace
 haskell/book/Discrete_Mathematics_Using_a_Computer
 
 haskell/book/Haskell_Financial_Data_Modeling/
+haskell/book/Haskell_Programming-Chris_Allen/
 haskell/book/Haskell_Road_to_Logic_Maths_and_Programming
 
 haskell/book/Learn_You_a_Haskell/helloworld
