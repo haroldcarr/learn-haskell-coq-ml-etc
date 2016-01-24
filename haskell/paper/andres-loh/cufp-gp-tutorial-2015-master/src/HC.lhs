@@ -1,18 +1,24 @@
 
-http://staff.mmcs.sfedu.ru/~ulysses/Edu/SSGEP/loh/loh-repo/Lecture1.pdf
+-- http://staff.mmcs.sfedu.ru/~ulysses/Edu/SSGEP/loh/loh-repo/Lecture1.pdf
 
+> {-# LANGUAGE ConstraintKinds           #-}
 > {-# LANGUAGE DataKinds                 #-}
 > {-# LANGUAGE ExistentialQuantification #-}
+> {-# LANGUAGE FlexibleInstances         #-}
 > {-# LANGUAGE GADTs                     #-}
 > {-# LANGUAGE KindSignatures            #-}
+> {-# LANGUAGE MultiParamTypeClasses     #-}
 > {-# LANGUAGE PolyKinds                 #-}
+> {-# LANGUAGE Rank2Types                #-}
 > {-# LANGUAGE ScopedTypeVariables       #-}
 > {-# LANGUAGE StandaloneDeriving        #-}
+> {-# LANGUAGE TypeFamilies              #-}
 > {-# LANGUAGE TypeOperators             #-}
-> {-# LANGUAGE Rank2Types                #-}
+> {-# LANGUAGE UndecidableInstances      #-}
 
 > module HC where
 > import           Data.Char (digitToInt)
+> import           GHC.Exts (Constraint)
 
 -- p 7
 
@@ -556,4 +562,251 @@ Example
 
 -- 1.6.2 p 17 Applicative n-ary products
 
+In an applicative for `NP` compared to `vreplicate`:
 
+- role of `n` is now the signature `xs`
+- role of 'a' is now the type constructor `f`
+    - `f` must accept any type in the signature `xs`
+
+Need a singleton for lists (following same pattern of `SNat   `):
+
+> data SList (xs :: [k]) where
+>     SNil  :: SList '[]
+>     SCons :: SListI xs => SList (x ': xs)
+>
+> class SListI (xs :: [k]) where
+>     sList :: SList xs
+>
+> instance SListI '[] where
+>     sList = SNil
+>
+> instance SListI xs => SListI (x ': xs) where
+>     sList = SCons
+
+Above not ideal:
+
+- says nothing about elements of the list
+- would like `SCons` to include singleton for head and singleton for tail
+
+> hpure :: forall f xs . SListI xs => (forall a . f a) -> NP f xs
+> hpure x = case sList :: SList xs of
+>     SNil  -> Nil
+>     SCons -> x :* hpure x
+
+-- p 18
+
+~~~{.haskell}
+:t hpure Nothing
+-- hpure Nothing :: SListI xs => NP Maybe xs
+
+:t hpure Nothing :: NP Maybe '[Char, Bool, Int]
+--            .. :: NP Maybe '[Char, Bool, Int]
+
+:t hpure (K 0)
+-- hpure (K 0) :: (Num a, SListI xs) => NP (K a) xs
+
+:t hpure (K 0) :: NP (K Int) '[Char, Bool, Int]
+-- ..          :: NP (K Int) '[Char, Bool, Int]
+~~~
+
+-- 1.6.3 p 18 Lifted functions
+
+Need `vap` (analogous to `vapply` : a kind of (`<*>`) )
+
+To define, need a type-level `\x -> (f x -> g x)`
+but Haskell has no type-level lambda, so:
+
+> newtype (f -.-> g) a = Fn {apFn :: f a -> g a}
+> infix 1 -.->
+
+Then use it to represent type-level function in:
+
+> hap :: NP (f -.-> g) xs -> NP f xs -> NP g xs
+> hap      Nil         _  = Nil
+> hap        _       Nil  = Nil
+> hap (f :* fs) (x :* xs) = apFn f x :* hap fs xs
+
+Examples
+
+> lists :: NP [] '[String, Int]
+> lists = ["foo", "bar", "baz"] :* [1 .. 10] :* Nil
+
+> numbers :: NP (K Int) '[String, Int]
+> numbers = K 2 :* K 5 :* Nil
+
+> fn_2 :: (f a -> f' a -> f''  a)
+>      -> (f -.-> (f' -.-> f'')) a
+> fn_2 f = Fn (\x -> Fn (\y -> f x y))
+
+> take' :: (K Int -.-> ([] -.-> [])) a
+> take' = fn_2 (\(K n) xs -> take n xs)
+
+~~~{.haskell}
+:t hpure take' `hap` numbers `hap` lists
+-- ... :: NP [] '[String, Int]
+~~~{.haskell}
+
+-- 1.6.4 p 19 Another look at `hmap`
+
+Identity, for normal lists (assuming `ZipList` applicative):
+
+~~~{.haskell}
+map f = pure f <*> xs
+~~~
+
+also holds for n-ary products:
+
+> hmap' :: SListI xs => (forall a . f a -> g a) -> NP f xs -> NP g xs
+> hmap' f xs = hpure (Fn f) `hap` xs
+
+-- 1.7 p 19 Abstracting from class and type functions
+
+Cannot do:
+
+~~~{.haskell}
+-- try to do: NP I -> NP (K String)
+hmap (K . show . unI) group'
+~~~
+
+because
+
+~~~{.haskell}
+:t K . show . unI
+-- ... :: Show a => I a -> K String b
+~~~
+
+does not match
+
+~~~{.haskell}
+                    f x -> g        x
+~~~
+
+the class constraint on `Show`.
+
+But useful to enable functions with class constraints to be used with `hmap`
+(assuming elements meet constraint).
+
+-- 1.7.1 p 19 The kind `Constraint`
+
+Classes can be seen as types with a different kind.
+
+- `data` produces types of kind `*`
+- class produces types of kind `Constraint`
+
+Examples
+
+- `Show`, `Eq`, `Ord` have kind `* -> Constraint`
+- `Functor`, `Monad`  have kind `(* -> *) -> Constraint`
+- multiparameter `MonadReader` has kind `* -> (* -> *) -> Constraint`
+
+-- p 20
+
+Use tuple syntax to create empty constraints
+
+> --                         GHC.Exts (Constraint)
+> --                         ConstraintKinds
+> --                         v
+> type NoConstraint = (() :: Constraint)
+
+or to combine constraints
+
+> type SomeConstraints a   = (Eq a, Show a)
+> type MoreConstraints f a = (Monad f, SomeConstraints a)
+
+-- 1.7.2 p 20 Type functions
+
+To write `hmap` variant compatible with constrained functions,
+need to express that a constraint holds for all elements of a type-level list.
+
+Use *type family* : a function on types.
+
+Combine parameterized constraint and list of parameters into a single constraint.
+
+> --   TypeFamilies
+> --   v
+> type family All (c :: k -> Constraint) (xs :: [k]) :: Constraint where
+>     All c '[] = ()
+>     All c (x ': xs) = (c x, All c xs)
+
+To see `All` in action, "expand" type families:
+
+~~~{.haskell}
+:kind! All Eq '[Int, Bool]
+-- ... :: Constraint = (Eq Int, (Eq Bool, (() :: Constraint)))
+~~~
+
+Note: the above looks nested, but is really a flat union.
+
+> hToString :: All Show xs => HList xs -> String
+> hToString        HNil  = ""
+> hToString (HCons x xs) = show x ++ hToString xs
+
+~~~{.haskell}
+hToString group
+-- "'x'False3"
+~~~
+
+Pattern matching on `HCons` says
+
+- `xs ~ y ': ys`
+- so: `All Show xs ~ All Show (y ': ys) ~ (Show y, All Show ys)`
+
+-- 1.7.3 p 21 Composing constraints
+
+To do same for `NP` (e.g., `NP f '[Int, Bool]`) need
+
+- `(Show (f Int), Show (f Bool))`
+
+or, if type-level function composition existed
+
+- `((SHow `Compose` f) Int, (Show `Compose` f) Bool)`
+
+but
+
+- no type-level lambda
+- newtype wrapping produces kind `*` but need kind `Constraint`
+
+For case of composition where result is `Constraint`:
+
+> -- UndecidableInstances
+> --       MultiParamTypeClasses
+> -- v     v
+> class    (f (g x)) => (f `Compose` g) x
+> --                    FlexibleInstances
+> --                    v
+> instance (f (g x)) => (f `Compose` g) x
+
+Inferred kind for `Compose`:
+
+~~~{.haskell}
+Compose :: (b -> Constraint) -> (a -> b) -> a -> Constraint
+~~~
+
+`class` defined constraints (unlike type synonyms and type families)
+can be partially applied.
+
+~~~{.haskell}
+:kind! All (Show `Compose` I) '[Int, Bool]
+-- ... :: Constraint
+--     = (Compose Show I Int, (Compose Show I Bool, (() :: Constraint)))
+~~~
+
+> hToString' :: All (Show `Compose` f) xs => NP f xs -> String
+> hToString'      Nil  = ""
+> hToString' (x :* xs) = show x ++ hToString' xs
+
+~~~{.haskell}
+hToString' groupNPM
+-- "Just 'x'Just FalseJust 3"
+~~~
+
+Now can derive `Show` because it has same type requirements as `hToString'`:
+
+> deriving instance (All (Compose Show f) xs) => Show (NP f xs)
+
+~~~{.haskell}
+show groupNPM
+-- "Just 'x' :* (Just False :* (Just 3 :* Nil))"
+~~~
+
+-- 1.7.4 p 22 Proxies
