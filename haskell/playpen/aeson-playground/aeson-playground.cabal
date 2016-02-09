@@ -1,0 +1,16 @@
+name:                aeson-playground
+version:             0.1.0.0
+build-type:          Simple
+-- extra-source-files:
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Aes, AesonAST, AesonTut
+  build-depends:       base >= 4.7 && < 5
+                     , aeson
+                     , bytestring
+                     , containers
+                     , text
+                     , unordered-containers
+  default-language:    Haskell2010

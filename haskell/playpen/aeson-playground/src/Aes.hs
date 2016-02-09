@@ -3,8 +3,10 @@
 
 {-
 Created       : 2014 Mar 17 (Tue) 18:23:16 by Harold Carr.
-Last Modified : 2014 Mar 18 (Tue) 11:38:32 by Harold Carr.
+Last Modified : 2016 Feb 09 (Tue) 14:35:29 by Harold Carr.
 -}
+
+module Aes where
 
 import           Control.Applicative
 import           Data.Aeson

@@ -1,10 +1,12 @@
 {-
 Created       : 2014 May 16 (Fri) 21:34:33 by Harold Carr.
-Last Modified : 2014 May 18 (Sun) 22:32:37 by Harold Carr.
+Last Modified : 2016 Feb 09 (Tue) 14:35:40 by Harold Carr.
 http://doingmyprogramming.com/2014/04/14/yet-another-aeson-tutorial/
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
+
+module AesonTut where
 
 import           Control.Applicative
 import           Data.Aeson

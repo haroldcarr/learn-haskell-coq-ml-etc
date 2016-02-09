@@ -1,5 +1,7 @@
-
 -- http://staff.mmcs.sfedu.ru/~ulysses/Edu/SSGEP/loh/loh-repo/Lecture1.pdf
+
+> {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+> {-# OPTIONS_GHC -fno-warn-type-defaults      #-}
 
 > {-# LANGUAGE ConstraintKinds           #-}
 > {-# LANGUAGE DataKinds                 #-}
@@ -153,10 +155,10 @@ Given
 
 Use the type system to avoid:
 
-> -- xsum [1,2,3]
-> -- *** Exception: Prelude.head: empty list
 > xsum :: [Int] -> Int
 > xsum xs = head xs + xsum (tail xs)
+> -- xsum [1,2,3]
+> -- *** Exception: Prelude.head: empty list
 
 via:
 
@@ -185,6 +187,7 @@ In the first argument of ‘vtail’, namely ‘xs’
 Motivation: move more info to type level.
 
 ~~~{.haskell}
+-- term-level replicate
 replicate :: Int -> a -> [a]
 replicate n x
     | n <= 0    = []
@@ -244,7 +247,7 @@ One way:
 
 -- p 12
 
-Way used in remainder:
+Mutually-recursive way used in remainder:
 
 > data SNat (n :: Nat) where
 >     SZero :: SNat 'Zero
@@ -273,7 +276,7 @@ Way used in remainder:
 
 -- 1.4.2 p 12
 
-PROS of Singletons (over one class per function)
+PROS of Singletons (compared to one class per function)
 
 - only need one class per type used in pattern matching
     - do not need that if singleton passed explicitly
@@ -315,8 +318,8 @@ liftA3 (,,) (ZipList [1,4,9]) (ZipList [2,8,1]) (ZipList [0,0,9])
 `vapply` is `<*>`
 
 > vapply :: Vec (a -> b) n -> Vec a n -> Vec b n
-> vapply VNil           _              = VNil
-> vapply _              VNil           = VNil
+> vapply           VNil             _  = VNil
+> vapply             _           VNil  = VNil
 > vapply (f `VCons` fs) (x `VCons` xs) = f x `VCons` vapply fs xs
 
 > va :: Vec Integer ('Suc ('Suc ('Suc 'Zero)))
@@ -327,7 +330,7 @@ liftA3 (,,) (ZipList [1,4,9]) (ZipList [2,8,1]) (ZipList [0,0,9])
 VCons 2 (VCons 20 (VCons 63 VNil))
 ~~~
 
-`Vec` cannot be made `Applicative` instance because its parameters are in the wrong order.
+Note: `Vec` cannot be made `Applicative` instance because its parameters are in the wrong order.
 
 -- X BEGIN
 
@@ -368,19 +371,19 @@ Can use
 -  `[]`         as kind constructor
 - `'[]`, `(':)` as types
     - *kind-polymorphic*
-    - `(':)` :: a -> [a] -> [a]
+    - `(':) :: a -> [a] -> [a]`
 
 Type-level list of promoted `Bool`, `Nat`, `[*]`
 
 ~~~{.haskell}
 :kind [True, False]
--- [True, False] :: [Bool]
+--              ... :: [Bool]
 
 :kind [Zero, Three]
--- [Zero, Three] :: [Nat]
+--              ... :: [Nat]
 
 :kind [Char, Bool, Int]
--- [Char, Bool, Int] :: [*]
+--                  ... :: [*]
 ~~~
 
 Need kind `[*]` for heterogeneous lists.
@@ -397,7 +400,7 @@ Need kind `[*]` for heterogeneous lists.
 > infixr 5 `HCons`
 
 > hhead :: HList (x ': xs) -> x
-> hhead (x `HCons` _) = x
+> hhead (x `HCons`  _) = x
 
 > htail :: HList (x ': xs) -> HList xs
 > htail (_ `HCons` xs) = xs
@@ -410,7 +413,7 @@ as an `HList`:
 
 > -- sig can be inferred
 > group :: HList '[Char, Bool, Int]
-> group = 'x' `HCons` False `HCons` (3::Int) `HCons` HNil
+> group = 'x' `HCons` False `HCons` 3 `HCons` HNil
 
 ~~~{.haskell}
 bh :: Int
@@ -441,7 +444,7 @@ to one of the types in the index list.
 `NP` means *n-ary product ("environment")
 - list `xs` is signature
 - kind polymorphic
-    - not required to be`[*]`
+    - not required to be `[*]`
     - is arbitrary type-level list of kind `[k]`
         - as long as `f` maps `k` to `*`
     - possible because elements of signature do not appear in environment
@@ -543,11 +546,11 @@ If arg function is polymorphic:
 - caller *must* pass in polymorphic function
 - called may flexibly use it on any type
 
-> -- The arg to `hmap` must be polymorphic (
+> -- The arg to `hmap` must be polymorphic
 > --                  Rank2Types
 > --                  v
 > hmap :: (forall x . f x -> g x) -> NP f xs -> NP g xs
-> hmap m Nil       = Nil
+> hmap _      Nil  = Nil
 > hmap m (x :* xs) = m x :* hmap m xs
 
 Example
@@ -568,7 +571,7 @@ In an applicative for `NP` compared to `vreplicate`:
 - role of 'a' is now the type constructor `f`
     - `f` must accept any type in the signature `xs`
 
-Need a singleton for lists (following same pattern of `SNat   `):
+Need a singleton for lists (following same pattern of `SNat`):
 
 > data SList (xs :: [k]) where
 >     SNil  :: SList '[]
@@ -672,13 +675,13 @@ because
 
 ~~~{.haskell}
 :t K . show . unI
--- ... :: Show a => I a -> K String b
+--            ... :: Show a => I a -> K String b
 ~~~
 
 does not match
 
 ~~~{.haskell}
-                    f x -> g        x
+                               f x -> g        x
 ~~~
 
 the class constraint on `Show`.
@@ -725,14 +728,14 @@ Combine parameterized constraint and list of parameters into a single constraint
 > --   TypeFamilies
 > --   v
 > type family All (c :: k -> Constraint) (xs :: [k]) :: Constraint where
->     All c '[] = ()
+>     All c      '[]  = ()
 >     All c (x ': xs) = (c x, All c xs)
 
 To see `All` in action, "expand" type families:
 
 ~~~{.haskell}
 :kind! All Eq '[Int, Bool]
--- ... :: Constraint = (Eq Int, (Eq Bool, (() :: Constraint)))
+--                     ... :: Constraint = (Eq Int, (Eq Bool, (() :: Constraint)))
 ~~~
 
 Note: the above looks nested, but is really a flat union.
@@ -810,3 +813,50 @@ show groupNPM
 ~~~
 
 -- 1.7.4 p 22 Proxies
+
+Use abstraction over constraints to define `hpure` variant
+
+~~~{.haskell}
+-- takes (for some parameterized constraint `c`)
+forall a . c a => f a
+-- instead of
+forall a .        f a
+~~~
+
+~~~{.haskell}
+hpure  :: forall f xs . SListI xs => (forall a .        f a) -> NP f xs
+
+hcpure ::  (SListI xs,  All c xs) => (forall a . c a => f a) -> NP f xs
+~~~
+
+A dummy parameter must be provided to the function (a "proxy")
+to help GHC decide type.
+
+Proxy
+- simple runtime rep
+- purpose is to fix the value of a type variable
+- GHC, knowing `Proxy a` can infer `a`
+
+> -- works for args of any kind (e.g., * -> Constraint)
+> data Proxy (a :: k) = Proxy
+
+> hcpure :: forall c f xs . (SListI xs, All c xs)
+>        => Proxy c -> (forall a . c a => f a) -> NP f xs
+
+-- p 23
+
+> hcpure p x = case sList :: SList xs of
+>     SNil  -> Nil
+>     SCons -> x :* hcpure p x
+
+> hcp1 :: NP I '[Char, Bool] -- inferred
+> hcp1 = hcpure (Proxy :: Proxy Bounded) (I minBound) :: NP I '[Char, Bool]
+
+> hcp2 :: NP (K String) '[Char, Bool, Int] -- inferred
+> hcp2 = hcpure (Proxy :: Proxy Show) (Fn (K . show . unI)) `hap` npgroup
+
+Composing `hcpure` with `hap` also provides mapping of constrained functions over environments.
+
+> hcmap :: (SListI xs, All c xs)
+>       => Proxy c -> (forall a . c a => f a -> g a) -> NP f xs -> NP g xs
+> hcmap p f xs = hcpure p (Fn f) `hap` xs
