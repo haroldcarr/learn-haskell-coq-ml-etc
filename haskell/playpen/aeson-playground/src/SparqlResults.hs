@@ -4,7 +4,7 @@
 
 {-
 Created       : 2016 Feb 09 (Tue) 14:37:22 by Harold Carr.
-Last Modified : 2016 Feb 09 (Tue) 19:14:57 by Harold Carr.
+Last Modified : 2016 Feb 13 (Sat) 15:00:31 by Harold Carr.
 -}
 
 module SparqlResults where
@@ -51,6 +51,7 @@ instance AT.FromJSON BindingValue
 selectFun ("subject")   = subject
 selectFun ("predicate") = predicate
 selectFun ("object")    = SparqlResults.object
+selectFun x             = error ("not supported: " ++ x)
 
 traverseResults(SparqlResults (VarsObject vs) (BindingsVector bs)) =
     P.zip vs $ P.map L.nub $ L.transpose $ traverseBindings (P.map selectFun vs) bs
