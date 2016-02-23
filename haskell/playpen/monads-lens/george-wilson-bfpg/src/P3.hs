@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures  #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -5,24 +6,18 @@
 {-# LANGUAGE NoMonomorphismRestriction  #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE TemplateHaskell            #-}
 
 module P3 where
 
-import           Control.Applicative
 import           Control.Lens         hiding (Lens, Prism, prism)
-import           Control.Monad
 import           Control.Monad.Except
 import           Control.Monad.Reader
-import           Control.Monad.RWS
-import           Control.Monad.State
-import           Control.Monad.Trans
-import           Control.Monad.Writer
 import qualified Data.Text            as T
 import           P0
 
 type Lens  a b = Lens'  a b
 type Prism a b = Prism' a b
+
 prism = prism'
 
 -- 25:00
@@ -31,7 +26,7 @@ data DbConfig =
      DbConfig {
          _dbConn   :: DbConnection
        , _dbSchema :: Schema
-      }
+     }
 
 class HasDbConfig t where
     dbConfig :: Lens t DbConfig
@@ -75,6 +70,8 @@ instance HasDbConfig AppConfig where
 instance HasNetworkConfig AppConfig where
     netConfig = lens appNetConfig (\app net -> app { appNetConfig = net})
 
+-- 32:04
+
 data DbError =
      QueryError T.Text
    | InvalidConnection
@@ -87,10 +84,104 @@ class AsDbError t where
     _InvalidConn =  _DbError . _InvalidConn
 
 instance AsDbError DbError where
-    _DbError    = id
-    _QueryError = prism QueryError
+    _DbError     = id
+    _QueryError  = prism QueryError
         $ \case QueryError t -> Just t
                 _            -> Nothing
     _InvalidConn = prism (const InvalidConnection)
         $ \case InvalidConnection -> Just ()
                 _                 -> Nothing
+
+-- 32:04
+
+data NetworkError =
+     Timeout Int
+   | ServerOnFire
+
+class AsNetworkError t where
+    _NetworkError :: Prism t NetworkError
+    _Timeout      :: Prism t Int
+    _ServerOnFire :: Prism t ()
+    _Timeout      =  _NetworkError . _Timeout
+    _ServerOnFire =  _NetworkError . _ServerOnFire
+
+instance AsNetworkError NetworkError where
+    _NetworkError = id
+    _Timeout      = prism Timeout
+        $ \case Timeout t -> Just t
+                _         -> Nothing
+    _ServerOnFire = prism (const ServerOnFire)
+        $ \case ServerOnFire -> Just ()
+                _            -> Nothing
+
+-- 34:00
+
+data AppError =
+     AppDbError { dbError :: DbError }
+   | AppNetError { netError :: NetworkError }
+
+instance AsDbError AppError where
+    _DbError     = prism AppDbError
+        $ \case AppDbError dbe -> Just dbe
+                _              -> Nothing
+
+instance AsNetworkError AppError where
+    _NetworkError = prism AppNetError
+        $ \case AppNetError ne -> Just ne
+                _              -> Nothing
+
+-- 34:50
+
+-- makeClassyPrisms ''NetworkError  -- prism
+-- makeClassy       ''DbConig       -- lens
+
+-- 35:38
+
+type MyData = String
+
+loadFromDb :: (MonadError e m, MonadReader r m,
+               AsDbError  e,   HasDbConfig r,
+               MonadIO m)
+            => m MyData
+loadFromDb = undefined
+
+sendOverNet :: (MonadError     e m, MonadReader      r m,
+                AsNetworkError e,   HasNetworkConfig r,
+                MonadIO m)
+             => MyData -> m ()
+sendOverNet = undefined
+
+loadAndSend :: (MonadError     e m, MonadReader      r m,
+                AsNetworkError e,   HasNetworkConfig r,
+                AsDbError      e,   HasDbConfig      r,
+                MonadIO m)
+             => m ()
+loadAndSend = loadFromDb >>= sendOverNet
+
+-- 39:00
+
+newtype App a =
+    App { unApp :: ReaderT AppConfig (ExceptT AppError IO) a }
+    deriving (Applicative, Functor, Monad, MonadIO,
+              MonadReader AppConfig,
+              MonadError AppError)
+
+mainApp :: App ()
+mainApp = loadAndSend
+
+-- 39:45
+
+-- Abstractions > Concretions
+-- Typeclass constraints stack up better than monolithic transformers
+-- Lens gives compositional vocabulary for talking about data
+
+-- talked about
+-- - http://hackage.haskell.org/package/mtl
+-- - http://lens.github.io
+
+-- encourage looking at
+ -- - http://github.com/benkolera/talk-stacking-your-monads/
+-- - http://hackage.haskell.org/package/hoist-error
+
+-- makeClassy / makeClassyPrisms
+-- - https://hackage.haskell.org/package/lens-4.13.2/docs/Control-Lens-TH.html
