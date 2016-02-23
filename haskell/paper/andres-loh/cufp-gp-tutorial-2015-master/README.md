@@ -1,1 +1,0 @@
-# HC working through cufp-gp-tutorial-2015
