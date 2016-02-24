@@ -1,14 +1,15 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE RecursiveDo         #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Lib where
 
-import           Control.Applicative ((<$>), (<|>))
-import           Data.Char           (isAlpha, isDigit)
+import           Control.Applicative (many, some, (<|>))
+import           Data.Char           (isAlpha, isAlphaNum, isDigit, isSpace)
 import           Test.HUnit          (Counts, Test (TestList), runTestTT)
 import qualified Test.HUnit.Util     as U (t, tt)
-import qualified Text.Earley         as TE (Grammar, Prod, fullParses,
-                                            namedSymbol, parser, rule, satisfy,
+import qualified Text.Earley         as TE (Grammar, Prod, Report, fullParses,
+                                            parser, rule, satisfy, symbol,
                                             (<?>))
 
 someFunc :: IO ()
@@ -56,36 +57,77 @@ simplify expr = case expr of
     (Mul e1 e2) -> simplify1 (Mul (simplify e1) (simplify e2))
     _           -> simplify1 expr
 
+exExpr = Add (Mul (Add (Mul (Const 0)
+                            (Var "x"))
+                       (Const 1))
+                  (Const 3))
+             (Const 12)
+
 eSimplify = U.t "eSimplify"
-    (simplify (Add (Mul (Add (Mul (Const 0)
-                                  (Var "x"))
-                             (Const 1))
-                        (Const 3))
-                   (Const 12)))
-     (Const 15)
+    (simplify exExpr)
+    (Const 15)
 
-expr :: TE.Grammar r (TE.Prod r String String Expr)
-expr = mdo
-    x1 <- TE.rule $ Add   <$> x1 <* TE.namedSymbol "+" <*> x2
-                 <|> x2
-                 TE.<?> "sum"
-    x2 <- TE.rule $ Mul   <$> x2 <* TE.namedSymbol "*" <*> x3
-                 <|> x3
-                 TE.<?> "product"
-    x3 <- TE.rule $ Var   <$> (TE.satisfy ident TE.<?> "identifier")
-                 <|> TE.namedSymbol "(" *> x1 <* TE.namedSymbol ")"
-    return x1
-  where
-     ident (x:_) = isAlpha x
-     ident _     = False
-     numbP (x:_) = isDigit x
-     numbP _     = False
+-- 1.7
 
-eParseExpr = U.t "eParseExpr"
-    (let (p,_) = TE.fullParses (TE.parser expr) $ words "a + b * ( c + d )"
-     in p)
-    [Add (Var "a") (Mul (Var "b") (Add (Var "c") (Var "d")))]
+grammar :: forall r. TE.Grammar r (TE.Prod r String Char Expr)
+grammar = mdo
+    whitespace <- TE.rule $ many $ TE.satisfy isSpace
+    let token :: TE.Prod r String Char a -> TE.Prod r String Char a
+        token p = whitespace *> p
+        sym x   = token $ TE.symbol x TE.<?> [x]
+        ident   = token $ (:) <$> TE.satisfy isAlpha <*> many (TE.satisfy isAlphaNum) TE.<?> "identifier"
+        num     = token $ some (TE.satisfy isDigit) TE.<?> "number"
+    expr0 <- TE.rule
+        $ (Const . read)  <$> num
+        <|> Var  <$> ident
+        <|> sym '(' *> expr2 <* sym ')'
+    expr1 <- TE.rule
+        $ Mul <$> expr1 <* sym '*' <*> expr0
+        <|> expr0
+    expr2 <- TE.rule
+        $ Add <$> expr2 <* sym '+' <*> expr1
+        <|> expr1
+    return $ expr2 <* whitespace
+
+parseExpr :: String -> ([Expr], TE.Report String String)
+parseExpr = TE.fullParses (TE.parser grammar)
+
+parseExpr' :: String -> Expr
+parseExpr' e =  let (p:_,_) = parseExpr e in p
+
+eParseExpr1 = U.t "eParseExpr1"
+    (parseExpr' "a + b * ( c + d )")
+    (Add (Var "a") (Mul (Var "b") (Add (Var "c") (Var "d"))))
+
+eParseExpr2 = U.t "eParseExpr3"
+    (parseExpr' "(0 * x + 1) * 3 + 12")
+    exExpr
+
+-- TODO : parseResult is different from result shown in book - are they equivalent?
+parseResult =
+     Mul (Add (Add (Var "x1")
+                   (Var "x2"))
+              (Var "x3"))
+         (Add (Add (Add (Const 1)
+                        (Const 2))
+                   (Mul (Const 3)
+                        (Var "x")))
+              (Var "y"))
+
+bookResult =
+     Mul (Add (Var "x1")
+              (Add (Var "x2")
+                   (Var "x3")))
+         (Add (Const 1)
+              (Add (Const 2)
+                   (Add (Mul (Const 3)
+                             (Var "x"))
+                        (Var "y"))))
+
+eParseExpr3 = U.t "eParseExpr3"
+    (parseExpr' "(x1 + x2 + x3) * (1 + 2 + 3 * x + y)")
+    parseResult
 
 test :: IO Counts
 test =
-    runTestTT $ TestList $ eExpr ++ eSimplify1 ++ eSimplify ++ eParseExpr
+    runTestTT $ TestList $ eExpr ++ eSimplify1 ++ eSimplify ++ eParseExpr1 ++ eParseExpr2 ++ eParseExpr3
