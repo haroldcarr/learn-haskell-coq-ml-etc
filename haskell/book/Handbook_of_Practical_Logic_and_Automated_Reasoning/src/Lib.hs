@@ -107,7 +107,7 @@ tParseExpr2 = U.t "tParseExpr3"
     (parseExpr' "(0 * x + 1) * 3 + 12")
     exExpr
 
--- TODO : parseResult is different from result shown in book - are they equivalent?
+-- TODO : this parser is left associative, book is right associative
 parseResult =
      Mul (Add (Add (Var "x1")
                    (Var "x2"))
@@ -132,20 +132,24 @@ tParseExpr3 = U.t "tParseExpr3"
     (parseExpr' "(x1 + x2 + x3) * (1 + 2 + 3 * x + y)")
     parseResult
 
-showExpr e = case e of
-    (Add e1 e2) -> se e1 <> text "+" <> se e2
-    (Mul e1 e2) -> se e1 <> text "*" <> se e2
+data ComingFrom = A | M
+
+showExpr e0 = case e0 of
+    (Add e1 e2) -> se e1 A <> text " + " <> se e2 A
+    (Mul e1 e2) -> se e1 M <> text " * " <> se e2 M
     (Const   i) -> text (show i)
     (Var     v) -> text v
   where
-    se e = case e of
-        c@(Const _) -> showExpr c
-        v@(Var   _) -> showExpr v
-        e'          -> text "(" <> showExpr e' <> text ")"
+    se e from = case (e, from) of
+        (c@(Const _),_) -> showExpr c
+        (v@(Var   _),_) -> showExpr v
+        (a@(Add _ _),A) -> showExpr a
+        (m@(Mul _ _),M) -> showExpr m
+        (e'         ,_) -> text "(" <> showExpr e' <> text ")"
 
 tShowExpr = U.t "tShowExpr"
     (show (showExpr (parseExpr' "(x1 + x2 + x3) * (1 + 2 + 3 * x + y)")))
-    "((x1+x2)+x3)*(((1+2)+(3*x))+y)"
+    "(x1 + x2 + x3) * (1 + 2 + (3 * x) + y)"
 
 test :: IO Counts
 test =
