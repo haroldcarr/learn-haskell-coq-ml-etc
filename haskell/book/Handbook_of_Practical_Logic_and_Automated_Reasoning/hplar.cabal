@@ -8,6 +8,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Lib
   build-depends:       base >= 4.7 && < 5
+                     , ansi-wl-pprint
                      , Earley
                      , HUnit
                      , test-hunit-util

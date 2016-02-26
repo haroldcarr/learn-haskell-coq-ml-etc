@@ -4,13 +4,17 @@
 
 module Lib where
 
-import           Control.Applicative (many, some, (<|>))
-import           Data.Char           (isAlpha, isAlphaNum, isDigit, isSpace)
-import           Test.HUnit          (Counts, Test (TestList), runTestTT)
-import qualified Test.HUnit.Util     as U (t, tt)
-import qualified Text.Earley         as TE (Grammar, Prod, Report, fullParses,
-                                            parser, rule, satisfy, symbol,
-                                            (<?>))
+import           Control.Applicative          (many, some, (<|>))
+import           Data.Char                    (isAlpha, isAlphaNum, isDigit,
+                                               isSpace)
+import           Prelude                      as P
+import           Test.HUnit                   (Counts, Test (TestList),
+                                               runTestTT)
+import qualified Test.HUnit.Util              as U (t, tt)
+import qualified Text.Earley                  as TE (Grammar, Prod, Report,
+                                                     fullParses, parser, rule,
+                                                     satisfy, symbol, (<?>))
+import           Text.PrettyPrint.ANSI.Leijen as PP
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -24,7 +28,7 @@ data Expr =
   | Mul   Expr Expr
   deriving (Eq, Read, Show)
 
-eExpr = U.t "eExpr"
+tExpr = U.t "tExpr"
     (Add (Mul (Const 2) (Var "x")) (Var "y"))
     (Add (Mul (Const 2) (Var "x")) (Var "y"))
 
@@ -41,7 +45,7 @@ simplify1 expr = case expr of
 
 s1 = simplify1
 
-eSimplify1 = U.tt "eSimplify1"
+tSimplify1 = U.tt "tSimplify1"
     [ s1 $ Add (Const 3) (Const 4)
     , s1 $ Add (Const 4) (Const 3)
     , s1 $ Add (Const 0) (Const 7)
@@ -63,7 +67,7 @@ exExpr = Add (Mul (Add (Mul (Const 0)
                   (Const 3))
              (Const 12)
 
-eSimplify = U.t "eSimplify"
+tSimplify = U.t "tSimplify"
     (simplify exExpr)
     (Const 15)
 
@@ -75,17 +79,17 @@ grammar = mdo
     let token :: TE.Prod r String Char a -> TE.Prod r String Char a
         token p = whitespace *> p
         sym x   = token $ TE.symbol x TE.<?> [x]
-        ident   = token $ (:) <$> TE.satisfy isAlpha <*> many (TE.satisfy isAlphaNum) TE.<?> "identifier"
+        ident   = token $ (:) P.<$> TE.satisfy isAlpha <*> many (TE.satisfy isAlphaNum) TE.<?> "identifier"
         num     = token $ some (TE.satisfy isDigit) TE.<?> "number"
     expr0 <- TE.rule
-        $ (Const . read)  <$> num
-        <|> Var  <$> ident
+        $ (Const . read)  P.<$> num
+        <|> Var  P.<$> ident
         <|> sym '(' *> expr2 <* sym ')'
     expr1 <- TE.rule
-        $ Mul <$> expr1 <* sym '*' <*> expr0
+        $ Mul P.<$> expr1 <* sym '*' <*> expr0
         <|> expr0
     expr2 <- TE.rule
-        $ Add <$> expr2 <* sym '+' <*> expr1
+        $ Add P.<$> expr2 <* sym '+' <*> expr1
         <|> expr1
     return $ expr2 <* whitespace
 
@@ -95,11 +99,11 @@ parseExpr = TE.fullParses (TE.parser grammar)
 parseExpr' :: String -> Expr
 parseExpr' e =  let (p:_,_) = parseExpr e in p
 
-eParseExpr1 = U.t "eParseExpr1"
+tParseExpr1 = U.t "tParseExpr1"
     (parseExpr' "a + b * ( c + d )")
     (Add (Var "a") (Mul (Var "b") (Add (Var "c") (Var "d"))))
 
-eParseExpr2 = U.t "eParseExpr3"
+tParseExpr2 = U.t "tParseExpr3"
     (parseExpr' "(0 * x + 1) * 3 + 12")
     exExpr
 
@@ -124,10 +128,26 @@ bookResult =
                              (Var "x"))
                         (Var "y"))))
 
-eParseExpr3 = U.t "eParseExpr3"
+tParseExpr3 = U.t "tParseExpr3"
     (parseExpr' "(x1 + x2 + x3) * (1 + 2 + 3 * x + y)")
     parseResult
 
+showExpr e = case e of
+    (Add e1 e2) -> se e1 <> text "+" <> se e2
+    (Mul e1 e2) -> se e1 <> text "*" <> se e2
+    (Const   i) -> text (show i)
+    (Var     v) -> text v
+  where
+    se e = case e of
+        c@(Const _) -> showExpr c
+        v@(Var   _) -> showExpr v
+        e'          -> text "(" <> showExpr e' <> text ")"
+
+tShowExpr = U.t "tShowExpr"
+    (show (showExpr (parseExpr' "(x1 + x2 + x3) * (1 + 2 + 3 * x + y)")))
+    "((x1+x2)+x3)*(((1+2)+(3*x))+y)"
+
 test :: IO Counts
 test =
-    runTestTT $ TestList $ eExpr ++ eSimplify1 ++ eSimplify ++ eParseExpr1 ++ eParseExpr2 ++ eParseExpr3
+    runTestTT $ TestList $ tExpr ++ tSimplify1 ++ tSimplify ++
+                           tParseExpr1 ++ tParseExpr2 ++ tParseExpr3 ++ tShowExpr
