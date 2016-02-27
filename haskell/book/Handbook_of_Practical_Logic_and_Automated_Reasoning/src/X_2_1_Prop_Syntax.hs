@@ -48,14 +48,14 @@ pr x = let (Right r) = p x in r
 
 {- parses a term, followed by whitespace and end-of-file -}
 start = do
-    e <- expr
+    e <- formula
     whiteSpace
     P.eof
     return e
 
-expr = P.buildExpressionParser table term P.<?> "expression"
+formula = P.buildExpressionParser table operatorOrAtom P.<?> "formula"
 
-term =  parens expr P.<|> atom P.<?> "simple expression"
+operatorOrAtom = parens formula P.<|> atom P.<?> "operatorOrAtom"
 
 atom = do
     i <- identifier
@@ -64,7 +64,7 @@ atom = do
 table = [ [ prefix "~"   Not ]
         , [ binary "^"   And  P.AssocLeft ]
         , [ binary "v"   Or   P.AssocLeft ]
-        , [ binary "-->" Impl P.AssocLeft ]
+        , [ binary ">"   Impl P.AssocLeft ] -- TODO "-->"
         , [ binary "<->" Iff  P.AssocLeft ]
         ]
 
@@ -72,13 +72,21 @@ table = [ [ prefix "~"   Not ]
 binary  name fun       = P.Infix  (do { reservedOp name; return fun })
 prefix  name fun       = P.Prefix (do { reservedOp name; return fun })
 
+tp0 = U.t "tp0"
+      (pr "~(~p ^ ~q)")
+      (Not (And (Not (Atom "p")) (Not (Atom "q"))))
+
 tp1 = U.t "tp1"
-      (p "p ^ q")
-      (Right (And (Atom "p") (Atom "q")))
+      (pr "p ^ q")
+      (And (Atom "p") (Atom "q"))
 
 tp2 = U.t "tp2"
-      (p "p v q ^ z")
-      (Right (Or (Atom "p") (And (Atom "q") (Atom "z"))))
+      (pr "p v q ^ z")
+      (Or (Atom "p") (And (Atom "q") (Atom "z")))
+
+tp3 = U.t "tp3"
+      (pr "p v q > r")
+      (Impl (Or (Atom "p") (Atom "q")) (Atom "r"))
 
 ------------------------------------------------------------------------------
 -- pretty printer
@@ -104,7 +112,8 @@ ts1 = U.t "tShowFormula"
 
 test :: IO U.Counts
 test =
-    U.runTestTT $ U.TestList $ tp1 ++ tp2 ++ ts1
+    U.runTestTT $ U.TestList $ tp0 ++ tp1 ++ tp2 ++ tp3 ++
+                               ts1
 
 ------------------------------------------------------------------------------
 -- helper functions
