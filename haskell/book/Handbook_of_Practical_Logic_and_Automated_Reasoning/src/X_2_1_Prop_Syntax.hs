@@ -4,14 +4,21 @@ module X_2_1_Prop_Syntax where
 
 import qualified Test.HUnit                   as U (Counts, Test (TestList),
                                                     runTestTT)
-import qualified Test.HUnit.Util              as U (t, tt)
-import qualified Text.Parsec                  as P (eof, runP, (<?>), (<|>))
+import qualified Test.HUnit.Util              as U (t)
+import qualified Text.Parsec                  as P (alphaNum, eof, letter,
+                                                    oneOf, runP, (<?>), (<|>))
 import qualified Text.Parsec.Expr             as P (Assoc (AssocLeft),
                                                     Operator (Infix, Prefix),
                                                     buildExpressionParser)
-import qualified Text.Parsec.Language         as P (haskell)
-import qualified Text.Parsec.Token            as P (identifier, parens,
-                                                    reservedOp, whiteSpace)
+import qualified Text.Parsec.Token            as P (GenLanguageDef (LanguageDef),
+                                                    caseSensitive, commentEnd,
+                                                    commentLine, commentStart,
+                                                    identLetter, identStart,
+                                                    identifier, makeTokenParser,
+                                                    nestedComments, opLetter,
+                                                    opStart, parens, reserved,
+                                                    reservedNames, reservedOp,
+                                                    reservedOpNames, whiteSpace)
 import qualified Text.PrettyPrint.ANSI.Leijen as PP (text, (<>))
 
 -- 2.1
@@ -32,13 +39,30 @@ data Formula a =
 ------------------------------------------------------------------------------
 -- Parser
 
--- Haskell lexer via Parsec tokenizer
-lexer = P.haskell
+langDef = P.LanguageDef
+    { P.commentStart    = "{-"
+    , P.commentEnd      = "-}"
+    , P.commentLine     = "--"
+    , P.nestedComments  = True
+    , P.identStart      = P.letter
+    , P.identLetter     = P.alphaNum
+    , P.opStart         = P.oneOf "~^v-<"
+    , P.opLetter        = P.oneOf ">"
+    , P.reservedNames   = ["v"]
+    , P.reservedOpNames = ["~","^","v","->","<>"]
+    , P.caseSensitive   = True
+    }
 
-reservedOp = P.reservedOp lexer
-identifier = P.identifier lexer
-parens     = P.parens     lexer
-whiteSpace = P.whiteSpace lexer
+lexer        = P.makeTokenParser langDef
+identifier   = P.identifier lexer
+parens       = P.parens     lexer
+reserved     = P.reserved   lexer
+reservedOp   = P.reservedOp lexer
+whiteSpace   = P.whiteSpace lexer
+
+-- TMP
+pimpl = P.runP (reservedOp "-->") (3::Int) "foo"
+piff  = P.runP (reservedOp "<->") (3::Int) "foo"
 
 -- parser that return Either
 p = P.runP start (3::Int) "foo"
@@ -55,22 +79,25 @@ start = do
 
 formula = P.buildExpressionParser table operatorOrAtom P.<?> "formula"
 
-operatorOrAtom = parens formula P.<|> atom P.<?> "operatorOrAtom"
+operatorOrAtom =
+          parens formula
+    P.<|> atom
+    P.<?> "operatorOrAtom"
 
 atom = do
-    i <- identifier
-    return (Atom i)
+    a <- identifier
+    return (Atom a)
 
 table = [ [ prefix "~"   Not ]
         , [ binary "^"   And  P.AssocLeft ]
         , [ binary "v"   Or   P.AssocLeft ]
-        , [ binary ">"   Impl P.AssocLeft ] -- TODO "-->"
-        , [ binary "<->" Iff  P.AssocLeft ]
+        , [ binary "->" Impl P.AssocLeft ] -- TODO "-->"
+        , [ binary "<>" Iff  P.AssocLeft ] -- TODO "<->"
         ]
 
 --      name fun assoc
-binary  name fun       = P.Infix  (do { reservedOp name; return fun })
-prefix  name fun       = P.Prefix (do { reservedOp name; return fun })
+binary  name fun       = P.Infix  (reservedOp name >> return fun)
+prefix  name fun       = P.Prefix (reservedOp name >> return fun)
 
 tp0 = U.t "tp0"
       (pr "~(~p ^ ~q)")
@@ -85,8 +112,12 @@ tp2 = U.t "tp2"
       (Or (Atom "p") (And (Atom "q") (Atom "z")))
 
 tp3 = U.t "tp3"
-      (pr "p v q > r")
+      (pr "p v q -> r")
       (Impl (Or (Atom "p") (Atom "q")) (Atom "r"))
+
+tp4 = U.t "tp4"
+      (pr "p <> r")
+      (Iff (Atom "p") (Atom "r"))
 
 ------------------------------------------------------------------------------
 -- pretty printer
@@ -112,7 +143,7 @@ ts1 = U.t "tShowFormula"
 
 test :: IO U.Counts
 test =
-    U.runTestTT $ U.TestList $ tp0 ++ tp1 ++ tp2 ++ tp3 ++
+    U.runTestTT $ U.TestList $ tp0 ++ tp1 ++ tp2 ++ tp3 ++ tp4 ++
                                ts1
 
 ------------------------------------------------------------------------------
