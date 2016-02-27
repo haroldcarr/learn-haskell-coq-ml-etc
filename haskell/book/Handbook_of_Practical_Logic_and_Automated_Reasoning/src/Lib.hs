@@ -4,7 +4,7 @@
 
 module Lib where
 
-import           Control.Applicative          (many, some, (<|>))
+import           Control.Applicative          as A (many, some, (<|>))
 import           Data.Char                    (isAlpha, isAlphaNum, isDigit,
                                                isSpace)
 import           Prelude                      as P
@@ -73,28 +73,28 @@ tSimplify = U.t "tSimplify"
 
 -- 1.7
 
-grammar :: forall r. TE.Grammar r (TE.Prod r String Char Expr)
-grammar = mdo
-    whitespace <- TE.rule $ many $ TE.satisfy isSpace
+exprGrammar :: forall r. TE.Grammar r (TE.Prod r String Char Expr)
+exprGrammar = mdo
+    whitespace <- TE.rule $ A.many $ TE.satisfy isSpace
     let token :: TE.Prod r String Char a -> TE.Prod r String Char a
         token p = whitespace *> p
         sym x   = token $ TE.symbol x TE.<?> [x]
-        ident   = token $ (:) P.<$> TE.satisfy isAlpha <*> many (TE.satisfy isAlphaNum) TE.<?> "identifier"
+        ident   = token $ (:) P.<$> TE.satisfy isAlpha <*> A.many (TE.satisfy isAlphaNum) TE.<?> "identifier"
         num     = token $ some (TE.satisfy isDigit) TE.<?> "number"
     expr0 <- TE.rule
         $ (Const . read)  P.<$> num
-        <|> Var  P.<$> ident
-        <|> sym '(' *> expr2 <* sym ')'
+        A.<|> Var  P.<$> ident
+        A.<|> sym '(' *> expr2 <* sym ')'
     expr1 <- TE.rule
         $ Mul P.<$> expr1 <* sym '*' <*> expr0
-        <|> expr0
+        A.<|> expr0
     expr2 <- TE.rule
         $ Add P.<$> expr2 <* sym '+' <*> expr1
-        <|> expr1
+        A.<|> expr1
     return $ expr2 <* whitespace
 
 parseExpr :: String -> ([Expr], TE.Report String String)
-parseExpr = TE.fullParses (TE.parser grammar)
+parseExpr = TE.fullParses (TE.parser exprGrammar)
 
 parseExpr' :: String -> Expr
 parseExpr' e =  let (p:_,_) = parseExpr e in p
@@ -150,6 +150,22 @@ showExpr e0 = case e0 of
 tShowExpr = U.t "tShowExpr"
     (show (showExpr (parseExpr' "(x1 + x2 + x3) * (1 + 2 + 3 * x + y)")))
     "(x1 + x2 + x3) * (1 + 2 + (3 * x) + y)"
+
+-- 2.1
+
+data Formula a =
+    F
+  | T
+  | Atom  a
+  | Not   (Formula a)
+  | And   (Formula a) (Formula a)
+  | Or    (Formula a) (Formula a)
+  | Impl  (Formula a) (Formula a)
+  | Iff   (Formula a) (Formula a)
+  | Forall String     (Formula a)
+  | Exists String     (Formula a)
+
+newtype Prop = P { pname :: String }
 
 test :: IO Counts
 test =
