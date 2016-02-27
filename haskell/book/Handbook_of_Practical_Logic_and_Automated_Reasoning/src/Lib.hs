@@ -151,20 +151,6 @@ tShowExpr = U.t "tShowExpr"
     (show (showExpr (parseExpr' "(x1 + x2 + x3) * (1 + 2 + 3 * x + y)")))
     "(x1 + x2 + x3) * (1 + 2 + (3 * x) + y)"
 
--- 2.1
-
-data Formula a =
-    F
-  | T
-  | Atom  a
-  | Not   (Formula a)
-  | And   (Formula a) (Formula a)
-  | Or    (Formula a) (Formula a)
-  | Impl  (Formula a) (Formula a)
-  | Iff   (Formula a) (Formula a)
-  | Forall String     (Formula a)
-  | Exists String     (Formula a)
-
 newtype Prop = P { pname :: String }
 
 test :: IO Counts
