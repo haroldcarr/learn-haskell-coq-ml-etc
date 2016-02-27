@@ -4,11 +4,12 @@
 
 module Parser where
 
-import           Text.Parsec
-import           Text.Parsec.Expr
-import           Text.Parsec.Language
-import qualified Text.Parsec.Token    as P
-
+import qualified Text.Parsec          as P (eof, many1, runP, (<|>))
+import qualified Text.Parsec.Expr     as P (Assoc (AssocLeft), Operator (Infix),
+                                            buildExpressionParser)
+import qualified Text.Parsec.Language as P (haskell)
+import qualified Text.Parsec.Token    as P (identifier, natural, parens,
+                                            reserved, reservedOp, whiteSpace)
 
 -- abstract syntax for language terms
 data Term = Var Ident               -- variables
@@ -28,7 +29,7 @@ data Term = Var Ident               -- variables
 type Ident = String
 
 -- setup a Haskell-like lexer using the Parsec tokenizer
-lexer = haskell
+lexer = P.haskell
 
 reserved   = P.reserved lexer
 reservedOp = P.reservedOp lexer
@@ -37,43 +38,30 @@ natural    = P.natural lexer
 parens     = P.parens lexer
 whiteSpace = P.whiteSpace lexer
 
+test = [ p "\\x y->x+y"
+       , p "let x=1 in 2*(x+1)" -- Let "x" (Const 1) (Const 2 :* (Var "x" :+ Const 1))
+       , p "\\x y->x+y"         -- Lambda "x" (Lambda "y" (Var "x" :+ Var "y")
+       ]
 
-{- This is the start non-terminal: parses a term
-   followed by whitespace and end-of-file
+testE = p "x*2)"                -- parse error at (line 1, column 4):    unexpected ")"    expecting digit, identifier, natural, "(", "*", operator or end of input
 
-   Examples (at the GHCi prompt):
-   > parseTest "let x=1 in 2*(x+1)"
-   Let "x" (Const 1) (Const 2 :* (Var "x" :+ Const 1))
-   > parseTest "\\x y->x+y"
-   Lambda "x" (Lambda "y" (Var "x" :+ Var "y")
-   > parseTest "x*2)"
-   parse error at (line 1, column 4):
-   unexpected ")"
-   expecting digit, identifier, natural, "(", "*", operator or end of input
-
-   The "parseTest" function  is exported by the Parsec library;
-   see also the documentation on "parse" and "parseFromFile".
--}
+{- parses a term, followed by whitespace and end-of-file -}
 start = do
-    e<-term
+    e <- term
     whiteSpace
-    eof
+    P.eof
     return e
 
--- the rest of the grammar follows
-
--- terms of the Fun language
 term =
-    do
-        reserved "let"  -- let/in construct
-        x<-identifier
+    do  -- let/in construct
+        reserved "let"
+        x <- identifier
         reservedOp "="
-        e1<-term
+        e1 <- term
         reserved "in"
-        e2<-term
+        e2 <- term
         return (Let x e1 e2)
-        -- if/then/else construct
-    <|> do
+    P.<|> do -- if/then/else construct
         reserved "if"
         e1 <- term
         reserved "then"
@@ -81,52 +69,49 @@ term =
         reserved "else"
         e3 <- term
         return (IfThenElse e1 e2 e3)
-    -- fixpoint operator
-    <|> do
+    P.<|> do -- fixpoint operator
         reserved "fix"
         e <- term
         return (Fix e)
-    -- lambda-abstraction
-    -- multiple identifiers are expanded into curried form
-    <|> do
+    P.<|> do -- lambda-abstraction : multiple identifiers expanded into curried form
         reservedOp "\\"
-        xs <- many1 identifier
+        xs <- P.many1 identifier
         reservedOp "->"
         e <- term
         return (foldr Lambda e xs)
-    -- otherwise: an infix expression
-    <|> expr
+    P.<|> expr -- otherwise: an infix expression
 
--- an expression using infix arithmetic and comparision operators
--- uses the Parsec expression parser builder
-expr = buildExpressionParser table applExpr
-    where table = [ [ binary "*" (:*) AssocLeft ]
-                  , [ binary "+" (:+) AssocLeft
-                    , binary "-" (:-) AssocLeft
+-- using infix arithmetic and comparision operators
+expr = P.buildExpressionParser table applExpr
+    where table = [ [ binary "*" (:*) P.AssocLeft ]
+                  , [ binary "+" (:+) P.AssocLeft
+                    , binary "-" (:-) P.AssocLeft
                     ]
                   ]
           --     s op assoc
-          binary s op = Infix (do { reservedOp s; return op })
+          binary s op = P.Infix (do { reservedOp s; return op })
 
--- an application (e0 e1 e2 .. en)
--- where ei are self-delimited expressions
+-- application (e0 e1 e2 .. en)
 applExpr = do
-    es<-many1 delimExpr
+    es <- P.many1 delimExpr
     return (foldl1 App es)
 
--- self-delimited expressions:
--- identifiers, constants or parentesised terms
+-- self-delimited expressions: identifiers, constants or parentesised terms
 delimExpr =
     do
-        x<-identifier
+        x <- identifier
         return (Var x)
-    <|> do
-        n<-natural
+    P.<|> do
+        n <- natural
         return (Const (fromInteger n))
-    <|> parens term
+    P.<|> parens term
 
-par x = let (Right r) = runP start (3::Int) "foo" x in r
+p = P.runP start (3::Int) "foo"
 
--- par "\\x y->x+y"
+ps x = case p x of
+    (Right r) -> show r
+    (Left  l) -> show l
+
+pr x = let (Right r) = p x in r
 
 -- end of file ---
