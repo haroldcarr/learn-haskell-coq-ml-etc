@@ -49,7 +49,7 @@ langDef = P.LanguageDef
     , P.identLetter     = P.alphaNum
     , P.opStart         = P.oneOf "~^v-<"
     , P.opLetter        = P.oneOf ">"
-    , P.reservedNames   = ["v"]
+    , P.reservedNames   = ["T", "F", "v", "Forall", "Exists"]
     , P.reservedOpNames = ["~","^","v","->","<->"]
     , P.caseSensitive   = True
     }
@@ -78,8 +78,13 @@ formula = P.buildExpressionParser table operatorOrAtom P.<?> "formula"
 
 operatorOrAtom =
           parens formula
+    P.<|> boolean
     P.<|> atom
     P.<?> "operatorOrAtom"
+
+boolean =
+          (reserved "T" >> return T)
+    P.<|> (reserved "F" >> return F)
 
 atom = do
     a <- identifier
@@ -93,6 +98,7 @@ table = [ [ prefix "~"   Not ]
         ]
 
 -- TMP
+-- also see: http://www.mega-nerd.com/erikd/Blog/CodeHacking/Haskell/parsec_expression_parsing.html
 pt x = P.runP (reservedOp x) (3::Int) "foo"
 
 --      name fun assoc
@@ -100,8 +106,8 @@ binary  name fun       = P.Infix  (reservedOp name >> return fun)
 prefix  name fun       = P.Prefix (reservedOp name >> return fun)
 
 tp0 = U.t "tp0"
-      (pr "~(~p ^ ~q)")
-      (Not (And (Not (Atom "p")) (Not (Atom "q"))))
+      (pr "~(~T ^ ~F)")
+      (Not (And (Not T) (Not F)))
 
 tp1 = U.t "tp1"
       (pr "p ^ q")
@@ -125,6 +131,8 @@ tp4 = U.t "tp4"
 data ComingFrom = A | O
 
 showFormula f0 = case f0 of
+    T           -> PP.text "T"
+    F           -> PP.text "F"
     (Atom    a) -> PP.text a
     (Not     f) -> PP.text "~" PP.<> showFormula f
     (And f1 f2) -> se f1 A PP.<> PP.text " ^ " PP.<> se f2 A
