@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module X_2_1_Prop_Syntax where
 
@@ -49,7 +50,7 @@ langDef = P.LanguageDef
     , P.opStart         = P.oneOf "~^v-<"
     , P.opLetter        = P.oneOf ">"
     , P.reservedNames   = ["v"]
-    , P.reservedOpNames = ["~","^","v","->","<>"]
+    , P.reservedOpNames = ["~","^","v","->","<->"]
     , P.caseSensitive   = True
     }
 
@@ -59,10 +60,6 @@ parens       = P.parens     lexer
 reserved     = P.reserved   lexer
 reservedOp   = P.reservedOp lexer
 whiteSpace   = P.whiteSpace lexer
-
--- TMP
-pimpl = P.runP (reservedOp "-->") (3::Int) "foo"
-piff  = P.runP (reservedOp "<->") (3::Int) "foo"
 
 -- parser that return Either
 p = P.runP start (3::Int) "foo"
@@ -91,9 +88,12 @@ atom = do
 table = [ [ prefix "~"   Not ]
         , [ binary "^"   And  P.AssocLeft ]
         , [ binary "v"   Or   P.AssocLeft ]
-        , [ binary "->" Impl P.AssocLeft ] -- TODO "-->"
-        , [ binary "<>" Iff  P.AssocLeft ] -- TODO "<->"
+        , [ binary "->"  Impl P.AssocLeft ] -- TODO "-->"
+        , [ binary "<->" Iff  P.AssocLeft ]
         ]
+
+-- TMP
+pt x = P.runP (reservedOp x) (3::Int) "foo"
 
 --      name fun assoc
 binary  name fun       = P.Infix  (reservedOp name >> return fun)
@@ -116,7 +116,7 @@ tp3 = U.t "tp3"
       (Impl (Or (Atom "p") (Atom "q")) (Atom "r"))
 
 tp4 = U.t "tp4"
-      (pr "p <> r")
+      (pr "p <-> r")
       (Iff (Atom "p") (Atom "r"))
 
 ------------------------------------------------------------------------------
