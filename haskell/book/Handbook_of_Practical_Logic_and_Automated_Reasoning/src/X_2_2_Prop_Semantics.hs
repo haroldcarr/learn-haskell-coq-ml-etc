@@ -2,10 +2,11 @@
 
 module X_2_2_Prop_Semantics where
 
+import           Data.List         (nub, sort)
 import qualified Data.Map          as Map (fromList, lookup)
 import           Data.Maybe        (fromJust)
 import qualified Test.HUnit        as U (Counts, Test (TestList), runTestTT)
-import qualified Test.HUnit.Util   as U (tt)
+import qualified Test.HUnit.Util   as U (t, tt)
 import           X_2_1_Prop_Syntax
 
 -- 2.2
@@ -25,13 +26,30 @@ te v fs = let pq = Map.fromList v
 
 tev1 = U.tt "tev1"
        (te [("p",False),("q",False)]
-           [ "p v q", "p ^ q", "~(~p ^ ~q)"])
+           [ "p ^ q", "p v q", "~(p -> q)", "~(p <-> q)" ])
        False
 
 tev2 = U.tt "tev2"
        (te [("p",False),("q",True)]
-           [ "p v q", "~(~p ^ ~q)", "p -> q"])
+           [ "p ^ q", "~(p v q)", "~(p -> q)", "p <-> q"])
+       False
+
+tev3 = U.tt "tev3"
+       (te [("p",True),("q",False)]
+           [ "p ^ q", "~(p v q)", "p -> q", "p <-> q", "~p", "~(~q)"]) -- TODO ~~q
+       False
+
+tev4 = U.tt "tev4"
+       (te [("p",True),("q",True)]
+           [ "(p ^ q)", "p v q", "p -> q", "p <-> q"])
        True
+
+atoms :: (Eq a, Ord a, Foldable t) => t a -> [a]
+atoms = sort . nub . foldr (:) []
+
+ta1 = U.t "ta1"
+      (atoms (pr "p ^ q v s -> ~p v (r <-> s)"))
+      ["p","q","r","s"]
 
 ------------------------------------------------------------------------------
 -- test
@@ -39,6 +57,7 @@ tev2 = U.tt "tev2"
 test :: IO U.Counts
 test =
     U.runTestTT $ U.TestList $
-    tev1 ++ tev2
+    tev1 ++ tev2 ++ tev3 ++ tev4 ++
+    ta1
 
 -- end of file ---
