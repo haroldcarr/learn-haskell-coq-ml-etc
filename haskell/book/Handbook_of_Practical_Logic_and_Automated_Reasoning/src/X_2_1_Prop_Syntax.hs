@@ -1,5 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveFunctor     #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleContexts  #-}
 
 module X_2_1_Prop_Syntax where
 
@@ -35,7 +37,7 @@ data Formula a =
   | Iff   (Formula a) (Formula a)
   | Forall String     (Formula a)
   | Exists String     (Formula a)
-  deriving (Eq, Show)
+  deriving (Eq, Functor, Foldable, Show, Traversable)
 
 ------------------------------------------------------------------------------
 -- Parser
@@ -62,10 +64,10 @@ reservedOp   = P.reservedOp lexer
 whiteSpace   = P.whiteSpace lexer
 
 -- parser that return Either
-p = P.runP start (3::Int) "foo"
+p' = P.runP start (3::Int) "foo"
 
 -- parser that expects success
-pr x = let (Right r) = p x in r
+pr x = let (Right r) = p' x in r
 
 {- parses a term, followed by whitespace and end-of-file -}
 start = do
@@ -149,15 +151,25 @@ ts1 = U.t "tShowFormula"
     (show (showFormula (pr "(p v q v r) ^ (p v q v  r ^ x  v y)")))
                            "(p v q v r) ^ (p v q v (r ^ x) v y)"
 
-test :: IO U.Counts
-test =
-    U.runTestTT $ U.TestList $ tp0 ++ tp1 ++ tp2 ++ tp3 ++ tp4 ++
-                               ts1
+------------------------------------------------------------------------------
+-- syntax operations
+
+onAtoms :: Applicative f => (a -> f b) -> Formula a -> f (Formula b)
+onAtoms = traverse
+
+toa1 = U.t "toa1"
+       (let r = pr "p v q" in (r, onAtoms (const "z") r))
+       ( Or (Atom "p") (Atom "q")
+       ,[Or (Atom 'z') (Atom 'z')])
 
 ------------------------------------------------------------------------------
--- helper functions
+-- test
 
-newtype Prop = P { pname :: String }
-
+test :: IO U.Counts
+test =
+    U.runTestTT $ U.TestList $
+    tp0 ++ tp1 ++ tp2 ++ tp3 ++ tp4 ++
+    ts1 ++
+    toa1
 
 -- end of file ---
