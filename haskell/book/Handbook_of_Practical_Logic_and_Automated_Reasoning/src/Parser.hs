@@ -54,44 +54,48 @@ whiteSpace = P.whiteSpace lexer
    The "parseTest" function  is exported by the Parsec library;
    see also the documentation on "parse" and "parseFromFile".
 -}
-start = do { e<-term; whiteSpace; eof; return e }
+start = do
+    e<-term
+    whiteSpace
+    eof
+    return e
 
 -- the rest of the grammar follows
 
 -- terms of the Fun language
-term = do { reserved "let"  -- let/in construct
-          ; x<-identifier
-          ; reservedOp "="
-          ; e1<-term
-          ; reserved "in"
-          ; e2<-term
-          ; return (Let x e1 e2)
-          }
-       -- if/then/else construct
-       <|> do { reserved "if"
-              ; e1 <- term
-              ; reserved "then"
-              ; e2 <- term
-              ; reserved "else"
-              ; e3 <- term
-              ; return (IfThenElse e1 e2 e3)
-              }
-       -- fixpoint operator
-       <|> do { reserved "fix"
-              ; e <- term
-              ; return (Fix e)
-              }
-       -- lambda-abstraction
-       -- multiple identifiers are expanded into curried form
-       <|> do { reservedOp "\\"
-              ; xs <- many1 identifier
-              ; reservedOp "->"
-              ; e <- term
-              ; return (foldr Lambda e xs)
-              }
-       -- otherwise: an infix expression
-       <|> expr
-
+term =
+    do
+        reserved "let"  -- let/in construct
+        x<-identifier
+        reservedOp "="
+        e1<-term
+        reserved "in"
+        e2<-term
+        return (Let x e1 e2)
+        -- if/then/else construct
+    <|> do
+        reserved "if"
+        e1 <- term
+        reserved "then"
+        e2 <- term
+        reserved "else"
+        e3 <- term
+        return (IfThenElse e1 e2 e3)
+    -- fixpoint operator
+    <|> do
+        reserved "fix"
+        e <- term
+        return (Fix e)
+    -- lambda-abstraction
+    -- multiple identifiers are expanded into curried form
+    <|> do
+        reservedOp "\\"
+        xs <- many1 identifier
+        reservedOp "->"
+        e <- term
+        return (foldr Lambda e xs)
+    -- otherwise: an infix expression
+    <|> expr
 
 -- an expression using infix arithmetic and comparision operators
 -- uses the Parsec expression parser builder
@@ -102,19 +106,24 @@ expr = buildExpressionParser table applExpr
                     ]
                   ]
           --     s op assoc
-          binary s op = Infix (do {reservedOp s; return op})
+          binary s op = Infix (do { reservedOp s; return op })
 
 -- an application (e0 e1 e2 .. en)
 -- where ei are self-delimited expressions
-applExpr = do { es<-many1 delimExpr
-              ; return (foldl1 App es)
-              }
+applExpr = do
+    es<-many1 delimExpr
+    return (foldl1 App es)
 
 -- self-delimited expressions:
 -- identifiers, constants or parentesised terms
-delimExpr = do { x<-identifier; return (Var x) }
-             <|> do { n<-natural; return (Const (fromInteger n)) }
-             <|> parens term
+delimExpr =
+    do
+        x<-identifier
+        return (Var x)
+    <|> do
+        n<-natural
+        return (Const (fromInteger n))
+    <|> parens term
 
 par x = let (Right r) = runP start (3::Int) "foo" x in r
 
