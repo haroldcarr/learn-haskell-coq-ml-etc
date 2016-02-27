@@ -2,7 +2,7 @@
 {-# LANGUAGE RecursiveDo         #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Lib where
+module X_1_6_to_1_8_Expr where
 
 import           Control.Applicative          as A (many, some, (<|>))
 import           Data.Char                    (isAlpha, isAlphaNum, isDigit,
@@ -148,10 +148,8 @@ showExpr e0 = case e0 of
         (e'         ,_) -> text "(" <> showExpr e' <> text ")"
 
 tShowExpr = U.t "tShowExpr"
-    (show (showExpr (parseExpr' "(x1 + x2 + x3) * (1 + 2 + 3 * x + y)")))
-    "(x1 + x2 + x3) * (1 + 2 + (3 * x) + y)"
-
-newtype Prop = P { pname :: String }
+    (show (showExpr (parseExpr' "(x1 + x2 + x3) * (1 + 2 +  3 * x  + y)")))
+                                "(x1 + x2 + x3) * (1 + 2 + (3 * x) + y)"
 
 test :: IO Counts
 test =

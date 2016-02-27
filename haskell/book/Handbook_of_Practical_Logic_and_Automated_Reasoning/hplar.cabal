@@ -6,8 +6,9 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Lib
-                     , Parser
+  exposed-modules:     X_1_6_to_1_8_Expr
+                     , X_2_1_Prop_Syntax
+                     , Test
   build-depends:       base >= 4.7 && < 5
                      , ansi-wl-pprint
                      , Earley
