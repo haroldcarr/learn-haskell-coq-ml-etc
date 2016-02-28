@@ -29,7 +29,7 @@ import qualified Text.PrettyPrint.ANSI.Leijen as PP (text, (<>))
 data Formula a =
     F
   | T
-  | Atom  a
+  | Atom           a
   | Not   (Formula a)
   | And   (Formula a) (Formula a)
   | Or    (Formula a) (Formula a)
@@ -154,13 +154,26 @@ ts1 = U.t "tShowFormula"
 ------------------------------------------------------------------------------
 -- syntax operations
 
-onAtoms :: Applicative f => (a -> f b) -> Formula a -> f (Formula b)
-onAtoms = traverse
+onAtomsContents :: Applicative f => (a -> f b) -> Formula a -> f (Formula b)
+onAtomsContents = traverse
 
 toa1 = U.t "toa1"
-       (let r = pr "p v q" in (r, onAtoms (const "z") r))
+       (let r = pr "p v q" in (r, onAtomsContents (const "z") r))
        ( Or (Atom "p") (Atom "q")
        ,[Or (Atom 'z') (Atom 'z')])
+
+-- TODO : use library function
+onAtoms :: (a -> Formula a) -> Formula a -> Formula a
+onAtoms f fs = case fs of
+    (Atom   a  ) -> f a
+    (Not    p  ) -> Not    (onAtoms f p)
+    (Or     p q) -> Or     (onAtoms f p) (onAtoms f q)
+    (And    p q) -> And    (onAtoms f p) (onAtoms f q)
+    (Impl   p q) -> Impl   (onAtoms f p) (onAtoms f q)
+    (Iff    p q) -> Iff    (onAtoms f p) (onAtoms f q)
+    (Forall x p) -> Forall x             (onAtoms f p)
+    (Exists x p) -> Exists x             (onAtoms f p)
+    _            -> fs
 
 ------------------------------------------------------------------------------
 -- test

@@ -103,6 +103,11 @@ ttt1 = U.t "ttt1"
        , (["T","T","F"],"F")
        , (["T","T","T"],"T") ]
 
+printTT :: Ord a => Formula a -> IO ()
+printTT = mapM_ print . truthtable
+
+-- printTT (pr "p ^ q -> q ^ r")
+
 ------------------------------------------------------------------------------
 -- test
 

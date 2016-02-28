@@ -2,6 +2,7 @@
 
 module X_2_3_Prop_Validity_Satisfiability_Tautology where
 
+import           Data.Maybe           (fromMaybe)
 import qualified Test.HUnit           as U (Counts, Test (TestList), runTestTT)
 import qualified Test.HUnit.Util      as U (t, tt)
 import           X_2_1_Prop_Syntax
@@ -70,13 +71,46 @@ Notation Γ |= q : means ‘for all valuations in which all p ∈ Γ are true, q
 tautology fs =
     and $ onAllValuations (\v -> [eval fs v]) (const False) (atoms fs)
 
+ttt = U.tt "ttt"
+      [ tautology (pr "p v ~p")
+      , tautology (pr "(p v q) ^ ~(p ^ q) -> (~p <-> q)")]
+      True
 
+ttf = U.tt "ttf"
+      [ tautology (pr "p v q -> p")
+      , tautology (pr "p v q -> q v (p <-> q)")]
+      False
+
+unsatisfiable :: Ord a => Formula a -> Bool
+unsatisfiable = tautology . Not
+
+satisfiable :: Ord a => Formula a -> Bool
+satisfiable = not . unsatisfiable
+
+-- Substitution
+
+-- https://www.cl.cam.ac.uk/~jrh13/hol-light/HTML/.singlefun.html
+(|=>) :: Eq a => a -> b -> a -> Maybe b
+(x |=> y) z = if z == x then Just y else Nothing
+
+-- https://www.cl.cam.ac.uk/~jrh13/hol-light/HTML/tryapplyd.html
+tryApplyD :: (a -> Maybe b) -> a -> b -> b
+tryApplyD f x d = fromMaybe d (f x)
+
+psubst :: (a -> Maybe (Formula a)) -> Formula a -> Formula a
+psubst f = onAtoms (\p -> tryApplyD f p (Atom p))
+{-
+tps1 = U.t "tps1"
+    --      (Formula [Char] -> Maybe (Formula String)) -> Formula String
+    (psubst ((Atom "p") |=> (pr "p ^ q"))                 (pr "p ^ q ^ p ^ q"))
+    (Atom "c")
+-}
 ------------------------------------------------------------------------------
 -- test
 
 test :: IO U.Counts
 test =
     U.runTestTT $ U.TestList $
-    tTautlogy ++ tContradition
+    tTautlogy ++ tContradition ++ ttt ++ ttf
 
 -- end of file ---

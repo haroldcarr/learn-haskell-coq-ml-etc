@@ -1,8 +1,12 @@
 http://techbus.safaribooksonline.com/book/programming/9781139637886
 
+https://www.cl.cam.ac.uk/~jrh13/
+
 http://www.cl.cam.ac.uk/~jrh13/atp/
 
 http://www.cl.cam.ac.uk/~jrh13/atp/Errata/
+
+https://www.cl.cam.ac.uk/~jrh13/hol-light/
 
 - page xi: The date of death for Thomas Hobbes given after the quotation should be 1679, not 1697.
 
