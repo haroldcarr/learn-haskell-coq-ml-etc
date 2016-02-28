@@ -99,18 +99,18 @@ tryApplyD f x d = fromMaybe d (f x)
 
 psubst :: (a -> Maybe (Formula a)) -> Formula a -> Formula a
 psubst f = onAtoms (\p -> tryApplyD f p (Atom p))
-{-
+
 tps1 = U.t "tps1"
-    --      (Formula [Char] -> Maybe (Formula String)) -> Formula String
-    (psubst ((Atom "p") |=> (pr "p ^ q"))                 (pr "p ^ q ^ p ^ q"))
-    (Atom "c")
--}
+    --          (String -> Maybe (Formula String)) -> Formula String
+    (pp (psubst ("p" |=> pr "x ^ y")                  (pr "p ^ q ^ p ^ q")))
+    "x ^ y ^ q ^ x ^ y ^ q"
+
 ------------------------------------------------------------------------------
 -- test
 
 test :: IO U.Counts
 test =
     U.runTestTT $ U.TestList $
-    tTautlogy ++ tContradition ++ ttt ++ ttf
+    tTautlogy ++ tContradition ++ ttt ++ ttf ++ tps1
 
 -- end of file ---

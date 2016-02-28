@@ -147,6 +147,8 @@ showFormula f0 = case f0 of
         (o@(Or  _ _),O) -> showFormula o
         (f'         ,_) -> PP.text "(" PP.<> showFormula f' PP.<> PP.text ")"
 
+pp = show . showFormula
+
 ts1 = U.t "tShowFormula"
     (show (showFormula (pr "(p v q v r) ^ (p v q v  r ^ x  v y)")))
                            "(p v q v r) ^ (p v q v (r ^ x) v y)"
