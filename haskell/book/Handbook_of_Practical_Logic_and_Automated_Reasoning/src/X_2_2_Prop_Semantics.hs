@@ -76,6 +76,7 @@ ta1 = U.t "ta1"
       (atoms (pr "p ^ q v s -> ~p v (r <-> s)"))
       ["p","q","r","s"]
 
+onAllValuations :: Eq t => ((t -> Bool) -> [a]) -> (t -> Bool) -> [t] -> [a]
 onAllValuations f v as = case as of
     []     -> f v
     (p:ps) -> let v' t q = if q == p then t else v q
@@ -111,5 +112,46 @@ test =
     tev1 ++ tev2 ++ tev3 ++ tev4 ++
     ta1 ++
     ttt1
+
+{-
+Implication
+p ⇒ q not like English reading ‘p implies q’ or ‘if p then q’.
+
+truth-value of p ⇒ q in terms of truth-values of p and q
+
+semantics is only reasonable one
+
+intuitively : if p and p ⇒ q are true, then so is q
+- consequently if p is true and q is false, then p ⇒ q must be false
+
+Possible that p ∧ q ⇒ p is always true: semantics makes this true whatever truth-values of p and q
+
+English : ‘p implies q’ or ‘if p then q’ mean a causal connection between p and q.
+
+Does not seem reasonable to assert ‘p implies q’ just because not the case that p/true q/false
+
+definition : ‘p implies q’ is true whenver q is true, regardless of p value
+or any relation between p and q
+
+Also ‘p implies q’ is true whenever p is false, regardless of q.
+- ‘if the moon is made of cheese then 2 + 2 = 5’ is true
+
+intuitive meaning of ‘if p, then q’ is not simply that we do not have p∧¬q,
+but more strongly that we cannot under any circumstances have p ∧ ¬q.
+
+‘whatever the value(s) taken by the component variables’
+
+regard truth-functional conditional ‘p ⇒ q’ as distinct from everyday notions
+
+BI-IMPLICATION: IF AND ONLY IF
+
+‘if and only if ’ : implication in both directions
+- ‘p if and only if q’ :
+  - ‘p implies q &&
+  -  q implies p’.
+
+Prove IFF by proving ‘if p then q’ and ‘if q then p’
+(like proving x = y by proving x ≤ y and y ≤ x).
+-}
 
 -- end of file ---

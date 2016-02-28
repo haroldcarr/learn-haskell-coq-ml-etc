@@ -9,6 +9,7 @@ library
   exposed-modules:     X_1_6_to_1_8_Expr
                      , X_2_1_Prop_Syntax
                      , X_2_2_Prop_Semantics
+                     , X_2_3_Prop_Validity_Satisfiability_Tautology
                      , Test
   build-depends:       base >= 4.7 && < 5
                      , ansi-wl-pprint
