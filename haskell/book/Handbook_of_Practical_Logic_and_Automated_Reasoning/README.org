@@ -13,11 +13,11 @@ https://www.cl.cam.ac.uk/~jrh13/hol-light/
 - page 10, in the discussion of syntax and semantics:
   the phrase "like algebraic manipulations" should not be in quotes.
 
-- page 34,  "As a simple example of ... structural induction ..., will show"
+- page 34,  "As a simple example of ... structural induction ...,    will show"
   should be "As a simple example of ... structural induction ..., we will show"
 
 - page 39, first bullet in section 2.3:
-            "if is satisfied by all valuations"
+            "if    is satisfied by all valuations"
   should be "if it is satisfied by all valuations"
 
 - page 50, psimplify function should have a clause to simplify
@@ -26,7 +26,7 @@ https://www.cl.cam.ac.uk/~jrh13/hol-light/
   Here is a fixed version of the file prop.ml with this line added.
 
 - page 102, third line from the bottom:
-            "and if so returns one them together"
+            "and if so returns one    them together"
   should be "and if so returns one of them together"
 
 - page 119, in the second ML box, the power and cosine function are wrong way
@@ -37,50 +37,52 @@ https://www.cl.cam.ac.uk/~jrh13/hol-light/
      "holds M v p = not(holds M v p)" should
   be "holds M v p = not(holds M v q)"
 
-- page 130, second paragraph: "we usually just |= p"
+- page 130, second paragraph: "we usually just       |= p"
                     should be "we usually just write |= p"
 
 - page 130, second line of section 3.4: the example of universal closure should
-  be universally quantified over both x and z, not just x (Andreas Kübler).
+  be universally quantified over both x and z, not just x
 
 - page 142, first displayed formula: to be consistent with the next page, this
-  invalid formula should have a bar through the "iff" symbol (Anders
-  Schlichtkrull).
+  invalid formula should have a bar through the "iff" symbol
 
-- page 144, first paragraph of 3.6: Skolem's first name "Thoraf" should be
-  "Thoralf" (Jasmin Blanchette).
+- page 144, first paragraph of 3.6: Skolem's first name "Thoraf" should be "Thoralf"
 
-- page 155, proof of Corollary 3.20: "... which is exactly Theorem 3.5" should
-  say "... which is exactly Lemma 3.5" (Yasushi Fujiwara).
+- page 155, proof of Corollary 3.20:
+      "... which is exactly Theorem 3.5" should
+  say "... which is exactly Lemma   3.5"
 
-- page 166, middle of second paragraph of text: "complicated terms like x =
-  g(f(g(y))" is missing a right parenthesis and should say "complicated terms
-  like x = g(f(g(y)))" (Christoph Zengler).
+- page 166, middle of second paragraph of text:
+      "complicated terms like x = g(f(g(y))"
+  is missing a right parenthesis and should say "complicated terms like x = g(f(g(y)))"
 
-- page 204, second line: "satisifes" should be "satisfies".
+- page 204, second line: "satisifes" should be
+                         "satisfies".
 
-- page 205, first line of proof of Theorem 3.43: "right-to-left definition"
-  should be "right-to-left direction".
+- page 205, first line of proof of Theorem 3.43:
+      "right-to-left definition" should be
+      "right-to-left direction".
 
-- page 257: in the second rewrite example just above the "Abstract reduction
-  relations" section, both instances of "a · c + b · d" should read "a · c + b ·
-  c" (Andreas Kübler).
+- page 257: in the second rewrite example just above the
+     "Abstract reduction relations" section, both instances of
+        "a · c + b · d" should read
+        "a · c + b · c"
 
 - page 271: the term "local confluence" is used here and several more times but
   it was never explicitly stated that this is alternative terminology for "weak
   confluence" as defined earlier. Either the same terminology should be used
-  everywhere or the definition on page 258 should mention both phrases (Tom
-  Hales).
+  everywhere or the definition on page 258 should mention both phrases
+
 
 - page 317, top paragraph (last of section 5.3): there are actually 17 universal
   quantifiers not 19 using the code given in the book, and moreover the number
   of ground instances should be computed by raising that number to the tenth
   power, not vice versa. Thus "... has 19 universal quantifiers ... There are no
   fewer than "1019 ground instances" should be "... has 17 universal quantifiers
-  ... There are no fewer than "1710 ground instances" (Andreas Kübler).
+  ... There are no fewer than "1710 ground instances"
 
-- page 321, definition 5.1: "valid in all finite models" should be "holds in all
-  finite interpretations" (Tobias Nipkow).
+- page 321, definition 5.1: "valid in all finite models" should be
+                            "holds in all finite interpretations"
 
 - page 326: the penultimate paragraph uses RM and plain R somewhat
   inconsistently. While not really likely to cause confusion, they are all with
@@ -92,89 +94,91 @@ https://www.cl.cam.ac.uk/~jrh13/hol-light/
   footnote should probably also have a reference to exercise 7.11.
 
 - page 332, line above displayed formula: "equivalence" should be
-  "T-equivalence" or "equivalence in the theory of DLOs" (Tobias Nipkow).
+                                          "T-equivalence" or "equivalence in the theory of DLOs"
 
 - page 356, Corollary 5.12: this should explicitly state the assumption that we
   are working over an integral domain (Tom Hales).
 
-- page 396, top line: q1(x) = 0 \/ ... qm(x) = 0 should be q1(x) = 0 \/ ... \/
-  qm(x) = 0.
+- page 396, top line: q1(x) = 0 \/ ... qm(x) = 0 should be
+                      q1(x) = 0 \/ ... \/ qm(x) = 0.
 
-- page 414, third line: "without affecting incompleteness" should be "without
-  affecting completeness" or "without introducing incompleteness".
+- page 414, third line: "without affecting   incompleteness" should be
+                        "without affecting     completeness"   or
+                        "without introducing incompleteness".
 
-- page 449, first paragraph: ICS was based on Shostak, but Yices is actually
-  based on Nelson-Oppen (Natarajan Shankar).
+- page 449, first paragraph: ICS was based on Shostak, but Yices is actually based on Nelson-Oppen
 
-- page 451, near middle: "Soloray (private communication)" should be "Solovay
-  (private communication)".
+- page 451, near middle: "Soloray (private communication)" should be
+                         "Solovay (private communication)".
 
-- page 457, exercise 5.10: should add "You may need to consider an expanded
-  language" (Tobias Nipkow).
+- page 457, exercise 5.10: should add "You may need to consider an expanded language"
 
 - page 459, exercise 5.25: this construction only results in a field extension
   where each polynomial with coefficients in the original field F has a root. To
   give the full algebraic closure of F one would need an iterative version of
-  the construction (Tom Hales).
+  the construction
 
-- page 489, second sentence of "Basic equality properties" section: "others
-  properties" should be "other properties" (Anders Schlichtkrull).
+- page 489, second sentence of "Basic equality properties" section: "others properties" should be
+                                                                    "other  properties"
 
-- page 497, the OCaml type in the first paragraph should be "(term -> term) *
-  fol formula -> thm" (Anders Schlichtkrull).
+- page 497, the OCaml type in the first paragraph should be
+     "(term -> term) * fol formula -> thm"
 
 - page 504, second box: note that problem p58 is not in fact Pelletier problem
   58, as the naming would suggest; in general, only those up to p46 correspond
-  to Pelletier problems (Eric Taucher).
+  to Pelletier problems
 
-- page 531, near bottom of first subsection: "nested way inside term" should be
-  "nested way inside a term".
+- page 531, near bottom of first subsection: "nested way inside   term" should be
+                                             "nested way inside a term".
 
 - page 591, exercise 7.15: nn ≠ 0 should be bn ≠ 0.
 
-- page 593, fourth line from bottom: "a inequation" should be "an inequation"
-  (Eray Gençay).
+- page 593, fourth line from bottom: "a inequation" should be
+                                     "an inequation"
 
-- page 594, middle of page: "E[x] symbolizes" should be "anything of the form
-  E[x] symbolizes" (Rune Fredriksen).
 
-- page 594, fifth line from bottom: "pairs whose first member is in S and whose
-  second member is in T, i.e. {(x,y) | x ∈ S and x ∈ T}" should say "... i.e.
-  {(x,y) | x ∈ S and y ∈ T}" (William Denman).
+- page 594, middle of page:                      "E[x] symbolizes" should be 
+                            "anything of the form E[x] symbolizes"
 
-- page 595, discussion below first list of relation properties: "the equality
-  relation = has all properties other than irreflexivity" should say "... other
-  than irreflexivity and connectedness" (Domenico Masini).
+- page 594, fifth line from bottom:
+  "pairs whose first member is in S and whose second member is in T, i.e. {(x,y) | x ∈ S and x ∈ T}" should say
+                                                                "... i.e. {(x,y) | x ∈ S and y ∈ T}"
+
+- page 595, discussion below first list of relation properties:
+    "the equality relation = has all properties other than irreflexivity" should say
+                                           "... other than irreflexivity and connectedness"
 
 - page 597, on the second line of the second paragraph discussing characteristic
-  functions, both instances of "f" should be "χS" (Vadim Flyagin).
+  functions, both instances of "f" should be "χS"
 
-- page 610, code in third box: the definition of odd should read "if n = 0 then
-  false ..." rather than "if n = 1 then true ..." to ensure that it terminates
-  for all nonnegative integers (Eray Gençay).
+- page 610, code in third box: the definition of odd should read "if n = 0 then false ..." rather than
+                                                                 "if n = 1 then true ..."
+  to ensure that it terminates for all nonnegative integers
 
-- page 626, last sentence: the whole sentence "This takes a flag ...
-  existential" is incorrect and should simply be removed (Anders Schlichtkrull).
+- page 626, last sentence: the whole sentence "This takes a flag ... existential"
+  is incorrect and should simply be removed
 
-- page 629, first sentence: "use this is one" should be "use this as one"
-  (Anders Schlichtkrull).
+- page 629, first sentence: "use this is one" should be
+                            "use this as one"
 
 - page 638, Conway and Sloane reference: "Sloaue" in the volume editor should
-  also be "Sloane".
+                                 also be "Sloane".
 
 - page 640, Dijkstra reference at the bottom of the page: the URL for the
   document www.cs.utexas.edu/users/EWD/ewd12xx/EWD1062.PDF should be
-  www.cs.utexas.edu/users/EWD/ewd10xx/EWD1062.PDF (Eric Taucher).
+           www.cs.utexas.edu/users/EWD/ewd10xx/EWD1062.PDF
 
-- page 655, Mehlhorn et al. reference: "seel" should be "Seel" with an uppercase
-  S.
+- page 655, Mehlhorn et al. reference: "seel" should be
+                                       "Seel"
 
-- page 662, Smorynski (1980) reference: the title "Logic Number Theory" should
-  be "Logical Number Theory"
+- page 662, Smorynski (1980) reference: the title "Logic   Number Theory" should be
+                                                  "Logical Number Theory"
 
-Not explicitly in the text but in the supplementary examples in the code. The
-Pelletier problem 27 is stated incorrectly, where "forall x. U(x) ==> ~R(x)"
-should read "forall x. V(x) ==> ~R(x)", and this appears in several places. One
-of the calls to isubst in "folderived.ml" is not given all its arguments. Here
-are fixed version of the files folderived.ml, lcffol.ml, meson.ml, resolution.ml
-and tableaux.ml with these corrected (Eric Taucher, Jørgen Villadsen).
+Not explicitly in the text but in the supplementary examples in the code:
+
+The Pelletier problem 27 is stated incorrectly,
+      where "forall x. U(x) ==> ~R(x)"
+should read "forall x. V(x) ==> ~R(x)", and this appears in several places.
+
+One of the calls to isubst in "folderived.ml" is not given all its arguments.
+Here are fixed version of the files folderived.ml, lcffol.ml, meson.ml, resolution.ml and tableaux.ml

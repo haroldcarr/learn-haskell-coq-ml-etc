@@ -10,7 +10,7 @@ import qualified Test.HUnit                   as U (Counts, Test (TestList),
 import qualified Test.HUnit.Util              as U (t)
 import qualified Text.Parsec                  as P (alphaNum, eof, letter,
                                                     oneOf, runP, (<?>), (<|>))
-import qualified Text.Parsec.Expr             as P (Assoc (AssocLeft),
+import qualified Text.Parsec.Expr             as P (Assoc (AssocRight),
                                                     Operator (Infix, Prefix),
                                                     buildExpressionParser)
 import qualified Text.Parsec.Token            as P (GenLanguageDef (LanguageDef),
@@ -93,10 +93,10 @@ atom = do
     return (Atom a)
 
 table = [ [ prefix "~"   Not ]
-        , [ binary "^"   And  P.AssocLeft ]
-        , [ binary "v"   Or   P.AssocLeft ]
-        , [ binary "->"  Impl P.AssocLeft ] -- TODO "-->"
-        , [ binary "<->" Iff  P.AssocLeft ]
+        , [ binary "^"   And  P.AssocRight ]
+        , [ binary "v"   Or   P.AssocRight ]
+        , [ binary "->"  Impl P.AssocRight ] -- TODO "-->"
+        , [ binary "<->" Iff  P.AssocRight ]
         ]
 
 -- TMP

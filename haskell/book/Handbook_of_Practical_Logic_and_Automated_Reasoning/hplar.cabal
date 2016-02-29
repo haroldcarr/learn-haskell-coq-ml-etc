@@ -10,6 +10,7 @@ library
                      , X_2_1_Prop_Syntax
                      , X_2_2_Prop_Semantics
                      , X_2_3_Prop_Validity_Satisfiability_Tautology
+                     , X_2_4_DeMorgan_Adequacy_Duality
                      , Test
   build-depends:       base >= 4.7 && < 5
                      , ansi-wl-pprint
