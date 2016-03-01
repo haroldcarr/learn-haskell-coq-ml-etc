@@ -64,10 +64,10 @@ reservedOp   = P.reservedOp lexer
 whiteSpace   = P.whiteSpace lexer
 
 -- parser that return Either
-p' = P.runP start (3::Int) "foo"
+pe = P.runP start (3::Int) "foo"
 
 -- parser that expects success
-pr x = let (Right r) = p' x in r
+pr x = let (Right r) = pe x in r
 
 {- parses a term, followed by whitespace and end-of-file -}
 start = do
@@ -130,15 +130,18 @@ tp4 = U.t "tp4"
 ------------------------------------------------------------------------------
 -- pretty printer
 
-data ComingFrom = A | O
+data ComingFrom = A | O deriving Show
 
 showFormula f0 = case f0 of
-    T           -> PP.text "T"
-    F           -> PP.text "F"
-    (Atom    a) -> PP.text a
-    (Not     f) -> PP.text "~" PP.<> showFormula f
-    (And f1 f2) -> se f1 A PP.<> PP.text " ^ " PP.<> se f2 A
-    (Or  f1 f2) -> se f1 O PP.<> PP.text " v " PP.<> se f2 O
+    T          -> PP.text "T"
+    F          -> PP.text "F"
+    Atom    a  -> PP.text a
+    Not     f  -> PP.text "~" PP.<> showFormula f
+    And  f1 f2 -> se f1 A PP.<> PP.text " ^ " PP.<> se f2 A
+    Or   f1 f2 -> se f1 O PP.<> PP.text " v " PP.<> se f2 O
+    Impl f1 f2 -> showFormula f1 PP.<> PP.text  " -> " PP.<> showFormula f2
+    Iff  f1 f2 -> showFormula f1 PP.<> PP.text " <-> " PP.<> showFormula f2
+    _          -> error $ "showFormula: " ++ show f0
   where
     se f from = case (f, from) of
         (a@(Atom  _),_) -> showFormula a
