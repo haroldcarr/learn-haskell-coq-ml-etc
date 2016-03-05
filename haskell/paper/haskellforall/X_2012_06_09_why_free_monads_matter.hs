@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-unused-do-bind #-}
 {-# LANGUAGE DeriveFunctor         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -6,7 +6,7 @@
 module X_2012_06_09_why_free_monads_matter where
 {-
 Created       : 2014 Apr 28 (Mon) 16:13:48 by Harold Carr.
-Last Modified : 2016 Mar 05 (Sat) 09:47:26 by Harold Carr.
+Last Modified : 2016 Mar 05 (Sat) 10:33:56 by Harold Carr.
 -}
 
 -- http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
@@ -197,7 +197,7 @@ Some cases may need Done's "abort" semantics.
 
 -- INTERPRETER
 
-ringBell :: IO () -- some obnoxious library would provide this
+ringBell :: IO ()
 ringBell  = print "BELL"
 
 interpret :: (Show b) => Free (Toy b) r -> IO ()
@@ -247,15 +247,13 @@ thread2  = do
     atomic $ putStrLn str
 
 interleave :: (Monad m) => Thread m r -> Thread m r -> Thread m r
+interleave        th1  (Return _)  = th1
+interleave (Return _)        th2   = th2
 interleave (Atomic m1) (Atomic m2) = do
     next1 <- atomic m1
     next2 <- atomic m2
     interleave next1 next2
 
-interleave th1 (Return _) = th1
-interleave (Return _) th2 = th2
-
--- run threads after interleaving them
 runThread :: (Monad m) => Thread m r -> m r
 runThread (Atomic m) = m >>= runThread
 runThread (Return r) = return r
@@ -263,6 +261,22 @@ runThread (Return r) = return r
 t5 = T.t "t5"
      (unsafePerformIO (runThread (interleave thread1 thread2)))
      ()
+
+thr1 :: Thread Maybe String
+thr1  = do
+    atomic $ Just "putStrLn: Enter text, hit return"
+    atomic $ Just "putStrLn: Here is what you entered:"
+
+thr2 :: Thread Maybe String
+thr2  = do
+    str <- atomic $ Just "getLine"
+    atomic $ Just str
+
+t6 = T.t "t6"
+     ( runThread (interleave thr1 thr2)
+     , runThread (interleave thr2 thr1) )
+     ( Just "putStrLn: Here is what you entered:"
+     , Just "getLine" )
 
 ------------------------------------------------------------------------------
 
@@ -404,7 +418,7 @@ easyToAnger' = forever $ do
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
-runTests  = runTestTT $ TestList $ t0 ++ t1 ++ t2 ++ t3 ++ t4 ++ t5
+runTests  = runTestTT $ TestList $ t0 ++ t1 ++ t2 ++ t3 ++ t4 ++ t5 ++ t6
 
 -- End of file.
 
