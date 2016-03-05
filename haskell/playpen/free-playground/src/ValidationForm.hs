@@ -2,14 +2,13 @@
 
 module ValidationForm where
 
+
 import           Control.Applicative.Free
 import           Control.Monad.State
 import           Control.Monad.Writer
-
+import           System.IO
 import           Text.Printf
 import           Text.Read                (readEither)
-
-import           System.IO
 
 {-# ANN module "HLint: ignore Eta reduce" #-}
 
@@ -49,8 +48,8 @@ count = getSum . runAp_ (\_ -> Sum 1)
 -- Shows progress on each field.
 -- Repeats field input until it passes validation.
 -- Show help message on empty input.
-input :: Ap Field a -> IO a
-input m = evalStateT (runAp inputField m) (1 :: Integer)
+iIO :: Ap Field a -> IO a
+iIO m = evalStateT (runAp inputField m) (1 :: Integer)
   where
     inputField f@(Field n g h) = do
         i <- get
@@ -73,12 +72,14 @@ input m = evalStateT (runAp inputField m) (1 :: Integer)
                     liftIO . putStrLn $ "error: " ++ e
                     inputField f
 
-input' :: Monad m => Ap Field a -> m a
-input' form0 = runAp inputField form0
+fromRight :: Either l r -> r
+fromRight (Right r) = r
+fromRight _         = error "fromRight"
+
+iAP :: Applicative ap => Ap Field a -> ap a
+iAP form0 = runAp inputField form0
   where
-    inputField f@(Field n g h) =
-        case g n of
-            Right x -> return x
+    inputField f@(Field n g h) = pure (fromRight (g n))
 
 -- | User datatype.
 data User = User { userName     :: String
@@ -106,20 +107,20 @@ form' us = thre<$> available us  "Username"  "any vacant username"
 
 main :: IO ()
 main = do
-  user <- input (form ["bob", "alice"])
-  putStrLn $ "Success: created: " ++ show user
+    user <- iIO (form ["bob", "alice"])
+    putStrLn $ "Success: created: " ++ show user
 
 main' :: IO ()
 main' = do
-  user <- input' (form' ["bob", "alice"])
-  putStrLn $ "Success: created: " ++ show user
+    user <- iAP (form' ["bob", "alice"])
+    putStrLn $ "Success: created: " ++ show user
 
 off :: IO ThreeStrings
-off = input' (form' ["bob", "alice"])
+off = iAP (form' ["bob", "alice"])
 
 mf :: Maybe ThreeStrings
-mf = input' (form' ["bob", "alice"])
+mf = iAP (form' ["bob", "alice"])
 
 lf :: [ThreeStrings]
-lf = input' (form' ["bob", "alice"])
+lf = iAP (form' ["bob", "alice"])
 

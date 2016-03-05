@@ -4,7 +4,7 @@
 module X_2012_06_09_why_free_monads_matter where
 {-
 Created       : 2014 Apr 28 (Mon) 16:13:48 by Harold Carr.
-Last Modified : 2015 Sep 01 (Tue) 19:19:35 by Harold Carr.
+Last Modified : 2016 Mar 05 (Sat) 09:11:12 by Harold Carr.
 -}
 
 -- http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
@@ -16,7 +16,7 @@ import           Data.Fix
 
 import           System.IO.Unsafe       (unsafePerformIO)
 import           Test.HUnit
-import           Test.HUnit.Util        as T
+import           Test.HUnit.Util        as T (t, tt)
 
 ------------------------------------------------------------------------------
 {-
@@ -40,8 +40,10 @@ data Toy b next = Output b next -- prints something of type b to console
 
 -- Problem: different type for every command combination
 
-example_command  =       Output 'A' Done  ::        Toy Char (Toy a next)
-example_command2 = Bell (Output 'A' Done) :: Toy a (Toy Char (Toy b next))
+exampleCommand  ::        Toy Char (Toy a next)
+exampleCommand   =       Output 'A' Done
+exampleCommand2 :: Toy a (Toy Char (Toy b next))
+exampleCommand2  = Bell (Output 'A' Done)
 
 {-
 Remedy using:
@@ -52,10 +54,14 @@ newtype   Fix f = Fix {unFix :: f (Fix f)}
 instance   Eq (f (Fix f)) =>   Eq (Fix f)
 instance  Ord (f (Fix f)) =>  Ord (Fix f)
 instance Show (f (Fix f)) => Show (Fix f)
+
+Wraps many Toys into the same data type.
 -}
 
-example_command_fp1 =            Fix (Output 'A' (Fix Done))   :: Fix (Toy Char)
-example_command_fp2 = Fix (Bell (Fix (Output 'A' (Fix Done)))) :: Fix (Toy Char)
+exampleCommandFp1 :: Fix (Toy Char)
+exampleCommandFp1  =            Fix (Output 'A' (Fix Done))
+exampleCommandFp2 :: Fix (Toy Char)
+exampleCommandFp2  = Fix (Bell (Fix (Output 'A' (Fix Done))))
 
 {-
 - Problem: requires Done constructor to terminate chain
@@ -69,14 +75,14 @@ data FixE f a = Fix' (f (FixE f a))
               | Throw a
 
 catch :: (Functor f) => FixE f e1 -> (e1 -> FixE f e2) -> FixE f e2
-catch (Fix'  x) f = Fix' (fmap (flip catch f) x)
+catch (Fix'  x) f = Fix' (fmap (`catch` f) x)
 catch (Throw e) f = f e
 
 -- Toy b must be a functor:
 instance Functor (Toy b) where
     fmap f (Output x next) = Output x (f next)
     fmap f (Bell     next) = Bell     (f next)
-    fmap f  Done           = Done
+    fmap _  Done           = Done
 
 -- Now code can be caught and resumed:
 data IncompleteException = IncompleteException
@@ -84,7 +90,7 @@ data IncompleteException = IncompleteException
 -- output 'A'
 -- throw IncompleteException
 subroutine :: FixE (Toy Char) IncompleteException
-subroutine = Fix' (Output 'A' (Throw IncompleteException))
+subroutine  = Fix' (Output 'A' (Throw IncompleteException))
 
 -- try {subroutine}
 -- catch (IncompleteException) {
@@ -92,11 +98,14 @@ subroutine = Fix' (Output 'A' (Throw IncompleteException))
 --     done
 -- }
 program :: FixE (Toy Char) e
-program = subroutine `catch` (\_ -> Fix' (Bell (Fix' Done)))
+program  = subroutine `catch` (\_ -> Fix' (Bell (Fix' Done)))
 
 ------------------------------------------------------------------------------
+-- Free Monads - Part 1
 
 {-
+FixE (above) already exists:
+
 data Free f a = Free (f (Free f a))
               | Pure  a
 
