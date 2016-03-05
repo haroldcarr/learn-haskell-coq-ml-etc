@@ -1,10 +1,12 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# LANGUAGE DeriveFunctor         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module X_2012_06_09_why_free_monads_matter where
 {-
 Created       : 2014 Apr 28 (Mon) 16:13:48 by Harold Carr.
-Last Modified : 2016 Mar 05 (Sat) 09:11:12 by Harold Carr.
+Last Modified : 2016 Mar 05 (Sat) 09:47:26 by Harold Carr.
 -}
 
 -- http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
@@ -17,6 +19,9 @@ import           Data.Fix
 import           System.IO.Unsafe       (unsafePerformIO)
 import           Test.HUnit
 import           Test.HUnit.Util        as T (t, tt)
+
+{-# ANN module "HLint: ignore Monad law, left identity" #-}
+{-# ANN module "HLint: ignore Monad law, right identity" #-}
 
 ------------------------------------------------------------------------------
 {-
@@ -36,7 +41,7 @@ example ways to process
 data Toy b next = Output b next -- prints something of type b to console
                 | Bell     next -- rings computer's bell
                 | Done          -- end of execution
-                deriving (Eq, Show)
+                deriving (Eq, Functor, Show) -- Functor for FixE/Free example
 
 -- Problem: different type for every command combination
 
@@ -69,7 +74,8 @@ exampleCommandFp2  = Fix (Bell (Fix (Output 'A' (Fix Done))))
 
 Hack : when subroutine finished but not calling Done,
        throw exception with continuation where catcher resumes
--}
+
+Note FixE is Fix in haskell library
 
 data FixE f a = Fix' (f (FixE f a))
               | Throw a
@@ -83,22 +89,23 @@ instance Functor (Toy b) where
     fmap f (Output x next) = Output x (f next)
     fmap f (Bell     next) = Bell     (f next)
     fmap _  Done           = Done
+-}
 
 -- Now code can be caught and resumed:
 data IncompleteException = IncompleteException
 
 -- output 'A'
 -- throw IncompleteException
-subroutine :: FixE (Toy Char) IncompleteException
-subroutine  = Fix' (Output 'A' (Throw IncompleteException))
+subroutine :: Free (Toy Char) IncompleteException
+subroutine  = Free (Output 'A' (Pure IncompleteException))
 
 -- try {subroutine}
 -- catch (IncompleteException) {
 --     bell
 --     done
 -- }
-program :: FixE (Toy Char) e
-program  = subroutine `catch` (\_ -> Fix' (Bell (Fix' Done)))
+program :: Free (Toy Char) e
+program  = subroutine >> Free (Bell (Free Done))
 
 ------------------------------------------------------------------------------
 -- Free Monads - Part 1
@@ -117,20 +124,25 @@ instance (Functor f) => Monad (Free f) where
 e.g., return is Throw, >>= is catch
 
 liftF :: Functor f => f a -> Free f a
-liftF = Free . fmap Pure
+liftF  = Free . fmap Pure
 -}
 
-output x = liftF (Output x ())
-bell     = liftF (Bell     ())
-done     = liftF  Done
+output      :: a -> Free (Toy a)    ()
+output x     = liftF (Output x ())
 
-subroutine' :: Free (Toy Char) ()
-subroutine' = output 'A'
+bell        ::      Free (Toy a)    ()
+bell         = liftF (Bell     ())
+
+done        ::      Free (Toy Char) a
+done         = liftF  Done
+
+subroutine' ::      Free (Toy Char) ()
+subroutine'  = output 'A'
 
 -- can use `do` notation since using Free MONAD
 -- just builds a data type instance (no effects)
 program' :: Free (Toy Char) r
-program' = do
+program'  = do
     subroutine'
     bell
     subroutine'
@@ -138,8 +150,13 @@ program' = do
     bell
     done
 
--- program'
--- => Free (Output 'A' (Free (Bell (Free (Output 'A' (Free (Bell (Free (Bell (Free Done))))))))))
+-- this signature/function to give Char type to `r` for tests
+program'' :: Free (Toy Char) Char
+program''  = program'
+
+t0 = T.t "t0"
+     program''
+     (Free (Output 'A' (Free (Bell (Free (Output 'A' (Free (Bell (Free (Bell (Free Done)))))))))))
 
 -- PRETTY PRINT
 
@@ -149,9 +166,9 @@ showProgram (Free (Bell     x)) = "bell\n"  ++ showProgram x
 showProgram (Free Done)         = "done\n"
 showProgram (Pure r)            = "return " ++ show r ++ "\n"
 
--- this signature/function just to give unit type to `r` for tests
+-- this signature/function to give () type to `r` for tests
 pretty :: (Show a) => Free (Toy a) () -> String
-pretty = showProgram
+pretty  = showProgram
 
 t1 = T.t "t1"
      (pretty program')
@@ -181,13 +198,13 @@ Some cases may need Done's "abort" semantics.
 -- INTERPRETER
 
 ringBell :: IO () -- some obnoxious library would provide this
-ringBell = print "BELL"
+ringBell  = print "BELL"
 
 interpret :: (Show b) => Free (Toy b) r -> IO ()
 interpret (Free (Output b x)) = print b  >> interpret x
 interpret (Free (Bell     x)) = ringBell >> interpret x
 interpret (Free  Done       ) = return ()
-interpret (Pure r)            = throwIO (userError "Improper termination")
+interpret (Pure _)            = throwIO (userError "Improper termination")
 
 t4 = T.t "t4"
      (unsafePerformIO (interpret program'))
@@ -206,7 +223,7 @@ data Thread m r = Atomic (m (Thread m r)) -- Atomic wraps one indivisible step
                 | Return r
 
 -- turn any single monad invocation into an atomic Thread step
-atomic :: (Monad m) => m a -> Thread m a
+atomic  :: (Monad m) => m a -> Thread m a
 atomic m = Atomic $ liftM Return m
 
 -- make Thread a monad
@@ -220,13 +237,13 @@ instance (Monad m) => Monad (Thread m) where
     (Return r) >>= f = f r
 
 thread1 :: Thread IO ()
-thread1 = do
+thread1  = do
     atomic $ do putStrLn ""; putStrLn "Enter text, hit return"
     atomic $ putStrLn "Here is what you entered:"
 
 thread2 :: Thread IO ()
-thread2 = do
-    str <- atomic $ getLine
+thread2  = do
+    str <- atomic getLine
     atomic $ putStrLn str
 
 interleave :: (Monad m) => Thread m r -> Thread m r -> Thread m r
@@ -235,8 +252,8 @@ interleave (Atomic m1) (Atomic m2) = do
     next2 <- atomic m2
     interleave next1 next2
 
-interleave t1 (Return _) = t1
-interleave (Return _) t2 = t2
+interleave th1 (Return _) = th1
+interleave (Return _) th2 = th2
 
 -- run threads after interleaving them
 runThread :: (Monad m) => Thread m r -> m r
@@ -288,8 +305,8 @@ List' a
 -- interleave (above) is list merge:
 
 merge (x1:xs1) (x2:xs2) = x1:x2:merge xs1 xs2
-merge xs1 [] = xs1
-merge [] xs2 = xs2
+merge     xs1       []  = xs1
+merge      []      xs2  = xs2
 
 -- this is actually more similar to:
 -- [x1] ++ [x2] ++ interleave xs1 xs2
@@ -337,7 +354,7 @@ type Program = Free Interaction
 
 -- player can a program, e.g.,:
 easyToAnger = Free $ ReadLine $ \s -> case s of
-    "No" -> Free $ Fire Forward $ Free $ WriteLine "Take that!" (\_ -> easyToAnger)
+    "No" -> Free $ Fire Forward $ Free $ WriteLine "Take that!" (const easyToAnger)
     _    -> easyToAnger
 
 data Game r = Game r
@@ -387,7 +404,7 @@ easyToAnger' = forever $ do
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
-runTests = runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t4 ++ t5
+runTests  = runTestTT $ TestList $ t0 ++ t1 ++ t2 ++ t3 ++ t4 ++ t5
 
 -- End of file.
 
