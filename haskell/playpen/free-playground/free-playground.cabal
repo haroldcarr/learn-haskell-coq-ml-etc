@@ -6,8 +6,11 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     ValidationForm
+  exposed-modules:     FM
+                     , ValidationForm
   build-depends:       base >= 4.7 && < 5
                      , free
+                     , HUnit
                      , mtl
+                     , test-hunit-util
   default-language:    Haskell2010

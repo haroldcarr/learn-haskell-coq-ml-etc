@@ -7,6 +7,10 @@ resolver: lts-5.5
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
+- location:
+    git: git@github.com:haroldcarr/test-hunit-util.git
+    commit: 76246854236d38ae569c0c7907abbd506902cd05
+
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps: []
 
