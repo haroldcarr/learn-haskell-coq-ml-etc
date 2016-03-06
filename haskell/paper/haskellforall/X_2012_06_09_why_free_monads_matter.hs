@@ -6,7 +6,7 @@
 module X_2012_06_09_why_free_monads_matter where
 {-
 Created       : 2014 Apr 28 (Mon) 16:13:48 by Harold Carr.
-Last Modified : 2016 Mar 05 (Sat) 10:33:56 by Harold Carr.
+Last Modified : 2016 Mar 05 (Sat) 21:07:08 by Harold Carr.
 -}
 
 -- http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
@@ -22,6 +22,7 @@ import           Test.HUnit.Util        as T (t, tt)
 
 {-# ANN module "HLint: ignore Monad law, left identity" #-}
 {-# ANN module "HLint: ignore Monad law, right identity" #-}
+{-# ANN module "HLint: ignore Eta reduce" #-}
 
 ------------------------------------------------------------------------------
 {-
@@ -300,10 +301,9 @@ data List a   = Cons  a (List a  )  | Nil
 type List' a = Free ((,) a) ()
 
 {-
-List' a
-= Free ((,) a) ()
-= Free (a, List' a) | Pure ()
-= Free  a (List' a) | Pure ()
+     List' a = Free ((,) a) ()
+             = Free (a, List' a) | Pure ()
+             = Free  a (List' a) | Pure ()
 -}
 
 -- It becomes an ordinary list
@@ -347,10 +347,10 @@ interleave' (Return _) a2 = a2
 data Direction = Left | Right | Forward | Backward | Up | Down
 data Image = Image
 
-data Interaction next = Look Direction (Image -> next)
-                      | Fire Direction next
-                      | ReadLine (String -> next)
-                      | WriteLine String (Bool -> next)
+data Interaction next = Look      Direction (Image -> next)
+                      | Fire      Direction           next
+                      | ReadLine (String           -> next)
+                      | WriteLine String    (Bool  -> next)
                       -- deriving (Functor) -- explict below instead
 
 -- Constructor have fields player fills in
@@ -358,10 +358,10 @@ data Interaction next = Look Direction (Image -> next)
 -- Interaction is contract between programmer and interpreter for a single step
 
 instance Functor Interaction where
-    fmap f (Look dir g)    = Look dir (f . g)
-    fmap f (Fire dir x)    = Fire dir (f x)
-    fmap f (ReadLine g)    = ReadLine (f . g)
-    fmap f (WriteLine s g) = WriteLine s (f . g)
+    fmap f (Look     dir g) = Look      dir (f . g)
+    fmap f (Fire     dir x) = Fire      dir (f x)
+    fmap f (ReadLine     g) = ReadLine      (f . g)
+    fmap f (WriteLine  s g) = WriteLine s   (f . g)
 
 -- create a list of actions by using the Free monad
 type Program = Free Interaction
@@ -388,33 +388,33 @@ interpret' prog = case prog of
         putChatLine s
         interpret' (g True)
     Pure r -> return r
+-}
+collectImage dir = Game dir
+sendBullet   dir = Game dir
+getChatLine      = Game "getChatLine"
+putChatLine  s   = Game s
 
-collectImage dir = Game Image
-sendBullet dir = Game dir
-getChatLine = Game "getChatLine"
-putChatLine s = Game s
+look       :: Direction -> Program Image
+look dir    = liftF (Look dir id)
 
-look :: Direction -> Program Image
-look dir = liftF (Look dir id)
+fire       :: Direction -> Program ()
+fire dir    = liftF (Fire dir ())
 
-fire :: Direction -> Program ()
-fire dir = liftF (Fire dir ())
-
-readLine :: Program String
-readLine = liftF (ReadLine id)
+readLine   :: Program String
+readLine    = liftF (ReadLine id)
 
 writeLine :: String -> Program Bool
 writeLine s = liftF (WriteLine s id)
 
 -- player can more easily write their program using do:
 easyToAnger' :: Program a
-easyToAnger' = forever $ do
+easyToAnger'  = forever $ do
     str <- readLine
     when (str == "No") $ do
         fire Forward
         _ <- writeLine "Take that!"
         return ()
--}
+
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
