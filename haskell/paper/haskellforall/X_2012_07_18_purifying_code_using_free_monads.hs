@@ -9,7 +9,7 @@ import           Test.QuickCheck    as QC
 
 {-
 Created       : 2015 Sep 02 (Wed) 11:56:37 by Harold Carr.
-Last Modified : 2016 Mar 06 (Sun) 08:57:31 by Harold Carr.
+Last Modified : 2016 Mar 06 (Sun) 10:47:31 by Harold Carr.
 
 http://www.haskellforall.com/2012/07/purify-code-using-free-monads.html
 
@@ -93,15 +93,15 @@ Can prove that any command after exitSuccess' never executes in purified version
 
 Prove:  exitSuccess' >> m = exitSuccess'
 
-                  exitSuccess' >>        m -- exitSuccess' = liftF ExitSuccess
-=           liftF ExitSuccess  >>        m -- m >> m' = m >>= \_ -> m'
-=           liftF ExitSuccess  >>= \_ -> m -- liftF f = Free (fmap Pure f)
-= Free (fmap Pure ExitSuccess) >>= \_ -> m -- fmap f ExitSuccess = ExitSuccess
-= Free            ExitSuccess  >>= \_ -> m -- Free m >>= f = Free (fmap (>>= f) m)
-= Free (fmap (>>= \_ -> m) ExitSuccess)    -- fmap f ExitSuccess = ExitSuccess
-= Free            ExitSuccess              -- fmap f ExitSuccess = ExitSuccess
-= Free (fmap Pure ExitSuccess)             -- liftF f = Free (fmap Pure f)
-=           liftF ExitSuccess              -- exitSuccess' = liftF ExitSuccess
+                  exitSuccess' >>        m       -- exitSuccess' = liftF ExitSuccess
+=           liftF ExitSuccess  >>        m       -- m >> m' = m >>= \_ -> m'
+=           liftF ExitSuccess  >>= \_ -> m       -- liftF f = Free (fmap Pure f)
+= Free (fmap Pure ExitSuccess) >>= \_ -> m       -- fmap f ExitSuccess = ExitSuccess
+= Free            ExitSuccess  >>= \_ -> m       -- Free m >>= f = Free (fmap (>>= f) m)
+= Free (fmap (>>= \_ -> m) ExitSuccess)          -- fmap f ExitSuccess = ExitSuccess
+= Free            ExitSuccess                    -- fmap f ExitSuccess = ExitSuccess
+= Free (fmap Pure ExitSuccess)                   -- liftF f = Free (fmap Pure f)
+=           liftF ExitSuccess                    -- exitSuccess' = liftF ExitSuccess
 =                 exitSuccess'
 
 Last steps equality reversed : worked backwards from fun def to defined expr.
@@ -117,7 +117,7 @@ Reasoning
 Can't prove program outputs string received as input because putStrLn is impure.
 Can't prove free monad with above interpreter either since interpreter uses putStrLn.
 
-Can prove using pure interpreter: runPure echo = take 1
+Prove using pure interpreter: runPure echo = take 1
 -}
 
 -- PURE INTERPRETER OF REPRESENTATION
@@ -130,8 +130,48 @@ runPure (Free (GetLine  f    )) (x:xs) =     runPure (f x) xs
 runPure (Free  ExitSuccess    )    xs  = []
 
 {-
+instance (Functor f) => Monad (Free f) where
+    return = Pure
+    (Free x) >>= f = Free (fmap (>>= f) x)
+    (Pure r) >>= f = f r
+
 TODO : PROOF
 
+runPure echo                                              []
+
+runPure (do
+                          str <- getLine'
+                          putStrLn' str
+                          exitSuccess'
+                          putStrLn' "Finished")           []
+
+runPure (                 getLine'                     >>= \str ->
+                          putStrLn' str                >>= \_   ->
+                          exitSuccess'                 >>= \_   ->
+                          putStrLn' "Finished")           []
+
+runPure (liftF           (GetLine id)                  >>= \str ->
+         liftF           (PutStrLn str ())             >>= \_   ->
+         liftF            ExitSuccess                  >>= \_   ->
+         liftF           (PutStrLn "Finished" ())         []
+
+runPure (Free (fmap Pure (GetLine id))                 >>= \str ->
+         Free (fmap Pure (PutStrLn str ()))            >>= \_   ->
+         Free (fmap Pure  ExitSuccess)                 >>= \_   ->
+         Free (fmap Pure (PutStrLn "Finished" ()))        []
+
+runPure (Free            (GetLine (Pure . id))         >>= \str ->
+         Free            (PutStrLn str (Pure ()))      >>= \_   ->
+         Free             ExitSuccess                  >>= \_   ->
+         Free            (PutStrLn "Finished" (Pure ()))) []
+
+runPure (Free  (fmap (>>=    \str ->
+         Free            (PutStrLn str (Pure ()))      >>= \_   ->
+         Free             ExitSuccess                  >>= \_   ->
+         Free            (PutStrLn "Finished" (Pure ())))
+                     (GetLine (Pure . id))))       []
+
+TODO : continue (and test above)
 
 Corner case: the user might not enter any input.
 
