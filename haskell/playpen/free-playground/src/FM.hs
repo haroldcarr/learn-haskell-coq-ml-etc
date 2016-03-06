@@ -74,30 +74,18 @@ echo2 = do
     exitSuccess'
     putStrLn' "after exit"
 
-runTrace1 :: Teletype r -> [String] -> [String]
-runTrace1 (Pure               r )    xs  = ["Pure"]
-runTrace1 (Free (PutStrLn str t))    xs  = ("PurStrLn/"++str) : runTrace1 t     xs
-runTrace1 (Free (GetLine  f    ))    []  = ["GetLine/[]"]
-runTrace1 (Free (GetLine  f    )) (x:xs) = ("GetLine/"++x)    : runTrace1 (f x) xs
-runTrace1 (Free  ExitSuccess    )    xs  = ["ExitSuccess"]
+runTrace :: Teletype r -> ([String],[String]) -> ([String],[String])
+runTrace (Pure               r )   (is, os) =                (is, os++["Pure"])
+runTrace (Free (PutStrLn str t))   (is, os) = runTrace t     (is, os++["PurStrLn/"++str])
+runTrace (Free (GetLine  f    ))   ([], os) =                ([], os++["GetLine/[]"])
+runTrace (Free (GetLine  f    )) (i:is, os) = runTrace (f i) (is, os++["GetLine/"++i])
+runTrace (Free  ExitSuccess    )   (is, os) =                (is, os++["ExitSuccess"])
 
-trt1e2 :: [Test]
-trt1e2  = U.t "trt1e2"
-    (runTrace1 echo2 ["1","2","3","4","5"])
-    ["GetLine/1","GetLine/2","PurStrLn/2","GetLine/3","PurStrLn/3","GetLine/4","PurStrLn/3","PurStrLn/before exit","ExitSuccess"]
-
-runTrace2 :: Teletype r -> ([String],[String]) -> ([String],[String])
-runTrace2 (Pure               r )   (is, os) =                 (is, os++["Pure"])
-runTrace2 (Free (PutStrLn str t))   (is, os) = runTrace2 t     (is, os++["PurStrLn/"++str])
-runTrace2 (Free (GetLine  f    ))   ([], os) =                 ([], os++["GetLine/[]"])
-runTrace2 (Free (GetLine  f    )) (i:is, os) = runTrace2 (f i) (is, os++["GetLine/"++i])
-runTrace2 (Free  ExitSuccess    )   (is, os) =                 (is, os++["ExitSuccess"])
-
-trt1e3 :: [Test]
-trt1e3  = U.t "trt1e3"
-    [ runTrace2 echo2 (["1","2","3"]        ,[])
-    , runTrace2 echo2 (["1","2","3","4"]    ,[])
-    , runTrace2 echo2 (["1","2","3","4","5"],[])
+trte2 :: [Test]
+trte2  = U.t "trte2"
+    [ runTrace echo2 (["1","2","3"]        ,[])
+    , runTrace echo2 (["1","2","3","4"]    ,[])
+    , runTrace echo2 (["1","2","3","4","5"],[])
     ]
     [ ([],  ["GetLine/1","GetLine/2","PurStrLn/2","GetLine/3","PurStrLn/3","GetLine/[]"])
     , ([],  ["GetLine/1","GetLine/2","PurStrLn/2","GetLine/3","PurStrLn/3","GetLine/4","PurStrLn/3","PurStrLn/before exit","ExitSuccess"])
@@ -106,4 +94,4 @@ trt1e3  = U.t "trt1e3"
 
 test :: IO Counts
 test =
-    runTestTT $ TestList $ trpe1 ++ trt1e2 ++ trt1e3
+    runTestTT $ TestList $ trpe1 ++ trte2
