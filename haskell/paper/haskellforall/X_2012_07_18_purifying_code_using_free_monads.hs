@@ -9,7 +9,7 @@ import           Test.QuickCheck    as QC
 
 {-
 Created       : 2015 Sep 02 (Wed) 11:56:37 by Harold Carr.
-Last Modified : 2016 Mar 06 (Sun) 07:04:09 by Harold Carr.
+Last Modified : 2016 Mar 06 (Sun) 08:57:31 by Harold Carr.
 
 http://www.haskellforall.com/2012/07/purify-code-using-free-monads.html
 
@@ -158,7 +158,8 @@ Can exercise pure code via QuickCheck.
 Test 'runPure echo = take 1'
 -}
 
--- >>> QC.quickCheck (\xs -> runPure echo xs == take 1 xs)
+test :: IO ()
+test = QC.quickCheck (\xs -> runPure echo xs == take 1 xs)
 
 {-}
 +++ OK, passed 100 tests.
@@ -170,9 +171,63 @@ conclusion: equational reasoning on pure code
 
 Use Free monad to achieve more purity / less impurity.
 
+-------------------------
 April 23, 2014:
 
 `free` library has Template Haskell function to autogenerate wrapped functions (e.g., putStrLn')
 
 http://hackage.haskell.org/package/free-4.7.1/docs/Control-Monad-Free-TH.html
+
+
+
+-------------------------
+Unknown December 6, 2015:
+
+How to represent a function of the type (e.g., System.TimeIt.timeItT):
+
+    `IO a -> IO (Double, a)`
+
+as a TeletypeF constructor
+
+Gabriel Gonzalez December 6, 2015:
+
+use
+
+https://hackage.haskell.org/package/operational
+
+encoding of free monads
+
+-------------------------
+Michael Roger January 13, 2014:
+
+Is the "free monad" the key to adding purity/semantics to IO?
+
+You are splitting IO into to two monads:
+- pure
+- impure monad.
+Enables swapping out impure impl with pure, maintaining some semantic guarantees.
+
+It would be more useful to to use a non-free monad
+- that enables type-system encode *even more* semantics about behaviors of the IO functions
+
+Reason `runPure echo === take ` shows
+- `run echo` (impure) *might* be ismorphic/adjoint/equivalent to `take 1`
+- but no guarantee
+- because list-management code is inside `runPure`, not in the common (free) monad.
+- the free monad and `runPure` provides a test case that `run` "isn't definitely wrong"
+
+If list-management code moved from `runPure` to the pure monad
+- no longer a free monad, carries additional semantics
+  - says `putStrLn` consumes content from `getLine` (and any intermediate pure transformations),
+  - then you have IO "laws"
+- still can't statically *guarantee* that impure IO follows those laws
+- but can encode them and can write specific test cases to check
+
+Gabriel Gonzalez January 18, 2014:
+
+The free monad is not the only way to add a useful semantics to `IO`.
+The approach of moving some shared logic up into the free monad and making it non-free is better.
+
+I use the free monad in example because it is extreme
+- once free monad is understood, then typically understand how non-free derivatives work
 -}
