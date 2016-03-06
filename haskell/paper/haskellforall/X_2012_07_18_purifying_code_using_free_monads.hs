@@ -1,14 +1,15 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# OPTIONS_GHC -fno-warn-unused-do-bind -fno-warn-unused-matches #-}
 
 module X_2012_07_18_purifying_code_using_free_monads where
 
 import           Control.Monad.Free
-import           System.Exit        hiding (ExitSuccess)
-import           Test.QuickCheck
+import qualified System.Exit        as SE hiding (ExitSuccess)
+import           Test.QuickCheck    as QC
 
 {-
 Created       : 2015 Sep 02 (Wed) 11:56:37 by Harold Carr.
-Last Modified : 2015 Sep 02 (Wed) 17:06:59 by Harold Carr.
+Last Modified : 2016 Mar 06 (Sun) 07:04:09 by Harold Carr.
 
 http://www.haskellforall.com/2012/07/purify-code-using-free-monads.html
 
@@ -23,52 +24,53 @@ Purity enables:
 
 Impure program:
 
-main = do x <- getLine
-          putStrLn x
-          exitSuccess
-          putStrLn "Finished"
-
+main = do
+    x <- getLine
+    putStrLn x
+    exitSuccess
+    putStrLn "Finished"
 -}
 
 -- REPRESENTATION
 
 data TeletypeF x
-  = PutStrLn String    x    -- putStrLn    :: String -> IO ()
-  | GetLine (String -> x)   -- getLine     :: IO String
-  | ExitSuccess             -- exitSuccess :: IO a
-  deriving Functor
+    = PutStrLn String    x    -- putStrLn    :: String -> IO ()
+    | GetLine (String -> x)   -- getLine     ::           IO String
+    | ExitSuccess             -- exitSuccess ::           IO a
+    deriving Functor
 {-
 instance Functor TeletypeF where
     fmap f (PutStrLn str x) = PutStrLn str (f x)
-    fmap f (GetLine      k) = GetLine (f . k)
+    fmap f (GetLine      k) = GetLine      (f . k)
     fmap f  ExitSuccess     = ExitSuccess
 -}
 type Teletype = Free TeletypeF
 
-putStrLn' :: String -> Teletype ()
+putStrLn'    :: String -> Teletype ()
 putStrLn' str = liftF $ PutStrLn str ()
 
-getLine' :: Teletype String
-getLine' = liftF $ GetLine id
+getLine'     :: Teletype String
+getLine'      = liftF $ GetLine id
 
 exitSuccess' :: Teletype r
-exitSuccess' = liftF ExitSuccess
+exitSuccess'  = liftF ExitSuccess
 
 -- IMPURE INTERPRETER OF REPRESENTATION
 
 run :: Teletype r -> IO r
-run (Pure                r) = return r
+run (Pure               r ) = return r
 run (Free (PutStrLn str t)) = putStrLn str >>  run t
 run (Free (GetLine  f    )) = getLine      >>= run . f
-run (Free  ExitSuccess    ) = exitSuccess
+run (Free  ExitSuccess    ) = SE.exitSuccess
 
 -- EXAMPLE INSTANCE
 
 echo :: Teletype ()
-echo = do str <- getLine'
-          putStrLn' str
-          exitSuccess'
-          putStrLn' "Finished"
+echo = do
+    str <- getLine'
+    putStrLn' str
+    exitSuccess'
+    putStrLn' "Finished"
 
 -- run echo
 
@@ -79,10 +81,11 @@ ADVANTAGE: Proofs
 
 Prove last line never executes:
 
-main = do x <- getLine
-          putStrLn x
-          exitSuccess
-          putStrLn "Finished" <-- NEVER EXECUTES
+main = do
+    x <- getLine
+    putStrLn x
+    exitSuccess
+    putStrLn "Finished" <-- NEVER EXECUTES
 
 Depends on impure implementation of 'exitSuccess'.  Types don't help.
 
@@ -120,7 +123,7 @@ Can prove using pure interpreter: runPure echo = take 1
 -- PURE INTERPRETER OF REPRESENTATION
 
 runPure :: Teletype r -> [String] -> [String]
-runPure (Pure                r)    xs  = []
+runPure (Pure               r )    xs  = []
 runPure (Free (PutStrLn str t))    xs  = str:runPure t     xs
 runPure (Free (GetLine  f    ))    []  = []
 runPure (Free (GetLine  f    )) (x:xs) =     runPure (f x) xs
@@ -153,8 +156,11 @@ Tests for impure code don't scale.
 Can exercise pure code via QuickCheck.
 
 Test 'runPure echo = take 1'
+-}
 
->>> quickCheck (\xs -> runPure echo xs == take 1 xs)
+-- >>> QC.quickCheck (\xs -> runPure echo xs == take 1 xs)
+
+{-}
 +++ OK, passed 100 tests.
 
 conclusion: equational reasoning on pure code
