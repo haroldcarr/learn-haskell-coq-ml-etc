@@ -11,6 +11,8 @@ library
   build-depends:       base >= 4.7 && < 5
                      , free
                      , HUnit
+                     , monad-loops
                      , mtl
+                     , pipes
                      , test-hunit-util
   default-language:    Haskell2010
