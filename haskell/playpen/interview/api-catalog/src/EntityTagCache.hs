@@ -16,7 +16,12 @@ import qualified Test.HUnit.Util as U (t)
 
 type MSI   = Map String Int
 type MIS   = Map Int    String
-type Cache = (Map Int [Int], Int, MSI, MIS)
+
+data Cache = Cache { mii  :: Map Int [Int]
+                   , next :: Int
+                   , msi  :: MSI
+                   , mis  :: MIS
+                   }
 
 ------------------------------------------------------------------------------
 -- Use cache
@@ -32,12 +37,12 @@ updateTagsIO x ts      = liftM (updateTags x ts)
 -- pure
 
 getTags               :: Int ->    Cache ->     Maybe [String]
-getTags x (c,_, _,mis) = M.lookup x c >>= \r -> return $ MB.mapMaybe (`M.lookup` mis) r
+getTags x c = M.lookup x (mii c) >>= \r -> return $ MB.mapMaybe (`M.lookup` mis c) r
 
 updateTags            :: Int -> [String] ->    Cache ->    Cache
-updateTags x ts (c,i0,msi0,mis0) =
-    let (ks, i, msi, mis) = dedupTagIdTags (ts, i0, msi0, mis0)
-    in (M.insert x ks c, i, msi, mis)
+updateTags x ts c = -- (c,i0,msi0,mis0)
+    let (ks, next', msi', mis') = dedupTagIdTags (ts, next c, msi c, mis c)
+    in Cache (M.insert x ks (mii c)) next' msi' mis'
 
 ------------------------------------------------------------------------------
 -- Populate cache
@@ -57,28 +62,28 @@ collectTagIdAndTags  = P.map mkEntry . lines
   where
     mkEntry x = let (i:xs) = splitOn "," x in (read i, xs)
 
-dedupTags :: (Num k, Ord k, Ord a, Foldable t)
-          => [(k, t a)] -> ( M.Map k [k], k, M.Map a  k, M.Map k  a)
-dedupTags  = P.foldr level1 (M.empty, -1, M.empty, M.empty)
+dedupTags :: [(Int, [String])] -> Cache
+dedupTags  = toCache . P.foldr level1 (M.empty, -1, M.empty, M.empty)
   where
     level1 (tag, ss) (acc, i0, msi0, mis0) =
-        let (ks, i, msi, mis) = dedupTagIdTags (ss, i0, msi0, mis0)
-        in  (M.insert tag ks acc, i, msi, mis)
+        let (ks, i, msi', mis') = dedupTagIdTags (ss, i0, msi0, mis0)
+        in  (M.insert tag ks acc, i, msi', mis')
+    toCache (mii0, next0, msi0, mis0) = Cache mii0 next0 msi0 mis0
 
 dedupTagIdTags :: (Num k, Ord k, Ord a, Foldable t)
                => (t a, k, Map a k, Map k a)
                -> ([k], k, Map a k, Map k a)
 dedupTagIdTags (ss, i0, msi0, mis0) = P.foldr level2 (mempty, i0, msi0, mis0) ss
   where
-    level2 s (acc, i, msi, mis) = case M.lookup s msi of
-        Just j  -> (j:acc, i,                msi,              mis)
-        Nothing -> (i:acc, i+1, M.insert s i msi, M.insert i s mis)
+    level2 s (acc, i, msi', mis') = case M.lookup s msi' of
+        Just j  -> (j:acc, i,                msi',              mis')
+        Nothing -> (i:acc, i+1, M.insert s i msi', M.insert i s mis')
 
 ------------------------------------------------------------------------------
 -- Test
 
 exCsv = "0,foo,bar\n1,abc,foo\n2\n3,xyz,bar"
-cToList (c,i,msi,mis) = (M.toList c, i, M.toList msi, M.toList mis)
+cToList c = (M.toList (mii c), next c, M.toList (msi c), M.toList (mis c))
 
 tgt = U.t "tgt"
     (P.map (\i -> getTags i (stringToCache exCsv)) [0..4])
@@ -108,10 +113,10 @@ tct = U.t "tct"
     [(0,["foo","bar"]), (1,["abc","foo"]), (2,[]), (3,["xyz","bar"])]
 
 tddt = U.t "tddt"
-    (let (i, acc, msi, mis) = dedupTagIdTags ( ["foo", "bar", "baz", "foo", "baz", "baz", "foo", "qux", "new"]
+    (let (i, acc, msi0, mis0) = dedupTagIdTags ( ["foo", "bar", "baz", "foo", "baz", "baz", "foo", "qux", "new"]
                                              , -1, M.empty, M.empty)
-     in  (i, acc, M.toList msi, M.toList mis))
-    (                                          [    1,     3,     2,     1,     2,     2,     1,     0,    -1]
+     in  (i, acc, M.toList msi0, M.toList mis0))
+    (                                            [    1,     3,     2,     1,     2,     2,     1,     0,    -1]
     , 4::Int
     , [("bar",3),("baz",2),("foo",1),("new",-1),("qux",0)]
     , [(-1,"new"),(0,"qux"),(1,"foo"),(2,"baz"),(3,"bar")])
@@ -140,5 +145,3 @@ spanList :: ([a] -> Bool) -> [a] -> ([a], [a])
 spanList _ [] = ([],[])
 spanList func list@(x:xs) = if func list then (x:ys,zs) else ([],list)
   where (ys,zs) = spanList func xs
-
-
