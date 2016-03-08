@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-unused-binds #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module EntityTagCache where
+module EntityTagCacheNoSigs where
 
 import           Control.Monad   (liftM, (>=>))
 import           Data.List       (isPrefixOf)
@@ -31,50 +31,40 @@ mis  (Cache _ _ _ r) = r
 
 -- impure
 
-getTagsIO             :: Int -> IO Cache -> IO (Maybe [String])
-getTagsIO              = liftM . getTags
+getTagsIO :: Monad m => Int -> m Cache -> m (Maybe [String])
+getTagsIO  = liftM . getTags
 
-updateTagsIO          :: Int -> [String] -> IO Cache -> IO Cache
-updateTagsIO x ts      = liftM (updateTags x ts)
+updateTagsIO x ts = liftM (updateTags x ts)
 
 -- pure
 
-getTags               :: Int ->    Cache ->     Maybe [String]
 getTags x c = M.lookup x (mii c) >>= \r -> return $ MB.mapMaybe (`M.lookup` mis c) r
 
-updateTags            :: Int -> [String] ->    Cache ->    Cache
-updateTags x ts c = -- (c,i0,msi0,mis0)
+updateTags x ts c =
     let (ks, next', msi', mis') = dedupTagIdTags (ts, next c, msi c, mis c)
     in Cache (M.insert x ks (mii c)) next' msi' mis'
 
 ------------------------------------------------------------------------------
 -- Populate cache
 
-loadCacheFromFile :: FilePath -> IO Cache
 loadCacheFromFile filename =
     withFile filename ReadMode (hGetContents >=> return . stringToCache)
 
-stringToCache     :: String -> Cache
-stringToCache      = dedupTags . collectTagIdAndTags
+stringToCache = dedupTags . collectTagIdAndTags
 
 ------------------------------------------------------------------------------
 -- Internals
 
-collectTagIdAndTags :: String -> [(Int, [String])]
 collectTagIdAndTags  = P.map mkEntry . lines
   where
     mkEntry x = let (i:xs) = splitOn "," x in (read i, xs)
 
-dedupTags :: [(Int, [String])] -> Cache
 dedupTags  = P.foldr level1 (Cache M.empty (-1) M.empty M.empty)
   where
     level1 (tag, ss) c =
         let (ks, i, msi', mis') = dedupTagIdTags (ss, next c, msi c, mis c)
         in  Cache (M.insert tag ks (mii c)) i msi' mis'
 
-dedupTagIdTags :: (Num k, Ord k, Ord a, Foldable t)
-               => (t a, k, Map a k, Map k a)
-               -> ([k], k, Map a k, Map k a)
 dedupTagIdTags (ss, i0, msi0, mis0) = P.foldr level2 (mempty, i0, msi0, mis0) ss
   where
     level2 s (acc, i, msi', mis') = case M.lookup s msi' of
