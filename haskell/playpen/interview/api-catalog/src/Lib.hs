@@ -1,30 +1,46 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-unused-binds #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib
-    ( someFunc
-    ) where
+module Lib where
 
+import           Control.Monad   ((>=>))
 import           Data.List       (isPrefixOf)
 import           Data.Map.Strict as M
+import           Data.Maybe      as MB (mapMaybe)
 import           Prelude         as P
+import           System.IO       (IOMode (ReadMode), hGetContents, withFile)
 import           Test.HUnit      (Counts, Test (TestList), runTestTT)
 import qualified Test.HUnit.Util as U (t)
 
-someFunc :: IO ()
-someFunc  = putStrLn "someFunc"
+getTagsIO :: Int
+          -> IO (Map Int [Int], Int, Map String Int, Map Int String)
+          -> IO (Maybe [String])
+getTagsIO x cache = do
+    c <- cache
+    return $ getTags x c
 
+getTags   :: Int
+          -> (Map Int [Int], Int, Map String Int, Map Int String)
+          -> Maybe [String]
+getTags x (c,_, _,mis) = M.lookup x c >>= \r -> return $ MB.mapMaybe (`M.lookup` mis) r
+
+loadCacheFromFile :: FilePath -> IO (Map Int [Int], Int, Map String Int, Map Int String)
+loadCacheFromFile filename =
+    withFile filename ReadMode (hGetContents >=> return . stringToCache)
+
+stringToCache :: String -> (Map Int [Int], Int, Map String Int, Map Int String)
 stringToCache = dedupTags . collectTagIdAndTags
 
-collectTagIdAndTags  :: String -> [(Int, [String])]
+collectTagIdAndTags :: String -> [(Int, [String])]
 collectTagIdAndTags   = P.map mkEntry . lines
   where
     mkEntry x = let (i:xs) = splitOn "," x in (read i, xs)
 
-dedupTags :: [(Int, [String])] -> ( M.Map Int    [Int]
-                                  , Int
-                                  , M.Map String  Int
-                                  , M.Map Int     String )
+dedupTags :: (Num k, Ord k, Ord a, Foldable t)
+          => [(k, t a)] -> ( M.Map k [k]
+                           , k
+                           , M.Map a  k
+                           , M.Map k  a)
 dedupTags  = P.foldr level1 (M.empty, -1, M.empty, M.empty)
   where
     level1 (tag, ss) (acc, i0, msi0, mis0) =
@@ -43,6 +59,15 @@ dedupTagIdTags (ss, i0, msi0, mis0) = P.foldr level2 (mempty, i0, msi0, mis0) ss
 ------------------------------------------------------------------------------
 -- Test
 
+tgt = U.t "tgt"
+    (P.map (\i -> getTags i (stringToCache "0,foo,bar\n1,abc,foo\n2\n3,xyz,bar")) [0..4])
+    [ Just ["foo","bar"]
+    , Just ["abc","foo"]
+    , Just []
+    , Just ["xyz","bar"]
+    , Nothing
+    ]
+
 tstc = U.t "tstc"
     (let (mii, i, msi, mis) = stringToCache "0,foo,bar\n1,abc,foo\n2\n3,xyz,bar"
      in  (M.toList mii, i, M.toList msi, M.toList mis))
@@ -60,13 +85,13 @@ tddt = U.t "tddt"
                                              , -1, M.empty, M.empty)
      in  (i, acc, M.toList msi, M.toList mis))
     (                                          [    1,     3,     2,     1,     2,     2,     1,     0,    -1]
-    , 4
+    , 4::Int
     , [("bar",3),("baz",2),("foo",1),("new",-1),("qux",0)]
     , [(-1,"new"),(0,"qux"),(1,"foo"),(2,"baz"),(3,"bar")])
 
 test :: IO Counts
 test =
-    runTestTT $ TestList $ tstc ++ tct ++ tddt
+    runTestTT $ TestList $ tgt ++ tstc ++ tct ++ tddt
 
 ------------------------------------------------------------------------------
 -- Utililties
