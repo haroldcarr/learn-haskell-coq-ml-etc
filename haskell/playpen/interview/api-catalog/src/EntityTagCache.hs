@@ -1,9 +1,9 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-unused-binds #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib where
+module EntityTagCache where
 
-import           Control.Monad   ((>=>))
+import           Control.Monad   (liftM, (>=>))
 import           Data.List       (isPrefixOf)
 import           Data.Map.Strict as M
 import           Data.Maybe      as MB (mapMaybe)
@@ -12,35 +12,53 @@ import           System.IO       (IOMode (ReadMode), hGetContents, withFile)
 import           Test.HUnit      (Counts, Test (TestList), runTestTT)
 import qualified Test.HUnit.Util as U (t)
 
-getTagsIO :: Int
-          -> IO (Map Int [Int], Int, Map String Int, Map Int String)
-          -> IO (Maybe [String])
-getTagsIO x cache = do
-    c <- cache
-    return $ getTags x c
+------------------------------------------------------------------------------
 
-getTags   :: Int
-          -> (Map Int [Int], Int, Map String Int, Map Int String)
-          -> Maybe [String]
+type MSI   = Map String Int
+type MIS   = Map Int    String
+type Cache = (Map Int [Int], Int, MSI, MIS)
+
+------------------------------------------------------------------------------
+-- Use cache
+
+-- impure
+
+getTagsIO        :: Int -> IO Cache -> IO (Maybe [String])
+getTagsIO         = liftM . getTags
+
+updateTagsIO     :: Int -> [String] -> IO Cache -> IO Cache
+updateTagsIO x ts = liftM (updateTags x ts)
+
+-- pure
+
+getTags :: Int ->    Cache ->     Maybe [String]
 getTags x (c,_, _,mis) = M.lookup x c >>= \r -> return $ MB.mapMaybe (`M.lookup` mis) r
 
-loadCacheFromFile :: FilePath -> IO (Map Int [Int], Int, Map String Int, Map Int String)
+updateTags :: Int -> [String] -> Cache -> Cache
+updateTags x ts (c,i0,msi0,mis0) =
+    let (ks, i, msi, mis) = dedupTagIdTags (ts, i0, msi0, mis0)
+    in (M.insert x ks c, i, msi, mis)
+
+------------------------------------------------------------------------------
+-- Populate cache
+
+loadCacheFromFile :: FilePath -> IO Cache
 loadCacheFromFile filename =
     withFile filename ReadMode (hGetContents >=> return . stringToCache)
 
-stringToCache :: String -> (Map Int [Int], Int, Map String Int, Map Int String)
-stringToCache = dedupTags . collectTagIdAndTags
+stringToCache :: String -> Cache
+stringToCache  = dedupTags . collectTagIdAndTags
+
+------------------------------------------------------------------------------
+-- Internals
 
 collectTagIdAndTags :: String -> [(Int, [String])]
-collectTagIdAndTags   = P.map mkEntry . lines
+collectTagIdAndTags  = P.map mkEntry . lines
   where
     mkEntry x = let (i:xs) = splitOn "," x in (read i, xs)
 
 dedupTags :: (Num k, Ord k, Ord a, Foldable t)
-          => [(k, t a)] -> ( M.Map k [k]
-                           , k
-                           , M.Map a  k
-                           , M.Map k  a)
+          => [(k, t a)] -> ( M.Map k [k], k, M.Map a  k, M.Map k  a)
 dedupTags  = P.foldr level1 (M.empty, -1, M.empty, M.empty)
   where
     level1 (tag, ss) (acc, i0, msi0, mis0) =
@@ -59,8 +77,11 @@ dedupTagIdTags (ss, i0, msi0, mis0) = P.foldr level2 (mempty, i0, msi0, mis0) ss
 ------------------------------------------------------------------------------
 -- Test
 
+exCsv = "0,foo,bar\n1,abc,foo\n2\n3,xyz,bar"
+cToList (c,i,msi,mis) = (M.toList c, i, M.toList msi, M.toList mis)
+
 tgt = U.t "tgt"
-    (P.map (\i -> getTags i (stringToCache "0,foo,bar\n1,abc,foo\n2\n3,xyz,bar")) [0..4])
+    (P.map (\i -> getTags i (stringToCache exCsv)) [0..4])
     [ Just ["foo","bar"]
     , Just ["abc","foo"]
     , Just []
@@ -68,16 +89,22 @@ tgt = U.t "tgt"
     , Nothing
     ]
 
+tut = U.t "tut"
+    (cToList $ updateTags 2 ["new1","new2"] (stringToCache exCsv))
+    ( [(0,[1,-1]), (1,[2,1]), (2,[4,3]), (3,[0,-1])]
+    , 5
+    , [("abc",2),("bar",-1),("foo",1),("new1",4),("new2",3),("xyz",0)]
+    , [(-1,"bar"),(0,"xyz"),(1,"foo"),(2,"abc"),(3,"new2"),(4,"new1")] )
+
 tstc = U.t "tstc"
-    (let (mii, i, msi, mis) = stringToCache "0,foo,bar\n1,abc,foo\n2\n3,xyz,bar"
-     in  (M.toList mii, i, M.toList msi, M.toList mis))
+    (cToList $ stringToCache exCsv)
     ( [(0,[1,-1]), (1,[2,1]), (2,[]), (3,[0,-1])]
     , 3
     , [("abc",2),("bar",-1),("foo",1),("xyz",0)]
     , [(-1,"bar"),(0,"xyz"),(1,"foo"),(2,"abc")] )
 
 tct = U.t "tct"
-    (collectTagIdAndTags "0,foo,bar\n1,abc,foo\n2\n3,xyz,bar")
+    (collectTagIdAndTags exCsv)
     [(0,["foo","bar"]), (1,["abc","foo"]), (2,[]), (3,["xyz","bar"])]
 
 tddt = U.t "tddt"
@@ -91,10 +118,10 @@ tddt = U.t "tddt"
 
 test :: IO Counts
 test =
-    runTestTT $ TestList $ tgt ++ tstc ++ tct ++ tddt
+    runTestTT $ TestList $ tgt ++ tut ++ tstc ++ tct ++ tddt
 
 ------------------------------------------------------------------------------
--- Utililties
+-- Utililties (I can't find this in the Haskell libraries available on stackage)
 
 splitOn :: Eq a => [a] -> [a] -> [[a]]
 splitOn _ [] = []
