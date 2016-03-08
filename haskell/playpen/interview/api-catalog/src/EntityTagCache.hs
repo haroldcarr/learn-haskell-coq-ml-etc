@@ -23,18 +23,18 @@ type Cache = (Map Int [Int], Int, MSI, MIS)
 
 -- impure
 
-getTagsIO        :: Int -> IO Cache -> IO (Maybe [String])
-getTagsIO         = liftM . getTags
+getTagsIO             :: Int -> IO Cache -> IO (Maybe [String])
+getTagsIO              = liftM . getTags
 
-updateTagsIO     :: Int -> [String] -> IO Cache -> IO Cache
-updateTagsIO x ts = liftM (updateTags x ts)
+updateTagsIO          :: Int -> [String] -> IO Cache -> IO Cache
+updateTagsIO x ts      = liftM (updateTags x ts)
 
 -- pure
 
-getTags :: Int ->    Cache ->     Maybe [String]
+getTags               :: Int ->    Cache ->     Maybe [String]
 getTags x (c,_, _,mis) = M.lookup x c >>= \r -> return $ MB.mapMaybe (`M.lookup` mis) r
 
-updateTags :: Int -> [String] -> Cache -> Cache
+updateTags            :: Int -> [String] ->    Cache ->    Cache
 updateTags x ts (c,i0,msi0,mis0) =
     let (ks, i, msi, mis) = dedupTagIdTags (ts, i0, msi0, mis0)
     in (M.insert x ks c, i, msi, mis)
@@ -46,8 +46,8 @@ loadCacheFromFile :: FilePath -> IO Cache
 loadCacheFromFile filename =
     withFile filename ReadMode (hGetContents >=> return . stringToCache)
 
-stringToCache :: String -> Cache
-stringToCache  = dedupTags . collectTagIdAndTags
+stringToCache     :: String -> Cache
+stringToCache      = dedupTags . collectTagIdAndTags
 
 ------------------------------------------------------------------------------
 -- Internals
