@@ -63,12 +63,11 @@ collectTagIdAndTags  = P.map mkEntry . lines
     mkEntry x = let (i:xs) = splitOn "," x in (read i, xs)
 
 dedupTags :: [(Int, [String])] -> Cache
-dedupTags  = toCache . P.foldr level1 (M.empty, -1, M.empty, M.empty)
+dedupTags  = P.foldr level1 (Cache M.empty (-1) M.empty M.empty)
   where
-    level1 (tag, ss) (acc, i0, msi0, mis0) =
-        let (ks, i, msi', mis') = dedupTagIdTags (ss, i0, msi0, mis0)
-        in  (M.insert tag ks acc, i, msi', mis')
-    toCache (mii0, next0, msi0, mis0) = Cache mii0 next0 msi0 mis0
+    level1 (tag, ss) c =
+        let (ks, i, msi', mis') = dedupTagIdTags (ss, next c, msi c, mis c)
+        in  Cache (M.insert tag ks (mii c)) i msi' mis'
 
 dedupTagIdTags :: (Num k, Ord k, Ord a, Foldable t)
                => (t a, k, Map a k, Map k a)
