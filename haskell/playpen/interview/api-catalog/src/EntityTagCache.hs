@@ -17,14 +17,19 @@ import qualified Test.HUnit.Util as U (t)
 type MSI   = Map String Int
 type MIS   = Map Int    String
 
-data Cache = Cache !(Map Int [Int]) -- entity id to tag numbers
-                   !Int             -- next tag number
-                   !MSI             -- tag to tag number
-                   !MIS             -- tag number to tag
-mii  (Cache r _ _ _) = r
-next (Cache _ r _ _) = r
-msi  (Cache _ _ r _) = r
-mis  (Cache _ _ _ r) = r
+data Cache' a = Cache' !a
+                       !Int -- next tag number
+                       !MSI -- tag to tag number
+                       !MIS -- tag number to tag
+mii  (Cache' r _ _ _) = r
+ss                    = mii
+ks                    = mii
+next (Cache' _ r _ _) = r
+msi  (Cache' _ _ r _) = r
+mis  (Cache' _ _ _ r) = r
+type Cache            = Cache' (Map Int [Int]) -- entity id to tag numbers
+type DDIn             = Cache' [String]        -- input  to DD
+type DDOut            = Cache' [Int]           -- output of DD
 
 ------------------------------------------------------------------------------
 -- Use cache
@@ -44,8 +49,8 @@ getTags x c = M.lookup x (mii c) >>= \r -> return $ MB.mapMaybe (`M.lookup` mis 
 
 updateTags            :: Int -> [String] ->    Cache ->    Cache
 updateTags x ts c = -- (c,i0,msi0,mis0)
-    let o = dedupTagIdTags (DD ts (next c) (msi c) (mis c))
-    in Cache (M.insert x (as o) (mii c)) (nextdd o) (msidd o) (misdd o)
+    let o = dedupTagIdTags (Cache' ts (next c) (msi c) (mis c))
+    in Cache' (M.insert x (ks o) (mii c)) (next o) (msi o) (mis o)
 
 ------------------------------------------------------------------------------
 -- Populate cache
@@ -66,24 +71,20 @@ collectTagIdAndTags  = P.map mkEntry . lines
     mkEntry x = let (i:xs) = splitOn "," x in (read i, xs)
 
 dedupTags :: [(Int, [String])] -> Cache
-dedupTags  = P.foldr level1 (Cache M.empty (-1) M.empty M.empty)
+dedupTags  = P.foldr level1 (Cache' M.empty (-1) M.empty M.empty)
   where
-    level1 (tag, ss) c =
-        let o = dedupTagIdTags (DD ss (next c) (msi c) (mis c))
-        in  Cache (M.insert tag (as o) (mii c)) (nextdd o) (msidd o) (misdd o)
-
-data DD a  = DD { as :: [a], nextdd  :: Int, msidd  :: MSI, misdd  :: MIS }
-type DDIn  = DD String
-type DDOut = DD Int
+    level1 (tag, ss0) c =
+        let o = dedupTagIdTags (Cache' ss0 (next c) (msi c) (mis c))
+        in  Cache' (M.insert tag (ks o) (mii c)) (next o) (msi o) (mis o)
 
 dedupTagIdTags :: DDIn -> DDOut
-dedupTagIdTags i = P.foldr level2 (DD mempty (nextdd i) (msidd i) (misdd i)) (as i)
+dedupTagIdTags i = P.foldr level2 (Cache' mempty (next i) (msi i) (mis i)) (ss i)
   where
-    level2 s o = case M.lookup s (msidd o) of
+    level2 s o = case M.lookup s (msi o) of
         Just j  ->
-            DD        (j:as o) (nextdd o)                            (msidd o)                         (misdd o)
+            Cache'      (j:ks o) (next o)                          (msi o)                       (mis o)
         Nothing ->
-            DD (nextdd o:as o) (nextdd o + 1) (M.insert s (nextdd o) (msidd o)) (M.insert (nextdd o) s (misdd o))
+            Cache' (next o:ks o) (next o + 1) (M.insert s (next o) (msi o)) (M.insert (next o) s (mis o))
 
 ------------------------------------------------------------------------------
 -- Test
@@ -119,10 +120,10 @@ tct = U.t "tct"
     [(0,["foo","bar"]), (1,["abc","foo"]), (2,[]), (3,["xyz","bar"])]
 
 tddt = U.t "tddt"
-    (let o = dedupTagIdTags (DD ["foo", "bar", "baz", "foo", "baz", "baz", "foo", "qux", "new"]
-                                (-1) M.empty M.empty)
-     in  (as o, nextdd o, M.toList (msidd o), M.toList (misdd o)))
-    (                         [    1,     3,     2,     1,     2,     2,     1,     0,    -1]
+    (let o = dedupTagIdTags (Cache' ["foo", "bar", "baz", "foo", "baz", "baz", "foo", "qux", "new"]
+                                    (-1) M.empty M.empty)
+     in  (ks o, next o, M.toList (msi o), M.toList (mis o)))
+    (                               [    1,     3,     2,     1,     2,     2,     1,     0,    -1]
     , 4::Int
     , [("bar",3),("baz",2),("foo",1),("new",-1),("qux",0)]
     , [(-1,"new"),(0,"qux"),(1,"foo"),(2,"baz"),(3,"bar")])
