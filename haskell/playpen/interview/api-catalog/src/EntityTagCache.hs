@@ -17,16 +17,13 @@ import qualified Test.HUnit.Util as U (t)
 type MSI   = Map String Int
 type MIS   = Map Int    String
 
-data Cache' a = Cache' !a
-                       !Int -- next tag number
-                       !MSI -- tag to tag number
-                       !MIS -- tag number to tag
-mii  (Cache' r _ _ _) = r
+data Cache' a = Cache' { mii  :: a
+                       , next :: Int -- next tag number
+                       , msi  :: MSI -- tag to tag number
+                       , mis  :: MIS -- tag number to tag
+                       }
 ss                    = mii
 ks                    = mii
-next (Cache' _ r _ _) = r
-msi  (Cache' _ _ r _) = r
-mis  (Cache' _ _ _ r) = r
 type Cache            = Cache' (Map Int [Int]) -- entity id to tag numbers
 type DDIn             = Cache' [String]        -- input  to DD
 type DDOut            = Cache' [Int]           -- output of DD
@@ -50,7 +47,7 @@ getTags x c = M.lookup x (mii c) >>= \r -> return $ MB.mapMaybe (`M.lookup` mis 
 updateTags            :: Int -> [String] ->    Cache ->    Cache
 updateTags x ts c = -- (c,i0,msi0,mis0)
     let o = dedupTagIdTags (Cache' ts (next c) (msi c) (mis c))
-    in Cache' (M.insert x (ks o) (mii c)) (next o) (msi o) (mis o)
+    in  o { mii = M.insert x (ks o) (mii c) }
 
 ------------------------------------------------------------------------------
 -- Populate cache
@@ -74,17 +71,16 @@ dedupTags :: [(Int, [String])] -> Cache
 dedupTags  = P.foldr level1 (Cache' M.empty (-1) M.empty M.empty)
   where
     level1 (tag, ss0) c =
-        let o = dedupTagIdTags (Cache' ss0 (next c) (msi c) (mis c))
-        in  Cache' (M.insert tag (ks o) (mii c)) (next o) (msi o) (mis o)
+        let o = dedupTagIdTags (c { mii = ss0 })
+        in  o { mii = M.insert tag (ks o) (mii c) }
 
 dedupTagIdTags :: DDIn -> DDOut
-dedupTagIdTags i = P.foldr level2 (Cache' mempty (next i) (msi i) (mis i)) (ss i)
+dedupTagIdTags i = P.foldr level2 (i { mii = mempty }) (ss i)
   where
     level2 s o = case M.lookup s (msi o) of
-        Just j  ->
-            Cache'      (j:ks o) (next o)                          (msi o)                       (mis o)
-        Nothing ->
-            Cache' (next o:ks o) (next o + 1) (M.insert s (next o) (msi o)) (M.insert (next o) s (mis o))
+        Just j  -> o { mii = j:ks o }
+        Nothing -> Cache' (next o:ks o) (next o + 1)
+                          (M.insert s (next o) (msi o)) (M.insert (next o) s (mis o))
 
 ------------------------------------------------------------------------------
 -- Test
