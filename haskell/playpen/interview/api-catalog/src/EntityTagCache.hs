@@ -44,8 +44,8 @@ getTags x c = M.lookup x (mii c) >>= \r -> return $ MB.mapMaybe (`M.lookup` mis 
 
 updateTags            :: Int -> [String] ->    Cache ->    Cache
 updateTags x ts c = -- (c,i0,msi0,mis0)
-    let (ks, next', msi', mis') = dedupTagIdTags (ts, next c, msi c, mis c)
-    in Cache (M.insert x ks (mii c)) next' msi' mis'
+    let o = dedupTagIdTags (DDIn ts (next c) (msi c) (mis c))
+    in Cache (M.insert x (ks o) (mii c)) (nextOut o) (msiOut o) (misOut o)
 
 ------------------------------------------------------------------------------
 -- Populate cache
@@ -69,17 +69,20 @@ dedupTags :: [(Int, [String])] -> Cache
 dedupTags  = P.foldr level1 (Cache M.empty (-1) M.empty M.empty)
   where
     level1 (tag, ss) c =
-        let (ks, i, msi', mis') = dedupTagIdTags (ss, next c, msi c, mis c)
-        in  Cache (M.insert tag ks (mii c)) i msi' mis'
+        let o = dedupTagIdTags (DDIn ss (next c) (msi c) (mis c))
+        in  Cache (M.insert tag (ks o) (mii c)) (nextOut o) (msiOut o) (misOut o)
 
-dedupTagIdTags :: (Num k, Ord k, Ord a, Foldable t)
-               => (t a, k, Map a k, Map k a)
-               -> ([k], k, Map a k, Map k a)
-dedupTagIdTags (ss, i0, msi0, mis0) = P.foldr level2 (mempty, i0, msi0, mis0) ss
+data DDIn  = DDIn  { ss :: [String], nextIn  :: Int, msiIn  :: MSI, misIn  :: MIS }
+data DDOut = DDOut { ks :: [Int]   , nextOut :: Int, msiOut :: MSI, misOut :: MIS }
+
+dedupTagIdTags :: DDIn -> DDOut
+dedupTagIdTags i = P.foldr level2 (DDOut mempty (nextIn i) (msiIn i) (misIn i)) (ss i)
   where
-    level2 s (acc, i, msi', mis') = case M.lookup s msi' of
-        Just j  -> (j:acc, i,                msi',              mis')
-        Nothing -> (i:acc, i+1, M.insert s i msi', M.insert i s mis')
+    level2 s o = case M.lookup s (msiOut o) of
+        Just j  ->
+            DDOut (j:ks o)  (nextOut o)                            (msiOut o)                          (misOut o)
+        Nothing ->
+            DDOut (nextOut o:ks o) (nextOut o + 1) (M.insert s (nextOut o) (msiOut o)) (M.insert (nextOut o) s (misOut o))
 
 ------------------------------------------------------------------------------
 -- Test
@@ -115,10 +118,10 @@ tct = U.t "tct"
     [(0,["foo","bar"]), (1,["abc","foo"]), (2,[]), (3,["xyz","bar"])]
 
 tddt = U.t "tddt"
-    (let (i, acc, msi0, mis0) = dedupTagIdTags ( ["foo", "bar", "baz", "foo", "baz", "baz", "foo", "qux", "new"]
-                                             , -1, M.empty, M.empty)
-     in  (i, acc, M.toList msi0, M.toList mis0))
-    (                                            [    1,     3,     2,     1,     2,     2,     1,     0,    -1]
+    (let o = dedupTagIdTags (DDIn ["foo", "bar", "baz", "foo", "baz", "baz", "foo", "qux", "new"]
+                                  (-1) M.empty M.empty)
+     in  (ks o, nextOut o, M.toList (msiOut o), M.toList (misOut o)))
+    (                         [    1,     3,     2,     1,     2,     2,     1,     0,    -1]
     , 4::Int
     , [("bar",3),("baz",2),("foo",1),("new",-1),("qux",0)]
     , [(-1,"new"),(0,"qux"),(1,"foo"),(2,"baz"),(3,"bar")])
