@@ -1,10 +1,15 @@
 {-# OPTIONS_GHC -fno-warn-unused-do-bind -fno-warn-unused-matches #-}
-{-# LANGUAGE DeriveFunctor    #-}
-{-# LANGUAGE ExplicitForAll   #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE AllowAmbiguousTypes  #-}
+{-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DeriveFunctor        #-}
+{-# LANGUAGE ExplicitForAll       #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE Rank2Types           #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module FM_JD_modern_fp where
 
+import           Control.Arrow      ((<<<))
 import           Control.Monad.Free (Free, liftF)
 
 ------------------------------------------------------------------------------
@@ -139,18 +144,192 @@ data LogF a
     = Log Level String a
     deriving Functor
 
-type Coproduct = Either
-toLeft  :: a -> Coproduct a b
-toLeft   = Left
-toRight :: b -> Coproduct a b
-toRight  = Right
-
 -- another interpreter
-logCloudFilesI :: forall a. CloudFilesF a -> Free LogF Unit
+logCloudFilesI                 :: forall a. CloudFilesF a -> Free LogF Unit
 logCloudFilesI (SaveFile p _ _) = liftF $ Log Debug ("Saving file to "   ++ show p) Unit
 logCloudFilesI (ListFiles p _)  = liftF $ Log Debug ("Listing files at " ++ show p) Unit
 
--- Interpreters compose
--- loggingCloudFilesI :: forall a. CloudFilesF a -> Free (Coproduct (LogF String) (HttpF String)) a
+-- TODO : depends on Coproduct at end of file
+-- compose interpreters
+-- toLeft  = liftF . left
+-- toRight = liftF . right
+-- loggingCloudFilesI :: forall a. CloudFilesF a -> Free (Coproduct LogF HttpF) a
 -- loggingCloudFilesI op = toLeft (logCloudFilesI op) *> toRight (cloudFilesI op)
 
+-- to "really" run it
+-- executor :: forall a. Coproduct LogF HttpF a -> IO a
+
+{-
+BENEFITS
+
+- cloud files layer focused on domain, not implementation
+
+- cloud files service -> REST APIs : centralized/isolated from rest of app
+  - for testing, cloud files service -> high-level mock service that uses semantics directly
+
+- logging code centralized/isolated and untangled from business logic and REST APIs
+  - logging can be structured/uniform rather than random/scattered across program
+  - need not log to a file: supply different interpreters to log to remote API
+
+- modular, composable
+  - pick interpreter for program (even based on runtime values) by composing interpreters
+-}
+
+------------------------------------------------------------------------------
+
+{-
+1. Orthogonal, Composable Algebras
+
+real-world: free algebras are not orthogonal: have overlapping operations
+-}
+
+data FileF1 a
+    = MakeDir     Path               a
+    | Delete1     Path               a
+    | Copy        Path Path          a
+    | Rename      Path Path          a
+    | Move        Path Path          a
+    | Ls1         Path (List Path -> a)
+    | CreateFile1 Path Bytes         a
+    | ReadFile1   Path (Bytes ->     a)
+    | AppendFile1 Path Bytes         a
+{-
+Above ops not primitive (i.e., some can be composed from others).
+
+More orthogonal:
+-}
+
+data FileF2 a
+    = CreateFile Path               a
+    | CreateDir  Path               a
+    | AppendFile Path Bytes         a
+    | Duplicate  Path Path          a
+    | Delete     Path               a
+    | Ls         Path (List Path -> a)
+    | ReadFile   Path (Bytes ->     a)
+    deriving Functor
+
+rename :: Path -> Path -> Free FileF2 Unit
+rename from to =
+  liftF (Duplicate from to Unit) *>
+  liftF (Delete from Unit)
+
+{-
+But better to have rename be primitive do avoid renaming 10 GB file  copy/delete of it.
+
+Or, use optimizing interpreter: detect patterns and substitute with faster alternatives.
+
+LIMITATION: free monads depend on runtime values
+
+FREE APPLICATIVES:
+- constrained enough to enable this type of optimization statically.
+
+Or extend free structure with atomic sequencing operation that ignores value of left-hand side (e.g. *> or >>).
+
+Both enable interpreters to see far enough ahead to do optimizations.
+
+2. Generalizing Interpreters
+
+Goal: make code less brittle to changes and maximize places they can be used.
+-}
+
+type Interpreter f g = forall a. f a -> Free g a
+
+{-
+Translates a single op f a into program of ops in g.
+
+But instead of interpreting to a concrete g
+- interpret to any g that supports required capabilities
+  - via: type-level Haskell, Scala implicits, type classes
+- most straightforward : lenses : a Prism
+
+Prism : construct and (when possible) deconstruct sum types.
+
+higher-order prism that can work with functors:
+-}
+
+type PrismP a b = (a,b) -- TO GET IT TO COMPILE
+
+type Inject f g = forall a. PrismP (f a) (g a)
+
+{-
+Enables constructing an f a from g a.
+
+generalize interpreter:
+-}
+
+type Interpreter2 f g' = forall a g. Inject g g' -> f a -> Free g a
+
+{-
+
+says: If prove that any g is at least as powerful as g' (by supplying a Inject),
+      then the interpreter (which requires g') can interpret into g.
+
+interpreter is polymorphic in its target algebra
+- more cumbersome to define
+- more robust to code changes and can be used in more places
+
+3. Generalizing DSLs
+
+This cloud DSL above requires target algebra be CloudFilesF.
+
+Can generalize in same way generalized the interpreters
+- requiring target algebra be at least as powerful as CloudFilesF.
+
+(uses PureScript’s first-class records to avoid boilerplate):
+
+data CloudFilesDSL g where
+    SaveFile2  :: Path -> Bytes -> Free g Unit
+    ListFiles2 :: Path -> Free g (List Path)
+
+cloudFilesDSL :: forall g. Inject g CloudFilesF -> CloudFilesDSL g
+cloudFilesDSL p = {
+  saveFile  : \path bytes -> liftF $ review p (SaveFile path bytes Unit),
+  listFiles : \path       -> liftF $ review p (ListFiles path id) }
+
+Now can use DSL in any target algebra that includes CloudFilesF
+
+Summary
+
+Avoid "purely functional" that sequentially executes "IO" code.  (Task in Scala, Eff in PureScript).
+
+Avoid anti-patterns :
+- mixing abstraction levels
+- distributing knowledge that should be centralized
+- tangling concerns
+
+Describe effects by
+- reducing them to orthogonal, composable operations (description of program)
+  - constrained algebras : enables reasoning/manipulation
+- describing computation with these operations using a computational context like Free. (introspect, transform, interpret)
+
+Do transformation to IO at the edge.
+-}
+
+------------------------------------------------------------------------------
+
+-- from https://github.com/purescript/purescript-coproducts/blob/master/src/Data/Functor/Coproduct.purs
+
+-- | `Coproduct f g` is the coproduct of two functors `f` and `g`
+newtype Coproduct f g a = Coproduct (Either (f a) (g a))
+
+-- | Unwrap a coproduct
+runCoproduct :: forall f g a. Coproduct f g a -> Either (f a) (g a)
+runCoproduct (Coproduct x) = x
+
+-- | Left injection
+left :: forall f g a. f a -> Coproduct f g a
+left = Coproduct <<< Left
+
+-- | Right injection
+right :: forall f g a. g a -> Coproduct f g a
+right = Coproduct <<< Right
+
+-- | Eliminate a coproduct by providing eliminators for the left and
+-- | right components
+coproduct :: forall f g a b. (f a -> b) -> (g a -> b) -> Coproduct f g a -> b
+coproduct f g = either f g <<< runCoproduct
+
+-- TODO
+-- instance functorCoproduct (Functor f, Functor g) => Functor (Coproduct f g) where
+--     fmap f = Coproduct <<< coproduct (Left <<< (<$>) f) (Right <<< (<$>) f)
