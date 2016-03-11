@@ -1,15 +1,18 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE DeriveFunctor #-}
 
-module X_2013_01_a_language_and_its_interpretation
+module FM_DebasishG_2013_01_a_language_and_its_interpretation
 where
 {-
 http://debasishg.blogspot.ca/2013/01/a-language-and-its-interpretation.html
 
 Created       : 2015 Sep 01 (Tue) 10:51:58 by Harold Carr.
-Last Modified : 2015 Sep 01 (Tue) 14:31:36 by Harold Carr.
+Last Modified : 2016 Mar 11 (Fri) 14:34:22 by Harold Carr.
 -}
 
-import           Control.Monad.Free
+import           Control.Monad.Free (Free (Free, Pure), liftF)
+import           Test.HUnit         (Counts, Test (TestList), runTestTT)
+import qualified Test.HUnit.Util    as U (t)
 
 {-
 separation of concerns between pure data and its processing
@@ -53,7 +56,7 @@ Similar exercise done for embedding Forth in Haskell
 https://github.com/TikhonJelvis/Forth-nonsense/blob/master/Forth.hs
 -}
 
-p :: Joy ()
+p :: Free JoyOperator ()
 p = do push 5
        push 6
        add
@@ -61,10 +64,12 @@ p = do push 5
        add2
        square
        end
-{-
-> p
-Free (Push 5 (Free (Push 6 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Dup (Free (Mult (Free End))))))))))))))))))))))
 
+tp = U.t "tp"
+    p
+    (Free (Push 5 (Free (Push 6 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Dup (Free (Mult (Free End)))))))))))))))))))))))
+
+{-
 Building the pure data (aka Builder)
 
 All operators take a continuation.
@@ -75,9 +80,8 @@ data JoyOperator cont = Push Int cont
                       | Mult     cont
                       | Dup      cont
                       | End
-                      deriving (Show, Functor)
+                      deriving (Eq, Show, Functor)
 {-
-
 Derives 'Functor'.
 Free monads are general way of turning functors into monads.
 (Required for implementing forgetful functor adjoint of free monad.)
@@ -92,7 +96,8 @@ data Free f a = Pure a | Free (f (Free f a))
 -}
 
 -- | The free monad over JoyOperator
-type Joy = Free JoyOperator
+-- type Joy = Free JoyOperator
+-- but not using so it is explcit below
 
 {-
 Joy operators as operations over free monads.
@@ -110,55 +115,58 @@ retract :: Monad f => Free f a -> f a
 retract . liftF = id
 -}
 
-push :: Int -> Joy ()
+push :: Int -> Free JoyOperator ()
 push n = liftF $ Push n ()
 
-add :: Joy ()
+add :: Free JoyOperator ()
 add = liftF $ Add ()
 
-mult :: Joy ()
+mult :: Free JoyOperator ()
 mult = liftF $ Mult ()
 
-dup :: Joy ()
+dup :: Free JoyOperator ()
 dup = liftF $ Dup ()
 
-end :: Joy ()
+end :: Free JoyOperator ()
 end = liftF End
 
 -- can also combine operators (since monads, can use 'do')
 
-incr :: Joy ()
+incr :: Free JoyOperator ()
 incr = do push 1; add
 
-add2 :: Joy ()
+add2 :: Free JoyOperator ()
 add2 = do incr; incr
 
-square :: Joy ()
+square :: Free JoyOperator ()
 square = do dup; mult
 
 {-
 An Interpreter (aka Visitor)
 -}
 
-data JoyError = NotEnoughParamsOnStack | NotEmptyOnEnd | NoEnd deriving Show
+data JoyError = NotEnoughParamsOnStack | NotEmptyOnEnd | NoEnd | FallThroughPattern deriving (Eq, Show)
 
--- | interpreter takes free monad as input
-runProgram :: Joy n -> Either JoyError Int
+-- | interpreter takes free monad (a program) as input
+runProgram :: Free JoyOperator continuation -> Either JoyError Int
 runProgram = joy []
   where joy stack           (Free (Push v cont)) = joy (v     : stack) cont
         joy (a : b : stack) (Free (Add    cont)) = joy (a + b : stack) cont
         joy (a : b : stack) (Free (Mult   cont)) = joy (a * b : stack) cont
         joy (a : stack)     (Free (Dup    cont)) = joy (a : a : stack) cont
-        joy _               (Free Add {})        = Left NotEnoughParamsOnStack
-        joy _               (Free Dup {})        = Left NotEnoughParamsOnStack
+        joy _               (Free (Add       _)) = Left NotEnoughParamsOnStack
+        joy _               (Free (Dup       _)) = Left NotEnoughParamsOnStack
         joy []              (Free End)           = Left NotEnoughParamsOnStack
         joy [result]        (Free End)           = Right result
         joy _               (Free End)           = Left NotEmptyOnEnd
-        joy _               (Pure {})            = Left NoEnd
+        joy _               (Pure            _)  = Left NoEnd
+        joy _               _                    = Left FallThroughPattern
+
+trp = U.t "trp"
+    (runProgram p)
+    (Right 196)
 
 {-
-runProgram p
-
 Improving bind
 
 Janis Voigtlander
@@ -167,3 +175,9 @@ http://www.janis-voigtlaender.eu/papers/AsymptoticImprovementOfComputationsOverF
 
 Edward Kmett implemented the above.
 -}
+
+------------------------------------------------------------------------------
+
+test :: IO Counts
+test =
+    runTestTT $ TestList $ tp ++ trp
