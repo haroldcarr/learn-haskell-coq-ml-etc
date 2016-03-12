@@ -11,6 +11,7 @@ library
                      , FM_EK_Teletype
                      , FM_GG_2012_07_purify_code
                      , FM_JD_modern_fp
+                     , HA_Operational_Monad_Tutorial
                      , ValidationForm
   build-depends:       base >= 4.7 && < 5
                      , free
