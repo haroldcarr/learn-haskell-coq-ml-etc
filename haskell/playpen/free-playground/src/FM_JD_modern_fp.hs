@@ -10,7 +10,7 @@
 module FM_JD_modern_fp where
 
 import           Control.Arrow      ((<<<))
-import           Control.Monad.Free (Free, liftF)
+import           Control.Monad.Free (Free (Free), liftF)
 
 ------------------------------------------------------------------------------
 -- http://degoes.net/articles/modern-fp
@@ -96,10 +96,9 @@ type Bytes  = String
 type List a = [a]
 data Unit   = Unit
 
-data CloudFilesF a
-    = SaveFile  Path Bytes a
-    | ListFiles Path (List Path -> a)
-    deriving Functor
+data CloudFilesF a = SaveFile  Path Bytes a
+                   | ListFiles Path (List Path -> a)
+                   deriving Functor
 
 -- DSL using alebra for interacting with the API:
 
@@ -128,9 +127,29 @@ data HttpF a
 
 -- Now can "interpret" (aka map or transform) cloud API semantics into algebra of RESTful APIs.
 
-cloudFilesI :: forall a. CloudFilesF a -> Free HttpF a
-cloudFilesI  = undefined
+-- BEGIN : THIS SECTION IS WRONG
+bytesToHttp :: Bytes -> Free HttpF a
+bytesToHttp  = undefined
 
+cloudFilesI :: forall a. Free CloudFilesF a -> Free HttpF a
+cloudFilesI  = cf
+  where
+    cf (Free (SaveFile path bytes cont)) = Free (POST path bytes bytesToHttp)
+    cf (Free (ListFiles path lpToA))     = Free (GET  path       bytesToHttp)
+    cf _                                 = error "BAD"
+
+ex :: Free CloudFilesF Unit
+ex = do
+    (f:fs) <- listFiles "/User/carr"
+    saveFile f "content"
+
+httpI :: forall a. Free HttpF a -> [String]
+httpI  = h []
+  where
+    h stack  (Free (POST path bytes b2h)) = [bytes]
+    h (f:fs) (Free (GET  path cont))      = [path]
+    h xs     _                            = xs
+-- END : THIS SECTION IS WRONG
 {-
 App can use high-level, domain-focused algebra CloudFilesF
 - will be dynamically interpreted into the low-level, protocol-focused algebra HttpF

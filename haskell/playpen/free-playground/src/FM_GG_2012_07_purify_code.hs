@@ -38,19 +38,19 @@ exitSuccess' :: Free TeletypeF a
 exitSuccess'  = liftF ExitSuccess
 
 runImpure :: Teletype r -> IO r
-runImpure (Pure               r ) = return r
-runImpure (Free (PutStrLn str t)) = putStrLn str >>  runImpure t
-runImpure (Free (GetLine  f    )) = getLine      >>= runImpure . f
-runImpure (Free  ExitSuccess    ) = SE.exitSuccess
+runImpure (Pure               r )            = return r
+runImpure (Free (PutStrLn str t))            = putStrLn str >>  runImpure t
+runImpure (Free (GetLine  f    ))            = getLine      >>= runImpure . f
+runImpure (Free  ExitSuccess    )            = SE.exitSuccess
 
 -- runImpure echo
 
 runTrace :: Teletype r -> ([String],[String]) -> ([String],[String])
-runTrace (Pure               r )   (is, os) =                (is, os++["Pure"])
-runTrace (Free (PutStrLn str t))   (is, os) = runTrace t     (is, os++["PurStrLn/"++str])
-runTrace (Free (GetLine  f    ))   ([], os) =                ([], os++["GetLine/[]"])
-runTrace (Free (GetLine  f    )) (i:is, os) = runTrace (f i) (is, os++["GetLine/"++i])
-runTrace (Free  ExitSuccess    )   (is, os) =                (is, os++["ExitSuccess"])
+runTrace  (Pure               r )   (is, os) =                (is, os++["Pure"])
+runTrace  (Free (PutStrLn str t))   (is, os) = runTrace t     (is, os++["PurStrLn/"++str])
+runTrace  (Free (GetLine  f    ))   ([], os) =                ([], os++["GetLine/[]"])
+runTrace  (Free (GetLine  f    )) (i:is, os) = runTrace (f i) (is, os++["GetLine/"++i])
+runTrace  (Free  ExitSuccess    )   (is, os) =                (is, os++["ExitSuccess"])
 
 echo :: Teletype ()
 echo = do
