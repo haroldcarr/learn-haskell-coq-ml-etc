@@ -5,7 +5,7 @@
 module HA_Operational_Monad_Tutorial where
 
 import           Test.HUnit      (Counts, Test (TestList), runTestTT)
-import qualified Test.HUnit.Util as U (t)
+import qualified Test.HUnit.Util as U (t, tt)
 
 {-# ANN module "HLint: ignore Use list literal" #-}
 {-# ANN module "HLint: ignore Use >=>"          #-}
@@ -109,8 +109,10 @@ tet = U.t "tet"
     (interpret (example >> example) [])
     47
 tet2 :: [Test]
-tet2 = U.t "tet2"
-    (interpret (example >>= \ab -> pop >>= \c -> return (ab*c)) [10])
+tet2 = U.tt "tet2"
+    [ interpret (example >>= \ab -> Pop ::: \c -> Return (ab*c)) [10]
+    , interpret (example >>= \ab -> pop >>= \c -> return (ab*c)) [10]
+    ]
     470
 
 -- more stack combinators
