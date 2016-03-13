@@ -4,6 +4,7 @@
 
 module HA_Operational_Monad_Tutorial where
 
+import           Control.Monad   (ap)
 import           Test.HUnit      (Counts, Test (TestList), runTestTT)
 import qualified Test.HUnit.Util as U (t, tt)
 
@@ -91,14 +92,14 @@ bindL :: StackProgramL -> StackProgramL -> StackProgramL
 bindL  = (++)
 
 instance Applicative (Program instr) where
-    pure  = undefined
-    (<*>) = undefined
+    pure  = return
+    (<*>) = ap -- ap m1 m2 = do { x1 <- m1; x2 <- m2; return (x1 x2) }
 
 instance Monad (Program instr) where
            -- (>>=)  :: Program i a -> (a -> Program i b) -> Program i b
     (Return a) >>= js = js a
     (i ::: is) >>= js = i ::: (\a -> is a >>= js)
-    return = Return
+    return            = Return
 
 tetL :: [Test]
 tetL = U.t "tetL"
