@@ -59,8 +59,8 @@ interpretL              []     stack  = stack
 interpret  :: StackProgram a -> Stack Int -> a
 interpret  (Push  a ::: is)    stack  = interpret (is ()) (a : stack)
 interpret  (Pop     ::: is) (a:stack) = interpret (is a )      stack
-interpret  (Return a)          _         = a
-interpret  _                   _         = error "interpret: fall through pattern match"
+interpret  (Pop     :::  _)    []     = error "interpret: pop of empty stack"
+interpret  (Return a)          _      = a
 
 til :: [Test]
 til = U.t "til"
@@ -71,6 +71,22 @@ ti1 :: [Test]
 ti1 = U.t "ti1"
     (interpret  example  [])
     47
+
+interpretIO  :: StackProgram a -> IO a
+interpretIO  (Push  a ::: is) = print a >>        interpretIO (is ())
+interpretIO  (Pop     ::: is) = getLine >>= \a -> interpretIO (is (read a :: Int))
+interpretIO  (Return a)       = return a
+
+interpretPP  :: Show a => StackProgram a -> Stack Int -> [String] -> [String]
+interpretPP  (Push  a ::: is)    as  o = interpretPP (is ()) (a:as) (("push "   ++ show a ++ ";") : o)
+interpretPP  (Pop     ::: is) (a:as) o = interpretPP (is a)     as  ( "pop;"                      : o)
+interpretPP  (Pop     :::  _)    []  o =                  reverse $         "pop of empty stack;" : o
+interpretPP  (Return a)          _   o =                  reverse $ ( "return " ++ show a ++ ";") : o
+
+tipp :: [Test]
+tipp = U.t "tipp"
+    (interpretPP example [] [])
+    ["push 5;","push 42;","pop;","pop;","return 47;"]
 
 -- "lift"
 
@@ -86,7 +102,7 @@ pop   = singleton Pop
 push :: Int -> StackProgram ()
 push  = singleton . Push
 
--- concatenat program sequences (respects monoid laws)
+-- concatenate program sequences (respects monoid laws)
 
 bindL :: StackProgramL -> StackProgramL -> StackProgramL
 bindL  = (++)
@@ -107,14 +123,14 @@ tetL = U.t "tetL"
     []
 tet :: [Test]
 tet = U.t "tet"
-    (interpret (example >> example) [])
-    47
+    (interpretPP (example >> example) [] [])
+    ["push 5;","push 42;","pop;","pop;","push 5;","push 42;","pop;","pop;","return 47;"]
 tet2 :: [Test]
 tet2 = U.tt "tet2"
-    [ interpret (example >>= \ab -> Pop ::: \c -> Return (ab*c)) [10]
-    , interpret (example >>= \ab -> pop >>= \c -> return (ab*c)) [10]
+    [ interpretPP (example >>= \ab -> Pop ::: \c -> Return (ab*c)) [10] []
+    , interpretPP (example >>= \ab -> pop >>= \c -> return (ab*c)) [10] []
     ]
-    470
+    ["push 5;","push 42;","pop;","pop;","pop;","return 470;"]
 
 -- more stack combinators
 
@@ -129,4 +145,4 @@ popN n = pop >> popN (n-1)
 
 test :: IO Counts
 test =
-    runTestTT $ TestList $ til ++ ti1 ++ tetL ++ tet ++ tet2
+    runTestTT $ TestList $ til ++ ti1 ++ tipp ++ tetL ++ tet ++ tet2
