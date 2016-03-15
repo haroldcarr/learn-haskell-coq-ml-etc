@@ -1,12 +1,14 @@
 {-
 Created       : 2014 Apr 29 (Tue) 15:48:28 by Harold Carr.
-Last Modified : 2014 May 01 (Thu) 20:38:36 by Harold Carr.
+Last Modified : 2016 Mar 14 (Mon) 18:35:58 by Harold Carr.
 -}
 
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
+module X_2013_09_andres_loeh_monads_for_free
 
 import           Test.HUnit
 import           Test.HUnit.Util as T
