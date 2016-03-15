@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Apr 29 (Tue) 15:48:28 by Harold Carr.
-Last Modified : 2016 Mar 14 (Mon) 20:30:47 by Harold Carr.
+Last Modified : 2016 Mar 14 (Mon) 20:50:32 by Harold Carr.
 -}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE GADTs               #-}
@@ -94,7 +94,7 @@ instance Applicative Interaction1 where
     (<*>) = ap
 
 instance Functor Interaction1 where
-    -- f::a->b; msg::String; Say1 msg :: Interaction String;  return : Interaction1 b
+    -- f::a->b; msg::String; Say1 msg :: Interaction1 String;  return : Interaction1 b
     fmap _ (Say1    _) = undefined
     fmap _ Ask1        = undefined
     fmap _ (Return1 _) = undefined
