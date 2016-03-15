@@ -6,8 +6,9 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     FM_DebasishG_2013_01_a_language_and_its_interpretation
+  exposed-modules:     FM_2013_09_andres_loeh_monads_for_free
                      , FM_DL_free_cofree
+                     , FM_DebasishG_2013_01_a_language_and_its_interpretation
                      , FM_EK_Teletype
                      , FM_GG_2012_07_purify_code
                      , FM_JD_modern_fp

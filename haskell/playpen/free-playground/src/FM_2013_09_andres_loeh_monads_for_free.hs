@@ -1,17 +1,22 @@
 {-
 Created       : 2014 Apr 29 (Tue) 15:48:28 by Harold Carr.
-Last Modified : 2016 Mar 14 (Mon) 18:35:58 by Harold Carr.
+Last Modified : 2016 Mar 14 (Mon) 20:30:47 by Harold Carr.
 -}
-
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module X_2013_09_andres_loeh_monads_for_free
+module FM_2013_09_andres_loeh_monads_for_free where
 
+import           Control.Monad   (ap)
 import           Test.HUnit
 import           Test.HUnit.Util as T
+
+{-# ANN module "HLint: ignore Redundant bracket" #-}
+{-# ANN module "HLint: ignore Use const"         #-}
+{-# ANN module "HLint: ignore Use list literal"  #-}
 
 -- https://skillsmatter.com/skillscasts/4430-monads-for-free
 -- http://www.andres-loeh.de/Free.pdf
@@ -84,6 +89,17 @@ instance Monad Interaction1 where
     return = Return1
     (>>=)  = Bind1
 
+instance Applicative Interaction1 where
+    pure  = return
+    (<*>) = ap
+
+instance Functor Interaction1 where
+    -- f::a->b; msg::String; Say1 msg :: Interaction String;  return : Interaction1 b
+    fmap _ (Say1    _) = undefined
+    fmap _ Ask1        = undefined
+    fmap _ (Return1 _) = undefined
+    fmap _ (Bind1 _ _) = undefined
+
 say1 = Say1
 ask1 = Ask1
 
@@ -154,6 +170,16 @@ instance Monad Interaction3 where
     -- left identity law satisfied by construction
     Return3  x     >>= f =                f       x
 
+instance Applicative Interaction3 where
+    pure  = return
+    (<*>) = ap
+
+instance Functor Interaction3 where
+    -- f::a->b; msg::String; Say1 msg :: Interaction String;  return : Interaction1 b
+    fmap _ (Say3  _ _) = undefined
+    fmap _ (Ask3    _) = undefined
+    fmap _ (Return3 _) = undefined
+
 say3     :: String -> Interaction3 ()
 say3 msg  = Say3 msg Return3 -- single say step then return results
 ask3     :: Interaction3 String
@@ -183,7 +209,8 @@ example_3 = do
 simulate3 :: Interaction3 a -> [String] -> [String]
 simulate3 (Say3     msg k)    is  = msg : simulate3 (k ()) is
 simulate3 (Ask3         k) (i:is) =       simulate3 (k i ) is
-simulate3 (Return3  _    )    is  = []
+simulate3 (Return3  _    )     _  = []
+simulate3                _     _  = error "simulate3: fall through pattern"
 
 t3 = T.t "t3"
      (simulate3 example_3 ["hc"])
@@ -284,6 +311,14 @@ instance Functor f => Monad (Free7 f) where
     Return7 x >>= f = f x
     Wrap7   c >>= f = Wrap7 (fmap (>>= f) c)
 
+instance Functor f => Applicative (Free7 f) where
+    pure  = return
+    (<*>) = ap
+
+instance (Functor f) => Functor (Free7 f) where
+  fmap f (Return7 x) = Return7 (f x)
+  fmap f (Wrap7  xs) = Wrap7 (fmap (fmap f) xs)
+
 ------------------------------------------------------------------------------
 -- 33'42" is InteractionOp a Functor?
 
@@ -307,7 +342,8 @@ example_7 = do
 simulate7 :: Interaction7 a -> [String] -> [String]
 simulate7 (Wrap7 (Say7     msg k))    is  = msg : simulate7 (k ()) is
 simulate7 (Wrap7 (Ask7         k)) (i:is) =       simulate7 (k i ) is
-simulate7        (Return7  _    )     is  = []
+simulate7        (Return7  _    )      _  = []
+simulate7                       _      _  = error "simulate7: fall through pattern"
 
 t7 = T.tt "t7"
  [ simulate7        example_7                                                                                                                                     ["in"]
