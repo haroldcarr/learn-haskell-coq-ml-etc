@@ -4,7 +4,7 @@
 
 module FM_MX_Redis where
 
-import           Control.Monad.Free    (Free (Free), MonadFree, iterM, liftF)
+import           Control.Monad.Free    (Free, MonadFree, iterM, liftF)
 import           Control.Monad.Free.TH (makeFree)
 import           Control.Monad.State   as MS hiding (get, put)
 import qualified Data.Map              as M
@@ -21,7 +21,7 @@ get         :: Conn -> String -> IO (Maybe String)
 get Conn k   = do putStrLn k; v <- getLine; return (Just v)
 put         :: Conn -> String -> String -> IO ()
 put Conn k v = putStrLn (k ++ "/" ++ v)
-multi       :: Conn -> t -> t
+multi       :: Conn -> IO () -> IO ()
 multi Conn x = x
 
 foo :: Conn -> IO ()
@@ -62,44 +62,35 @@ runDebug :: RedisCmdM a -> IO a
 runDebug = iterM run
   where
     run :: RedisCmd (IO a) -> IO a
-    run (Get' k f) = do
-        putStrLn $ unwords ["GET", k]
-        f . Just =<< getLine
-    run (Put' k v n) = do
-        putStrLn $ unwords ["PUT", k, v]
-        n
-    run (Multi' txn n) = do
-        putStrLn "MULTI"
-        runDebug txn
-        putStrLn "EXEC"
-        n
+    run (Get'   k f)   = do putStrLn $ unwords ["GET", k]; getLine          >>= f . Just
+    run (Put'   k v n) = do putStrLn $ unwords ["PUT", k, v]                ;   n
+    run (Multi' txn n) = do putStrLn "MULTI"; runDebug txn; putStrLn "EXEC" ;   n
 
 type FakeDB = M.Map String String
 
 runTest :: MonadState FakeDB m => RedisCmdM a -> m a
 runTest = iterM run
   where
-    run (Get' k f) = f =<< gets (M.lookup k)
-    run (Put' k v n) = do
-        MS.modify $ M.insert k v
-        n
-    run (Multi' txn n) = do
-        runTest txn
-        n
+    run (Get'   k f)   =    MS.gets    (M.lookup k)  >>= f
+    run (Put'   k v n) = do MS.modify $ M.insert k v ;   n
+    run (Multi' txn n) = do runTest txn              ;   n
 
 trt :: [Test]
 trt = U.t "trt"
     (execState (runTest foo') (M.fromList [("foo","fooval")]))
     (M.fromList [("foo","fooval"),("foo1","fooval"),("foo2","fooval")])
-{-
-runRedis :: (MonadState Conn m, MonadIO m) => RedisCmdM a -> m a
-runRedis = withConn $ \c -> iterM (run c)
-  where
-    run c (Get' k f)     = get   c k   >>= f
-    run c (Put' k v n)   = put   c k v >>  n
-    run c (Multi' txn n) = multi c txn >>  n
-    withConn action      = liftIO (action <$> db)
--}
+
+runRedis :: IO Conn -> RedisCmdM () -> IO ()
+runRedis c0 rc = do
+    c <- c0
+    iterM (run c) rc
+ where
+    run c (Get'   k f)   = get   c k   >>= f
+    run c (Put'   k v n) = put   c k v >>  n
+    run _ (Multi' txn _) = runRedis c0 txn
+
+-- runRedis (return Conn) foo'
+
 ------------------------------------------------------------------------------
 
 test :: IO Counts
