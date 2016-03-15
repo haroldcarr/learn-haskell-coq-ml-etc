@@ -11,7 +11,14 @@ import qualified Test.HUnit.Util as U (t, tt)
 {-# ANN module "HLint: ignore Use list literal" #-}
 {-# ANN module "HLint: ignore Use >=>"          #-}
 
+-- operational
 -- http://apfelmus.nfshost.com/articles/operational-monad.html
+-- https://www.reddit.com/r/haskell/comments/2qe6by/examining_hackage_operational/
+
+-- operational viz free:
+-- http://www.haskellforall.com/2012/06/gadts.html
+-- https://www.reddit.com/r/haskell/comments/utxq2/why_free_monads_matter/c4yo95b
+-- http://stackoverflow.com/questions/14263363/is-operational-really-isomorphic-to-a-free-monad
 
 -- emptyL and Return are "end of list", except Return holds a value
 type ProgramL instr    = [instr]
