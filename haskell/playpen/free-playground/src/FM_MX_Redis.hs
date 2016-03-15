@@ -80,16 +80,14 @@ trt = U.t "trt"
     (execState (runTest foo') (M.fromList [("foo","fooval")]))
     (M.fromList [("foo","fooval"),("foo1","fooval"),("foo2","fooval")])
 
-runRedis :: IO Conn -> RedisCmdM () -> IO ()
-runRedis c0 rc = do
-    c <- c0
-    iterM (run c) rc
+runRedis :: Conn -> RedisCmdM () -> IO ()
+runRedis c = iterM run
  where
-    run c (Get'   k f)   = get   c k   >>= f
-    run c (Put'   k v n) = put   c k v >>  n
-    run _ (Multi' txn _) = runRedis c0 txn
+    run (Get'   k f)   = get c k   >>= f
+    run (Put'   k v n) = put c k v >>  n
+    run (Multi' txn _) = runRedis c txn
 
--- runRedis (return Conn) foo'
+-- runRedis Conn foo'
 
 ------------------------------------------------------------------------------
 
