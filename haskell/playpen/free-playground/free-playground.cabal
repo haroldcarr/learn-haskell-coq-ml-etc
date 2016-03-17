@@ -6,7 +6,8 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     FM_2013_09_andres_loeh_monads_for_free
+  exposed-modules:     FA_EK_ValidationForm
+                     , FM_2013_09_andres_loeh_monads_for_free
                      , FM_DL_free_cofree
                      , FM_DebasishG_2013_01_a_language_and_its_interpretation
                      , FM_EK_Teletype
@@ -14,7 +15,6 @@ library
                      , FM_JD_modern_fp
                      , FM_MX_Redis
                      , HA_Operational_Monad_Tutorial
-                     , ValidationForm
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , free

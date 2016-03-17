@@ -1,7 +1,6 @@
 -- https://github.com/ekmett/free/blob/master/examples/ValidationForm.hs
 
-module ValidationForm where
-
+module FA_EK_ValidationForm where
 
 import           Control.Applicative.Free
 import           Control.Monad.State
