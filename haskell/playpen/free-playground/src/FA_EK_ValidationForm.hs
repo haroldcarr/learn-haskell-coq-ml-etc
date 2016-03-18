@@ -89,12 +89,12 @@ iAP' form0 = runAp inputField form0
   where
     inputField (Field _ g _ e) = pure (fromRight (g e))
 
-doc :: Monad m => Ap Field a -> m (a, String)
-doc m = runStateT (runAp inputField m) ""
+doc :: (Monad m, Show a) => Ap Field a -> m (a, [[String]])
+doc m = runStateT (runAp inputField m) []
   where
-    inputField (Field n g _ e) = do
+    inputField (Field n g h e) = do
         s <- get
-        put (s ++ n)
+        put ([n ++ ", " ++ h ++ ", e.g., " ++ e] : s)
         return (fromRight (g e))
 
 -- | User datatype.
@@ -111,14 +111,14 @@ thr a b c = (a,b,c)
 
 -- | (Ap Field) for User.
 form :: [String] -> Ap Field User
-form us = User <$> available us  "Username"  "any vacant username"  "(e.g. johnsmith)"
-               <*> string        "Full name" "your full name"       "(e.g. John Smith)"
+form us = User <$> available us  "Username"  "any vacant username"  "johnsmith"
+               <*> string        "Full name" "your full name"       "John Smith"
                <*> int           "Age"                              "31"
 
 -- | (Ap Field) for User.
 form' :: [String] -> Ap Field ThreeStrings
-form' us = thr <$> available us  "Username"  "any vacant username"  "(e.g. johnsmith)"
-               <*> string        "Full name" "your full name"       "(e.g. John Smith)"
+form' us = thr <$> available us  "Username"  "any vacant username"  "johnsmith"
+               <*> string        "Full name" "your full name"       "John Smith"
                <*> string        "Age"       "your current age"     "34"
 
 main :: IO ()
@@ -135,5 +135,5 @@ mf = iAP (form' ["bob", "alice"])
 lf :: [ThreeStrings]
 lf = iAP (form' ["bob", "alice"])
 
-dc :: Monad m => m (User, String)
+dc :: Monad m => m (User, [[String]])
 dc = doc (form ["bob", "alice"])
