@@ -5,6 +5,7 @@ module FA_EK_ValidationForm where
 import           Control.Applicative.Free (Ap, liftAp, runAp, runAp_)
 import           Control.Monad.State      (evalStateT, get, modify)
 import           Control.Monad.Writer     (Sum (Sum), getSum, liftIO)
+import           Data.Either.Unwrap       (fromRight)
 import           System.IO                (hFlush, stdout)
 import           Text.Printf              (printf)
 import           Text.Read                (readEither)
@@ -15,29 +16,30 @@ import           Text.Read                (readEither)
 data Field a = Field { fName     :: String                    -- ^ Name.
                      , fValidate :: String -> Either String a -- ^ Pure validation function.
                      , fHelp     :: String                    -- ^ Help message.
+                     , fExample  :: String                    -- ^ Example in put value.
                      }
 
 -- | Build a form with a single field.
---       name      validation fun                 help msg
-field :: String -> (String -> Either String a) -> String -> Ap Field a
-field n f h = liftAp $ Field n f h
+--       name      validation fun                 help      example
+field :: String -> (String -> Either String a) -> String -> String -> Ap Field a
+field n f h e = liftAp $ Field n f h e
 
 -- | Singleton form accepting any input.
---        name      help
-string :: String -> String -> Ap Field String
-string n h = field n Right h
+--        name      help      example
+string :: String -> String -> String -> Ap Field String
+string n h e = field n Right h e
 
 -- | Singleton form accepting anything but mentioned values.
---           taken       name      help
-available :: [String] -> String -> String -> Ap Field String
-available xs n h = field n check h
+--           taken       name      help      example
+available :: [String] -> String -> String -> String -> Ap Field String
+available xs n h e = field n check h e
   where
     check x | x `elem` xs = Left "the value is not available"
             | otherwise   = Right x
 
 -- | Singleton integer field form.
-int :: String -> Ap Field Int
-int n = field n readEither "an integer value"
+int :: String -> String -> Ap Field Int
+int n e = field n readEither "an integer value" e
 
 -- | Count fields in a form.
 count :: Ap Field a -> Int
@@ -47,10 +49,11 @@ count = getSum . runAp_ (\_ -> Sum 1)
 -- Shows progress on each field.
 -- Repeats field input until it passes validation.
 -- Show help message on empty input.
+-- runAp :: Applicative g => (forall x. f x -> g x) -> Ap f a -> g a
 iIO :: Ap Field a -> IO a
 iIO m = evalStateT (runAp inputField m) (1 :: Integer)
   where
-    inputField f@(Field n g h) = do
+    inputField f@(Field n g h _) = do
         i <- get
         -- get field input with prompt
         x <- liftIO $ do
@@ -71,14 +74,16 @@ iIO m = evalStateT (runAp inputField m) (1 :: Integer)
                     liftIO . putStrLn $ "error: " ++ e
                     inputField f
 
-fromRight :: Either l r -> r
-fromRight (Right r) = r
-fromRight _         = error "fromRight"
-
+-- runAp :: Applicative g => (forall x. f x -> g x) -> Ap f a -> g a
 iAP :: Applicative ap => Ap Field a -> ap a
 iAP form0 = runAp inputField form0
   where
-    inputField (Field n g _) = pure (fromRight (g n))
+    inputField (Field n g _ _) = pure (fromRight (g n))
+
+iAP' :: Applicative ap => Ap Field a -> ap a
+iAP' form0 = runAp inputField form0
+  where
+    inputField (Field _ g _ e) = pure (fromRight (g e))
 
 -- | User datatype.
 data User = User { userName     :: String
@@ -89,29 +94,24 @@ data User = User { userName     :: String
 type Three a b c = (a,b,c)
 type ThreeStrings = Three String String String
 
-thre :: a -> b -> c -> Three a b c
-thre a b c = (a,b,c)
+thr :: a -> b -> c -> Three a b c
+thr a b c = (a,b,c)
 
 -- | (Ap Field) for User.
 form :: [String] -> Ap Field User
-form us = User <$> available us  "Username"  "any vacant username"
-               <*> string        "Full name" "your full name (e.g. John Smith)"
-               <*> int           "Age"
+form us = User <$> available us  "Username"  "any vacant username"  "(e.g. johnsmith)"
+               <*> string        "Full name" "your full name"       "(e.g. John Smith)"
+               <*> int           "Age"                              "31"
 
 -- | (Ap Field) for User.
 form' :: [String] -> Ap Field ThreeStrings
-form' us = thre<$> available us  "Username"  "any vacant username"
-               <*> string        "Full name" "your full name (e.g. John Smith)"
-               <*> string        "Age"       "your current age"
+form' us = thr <$> available us  "Username"  "any vacant username"  "(e.g. johnsmith)"
+               <*> string        "Full name" "your full name"       "(e.g. John Smith)"
+               <*> string        "Age"       "your current age"     "34"
 
 main :: IO ()
 main = do
     user <- iIO (form ["bob", "alice"])
-    putStrLn $ "Success: created: " ++ show user
-
-main' :: IO ()
-main' = do
-    user <- iAP (form' ["bob", "alice"])
     putStrLn $ "Success: created: " ++ show user
 
 off :: IO ThreeStrings
@@ -122,4 +122,3 @@ mf = iAP (form' ["bob", "alice"])
 
 lf :: [ThreeStrings]
 lf = iAP (form' ["bob", "alice"])
-

@@ -17,6 +17,7 @@ library
                      , HA_Operational_Monad_Tutorial
   build-depends:       base >= 4.7 && < 5
                      , containers
+                     , either-unwrap
                      , free
                      , HUnit
                      , monad-loops
