@@ -1,9 +1,13 @@
 -- https://github.com/ekmett/free/blob/master/examples/ValidationForm.hs
 
+-- for 'doc'
+{-# LANGUAGE FlexibleContexts #-}
+
 module FA_EK_ValidationForm where
 
 import           Control.Applicative.Free (Ap, liftAp, runAp, runAp_)
-import           Control.Monad.State      (evalStateT, get, modify)
+import           Control.Monad.State      (evalStateT, execStateT, get, modify,
+                                           put, runStateT)
 import           Control.Monad.Writer     (Sum (Sum), getSum, liftIO)
 import           Data.Either.Unwrap       (fromRight)
 import           System.IO                (hFlush, stdout)
@@ -85,6 +89,14 @@ iAP' form0 = runAp inputField form0
   where
     inputField (Field _ g _ e) = pure (fromRight (g e))
 
+doc :: Monad m => Ap Field a -> m (a, String)
+doc m = runStateT (runAp inputField m) ""
+  where
+    inputField (Field n g _ e) = do
+        s <- get
+        put (s ++ n)
+        return (fromRight (g e))
+
 -- | User datatype.
 data User = User { userName     :: String
                  , userFullName :: String
@@ -122,3 +134,6 @@ mf = iAP (form' ["bob", "alice"])
 
 lf :: [ThreeStrings]
 lf = iAP (form' ["bob", "alice"])
+
+dc :: Monad m => m (User, String)
+dc = doc (form ["bob", "alice"])
