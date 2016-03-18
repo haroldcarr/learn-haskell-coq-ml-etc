@@ -7,7 +7,7 @@ module FA_EK_ValidationForm where
 
 import           Control.Applicative.Free (Ap, liftAp, runAp, runAp_)
 import           Control.Monad.State      (evalStateT, execStateT, get, modify,
-                                           put, runStateT)
+                                           put)
 import           Control.Monad.Writer     (Sum (Sum), getSum, liftIO)
 import           Data.Either.Unwrap       (fromRight)
 import           System.IO                (hFlush, stdout)
@@ -78,19 +78,13 @@ iIO m = evalStateT (runAp inputField m) (1 :: Integer)
                     liftIO . putStrLn $ "error: " ++ e
                     inputField f
 
--- runAp :: Applicative g => (forall x. f x -> g x) -> Ap f a -> g a
 iAP :: Applicative ap => Ap Field a -> ap a
 iAP form0 = runAp inputField form0
   where
-    inputField (Field n g _ _) = pure (fromRight (g n))
-
-iAP' :: Applicative ap => Ap Field a -> ap a
-iAP' form0 = runAp inputField form0
-  where
     inputField (Field _ g _ e) = pure (fromRight (g e))
 
-doc :: (Monad m, Show a) => Ap Field a -> m (a, [[String]])
-doc m = runStateT (runAp inputField m) []
+doc :: (Monad m, Show a) => Ap Field a -> m [[String]]
+doc m = execStateT (runAp inputField m) []
   where
     inputField (Field n g h e) = do
         s <- get
@@ -104,7 +98,7 @@ data User = User { userName     :: String
           deriving (Show)
 
 type Three a b c = (a,b,c)
-type ThreeStrings = Three String String String
+type ThreeSSI = Three String String Int
 
 thr :: a -> b -> c -> Three a b c
 thr a b c = (a,b,c)
@@ -114,26 +108,25 @@ form :: [String] -> Ap Field User
 form us = User <$> available us  "Username"  "any vacant username"  "johnsmith"
                <*> string        "Full name" "your full name"       "John Smith"
                <*> int           "Age"                              "31"
-
 -- | (Ap Field) for User.
-form' :: [String] -> Ap Field ThreeStrings
+form' :: [String] -> Ap Field ThreeSSI
 form' us = thr <$> available us  "Username"  "any vacant username"  "johnsmith"
                <*> string        "Full name" "your full name"       "John Smith"
-               <*> string        "Age"       "your current age"     "34"
+               <*> int           "Age"                              "31"
 
 main :: IO ()
 main = do
     user <- iIO (form ["bob", "alice"])
     putStrLn $ "Success: created: " ++ show user
 
-off :: IO ThreeStrings
+off :: IO ThreeSSI
 off = iAP (form' ["bob", "alice"])
 
-mf :: Maybe ThreeStrings
+mf :: Maybe ThreeSSI
 mf = iAP (form' ["bob", "alice"])
 
-lf :: [ThreeStrings]
+lf :: [ThreeSSI]
 lf = iAP (form' ["bob", "alice"])
 
-dc :: Monad m => m (User, [[String]])
+dc :: Monad m => m [[String]]
 dc = doc (form ["bob", "alice"])
