@@ -2,11 +2,11 @@
 
 module FA_EK_ValidationForm where
 
-import           Control.Applicative.Free
-import           Control.Monad.State
-import           Control.Monad.Writer
-import           System.IO
-import           Text.Printf
+import           Control.Applicative.Free (Ap, liftAp, runAp, runAp_)
+import           Control.Monad.State      (evalStateT, get, modify)
+import           Control.Monad.Writer     (Sum (Sum), getSum, liftIO)
+import           System.IO                (hFlush, stdout)
+import           Text.Printf              (printf)
 import           Text.Read                (readEither)
 
 {-# ANN module "HLint: ignore Eta reduce" #-}
@@ -78,7 +78,7 @@ fromRight _         = error "fromRight"
 iAP :: Applicative ap => Ap Field a -> ap a
 iAP form0 = runAp inputField form0
   where
-    inputField f@(Field n g h) = pure (fromRight (g n))
+    inputField (Field n g _) = pure (fromRight (g n))
 
 -- | User datatype.
 data User = User { userName     :: String
