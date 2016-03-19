@@ -49,19 +49,38 @@ int n e = field n readEither "an integer value" e
 count :: Ap Field a -> Int
 count = getSum . runAp_ (\_ -> Sum 1)
 
+formatDoc :: String -> String -> String -> String
+formatDoc = printf "%s, %s, e.g., %s"
+
+-- runAp_ :: Monoid m => (forall a. f a -> m) -> Ap f b -> m
+getFieldNames:: Ap Field a -> [String]
+getFieldNames = runAp_ (\(Field n _ _ _) -> [n])
+
+getDoc:: Ap Field a -> [String]
+getDoc        = runAp_ (\(Field n _ h e) -> [formatDoc n h e])
+
+-- | Extract documentation from form via state monad
+doc :: (Monad m, Show a) => Ap Field a -> m [[String]]
+doc m = execStateT (runAp inputField m) []
+  where
+    inputField (Field n g h e) = do
+        s <- get
+        put ([formatDoc n h e] : s)
+        return (fromRight (g e))
+
 -- | Interactive input of a form.
 -- Shows progress on each field.
 -- Repeats field input until it passes validation.
 -- Show help message on empty input.
 -- runAp :: Applicative g => (forall x. f x -> g x) -> Ap f a -> g a
 iIO :: Ap Field a -> IO a
-iIO m = evalStateT (runAp inputField m) (1 :: Integer)
+iIO form0 = evalStateT (runAp inputField form0) (1 :: Integer)
   where
     inputField f@(Field n g h _) = do
         i <- get
         -- get field input with prompt
         x <- liftIO $ do
-            putStr $ printf "[%d/%d] %s: " i (count m) n
+            putStr $ printf "[%d/%d] %s: " i (count form0) n
             hFlush stdout
             getLine
         case words x of
@@ -82,14 +101,6 @@ iAP :: Applicative ap => Ap Field a -> ap a
 iAP form0 = runAp inputField form0
   where
     inputField (Field _ g _ e) = pure (fromRight (g e))
-
-doc :: (Monad m, Show a) => Ap Field a -> m [[String]]
-doc m = execStateT (runAp inputField m) []
-  where
-    inputField (Field n g h e) = do
-        s <- get
-        put ([n ++ ", " ++ h ++ ", e.g., " ++ e] : s)
-        return (fromRight (g e))
 
 -- | User datatype.
 data User = User { userName     :: String
