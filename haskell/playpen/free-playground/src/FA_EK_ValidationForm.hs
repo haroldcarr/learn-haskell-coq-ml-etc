@@ -56,12 +56,13 @@ formatDoc = printf "%s, %s, e.g., %s"
 getFieldNames:: Ap Field a -> [String]
 getFieldNames = runAp_ (\(Field n _ _ _) -> [n])
 
+-- | Extract documentation from form
 getDoc:: Ap Field a -> [String]
 getDoc        = runAp_ (\(Field n _ h e) -> [formatDoc n h e])
 
--- | Extract documentation from form via state monad
+-- | Extract documentation from form via state monad while executing
 doc :: (Monad m, Show a) => Ap Field a -> m [[String]]
-doc m = execStateT (runAp inputField m) []
+doc form0 = execStateT (runAp inputField form0) []
   where
     inputField (Field n g h e) = do
         s <- get

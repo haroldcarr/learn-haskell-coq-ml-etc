@@ -6,7 +6,8 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     FA_EK_ValidationForm
+  exposed-modules:     FA
+                     , FA_EK_ValidationForm
                      , FM_2013_09_andres_loeh_monads_for_free
                      , FM_DL_free_cofree
                      , FM_DebasishG_2013_01_a_language_and_its_interpretation
@@ -24,4 +25,5 @@ library
                      , mtl
                      , pipes
                      , test-hunit-util
+                     , transformers
   default-language:    Haskell2010
