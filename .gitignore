@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2016 Mar 22 (Tue) 11:51:29 by Harold Carr.
+# Last Modified : 2016 Mar 22 (Tue) 11:53:57 by Harold Carr.
 
 # NOT USING:
 # also see ./.git/info/exclude
@@ -26,32 +26,6 @@ cabal.sandbox.config
 .project
 .settings
 
-# ------------------------------------------------------------------------------
-# COQ
-
-*.glob
-*.vo
-
-coq/.README.*
-coq/book/*-orig
-coq/book/*-repeat
-
-coq/book/CPDT*
-
-coq/book/SF-2013-07-18-worked/x07MoreProp.v
-coq/book/SF-2013-07-18-worked/x08Logic.v
-coq/book/SF-2013-07-18-worked/x09ProofObjects.v
-coq/book/SF-2013-07-18-worked/x10MoreInd.v
-coq/book/SF-2013-07-18-worked/x11SfLib.v
-coq/book/SF-2013-07-18-worked/x12Imp.v
-coq/book/SF-2013-07-18-worked/x13ImpParser.v
-coq/book/SF-2013-07-18-worked/x14ImpCEvalFun.v
-coq/book/SF-2013-07-18-worked/x15Extraction.v
-coq/book/SF-2013-07-18-worked/x16Equiv.v
-coq/book/SF-2013-07-18-worked/x17Hoare.v
-coq/book/SF-2013-07-18-worked/x18Hoare2.v
-
-coq/course/
 
 # ------------------------------------------------------------------------------
 
