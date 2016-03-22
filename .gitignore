@@ -1,10 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2016 Mar 22 (Tue) 11:53:57 by Harold Carr.
-
-# NOT USING:
-# also see ./.git/info/exclude
-
-# CUSTOM:
+# Last Modified : 2016 Mar 22 (Tue) 11:57:16 by Harold Carr.
 
 TAGS
 
@@ -16,8 +11,6 @@ TAGS
 *.pdf
 **/dist
 
-cabal.sandbox.config
-
 # ------------------------------------------------------------------------------
 # ECLIPSE
 
@@ -26,7 +19,6 @@ cabal.sandbox.config
 .project
 .settings
 
-
 # ------------------------------------------------------------------------------
 
 erlang
@@ -34,9 +26,6 @@ f-sharp
 forth
 foundations
 functional-programming
-
-# ------------------------------------------------------------------------------
-
 icfp
 java
 javascript
