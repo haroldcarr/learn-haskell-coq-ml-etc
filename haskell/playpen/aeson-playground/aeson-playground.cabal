@@ -6,7 +6,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Aes, AesonAST, AesonTut, SparqlResults
+  exposed-modules:     Aes, AesonAST, AesonTut, Search, SparqlResults
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , bytestring

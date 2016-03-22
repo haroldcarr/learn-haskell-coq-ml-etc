@@ -14,7 +14,7 @@ data Compute a = Compute { cName    :: String
                          , cCompute :: Integer -> Integer -- TODO return should be `a`
                          }
 
-mkCpt :: String -> (Integer -> Integer) -> Ap Compute a
+mkCpt :: String -> (Integer -> Integer) -> Ap Compute Integer
 mkCpt n f = liftAp $ Compute n f
 
 type Three a b c = (a,b,c)
