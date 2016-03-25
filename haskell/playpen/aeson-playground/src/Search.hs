@@ -4,15 +4,15 @@
 module Search where
 
 import           Control.Monad       ((>=>))
-import           Data.Aeson
-import           Data.ByteString     as BS
-import qualified Data.HashMap.Strict as HM
-import           Data.Text           as T
-import           Data.Text.Encoding  as T
+import           Data.Aeson          (Value (Object, String), decodeStrict)
+import           Data.ByteString     as BS (hGetContents)
+import qualified Data.HashMap.Strict as HM (toList)
+import           Data.Text           as T (Text)
+import           Data.Text.Encoding  as T (encodeUtf8)
 import           Prelude             as P
 import           System.IO           (IOMode (ReadMode), withFile)
 import           Test.HUnit          (Counts, Test (TestList), runTestTT)
-import           Test.HUnit.Util     as U
+import           Test.HUnit.Util     as U (t)
 
 readSwagger :: FilePath -> IO (Maybe Value)
 readSwagger filename =
