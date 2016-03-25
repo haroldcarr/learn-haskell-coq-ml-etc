@@ -8,8 +8,11 @@ import           Data.Aeson
 import           Data.ByteString     as BS
 import qualified Data.HashMap.Strict as HM
 import           Data.Text           as T
+import           Data.Text.Encoding  as T
 import           Prelude             as P
 import           System.IO           (IOMode (ReadMode), withFile)
+import           Test.HUnit          (Counts, Test (TestList), runTestTT)
+import           Test.HUnit.Util     as U
 
 readSwagger :: FilePath -> IO (Maybe Value)
 readSwagger filename =
@@ -50,3 +53,22 @@ swagger =
                                                       \\"items\": {\"$ref\": \"#/definitions/Tag\"}}}},\
          \\"Tag\"   : { \"properties\": { \"n ame\": { \"type\": \"string\" }}}}}"
 
+ex :: Value
+(Just ex) = decodeStrict (T.encodeUtf8 swagger)
+
+tex :: [Test]
+tex = U.t "tex"
+    (findRefs ex)
+    [(["definitions","Parent"]                                  ,("$ref",String "#/definitions/DoesNotExist"))
+    ,(["definitions","Pet","properties","tags","items"]         ,("$ref",String "#/definitions/Tag"))
+    ,(["paths","/pets","get","responses","200","schema","items"],("$ref",String "#/definitions/Pet"))]
+
+------------------------------------------------------------------------------
+
+runTests :: IO Counts
+runTests = runTestTT $ TestList {- $ -} tex
+
+{-
+
+(Just s) <- readSwagger "/Users/carr/.sync/.ksync/rpt/0-catalog/validation-playground/swagger-validation/resource    s/examples/swagger20/refs-simple-invalid.json"
+-}

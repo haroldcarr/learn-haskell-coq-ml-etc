@@ -11,6 +11,8 @@ library
                      , aeson
                      , bytestring
                      , containers
+                     , HUnit
+                     , test-hunit-util
                      , text
                      , unordered-containers
   default-language:    Haskell2010
