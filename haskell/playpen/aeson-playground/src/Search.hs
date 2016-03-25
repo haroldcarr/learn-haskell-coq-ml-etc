@@ -26,12 +26,9 @@ findRefs v = findRefs' v [] []
 findRefs' :: Value -> [Text] -> [([Text], (Text, Value))] -> [([Text], (Text, Value))]
 findRefs' (Object o) path result =
     let kvs = HM.toList o
-    in if P.null kvs
-           then result
-           else let (hk,_) = P.head kvs
-                in if hk == "$ref"
-                       then (P.reverse path, P.head kvs) : result
-                       else P.concatMap (\(k,v) -> (findRefs' v (k:path) result)) kvs
+    in if | P.null kvs                 -> result
+          | "$ref" == fst (P.head kvs) -> (P.reverse path, P.head kvs) : result
+          | otherwise                  -> P.concatMap (\(k,v) -> (findRefs' v (k:path) result)) kvs
 findRefs' _ _ result = result
 
 swagger :: T.Text
