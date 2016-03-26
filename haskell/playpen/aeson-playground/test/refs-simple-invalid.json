@@ -1,0 +1,17 @@
+{"swagger": "2.0",
+ "paths": {
+     "/pets": {
+         "get": {
+             "tags": ["pet"],
+             "summary": "list the pets",
+             "operationId": "getPets",
+             "responses": { "default": { "description": "Generic Error" },
+                            "200"    : { "description": "Pets list",
+                                         "schema": { "type": "array",
+                                                     "items": { "$ref": "#/definitions/Pet" } } } } } } },
+ "definitions": {
+     "Parent": { "$ref": "#/definitions/DoesNotExist" },
+     "Pet"   : { "properties": { "tags": { "type": "array",
+                                        "items": { "$ref": "#/definitions/Tag" } } } },
+     "Tag"   : { "properties": { "name": { "type": "string" } }  }  } }
+

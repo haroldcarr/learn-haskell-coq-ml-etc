@@ -1,0 +1,12 @@
+{"paths": {
+     "/pets": {
+         "get": {
+             "responses": { "default": { "X"     : "default-X-value" },
+                            "200"    : { "X"     : "200-X-value",
+                                         "schema": { "type": "array",
+                                                     "items": { "X": "200-schema-items-X-value" } } } } } } },
+ "definitions": {
+     "Pet"   : { "properties": { "tags": { "type": "array",
+                                           "items": { "X": "items-X-1-value", "X": "items-X-2-value" } } } },
+     "Tag"   : { "X": { "Tag-X-value": { "X": "Tag-X-value-X-value" } }  }  } }
+
