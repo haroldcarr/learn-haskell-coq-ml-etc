@@ -22,18 +22,18 @@ readJson filename =
     withFile filename ReadMode (BS.hGetContents >=> return . decodeStrict)
 
 findInJson :: Text -> Value -> Result
-findInJson goal top = fJson top [] []
+findInJson goal top = fJson top []
   where
-    --             path     result-in    result-out
-    fJson :: Value -> [Text] -> Result    -> Result
-    fJson (Object o) path result  = fObj (HM.toList o)
+    --                 path
+    fJson :: Value -> [Text] -> Result
+    fJson (Object o) path  = fObj (HM.toList o)
       where
-        fObj []                 = result
+        fObj []            = []
         fObj (hd@(k,v):tl)
-            | goal == k       = ((P.reverse path, hd) : result) ++ fObj tl
-            | otherwise       = fJson v (k:path) result         ++ fObj tl
-    fJson (Array  a) path result  = P.concatMap (\v -> fJson v path result) a
-    fJson         _     _ result  = result
+            | goal == k    = (P.reverse path, hd) :  fObj tl
+            | otherwise    = fJson v (k:path)     ++ fObj tl
+    fJson (Array  a) path  = P.concatMap (`fJson` path) a
+    fJson         _     _  = []
 
 readFind :: Text -> FilePath -> IO Result
 readFind goal filename = readJson filename >>= (\(Just s) -> return $ findInJson goal s)
