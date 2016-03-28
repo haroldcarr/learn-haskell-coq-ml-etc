@@ -1,12 +1,8 @@
-{"paths": {
-     "/pets": {
-         "get": {
-             "responses": { "default": { "X"     : "default-X-value" },
-                            "200"    : { "X"     : "200-X-value",
-                                         "schema": { "type": "array",
-                                                     "items": { "X": "200-schema-items-X-value" } } } } } } },
- "definitions": {
-     "Pet"   : { "properties": { "tags": { "type": "array",
-                                           "items": { "X": "items-X-1-value", "X": "items-X-2-value" } } } },
-     "Tag"   : { "X": { "Tag-X-value": { "X": "Tag-X-value-X-value" } }  }  } }
+{"responses": { "default": { "X"     : "responses-default-X-value" },
+                "200"    : { "X"     : "responses-200-X-value",
+                             "schema": { "type" : "array",
+                                         "items": { "X": "responses-200-schema-items-X-value" }}}},
+ "tags": { "type": "array",
+           "items": { "X": "tags-items-X-value-1", "X": "tags-items-X-value-2" }},
+ "Tag"   : { "X": { "Tag-X-value": { "X": "Tag-X-value-X-value" }}}}
 

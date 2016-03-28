@@ -23,17 +23,20 @@ readJson filename =
     withFile filename ReadMode (BS.hGetContents >=> return . decodeStrict)
 
 findInJson :: Text -> Value -> Result
-findInJson goal top = f goal top [] []
+findInJson goal top = f top [] []
   where
-    --                     path     result-in    result-out
-    f :: Text -> Value -> [Text] -> Result    -> Result
-    f g (Object o) path result =
-        let kvs = HM.toList o
-        in if | P.null kvs            -> result
-              | g == fst (P.head kvs) -> (P.reverse path, P.head kvs) : result
-              | otherwise             -> P.concatMap (\(k,v) -> f g v (k:path) result) kvs
-    f g (Array  a) path result         = P.concatMap (   \v  -> f g v    path  result) a
-    f _         _     _ result         = result
+    --             path     result-in    result-out
+    f :: Value -> [Text] -> Result    -> Result
+    f (Object o) path result =
+        let ol = HM.toList o
+        in if | P.null ol    -> result
+              | otherwise    -> let (hd@(k,v):tl) = ol
+                                in if | goal == k -> ((P.reverse path, hd) : result) ++
+                                                     f (Object (HM.fromList tl)) path result
+                                      | otherwise -> f v (k:path) result ++
+                                                     f (Object (HM.fromList tl)) path result
+    f (Array  a) path result  = P.concatMap (   \v  -> f v    path  result) a
+    f         _     _ result  = result
 
 readFind :: Text -> FilePath -> IO Result
 readFind goal filename = readJson filename >>= (\(Just s) -> return $ findInJson goal s)
@@ -58,13 +61,26 @@ ts2 = U.t "ts2"
 ts3 :: [Test]
 ts3 = U.t "ts3"
     (unsafePerformIO (readFind "X" "test/x.json"))
-    -- INCORRECT RESULTS - MISSING STUFF
-    [(["definitions","Tag"]                                     , ("X",Object (fromList [("Tag-X-value",Object (fromList [("X",String "Tag-X-value-X-value")]))])))
-    ,(["definitions","Pet","properties","tags","items"]         , ("X",String "items-X-2-value"))
-    ,(["paths","/pets","get","responses","default"]             , ("X",String "default-X-value"))
-    ,(["paths","/pets","get","responses","200","schema","items"], ("X",String "200-schema-items-X-value"))]
+    [(["Tag"]                              ,("X",Object (fromList [("Tag-X-value",Object (fromList [("X",String "Tag-X-value-X-value")]))])))
+    ,(["responses","default"]              ,("X",String "responses-default-X-value"))
+    ,(["responses","200","schema","items"] ,("X",String "responses-200-schema-items-X-value"))
+    ,(["responses","200"]                  ,("X",String "responses-200-X-value"))
+    ,(["tags","items"]                     ,("X",String "tags-items-X-value-2"))]
 
+ts4 :: [Test]
+ts4 = U.t "ts4"
+    (findInJson
+     "X"
+     (Object
+      (fromList
+       [("default" ,Object (fromList [("X",String "responses-default-X-value")]))
+       ,("200"     ,Object (fromList [("schema",Object (fromList [("items",Object (fromList [("X",String "responses-200-schema-items-X-value")]))
+                                                                 ,("type",String "array")]))
+                                     ,("X",String "responses-200-X-value")]))])))
+    [(["default"]               ,("X",String "responses-default-X-value"))
+    ,(["200","schema","items"]  ,("X",String "responses-200-schema-items-X-value"))
+    ,(["200"]                   ,("X",String "responses-200-X-value"))]
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
-runTests = runTestTT $ TestList $ ts1 ++ ts2 ++ ts3
+runTests = runTestTT $ TestList $ ts1 ++ ts2 ++ ts3 ++ ts4
