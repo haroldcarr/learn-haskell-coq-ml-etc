@@ -27,14 +27,14 @@ findInJson goal top = f top [] []
   where
     --             path     result-in    result-out
     f :: Value -> [Text] -> Result    -> Result
-    f (Object o) path result =
-        let ol = HM.toList o
-        in if | P.null ol    -> result
-              | otherwise    -> let (hd@(k,v):tl) = ol
-                                in if | goal == k -> ((P.reverse path, hd) : result) ++
-                                                     f (Object (HM.fromList tl)) path result
-                                      | otherwise -> f v (k:path) result ++
-                                                     f (Object (HM.fromList tl)) path result
+    f (Object o) path result = f' $ HM.toList o
+      where
+        f' []            = result
+        f' (hd@(k,v):tl) =
+            if | goal == k -> ((P.reverse path, hd) : result) ++
+                              f (Object (HM.fromList tl)) path result
+               | otherwise -> f v (k:path) result ++
+                              f (Object (HM.fromList tl)) path result
     f (Array  a) path result  = P.concatMap (   \v  -> f v    path  result) a
     f         _     _ result  = result
 
