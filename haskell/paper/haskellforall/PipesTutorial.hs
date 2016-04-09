@@ -1,28 +1,26 @@
+module PipesTutorial where
+
 {-
 Created       : 2014 May 01 (Thu) 21:59:04 by Harold Carr.
-Last Modified : 2014 May 01 (Thu) 22:22:25 by Harold Carr.
+Last Modified : 2016 Apr 07 (Thu) 19:26:03 by Harold Carr.
 -}
 
 {-
-Pipes Quick Start : read Pipes.Prelude
-  https://hackage.haskell.org/package/pipes-4.1.6/docs/Pipes-Prelude.html
+-- https://hackage.haskell.org/package/pipes-4.1.8/docs/Pipes-Tutorial.html
 
-This tutorial is more extensive and explains the pipes API in greater detail and illustrates several idioms.
-
--- https://hackage.haskell.org/package/pipes-4.1.6/docs/Pipes-Tutorial.html
-
-Haskell stream programming forces a choice of two of the following three features:
+Haskell stream programming forces choice of two of three features:
 - Effects
-  - sacrifice Effects : get pure/lazy lists,
-    - can transform using composable functions in constant space, but without interleaving effects.
+  - sacrifice Effects : get pure/lazy lists
+    - can transform using composable functions in constant space
+    - but no interleaving effects
 - Streaming
-  - sacrifice Streaming : get mapM, forM and "ListT done wrong",
-    - are composable and effectful,
-    - but do not return a single result until the whole list has first been processed
-      and loaded into memory.
+  - sacrifice Streaming : get mapM, forM and "ListT done wrong"
+    - composable and effectful
+    - no result until whole list processed / loaded into memory
 - Composability
-  - sacrifice Composability : get tightly coupled read/transform/write loop in IO,
-    - which is streaming and effectful, but is not modular or separable.
+  - sacrifice Composability : get tightly coupled read/transform/write loop in IO
+    - streaming and effectful
+    - not modular nor separable
 
 Pipes gives all three: effectful, streaming, composable programming.
 
@@ -31,14 +29,6 @@ Pipes provides many abstractions based on (all connectable because they share sa
 - effectful Consumers (like iteratees)
 - effectful Pipes (like Unix pipes)
 - ListT done right.
-
-Pipes requires a basic understanding of monad transformers.  Learn via:
-- "Monad Transformers - Step by Step"
-  https://www.fpcomplete.com/user/haroldcarr/example-of-why-to-use-monads-what-they-can-do
-- chapter 18 of "Real World Haskell"
-  http://book.realworldhaskell.org/read/monad-transformers.html
-- documentation of the transformers library.
-  http://stackoverflow.com/questions/2769487/mtl-transformers-monads-fd-monadlib-and-the-paradox-of-choice
 -}
 
 ------------------------------------------------------------------------------
@@ -71,12 +61,12 @@ Run this final Effect to begin streaming.
 
 Producers : effectful streams of input.
 
-Producer is a monad transformer that extends any base monad with a `yield` command.
-`yield` sends output downstream to an anonymous handler, decoupling generating
-values from consuming them.
+Producer : monad transformer that extends any base monad with a `yield` command.
+`yield` sends output downstream to anonymous handler,
+decoupling generating values from consuming them.
 
-`yield` emits a value, then suspends the Producer until the value is consumed.
-If value is not consumed then `yield` never returns.
+`yield` emits value, suspends Producer until value consumed.
+If value not consumed, `yield` never returns.
 
 -}
 import           Control.Monad (unless)
@@ -97,19 +87,35 @@ stdinLn = do
     unless eof $ do
         str <- lift getLine
         yield str            -- 'yield' the 'String'
-        stdinLn              -- Loop
-
+        stdinLn              -- loop
 
 ------------------------------------------------------------------------------
 {-
+'for' : simple way to consume Producer
+
+--                +-- Producer      +-- The body of the   +-- Result
+--                |   to loop       |   loop              |
+--                v   over          v                     v
+--                --------------    ------------------    ----------
+for :: Monad m => Producer a m r -> (a -> Effect m ()) -> Effect m r
+
+(for producer body) loops over (producer), substituting each yield in (producer) with (body).
+
+body takes one 'a' arg, same as output Producer (body gets input from Producer and nowhere else).
+
+return value of Producer matches return value of result
+(e.g., for must loop over entire Producer not skipping anything).
+
+Above types are simplified from the real types.
+
 -}
 
 loop :: Effect IO ()
 -- more concise: loop = for stdinLn (lift . putStrLn)
-loop = for stdinLn $ \str -> do  -- Read this like: "for str in stdinLn"
-    lift $ putStrLn str          -- The body of the 'for' loop
+loop = for stdinLn $ \str -> -- Read this like: "for str in stdinLn"
+    lift $ putStrLn str      -- The body of the 'for' loop
 
--- for loops over stdinLn, replaces every yield in stdinLn with the body of the loop, printing each line
+-- for loops over stdinLn, replaces every yield in stdinLn with body of loop:
 -- equivalent to:
 {-
  loop = do                      |  stdinLn = do
@@ -118,16 +124,19 @@ loop = for stdinLn $ \str -> do  -- Read this like: "for str in stdinLn"
          str <- lift getLine    |          str <- lift getLine
          (lift . putStrLn) str  |          yield str
          loop                   |          stdinLn
-You can think of yield as creating a hole and a for loop is one way to fill that hole.
+Think of 'yield' as creating a hole, and 'for' loop as one way to fill hole.
 -}
 
 runStdinLoop :: IO ()
 -- OR: main = runEffect $ for stdinLn (lift . putStrLn)
 runStdinLoop = runEffect loop
 
--- use for to loop over lists (or any Foldable): via convert list to Producer using each:
+-- 'for' with any Foldable: e.g., convert list to Producer using each:
 
 runListLoop :: IO ()
-runListLoop = runEffect $ for (each [1..4]) (lift . print)
+runListLoop  = runEffect $ for (each [1..4::Int])     (lift . print)
+
+runMaybeLoop :: IO ()
+runMaybeLoop = runEffect $ for (each (Just (1::Int))) (lift . print)
 
 -- End of file.
