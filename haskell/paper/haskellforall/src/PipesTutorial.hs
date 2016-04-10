@@ -1,6 +1,6 @@
 {-
 Created       : 2014 May 01 (Thu) 21:59:04 by Harold Carr.
-Last Modified : 2016 Apr 09 (Sat) 09:32:43 by Harold Carr.
+Last Modified : 2016 Apr 09 (Sat) 14:21:06 by Harold Carr.
 -}
 
 module PipesTutorial where
@@ -17,73 +17,73 @@ import           System.IO         (BufferMode (NoBuffering), hPutStrLn,
 {-
 -- https://hackage.haskell.org/package/pipes-4.1.8/docs/Pipes-Tutorial.html
 
-E: No (interleaved) Effects
-- S: get pure/lazy lists
-- C: can transform using composable functions in constant space
+note: Some types in comments are simplified from real types.
 
-S: No Streaming : no result until whole list processed / loaded into memory
-- E: get mapM, forM and "ListT done wrong"
-- C/E: composable and effectful
+Pipes give:
 
-C: No Composability : tightly coupled read/transform/write loop in IO
-- S/E: streaming and effectful
-- not modular nor separable
+Streaming
+- pure/lazy list: get (partial) results immediately
+  - do not have process/load whole list in memory
 
-Pipes give all three: effectful, streaming, composable programming.
+Composable
+- modular / separable
+- do not have to tightly coupled read/transform/write loop in IO
+- transform using composable functions in constant space
+
+Effects
+- mapM, forM and "ListT done right"
 
 Abstractions:
-- effectful Producers (like generators)
-- effectful Consumers (like iteratees)
-- effectful Pipes (like Unix pipes)
-- ListT done right.
+- Producers (generators)
+- Consumers (iteratees)
+- Pipes
 -}
 
 ------------------------------------------------------------------------------
 {- INTRO
 
-Connect streaming components that stream data in constant memory.
+Connect components that stream data in constant memory.
 
-Components communicate using two commands:
-- yield: Send output data
-- await: Receive input data
+communicate using:
+- yield: send
+- await: receive
 
 Components built around yield/await:
-- Producers yield values              : model streaming sources
-- Consumers await values              : model streaming sinks
-- Pipes both yield and await values   : model stream transformations
-- Effects can neither yield nor await : model non-streaming components
+- Producers yield/send            : sources
+- Consumers await/receive         : sinks
+- Pipes     yield  and await      : transformations
+- Effects neither yield nor await : model non-streaming components
 
-Connect components via (4 ways parallel 4 type above):
-- 'for' handles yields
-- (>~) handles awaits
-- (>->) handles both yields and awaits
-- (>>=) handles return values
+Connect via:
+- 'for' : handles yields
+- (>~)  : handles awaits
+- (>->) : handles yields and awaits
+- (>>=) : handles return values
 
-Done connecting when type is Effect: meaning all input/output has been handled.
-Run this final Effect to begin streaming.
+Done connecting when type is Effect
+- meaning all input/output has been handled
+- run Effect to begin streaming
 -}
 
 ------------------------------------------------------------------------------
 {- PRODUCERS
 
-Producers : effectful streams of input.
-
-Producer : monad transformer that extends any base monad with a `yield` command.
-`yield` sends output downstream to anonymous handler,
-decoupling generating values from consuming them.
-
-`yield` emits value, suspends Producer until value consumed.
-If value not consumed, `yield` never returns.
-
+Producer
+- effectful stream of input
+- monad transformer that extends any base monad with a `yield` command
+- `yield` sends output downstream to anonymous handler
+- decoupling generating values from consuming them
+- `yield` emits value, suspends Producer until value consumed
+- if value not consumed, `yield` never returns
 -}
 
- --         +--------+-- A 'Producer' that yields 'String's
+ --         +--------+-- 'Producer' that yields 'String's
  --         |        |
- --         |        |      +-- Every monad transformer has a base monad.
- --         |        |      |   This time the base monad is 'IO'.
+ --         |        |      +-- monad transformer has a base monad
+ --         |        |      |   base monad here is 'IO'
  --         |        |      |
- --         |        |      |  +-- Every monadic action has a return value.
- --         |        |      |  |   This action returns '()' when finished
+ --         |        |      |  +-- monadic action has return value
+ --         |        |      |  |   here returns '()' when finished
  --         v        v      v  v
 stdinLn' :: Producer String IO ()
 stdinLn' = do
@@ -103,20 +103,19 @@ stdinLn' = do
 --                --------------    ------------------    ----------
 for :: Monad m => Producer a m r -> (a -> Effect m ()) -> Effect m r
 
-(for producer body) loops over (producer), substituting each yield in (producer) with (body).
-
-body takes one 'a' arg, same as output Producer (body gets input from Producer and nowhere else).
-
-return value of Producer matches return value of result
-(e.g., for must loop over entire Producer not skipping anything).
-
-Above types are simplified from real types.
+(for producer body)
+- loops over (producer)
+- substituting each yield in (producer) with (body)
+- body takes one 'a' arg
+  - same as output Producer (body gets input from Producer and nowhere else)
+- Producer return value matches return value of result
+  - (e.g., for must loop over entire Producer not skipping anything)
 -}
 
 stdinLoop :: Effect IO ()
 -- more concise: stdinLoop = for stdinLn' (lift . putStrLn)
 stdinLoop = for stdinLn' $ \str -> -- "for str in stdinLn'"
-    lift $ putStrLn str            -- do: body of 'for' loop
+    lift $ putStrLn str            -- do: body
 
 -- 'for' loops over stdinLn', replaces every 'yield' in stdinLn' with body of loop:
 -- equivalent to:
@@ -127,6 +126,7 @@ stdinLoop = for stdinLn' $ \str -> -- "for str in stdinLn'"
          str <- lift getLine    |          str <- lift getLine
          (lift . putStrLn) str  |          yield str
          stdinLoop              |          stdinLn'
+
 Think of 'yield' as creating a hole, and 'for' loop as one way to fill hole.
 -}
 
@@ -134,7 +134,7 @@ runStdinLoop :: IO ()
 -- OR:         runEffect $ for stdinLn' (lift . putStrLn)
 runStdinLoop = runEffect stdinLoop
 
--- 'for' with any Foldable: e.g., convert list to Producer using each:
+-- 'for' works with any Foldable: e.g., convert list to Producer using each:
 
 runListLoop :: IO ()
 runListLoop  = runEffect $ for (each [1..4::Int])     (lift . print)
@@ -147,8 +147,6 @@ runMaybeLoop = runEffect $ for (each (Just (1::Int))) (lift . print)
 Composability
 
 Body of 'for' can be Producer.
-
-E.g., loop as Producer that outputs copies of each line from stdin.
 -}
 
 dup :: Monad m => a -> Producer a m ()
@@ -168,7 +166,7 @@ Use another 'for' to handle dup stream:
 runDupLoop :: IO ()
 runDupLoop = runEffect $ for dupLoop (lift . putStrLn)
 
--- Can be written as nested loop:
+-- written as nested loop:
 
 runDupLoop2 :: IO ()
 runDupLoop2 = runEffect $
@@ -182,9 +180,7 @@ Consumers
 
 'for' loop consumes every element of a Producer.
 
-Process Producer values in different ways.
-
-NEXT: General solution : externally iterate over Producer using 'next':
+NEXT: General consume solution : externally iterate over Producer using 'next':
 
 next :: Monad m => Producer a m r -> m (Either r (a, Producer a m r))
 
@@ -195,7 +191,7 @@ next :: Monad m => Producer a m r -> m (Either r (a, Producer a m r))
 or CONSUMER: effectful sink of values.
 
 Consumer : monad transformer that extends base monad with 'await'.
-await : receive input from anonymous upstream source.
+- await : receive input from anonymous upstream source.
 -}
 
 --           +--------+-- 'Consumer' that awaits 'String's
@@ -235,9 +231,7 @@ runEcho = runEffect $ lift getLine >~ stdoutLn'
 
 -- A Consumer can be fed with another Consumer : await while awaiting.
 
--- doubleUp splits every request from stdoutLn into two separate requests and returns back the concatenated result.
-
-
+-- converts stdoutLn/await into two awaits
 doubleUp :: Monad m => Consumer String m String
 -- more concise: doubleUp = (++) <$> await <*> await
 doubleUp = do
