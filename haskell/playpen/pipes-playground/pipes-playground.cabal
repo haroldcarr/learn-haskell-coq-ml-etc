@@ -10,6 +10,7 @@ library
   build-depends:       base >= 4.7 && < 5
                      , bytestring
                      , pipes
+                     , pipes-bytestring
                      , pipes-network
                      , transformers
   default-language:    Haskell2010
