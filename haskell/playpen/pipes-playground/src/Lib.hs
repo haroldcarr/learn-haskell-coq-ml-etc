@@ -63,6 +63,17 @@ dox = do
     withHTTP req m $ \resp ->
         runEffect $ responseBody resp >-> PB.stdout
 
+{-
+stream                   :: Pipes.Core.Producer ByteString IO () -> RequestBody
+(PB.stdin >-> PP.take 1) :: Control.Monad.IO.Class.MonadIO m =>
+                             Pipes.Internal.Proxy                a' a () ByteString m ()
+type Pipes.Core.Producer b = Pipes.Internal.Proxy Pipes.Internal.X () () b
+
+-}
+
+-- TODO : make a 'readFile' with this signature:
+-- readFile :: FilePath -> Producer ByteString IO ()
+
 readFile :: FilePath -> Producer' ByteString (SafeT IO) ()
 readFile file = bracket
     (do h <- IO.openFile file IO.ReadMode
@@ -73,4 +84,5 @@ readFile file = bracket
         P.putStrLn $ "{" ++ file ++ " closed}" )
     PB.fromHandle
 
+test :: IO ()
 test = runSafeT $ runEffect $ Lib.readFile "TAGS" >-> PP.take 4 >-> PB.stdout
