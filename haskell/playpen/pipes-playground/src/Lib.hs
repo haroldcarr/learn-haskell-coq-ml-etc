@@ -51,17 +51,19 @@ doRecv :: Producer' B.ByteString IO () -> Effect IO ()
 doRecv p = for p $ \b -> lift $ BC.putStrLn b
 
 dox :: IO ()
-dox = do
-    r <- parseUrl "http://127.0.0.1:3000/validator/validate"
-    let req = r { method = "POST"
-                , requestHeaders = [ ("Accept"      , "application/json")
-                                   , ("Content-Type", "application/swagger+json; version=2.0")
-                                   ]
-                , requestBody = stream (PB.stdin >-> PP.take 1)
-                }
-    m <- newManager defaultManagerSettings
-    withHTTP req m $ \resp ->
-        runEffect $ responseBody resp >-> PB.stdout
+dox =
+    IO.withFile fi IO.ReadMode $ \hIn -> do
+        r <- parseUrl "http://127.0.0.1:3000/validator/validate"
+        let req = r { method = "POST"
+                    , requestHeaders = [ ("Accept"      , "application/json")
+                                       , ("Content-Type", "application/swagger+json; version=2.0")
+                                       ]
+                    , requestBody = stream (PB.fromHandle hIn) -- (PB.stdin >-> PP.take 1)
+                    }
+        m <- newManager defaultManagerSettings
+        withHTTP req m $ \resp ->
+            runEffect $ responseBody resp >-> PB.stdout
+        return ()
 
 {-
 stream                   :: Pipes.Core.Producer ByteString IO () -> RequestBody
@@ -73,6 +75,9 @@ type Pipes.Core.Producer b = Pipes.Internal.Proxy Pipes.Internal.X () () b
 
 -- TODO : make a 'readFile' with this signature:
 -- readFile :: FilePath -> Producer ByteString IO ()
+
+fi :: FilePath
+fi = ""
 
 readFile :: FilePath -> Producer' ByteString (SafeT IO) ()
 readFile file = bracket
