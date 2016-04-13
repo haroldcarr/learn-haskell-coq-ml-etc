@@ -9,6 +9,7 @@ import           Data.ByteString        as B
 import           Data.ByteString.Char8  as BC (putStrLn)
 import           Pipes
 import qualified Pipes.ByteString       as PB
+import           Pipes.HTTP
 import           Pipes.Network.TCP
 import           Pipes.Prelude          as PP (take)
 
@@ -46,10 +47,15 @@ recIt soc = do
 doRecv :: Producer' B.ByteString IO () -> Effect IO ()
 doRecv p = for p $ \b -> lift $ BC.putStrLn b
 
-{-
-c <- connect
-let s = fst c
-let p = mkP s
-doRecv p
-close s
--}
+dox :: IO ()
+dox = do
+    r <- parseUrl "http://127.0.0.1:3000/validator/validate"
+    let req = r { method = "POST"
+                , requestHeaders = [ ("Accept"      , "application/json")
+                                   , ("Content-Type", "application/swagger+json; version=2.0")
+                                   ]
+                , requestBody = stream (PB.stdin >-> PP.take 1)
+                }
+    m <- newManager defaultManagerSettings
+    withHTTP req m $ \resp ->
+        runEffect $ responseBody resp >-> PB.stdout
