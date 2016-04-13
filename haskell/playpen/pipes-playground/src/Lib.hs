@@ -4,29 +4,36 @@
 
 module Lib where
 
-import           Control.Monad.IO.Class
-import           Data.ByteString        as B
-import           Data.ByteString.Char8  as BC (putStrLn)
-import           Pipes
-import qualified Pipes.ByteString       as PB
-import           Pipes.HTTP
-import           Pipes.Network.TCP
-import           Pipes.Prelude          as PP
-import           Pipes.Safe
-import           Prelude                as P hiding (readFile)
-import qualified System.IO              as IO
+import qualified Data.ByteString       as B (ByteString)
+import qualified Data.ByteString.Char8 as BC (putStrLn)
+import qualified Pipes                 as P (Consumer', Effect, MonadIO,
+                                             Producer', for, lift, runEffect,
+                                             (>->))
+import qualified Pipes.ByteString      as PB (fromHandle, stdin, stdout)
+import qualified Pipes.HTTP            as PH (defaultManagerSettings, method,
+                                              newManager, parseUrl, requestBody,
+                                              requestHeaders, responseBody,
+                                              stream, withHTTP)
+import qualified Pipes.Network.TCP     as PN (SockAddr, Socket, closeSock,
+                                              connectSock, fromSocket, toSocket)
+import qualified Pipes.Prelude         as PP (take)
+import qualified Pipes.Safe            as PS (SafeT, bracket, runSafeT)
+import           Prelude               as PL (FilePath, IO, fst, putStrLn,
+                                              return, ($), (++))
+import qualified System.IO             as IO (IOMode (ReadMode), hClose,
+                                              openFile, withFile)
 
-connect :: MonadIO m => m (Socket, SockAddr)
-connect = connectSock "127.0.0.1" "3000"
+connect :: P.MonadIO m => m (PN.Socket, PN.SockAddr)
+connect = PN.connectSock "127.0.0.1" "3000"
 
-close :: MonadIO m => Socket -> m ()
-close = closeSock
+close :: P.MonadIO m => PN.Socket -> m ()
+close = PN.closeSock
 
-mkP :: MonadIO m => Socket -> Producer' B.ByteString m ()
-mkP s = fromSocket s 4096
+mkP :: P.MonadIO m => PN.Socket -> P.Producer' B.ByteString m ()
+mkP s = PN.fromSocket s 4096
 
-mkC :: MonadIO m => Socket -> Consumer' B.ByteString m r
-mkC = toSocket
+mkC :: P.MonadIO m => PN.Socket -> P.Consumer' B.ByteString m r
+mkC = PN.toSocket
 
 doit :: IO ()
 doit = do
@@ -36,33 +43,33 @@ doit = do
     recIt s
     close s
 
-sendIt :: MonadIO m => Socket -> m ()
+sendIt :: P.MonadIO m => PN.Socket -> m ()
 sendIt soc = do
     let c = mkC soc
-    runEffect $ PB.stdin >-> PP.take 1 >-> c
+    P.runEffect $ PB.stdin P.>-> PP.take 1 P.>-> c
 
-recIt :: Socket -> IO ()
+recIt :: PN.Socket -> IO ()
 recIt soc = do
     let p = mkP soc
-    runEffect $ doRecv p
+    P.runEffect $ doRecv p
 
 -- doRecv :: Proxy x' x () ByteString IO a' -> Proxy x' x c' c IO a'
-doRecv :: Producer' B.ByteString IO () -> Effect IO ()
-doRecv p = for p $ \b -> lift $ BC.putStrLn b
+doRecv :: P.Producer' B.ByteString IO () -> P.Effect IO ()
+doRecv p = P.for p $ \b -> P.lift $ BC.putStrLn b
 
 dox :: IO ()
 dox =
     IO.withFile fi IO.ReadMode $ \hIn -> do
-        r <- parseUrl "http://127.0.0.1:3000/validator/validate"
-        let req = r { method = "POST"
-                    , requestHeaders = [ ("Accept"      , "application/json")
-                                       , ("Content-Type", "application/swagger+json; version=2.0")
-                                       ]
-                    , requestBody = stream (PB.fromHandle hIn) -- (PB.stdin >-> PP.take 1)
+        r <- PH.parseUrl "http://127.0.0.1:3000/validator/validate"
+        let req = r { PH.method = "POST"
+                    , PH.requestHeaders = [ ("Accept"      , "application/json")
+                                          , ("Content-Type", "application/swagger+json; version=2.0")
+                                          ]
+                    , PH.requestBody = PH.stream (PB.fromHandle hIn) -- (PB.stdin >-> PP.take 1)
                     }
-        m <- newManager defaultManagerSettings
-        withHTTP req m $ \resp ->
-            runEffect $ responseBody resp >-> PB.stdout
+        m <- PH.newManager PH.defaultManagerSettings
+        PH.withHTTP req m $ \resp ->
+            P.runEffect $ PH.responseBody resp P.>-> PB.stdout
         return ()
 
 fi :: FilePath
@@ -70,18 +77,18 @@ fi = ""
 
 -- TODO : make a 'readFile' with this signature:
 -- readFile :: FilePath -> Producer ByteString IO ()
-readFile :: FilePath -> Producer' ByteString (SafeT IO) ()
-readFile file = bracket
+readFile :: FilePath -> P.Producer' B.ByteString (PS.SafeT IO) ()
+readFile file = PS.bracket
     (do h <- IO.openFile file IO.ReadMode
-        P.putStrLn $ "{" ++ file ++ " open}"
+        PL.putStrLn $ "{" ++ file ++ " open}"
         return h )
     (\h -> do
         IO.hClose h
-        P.putStrLn $ "{" ++ file ++ " closed}" )
+        PL.putStrLn $ "{" ++ file ++ " closed}" )
     PB.fromHandle
 
 test :: IO ()
-test = runSafeT $ runEffect $ Lib.readFile "TAGS" >-> PP.take 4 >-> PB.stdout
+test = PS.runSafeT $ P.runEffect $ Lib.readFile "TAGS" P.>-> PP.take 4 P.>-> PB.stdout
 
 {-
 stream                   :: Pipes.Core.Producer ByteString IO () -> RequestBody
