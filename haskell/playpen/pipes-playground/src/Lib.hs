@@ -11,7 +11,10 @@ import           Pipes
 import qualified Pipes.ByteString       as PB
 import           Pipes.HTTP
 import           Pipes.Network.TCP
-import           Pipes.Prelude          as PP (take)
+import           Pipes.Prelude          as PP
+import           Pipes.Safe
+import           Prelude                as P hiding (readFile)
+import qualified System.IO              as IO
 
 connect :: MonadIO m => m (Socket, SockAddr)
 connect = connectSock "127.0.0.1" "3000"
@@ -59,3 +62,15 @@ dox = do
     m <- newManager defaultManagerSettings
     withHTTP req m $ \resp ->
         runEffect $ responseBody resp >-> PB.stdout
+
+readFile :: FilePath -> Producer' ByteString (SafeT IO) ()
+readFile file = bracket
+    (do h <- IO.openFile file IO.ReadMode
+        P.putStrLn $ "{" ++ file ++ " open}"
+        return h )
+    (\h -> do
+        IO.hClose h
+        P.putStrLn $ "{" ++ file ++ " closed}" )
+    PB.fromHandle
+
+test = runSafeT $ runEffect $ Lib.readFile "TAGS" >-> PP.take 4 >-> PB.stdout

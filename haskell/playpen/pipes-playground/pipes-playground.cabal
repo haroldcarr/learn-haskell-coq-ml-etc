@@ -13,6 +13,7 @@ library
                      , pipes-bytestring
                      , pipes-http
                      , pipes-network
+                     , pipes-safe
                      , transformers
   default-language:    Haskell2010
 
