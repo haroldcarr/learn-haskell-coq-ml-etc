@@ -24,7 +24,7 @@ import qualified System.IO             as IO (IOMode (ReadMode), hClose,
                                               openFile, withFile)
 
 connect :: P.MonadIO m => m (PN.Socket, PN.SockAddr)
-connect = PN.connectSock "127.0.0.1" "3000"
+connect = PN.connectSock "127.0.0.1" "2999"
 
 close :: P.MonadIO m => PN.Socket -> m ()
 close = PN.closeSock
@@ -57,26 +57,30 @@ recIt soc = do
 doRecv :: P.Producer' B.ByteString IO () -> P.Effect IO ()
 doRecv p = P.for p $ \b -> P.lift $ BC.putStrLn b
 
-dox :: IO ()
-dox =
-    IO.withFile fi IO.ReadMode $ \hIn -> do
-        r <- PH.parseUrl "http://127.0.0.1:3000/validator/validate"
+------------------------------------------------------------------------------
+
+fi :: FilePath
+fi = "TAGS"
+
+dox :: FilePath -> IO ()
+dox filename =
+    IO.withFile filename IO.ReadMode $ \hIn -> do
+        r <- PH.parseUrl "http://127.0.0.1:2999/validator/validate"
         let req = r { PH.method = "POST"
                     , PH.requestHeaders = [ ("Accept"      , "application/json")
                                           , ("Content-Type", "application/swagger+json; version=2.0")
                                           ]
-                    , PH.requestBody = PH.stream (PB.fromHandle hIn) -- (PB.stdin >-> PP.take 1)
+                    , PH.requestBody = PH.stream (PB.fromHandle hIn)
                     }
         m <- PH.newManager PH.defaultManagerSettings
         PH.withHTTP req m $ \resp ->
             P.runEffect $ PH.responseBody resp P.>-> PB.stdout
         return ()
 
-fi :: FilePath
-fi = ""
+------------------------------------------------------------------------------
 
 -- TODO : make a 'readFile' with this signature:
--- readFile :: FilePath -> Producer ByteString IO ()
+-- readFile :: FilePath -> P.Producer' B.ByteString IO ()
 readFile :: FilePath -> P.Producer' B.ByteString (PS.SafeT IO) ()
 readFile file = PS.bracket
     (do h <- IO.openFile file IO.ReadMode
@@ -88,9 +92,11 @@ readFile file = PS.bracket
     PB.fromHandle
 
 test :: IO ()
-test = PS.runSafeT $ P.runEffect $ Lib.readFile "TAGS" P.>-> PP.take 4 P.>-> PB.stdout
+test = PS.runSafeT $ P.runEffect $ readFile "TAGS" P.>-> PP.take 4 P.>-> PB.stdout
 
 {-
+java -cp ~/.m2/repository/ws-commons/tcpmon/1.0/tcpmon-1.0.jar  org.apache.ws.commons.tcpmon.TCPMon 2999 127.0.0.1 3000 &
+
 stream                   :: Pipes.Core.Producer ByteString IO () -> RequestBody
 (PB.stdin >-> PP.take 1) :: Control.Monad.IO.Class.MonadIO m =>
                              Pipes.Internal.Proxy                a' a () ByteString m ()
