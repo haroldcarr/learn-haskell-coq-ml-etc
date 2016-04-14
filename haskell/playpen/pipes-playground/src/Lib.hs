@@ -6,8 +6,8 @@ module Lib where
 
 import qualified Data.ByteString       as B (ByteString)
 import qualified Data.ByteString.Char8 as BC (putStrLn)
-import qualified Pipes                 as P (Consumer', Effect, MonadIO,
-                                             Producer', each, for, for, lift,
+import qualified Pipes                 as P (Consumer', MonadIO, Producer',
+                                             Proxy, each, for, for, lift,
                                              runEffect, (>->))
 import qualified Pipes.ByteString      as PB (fromHandle, stdout)
 import qualified Pipes.HTTP            as PH (defaultManagerSettings, method,
@@ -25,17 +25,8 @@ import qualified System.IO             as IO (IOMode (ReadMode), hClose,
 
 ------------------------------------------------------------------------------
 
-doit :: IO ()
-doit = do
-    c <- Lib.connect
-    let s = fst c
-    sendIt1 s
-    sendIt2 s
-    recIt s
-    close s
-
 connect :: P.MonadIO m => m (PN.Socket, PN.SockAddr)
-connect = PN.connectSock "127.0.0.1" "2999"
+connect = PN.connectSock "127.0.0.1" "3000"
 
 close :: P.MonadIO m => PN.Socket -> m ()
 close = PN.closeSock
@@ -46,12 +37,8 @@ mkP s = PN.fromSocket s 4096
 mkC :: P.MonadIO m => PN.Socket -> P.Consumer' B.ByteString m r
 mkC = PN.toSocket
 
-sendIt1 :: P.MonadIO m => PN.Socket -> m ()
-sendIt1 soc =
-    PN.send soc "abc\n"
-
-sendIt2 :: P.MonadIO m => PN.Socket -> m ()
-sendIt2 soc = do
+sendIt :: P.MonadIO m => PN.Socket -> m ()
+sendIt soc = do
     let c = mkC soc
 --    P.runEffect $ PB.stdin P.>-> PP.take 1 P.>-> c
     P.runEffect $ P.each ["abc\n"] P.>-> c
@@ -64,9 +51,29 @@ recIt soc = do
     let p = mkP soc
     P.runEffect $ doRecv p
 
--- doRecv :: Proxy x' x () ByteString IO a' -> Proxy x' x c' c IO a'
-doRecv :: P.Producer' B.ByteString IO () -> P.Effect IO ()
+doRecv :: P.Proxy x' x () B.ByteString IO a' -> P.Proxy x' x c' c IO a'
+-- doRecv :: P.Producer' B.ByteString IO () -> P.Effect IO ()
 doRecv p = P.for p $ \b -> P.lift $ BC.putStrLn b
+
+-- uses pipes to send and receive
+doit :: IO ()
+doit = do
+    c <- Lib.connect
+    let s = fst c
+    sendIt s
+    recIt s
+    close s
+
+-- uses socket directly to send / receives with pipes
+doit2 :: IO ()
+doit2 = do
+    c <- Lib.connect
+    let s = fst c
+        p = mkP s
+    PN.send s "foo\n"
+    P.runEffect $ doRecv p
+    close s
+    return ()
 
 ------------------------------------------------------------------------------
 
@@ -76,7 +83,7 @@ fi = "TAGS"
 dox :: FilePath -> IO ()
 dox filename =
     IO.withFile filename IO.ReadMode $ \hIn -> do
-        r <- PH.parseUrl "http://127.0.0.1:2999/validator/validate"
+        r <- PH.parseUrl "http://127.0.0.1:3000/validator/validate"
         let req = r { PH.method = "POST"
                     , PH.requestHeaders = [ ("Accept"      , "application/json")
                                           , ("Content-Type", "application/swagger+json; version=2.0")
