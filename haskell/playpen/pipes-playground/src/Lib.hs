@@ -7,21 +7,32 @@ module Lib where
 import qualified Data.ByteString       as B (ByteString)
 import qualified Data.ByteString.Char8 as BC (putStrLn)
 import qualified Pipes                 as P (Consumer', Effect, MonadIO,
-                                             Producer', for, lift, runEffect,
-                                             (>->))
-import qualified Pipes.ByteString      as PB (fromHandle, stdin, stdout)
+                                             Producer', each, for, for, lift,
+                                             runEffect, (>->))
+import qualified Pipes.ByteString      as PB (fromHandle, stdout)
 import qualified Pipes.HTTP            as PH (defaultManagerSettings, method,
                                               newManager, parseUrl, requestBody,
                                               requestHeaders, responseBody,
                                               stream, withHTTP)
 import qualified Pipes.Network.TCP     as PN (SockAddr, Socket, closeSock,
-                                              connectSock, fromSocket, toSocket)
+                                              connectSock, fromSocket, send,
+                                              toSocket)
 import qualified Pipes.Prelude         as PP (take)
 import qualified Pipes.Safe            as PS (SafeT, bracket, runSafeT)
-import           Prelude               as PL (FilePath, IO, fst, putStrLn,
-                                              return, ($), (++))
+import           Prelude               as PL hiding (readFile)
 import qualified System.IO             as IO (IOMode (ReadMode), hClose,
                                               openFile, withFile)
+
+------------------------------------------------------------------------------
+
+doit :: IO ()
+doit = do
+    c <- Lib.connect
+    let s = fst c
+    sendIt1 s
+    sendIt2 s
+    recIt s
+    close s
 
 connect :: P.MonadIO m => m (PN.Socket, PN.SockAddr)
 connect = PN.connectSock "127.0.0.1" "2999"
@@ -35,18 +46,18 @@ mkP s = PN.fromSocket s 4096
 mkC :: P.MonadIO m => PN.Socket -> P.Consumer' B.ByteString m r
 mkC = PN.toSocket
 
-doit :: IO ()
-doit = do
-    c <- Lib.connect
-    let s = fst c
-    sendIt s
-    recIt s
-    close s
+sendIt1 :: P.MonadIO m => PN.Socket -> m ()
+sendIt1 soc =
+    PN.send soc "abc\n"
 
-sendIt :: P.MonadIO m => PN.Socket -> m ()
-sendIt soc = do
+sendIt2 :: P.MonadIO m => PN.Socket -> m ()
+sendIt2 soc = do
     let c = mkC soc
-    P.runEffect $ PB.stdin P.>-> PP.take 1 P.>-> c
+--    P.runEffect $ PB.stdin P.>-> PP.take 1 P.>-> c
+    P.runEffect $ P.each ["abc\n"] P.>-> c
+
+tt :: P.MonadIO m => m ()
+tt = P.runEffect $ P.each ["abc\n"] P.>-> PB.stdout
 
 recIt :: PN.Socket -> IO ()
 recIt soc = do
@@ -99,7 +110,7 @@ java -cp ~/.m2/repository/ws-commons/tcpmon/1.0/tcpmon-1.0.jar  org.apache.ws.co
 
 stream                   :: Pipes.Core.Producer ByteString IO () -> RequestBody
 (PB.stdin >-> PP.take 1) :: Control.Monad.IO.Class.MonadIO m =>
-                             Pipes.Internal.Proxy                a' a () ByteString m ()
+                             Pipes.Internal.Proxy a'               a  () ByteString m ()
 type Pipes.Core.Producer b = Pipes.Internal.Proxy Pipes.Internal.X () () b
 
 -}
