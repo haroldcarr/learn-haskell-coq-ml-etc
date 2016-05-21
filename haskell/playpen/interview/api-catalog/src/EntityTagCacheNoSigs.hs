@@ -3,7 +3,7 @@
 
 module EntityTagCacheNoSigs where
 
-import           Control.Monad   (liftM, (>=>))
+import           Control.Monad   ((>=>))
 import           Data.List       (isPrefixOf)
 import           Data.Map.Strict as M
 import           Data.Maybe      as MB (mapMaybe)
@@ -32,9 +32,9 @@ mis  (Cache _ _ _ r) = r
 -- impure
 
 getTagsIO :: Monad m => Int -> m Cache -> m (Maybe [String])
-getTagsIO  = liftM . getTags
+getTagsIO  = fmap . getTags
 
-updateTagsIO x ts = liftM (updateTags x ts)
+updateTagsIO x ts = fmap (updateTags x ts)
 
 -- pure
 
@@ -75,10 +75,11 @@ dedupTagIdTags (ss, i0, msi0, mis0) = P.foldr level2 (mempty, i0, msi0, mis0) ss
 -- Test
 
 exCsv = "0,foo,bar\n1,abc,foo\n2\n3,xyz,bar"
+cache = stringToCache exCsv
 cToList c = (M.toList (mii c), next c, M.toList (msi c), M.toList (mis c))
 
 tgt = U.t "tgt"
-    (P.map (\i -> getTags i (stringToCache exCsv)) [0..4])
+    (P.map (`getTags` cache) [0..4])
     [ Just ["foo","bar"]
     , Just ["abc","foo"]
     , Just []
@@ -87,14 +88,14 @@ tgt = U.t "tgt"
     ]
 
 tut = U.t "tut"
-    (cToList $ updateTags 2 ["new1","new2"] (stringToCache exCsv))
+    (cToList $ updateTags 2 ["new1","new2"] cache)
     ( [(0,[1,-1]), (1,[2,1]), (2,[4,3]), (3,[0,-1])]
     , 5
     , [("abc",2),("bar",-1),("foo",1),("new1",4),("new2",3),("xyz",0)]
     , [(-1,"bar"),(0,"xyz"),(1,"foo"),(2,"abc"),(3,"new2"),(4,"new1")] )
 
 tstc = U.t "tstc"
-    (cToList $ stringToCache exCsv)
+    (cToList cache)
     ( [(0,[1,-1]), (1,[2,1]), (2,[]), (3,[0,-1])]
     , 3
     , [("abc",2),("bar",-1),("foo",1),("xyz",0)]
@@ -105,7 +106,7 @@ tct = U.t "tct"
     [(0,["foo","bar"]), (1,["abc","foo"]), (2,[]), (3,["xyz","bar"])]
 
 tddt = U.t "tddt"
-    (let (i, acc, msi0, mis0) = dedupTagIdTags ( ["foo", "bar", "baz", "foo", "baz", "baz", "foo", "qux", "new"]
+    (let (i, acc, msi0, mis0) = dedupTagIdTags ( ["foo", "bar", "baz", "foo", "baz", "baz", "foo", "qux", "new"::String]
                                              , -1, M.empty, M.empty)
      in  (i, acc, M.toList msi0, M.toList mis0))
     (                                            [    1,     3,     2,     1,     2,     2,     1,     0,    -1]
