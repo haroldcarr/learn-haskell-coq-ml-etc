@@ -3,5 +3,9 @@ HasFoo : underlying mechanism
 - https://www.youtube.com/watch?v=GZPup5Iuaqw
 - https://github.com/gwils/next-level-mtl-with-classy-optics
 
+
+OCharles:
+- https://twitter.com/acid2/status/737773506939748352
+
 Usage : do NEXT
 - http://github.com/benkolera/talk-stacking-your-monads/
