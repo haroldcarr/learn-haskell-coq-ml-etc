@@ -1,0 +1,21 @@
+name:                Haskell-Design-Patterns
+version:             0.1.0.0
+build-type:          Simple
+-- extra-source-files:
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Ch05_01_rank_n_types
+                     , Ch05_02_rank_n_types
+                     , Ch05_03_universal_quantification
+                     , Ch05_04_existential_quantification
+                     , Ch05_05_phantom_types
+                     , Ch05_06_gadt
+                     , Ch05_07_typecase
+                     , Ch05_08_dynamic_types_01
+                     , Ch05_08_dynamic_types_02
+                     , Ch05_09_hlists_via_existentials
+                     , Ch05_10_hlists_via_gadts
+  build-depends:       base >= 4.7 && < 5
+  default-language:    Haskell2010
