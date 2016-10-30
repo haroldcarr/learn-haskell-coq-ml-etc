@@ -1,6 +1,7 @@
 > {-# LANGUAGE FlexibleContexts       #-}
 > {-# LANGUAGE FlexibleInstances      #-}
 > {-# LANGUAGE FunctionalDependencies #-}
+> {-# LANGUAGE TypeFamilies           #-}
 >
 > module Ch07_03_associated_type_synonyms where
 
@@ -56,59 +57,88 @@ Instead of container type EP, can use multiparameter type-class with functional 
 >     to (L U)             = Nil'
 >     to (R (Combo x xs))  = (Cons' x xs)
 
-> ch07_03_e1 :: RList [Char]
+> -- ch07_03_e1 :: RList [Char]
 > ch07_03_e1  = from (Cons' "1" Nil')
 >
-> ch07_03_e2 :: Num a => RList a
+> -- ch07_03_e2 :: Num a => RList a
 > ch07_03_e2  = from (Cons' 1 Nil')
+>
+> -- ch07_03_e3 :: RList Integer
+> ch07_03_e3  = from (Cons' 1 (Cons' 2 Nil'))
+>
+> -- this type signature necessary to compile
+> ch07_03_e4 :: GenericFD (List' Integer) (RList Integer) => (List' Integer)
+> ch07_03_e4  = to ch07_03_e3
 
- ch07_03_e3 :: Choice a (Combo a1 (List' a2))
- ch07_03_e3  = to (R (Combo "1" Nil'))
-
-The from function is constrained to functionally-related types d and r. The functional dependency (d -> r) tells the compiler to only accept one r for every d; for example, we can't declare an alternative target representation for (List' a):
+`from` constrained to functionally-related types d and r.
+- functional dependency `d -> r` tells compiler to only accept one `r` for every `d`
+- e.g., can not declare an alternative target representation for (List' a):
 
   instance GenericFD (List' a) (AltRList a) ...
-Multiparameter type-classes became more useful once there was a way to constrain the relationship between the parameters (in the absence of which, type inference is not possible).
 
-Functional Dependencies by Mark Jones, 2000, was the first solution to this problem. They introduced the notion of type function, albeit implicitly, through relations. Type functions, in turn, unleashed a wave of type-level programming in the Haskell community.
+Multiparameter type-classes more useful when constraining relationship between parameters
+- otherwise type inference not possible
 
-In 2002, five years after the introduction of functional dependencies, associated type synonyms were introduced as an alternative way to specify a relationship between multiple type-class parameters as explicit type functions.
+Functional Dependencies by Mark Jones, 2000
+- first solution
+- introduced notion of type function (implicitly, through relations)
+- type functions enabled more type-level programming in Haskell
 
-Let's rewrite our Generic type-class using the associated types.
+2002 (five years after functional dependencies) ASSOCIATED TYPE SYNONYMS introduced
+- alternative way to specify a relationship between multiple type-class parameters as explicit type functions
 
 Associated type synonyms
 
-The key observation that leads us from functional dependencies to associated type synonyms is that the (GenericFD d r) type-class doesn't really have two parameters, but rather one parameter d, which uniquely determines the other parameter r:
+key observation
+- `GenericFD d r` type-class does not really have two parameters
+- it has one: `d``, that uniquely determines `r`
 
--- {-# LANGUAGE TypeFamilies #-}
-class GenericA d where
-  type Rep d :: *
-  
-  fromA :: d        -> (Rep d)
-  toA   :: (Rep d)  -> d
-The Rep is a type function (or type family, or associated type). In contrast to functional dependencies, the associated type synonym makes the type function explicit.
+-- requires TypeFamilies
 
-The fromA and toA are generic functions that are indexed against types that are themselves indexed by types! In this way, associated type synonyms extend type-classes by allowing for type-indexed behavior.
+> class GenericA d where
+>     type Rep d :: *
+>
+>     fromA ::      d  -> (Rep d)
+>     toA   :: (Rep d) ->      d
 
-The type-class instance needs to specify a value for the type function Rep, that is, the instance mixes type functions with type-class functions.
+`Rep` is a type function (aka "type family", "associated type").
+- In contrast to functional dependencies, the associated type synonym makes the type function explicit.
 
-instance GenericA (List' a) where
-  type Rep (List' a) = (RList a)
-  -- Rep type params must match the class params
-  
- fromA Nil'                   = L U
- fromA (Cons' x xs)     = R (Combo x xs)
- toA (L U)                    = Nil'
- toA (R (Combo x xs)) = (Cons' x xs)
+`fromA` and `toA`
+- generic functions
+- indexed against types that are themselves indexed by types
+- type families extend type-classes by enabling type-indexed behavior
 
-main = print $ fromA (Cons' 1 Nil')
-This is precisely how generics are implemented in the GHC (https://wiki.haskell.org/GHC.Generics). Moreover, GHC.Generics provides automatic instance generation with deriving Generic.
+instance must specify a value for the type function `Rep`
+- i.e., instance mixes type functions with type-class functions
+
+> instance GenericA (List' a) where
+>     -- Rep type params must match the class params
+>     type  Rep (List' a)    = (RList a)
+>
+>     fromA Nil'             = L U
+>     fromA (Cons' x xs)     = R (Combo x xs)
+>     toA   (L U)            = Nil'
+>     toA   (R (Combo x xs)) = (Cons' x xs)
+
+> ch07_03_e5 = fromA (Cons' 1 Nil')
+>
+> -- needs signature to compile
+> -- gets error if try to show
+> ch07_03_e6 :: (Rep d ~ Choice U (Combo Integer (List' Integer)), GenericA d) => d
+> ch07_03_e6  = toA ch07_03_e5
+
+This is how generics are implemented in the GHC
+- https://wiki.haskell.org/GHC.Generics
+- GHC.Generics provides automatic instance generation with deriving Generic.
 
 Associated types versus functional dependencies
 
-It turns out that associated types and functional dependencies have similar expressive power. Having said that, associated types have some clear benefits:
+associated types and functional dependencies have similar expressive power
 
-Associated types provide explicit type functions contrary to the implicit relations of functional dependencies
-Type functions allow us to reduce the number of type parameters
-Type functions are more idiomatically functional than relational-style functional dependencies
+associated types have clear benefits:
+
+- Associated types provide explicit type functions contrary to the implicit relations of functional dependencies
+- Type functions enable reducing number of type parameters
+- Type functions are more idiomatically functional than relational-style functional dependencies
 
