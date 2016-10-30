@@ -6,13 +6,11 @@ phantom_type
 
 Phantom Types
 
-Introduced in 1999 as a solution for embedding a type-safe domain specific language (DSL) in Haskell.
+Introduced in 1999 as solution for embedding type-safe domain specific language (DSL) in Haskell.
 
 See Fun with Phantom Types, Hinze http://www.cs.ox.ac.uk/ralf.hinze/publications/With.pdf
 
 Motivating example:
-
-Consider this trivial expression language and evaluator:
 
 > data Expr = I Int
 >           | B Bool
@@ -21,7 +19,7 @@ Consider this trivial expression language and evaluator:
 
 two problems:
 
-`Add` can be given booleans: `(Add (I2 11) (B2 True))`
+`Add` can be given booleans: `(Add (I2 3) (B2 True))`
 
 `eval` cannot pass type-checking
 
@@ -31,14 +29,14 @@ two problems:
 >
 > -- Couldn't match expected type ‘Bool’ with actual type ‘Int’
 
-Phantom type solve the "boolean to `Add`" problem by adding the type t:
+phantom type solves the "boolean to `Add`" problem by adding the type t:
 
 > data ExprP t = IP Int
 >              | BP Bool
 >              | AddP (ExprP Int) (ExprP Int)
 >              deriving Show
 
-`Expr3` is parametrized by type `t`, but `t` does not appear in any of the constructors, hence the term phantom type.
+`ExprP` is parametrized by type `t`, but `t` does not appear in any of the constructors, hence the term "phantom type".
 
 `t` serves as a placeholder that can be used by constructors to describe its particular type.
 
@@ -51,7 +49,7 @@ However, all the constructors still return the same type:
 > -- :t AddP
 > -- AddP :: ExprP Int -> ExprP Int -> ExprP t
 
-But invalid values can still be constructed:
+therefore invalid values can still be constructed:
 
 > -- :t (IP 1)
 > -- (IP 1) :: ExprP t
@@ -59,7 +57,7 @@ But invalid values can still be constructed:
 > -- (BP True) :: ExprP t
 > ap = AddP (IP 1) (BP True)
 
-Solution: use phantom type info to create type-safe smart constructors:
+solution: use phantom type info to create type-safe smart constructors:
 
 > iP :: Int -> ExprP Int
 > iP = IP
@@ -89,7 +87,6 @@ Despite limitations, phantom types useful.
 E.g., Lens library uses the const phantom type: https://github.com/ekmett/lens/wiki/Derivation
 
 Summary:
-- Phantom types enable type-safe construction.
-
-- To solve problem defining `eval` GADTs
+- phantom types enable type-safe construction
+- to solve problem defining `eval` GADTs (next)
 

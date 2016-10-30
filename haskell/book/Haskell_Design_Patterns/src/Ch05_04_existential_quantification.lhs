@@ -16,11 +16,11 @@ the existentially qualified
 
 > data E   = forall a. E a (a -> Bool) (a -> String)
 
-hides the type parameter (i.e., `a` no longer present on the left-hand side)
+hides type parameter (i.e., `a` no longer present on the left-hand side)
 
-(potential confusion: `forall` used in both cases)
+(potential confusion: `forall` used in both universal and existential cases)
 
-The type parameter is also "hidden" in type signatures:
+type parameter is also "hidden" in type signatures:
 
 > ef1 :: E -> Bool
 > ef1 (E v f1 _) = f1 v
@@ -48,10 +48,10 @@ Can also do abstract datatypes via Haskell's module system
 - hide algebraic datatype constructors while exporting functions over the type
 
 Universal                    Existential
+---------                    -----------
+type parametrization         type abstraction
 
-Type parametrization         Type abstraction
-
-Parametric Polymorphism      Encapsulation
+parametric polymorphism      encapsulation
 
 user of data specifies type  implementer of data specifies type
 

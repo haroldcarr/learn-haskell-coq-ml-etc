@@ -9,7 +9,7 @@
 > data DynamicExQuan =
 >     forall t. Show t => DynExQuan (Rep t) t
 
-`DynEq` values have opaque type, but are well typed.
+`DynExQuan` values have opaque type, but are well typed.
 
 Use to create heterogeneous lists:
 
@@ -19,7 +19,7 @@ Use to create heterogeneous lists:
 >
 > showDynExQuan (DynExQuan rep v) = showT rep v
 
-But lists are in a different universe, so:
+But lists are in a different universe, so use regular `map`:
 
 > ch05_08_1_e1 =  map showDynExQuan dynExQuanList
 
@@ -38,15 +38,14 @@ Use to create heterogeneous lists:
 >           , Dyn RInt 3
 >           ]
 >
-> showDyn (Dyn rep v) = showT rep v
 
-`showDyn` acts on dynamic values
+`Show Dynamic` acts on dynamic values
 
 generic `showT` acts on "generic data"
 
 But lists are in a different universe, so:
 
-> ch05_08_1_e2 = map showDyn dynList
+> ch05_08_1_e2 = map show dynList
 
 See next for adding list in same universe.
 

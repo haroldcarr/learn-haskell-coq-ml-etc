@@ -8,8 +8,6 @@ Abstracting/Generalizing type-classes
 
 multiparameter type-classes: extend number of type parameters
 
-requires specifing relations between type parameters by way of functional dependencies.
-
 regular type-classes (e.g., `Ord a`, `Monad a`) specifies a set of types
 
 multiparameter classes specify a set of type relations
@@ -25,7 +23,8 @@ E.g., specify a relation between two type parameters
 > instance Coerce Int [Int] where
 >   coerce x = [x]
 
-type signature of `coerce`` is `coerce :: Coerce a b => a -> b``
+:t coerce
+coerce :: Coerce a b => a -> b
 
 states that coerce is function a -> b
 - if a is coerce-able to b
@@ -46,7 +45,8 @@ have to add type annotations:
 
 that's the reason multiparameter type-classes did not make it into Haskell 98, despite being part of the GHC since 1997
 
-solved via functional dependencies (next)
+solved via specifing relations between type parameters by way of functional dependencies (next)
+
 
 
 

@@ -27,7 +27,7 @@ GADTs bring together
 
 GADT constructors describe constrained instances of Expr t (provide increased type safety for data construction).
 
-Now can define eval:
+GADT smart constructors built into type so pattern matching possible.  Now can define eval:
 
 > eval :: Expr t -> t
 > eval (I v) = v
@@ -35,8 +35,6 @@ Now can define eval:
 > eval (Add x y) = (eval x) + (eval y)
 >
 > eg = eval (Add (I 1) (I 2))
-
-because GADT smart constructors built into type so pattern matching possible.
 
 GADTs not expressed by syntax
 - rather by relationship between type parameters and constructor return types.

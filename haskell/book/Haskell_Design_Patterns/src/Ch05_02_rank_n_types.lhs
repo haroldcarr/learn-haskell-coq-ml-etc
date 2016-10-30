@@ -17,7 +17,7 @@ the function has a "higher rank type", in this case Rank 2.
 
 `forall` tells compiler to make `f` polymorphic in `a`
 
-the `forall` keyword indicates nested parametric polymorphism
+`forall` indicates nested parametric polymorphism
 
 > ch05_02_e1 = tf show (True, 2)
 
@@ -29,17 +29,11 @@ the `forall` keyword indicates nested parametric polymorphism
 
 > ch05_02_e2 = tfl length ([True, False], [1, 2, 4])
 
-Rank 0 : absence of polymorphism :
+Rank 0 : absence of polymorphism :               `add2ints :: Int -> Int -> Int`
 
-`add2ints :: Int -> Int -> Int`
-
-Rank 1 : "regular" parametric polymorphism :
-
-`identity :: a -> a`
+Rank 1 : "regular" parametric polymorphism :     `identity :: a -> a`
 
 Rank 2 / Rank n : nested polymorphism.
 
 -- Peyton Jones et al., 2007, Practical type inference for arbitrary-rank types
 -- http://research.microsoft.com/en-us/um/people/simonpj/papers/higher-rank/
-
-

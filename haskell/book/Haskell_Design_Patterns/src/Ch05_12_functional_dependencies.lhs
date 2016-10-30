@@ -23,9 +23,9 @@ E.g., can constrain relationship between a and b:
 > instance Coerce2 Int [Int] where
 >   coerce2 x = [x]
 
-relation `(b -> a)` tells compiler
+relation `b -> a` tells compiler
 - if it can infer `b`
-- then look up corresponding `a` in a type-class instances
+- then look up corresponding `a` in type-class instances
 
 > ch05_12_e1 = coerce2 12 :: String
 
@@ -44,4 +44,4 @@ Also, compiler can now prevent adding conflicting instance declarations:
 
 `b :: String` could imply either `Int` or `Float`
 
-The functional dependency `b -> a` tells the compiler that `b` determines a uniquely
+The functional dependency `b -> a` tells the compiler that `b` uniquely determines `a`

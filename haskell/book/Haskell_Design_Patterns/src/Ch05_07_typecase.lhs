@@ -4,8 +4,8 @@
 
 -- http://www.cs.ox.ac.uk/jeremy.gibbons/publications/typecase.pdf
 
-TypeCase : a design pattern that allows the definition of closed type-indexed functions,
-in which the index family is fixed but the collection of functions is extensible.
+TypeCase : design pattern for defining closed type-indexed functions,
+in which index family is fixed but collection of functions is extensible.
 
 Use-case for GADTs: generic programming.
 
@@ -26,7 +26,7 @@ Phantom type t serves as type metadata.
 > showT RChar i = (show i) ++ " :: Char"
 >
 > showT (RList rep) [] = "THE END"
-> showT (RList rep) (x:xs) 
+> showT (RList rep) (x:xs)
 >    = (showT rep x) ++ ", " ++
 >      (showT (RList rep) xs)
 

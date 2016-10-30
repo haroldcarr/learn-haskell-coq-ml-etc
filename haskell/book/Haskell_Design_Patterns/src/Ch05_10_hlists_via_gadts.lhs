@@ -10,7 +10,7 @@ Can express HLists in same two styles used with existentials.
 >   {MkShow1 :: a -> (a -> String) -> LI_Gadt1}
 >
 > hListGadt1 :: [LI_Gadt1]
-> hListGadt1 = [MkShow1 "3" show, MkShow1 5 show]
+> hListGadt1 = [ MkShow1 "3" show, MkShow1 5 show]
 >
 > showGadt1 (MkShow1 v showF) = showF v
 >
