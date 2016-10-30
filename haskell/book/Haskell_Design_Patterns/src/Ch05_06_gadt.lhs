@@ -32,7 +32,7 @@ GADT smart constructors built into type so pattern matching possible.  Now can d
 > eval :: Expr t -> t
 > eval (I v) = v
 > eval (B v) = v
-> eval (Add x y) = (eval x) + (eval y)
+> eval (Add x y) = eval x + eval y
 >
 > eg = eval (Add (I 1) (I 2))
 

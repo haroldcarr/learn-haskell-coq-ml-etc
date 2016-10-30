@@ -20,14 +20,13 @@ from Ch05_07
 
 > showT :: Show t => Rep t -> t -> String
 >
-> showT RInt  i = (show i) ++ " :: INT"
-> showT RChar i = (show i) ++ " :: Char"
+> showT RInt  i            = show i ++ " :: INT"
+> showT RChar i            = show i ++ " :: Char"
 >
-> showT (RList rep) [] = "THE END"
-> showT (RList rep) (x:xs)
->    = (showT rep x) ++ ", " ++
->      (showT (RList rep) xs)
-> showT RDyn (Dyn rep v) = showT rep v -- added compared to Ch05_07
+> showT (RList rep) []     = "THE END"
+> showT (RList rep) (x:xs) = showT rep x ++ ", " ++ showT (RList rep) xs
+> 
+> showT RDyn (Dyn rep v)   = showT rep v -- added compared to Ch05_07
 
 
 > ch05_08_2_e1 = showT RInt 17

@@ -35,8 +35,8 @@ functions fromL and toL to convert between the type and representation:
 
 We embedded this in the container type EP as follows:
 
-> data EP d r = EP { from_ :: (d -> r)
->                  , to_   :: (r -> d)
+> data EP d r = EP { from_ :: d -> r
+>                  , to_   :: r -> d
 >                  }
 
 Using functional dependencies
@@ -55,7 +55,7 @@ Instead of container type EP, can use multiparameter type-class with functional 
 >     from (Cons' x xs)    = R (Combo x xs)
 >  -- to :: GenericFD d r => r -> d
 >     to (L U)             = Nil'
->     to (R (Combo x xs))  = (Cons' x xs)
+>     to (R (Combo x xs))  = Cons' x xs
 
 > -- ch07_03_e1 :: RList [Char]
 > ch07_03_e1  = from (Cons' "1" Nil')
@@ -98,8 +98,8 @@ key observation
 > class GenericA d where
 >     type Rep d :: *
 >
->     fromA ::      d  -> (Rep d)
->     toA   :: (Rep d) ->      d
+>     fromA ::     d -> Rep d
+>     toA   :: Rep d ->     d
 
 `Rep` is a type function (aka "type family", "associated type").
 - In contrast to functional dependencies, the associated type synonym makes the type function explicit.
@@ -114,12 +114,12 @@ instance must specify a value for the type function `Rep`
 
 > instance GenericA (List' a) where
 >     -- Rep type params must match the class params
->     type  Rep (List' a)    = (RList a)
+>     type  Rep (List' a)    = RList a
 >
 >     fromA Nil'             = L U
 >     fromA (Cons' x xs)     = R (Combo x xs)
 >     toA   (L U)            = Nil'
->     toA   (R (Combo x xs)) = (Cons' x xs)
+>     toA   (R (Combo x xs)) = Cons' x xs
 
 > ch07_03_e5 = fromA (Cons' 1 Nil')
 >

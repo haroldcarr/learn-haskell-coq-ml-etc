@@ -22,13 +22,11 @@ Phantom type t serves as type metadata.
 
 > showT :: Show t => Rep t -> t -> String
 >
-> showT RInt i  = (show i) ++ " :: INT"
-> showT RChar i = (show i) ++ " :: Char"
+> showT RInt  i            = show i ++ " :: INT"
+> showT RChar i            = show i ++ " :: Char"
 >
-> showT (RList rep) [] = "THE END"
-> showT (RList rep) (x:xs)
->    = (showT rep x) ++ ", " ++
->      (showT (RList rep) xs)
+> showT (RList rep) []     = "THE END"
+> showT (RList rep) (x:xs) = showT rep x ++ ", " ++ showT (RList rep) xs
 
 `showT` is a CLOSED type-indexed function because the type index family (Rep t) is fixed.
 - defined for each member of the family of types Rep t:
