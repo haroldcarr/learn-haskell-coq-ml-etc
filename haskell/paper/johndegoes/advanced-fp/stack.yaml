@@ -1,0 +1,10 @@
+resolver: lts-7.8
+packages:
+- location: .
+- location:
+    git: https://github.com/haroldcarr/test-hunit-util
+    commit: 17971cdff83473fe044c7ea82aade2ed6afc47ed
+  extra-dep: true
+extra-deps: []
+flags: {}
+extra-package-dbs: []

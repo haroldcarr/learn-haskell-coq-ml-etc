@@ -142,3 +142,15 @@ associated types have clear benefits:
 - Type functions enable reducing number of type parameters
 - Type functions are more idiomatically functional than relational-style functional dependencies
 
+HC
+
+> type RMaybe a = Choice U a
+>
+> instance GenericA (Maybe a) where
+>     -- Rep type params must match the class params
+>     type  Rep (Maybe a) = RMaybe a
+>
+>     fromA Nothing       = L U
+>     fromA (Just x)      = R x
+>     toA   (L U)         = Nothing
+>     toA   (R x)         = Just x
