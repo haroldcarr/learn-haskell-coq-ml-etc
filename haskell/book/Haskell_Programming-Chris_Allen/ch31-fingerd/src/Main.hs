@@ -2,6 +2,20 @@
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE RecordWildCards   #-}
 
+{-
+To create DB:
+
+stack ghci --main-is ch31-fingerd:exe:fingerd
+
+Prelude> createDatabase
+=> User {userId = 1, ... noise ... }
+
+Creates sqlite database with name : finger.db in same directory as where fingerd service runs.
+
+sudo `stack exec which fingerd`
+finger callen@localhost
+
+-}
 module Main where
 
 import           Control.Exception
@@ -16,8 +30,9 @@ import           Data.Typeable
 import           Database.SQLite.Simple       hiding (close)
 import qualified Database.SQLite.Simple       as SQLite
 import           Database.SQLite.Simple.Types
-import           Network.Socket               hiding (close, recv)
+import           Network.Socket               as NS hiding (recv)
 import           Network.Socket.ByteString    (recv, sendAll)
+import           System.Environment           (getArgs)
 import           Text.RawString.QQ
 
 {-
@@ -94,6 +109,66 @@ createDatabase = do
              "/home/callen", "Chris Allen",
              "555-123-4567")
 
+-- | Connection to talk to DB.
+-- Socket to talk to user.
+-- Gets/retruns list of all users in DB.
+returnUsers :: Connection -> Socket -> IO ()
+returnUsers dbConn soc = do
+    rows <- query_ dbConn allUsers
+    let usernames = map username rows
+        newlineSeparated = T.concat $ intersperse "\n" usernames
+    sendAll soc (encodeUtf8 newlineSeparated)
+
+formatUser :: User -> ByteString
+formatUser (User _ username shell homeDir realName _) =
+    BS.concat ["Login:\t\t "  , e username , "\t\t\t\t" , "Name: "  , e realName, "\n",
+               "Directory:\t" , e homeDir  ,  "\t\t\t"  , "Shell: " , e shell,    "\n"]
+  where
+    e = encodeUtf8
+
+-- | Given a username.
+-- Returns user info (or prints not found and return nothing).
+returnUser :: Connection -> Socket -> Text -> IO ()
+returnUser dbConn soc username = do
+    maybeUser <- getUser dbConn (T.strip username) -- strip newline CR
+    case maybeUser of
+        Nothing -> do putStrLn ("Couldn't find matching user for username: " ++ show username)
+                      return ()
+        Just user -> sendAll soc (formatUser user)
+
+-- | rceives up to 1024 bytes of data.
+-- Either send list of all users or only a single user.
+handleQuery :: Connection -> Socket -> IO ()
+handleQuery dbConn soc = do
+      msg <- recv soc 1024
+      case msg of
+        "\r\n" -> returnUsers dbConn soc
+        name   -> returnUser  dbConn soc (decodeUtf8 name)
+
+-- | Simple to Debug echo server
+handleQueries :: Connection -> Socket -> IO ()
+handleQueries dbConn sock = forever $ do
+    (soc, _) <- accept sock
+    putStrLn "Got connection, handling query"
+    handleQuery dbConn soc
+    NS.close soc
+
+service :: String -> IO ()
+service portnum = withSocketsDo $ do
+    addrinfos <- getAddrInfo (Just (defaultHints {addrFlags = [AI_PASSIVE]}))
+                             Nothing
+                             (Just portnum)
+    let serveraddr = head addrinfos
+    sock <- socket (addrFamily serveraddr) Stream defaultProtocol
+    NS.bind sock (addrAddress serveraddr)
+    listen sock 1
+    -- only one connection open at a time
+    conn <- open "finger.db"
+    handleQueries conn sock
+    SQLite.close conn
+    NS.close sock
+
 main :: IO ()
 main = do
-  putStrLn "hello world"
+    args <- getArgs
+    service $ case args of [] -> "79"; (x:_) -> x
