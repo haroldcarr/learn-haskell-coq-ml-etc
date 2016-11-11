@@ -16,6 +16,7 @@ library
                      , FM_JD_modern_fp
                      , FM_MX_Redis
                      , HA_Operational_Monad_Tutorial
+                     , Test
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , either-unwrap

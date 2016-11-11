@@ -84,9 +84,10 @@ saveFile :: Path -> Bytes -> IO Unit
 saveFile p f = do
     log ("Saving file" ++ show (name p) ++ " to " ++ show (parentDir p))
     r <- httpPost ("cloudfiles.fooservice.com/" ++ (show p)) f
-    if (httpOK r) then log ("Successfully saved file " ++ show p)
-    else let msg = "Failed to save file " ++ show p
-    in log msg *> throwException (error msg)
+    if httpOK r
+        then log ("Successfully saved file " ++ show p)
+        else let msg = "Failed to save file " ++ show p
+             in log msg *> throwException (error msg)
 
 Define a composable algebra:
 -}
@@ -114,7 +115,7 @@ listFiles path = liftF (ListFiles path id)
 DSL defines semantics of API (could also define laws for operations)
 - does not describe how to provide the service
 
-API is REST API
+REST API
 - could express semantics of CloudFilesF in terms of another REST DSL:
 -}
 
@@ -125,7 +126,7 @@ data HttpF a
     | DELETE Path        (Bytes -> a)
     deriving Functor
 
--- Now can "interpret" (aka map or transform) cloud API semantics into algebra of RESTful APIs.
+-- Now can "interpret" (aka map or transform) cloud API semantics into algebra of RESTful APIs via `cloudFilesI`
 
 -- BEGIN : THIS SECTION IS WRONG
 bytesToHttp :: Bytes -> Free HttpF a

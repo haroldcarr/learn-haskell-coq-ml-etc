@@ -1,0 +1,6 @@
+free monads/applicatives:
+  http://degoes.net/articles/modern-fp
+  https://github.com/jdegoes/scalaworld-2015/blob/master/presentation.pdf
+
+Free Applicative Functors (just checkout the examples use-cases):
+  http://arxiv.org/pdf/1403.0749.pdf
