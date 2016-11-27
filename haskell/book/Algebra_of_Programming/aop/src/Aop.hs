@@ -1,7 +1,7 @@
 module Aop where
 
 import           Test.HUnit      (Counts, Test (TestList), runTestTT)
-import qualified Test.HUnit.Util as U (t)
+import qualified Test.HUnit.Util as U (t, tt)
 
 -- ch 1 1/18
 
@@ -79,8 +79,19 @@ fact n = n * fact (n - 1)
 fib :: Integer -> Integer
 fib 0 = 0
 fib 1 = 1
-fib n = fib n + fib (n - 1)
+fib n = fib (n - 1) + fib (n - 2)
 
+-- conversion between them
+
+itn :: Integer -> Nat
+itn 0 = Zero
+itn n = Succ (itn (n - 1))
+
+nti :: Nat -> Integer
+nti Zero     = 0
+nti (Succ n) = 1 + nti n
+
+-- homomorphism with local functions
 f :: Nat -> Nat
 f x = case x of
   Zero   -> c
@@ -92,34 +103,61 @@ f x = case x of
   h :: Nat -> Nat
   h = undefined
 
--- c, h and f capture in homomorphism of Nat:
+-- more generic homomorphism of Nat based on above:
 
-foldn :: (Nat, Nat -> Nat) -> Nat -> Nat
+foldn :: (t, t -> t) -> Nat -> t
 foldn (c, _) Zero     = c
 foldn (c, h) (Succ n) = h ((foldn (c, h)) n)
+
+foldi :: (t, t -> t) -> Integer -> t
+foldi (c, _) 0 = c
+foldi (c, h) n = h ((foldi (c, h)) $ n - 1)
 
 -- curried version of Nat functions
 
 plusf, multf, expnf :: Nat -> Nat -> Nat
-plusf m = foldn (m, Succ)
-multf m = foldn (Zero, plusf m)
+plusf m = foldn (        m, Succ)
+multf m = foldn (     Zero, plusf m)
 expnf m = foldn (Succ Zero, multf m)
 
-i2n :: Int -> Nat
-i2n 0 = Zero
-i2n n = Succ (i2n (n - 1))
-
-n2i :: Nat -> Int
-n2i Zero     = 0
-n2i (Succ n) = 1 + n2i n
-
 t001 :: [Test]
-t001 = U.t "t001"
-       (n2i (expnf (i2n 8) (i2n 2)))
-       64
+t001 = U.tt "t001"
+  [ plusf (itn 62) (itn 2)
+  , multf (itn 32) (itn 2)
+  , expnf (itn  2) (itn 6)
+  , expnf (itn  8) (itn 2)
+  ]
+  (itn 64)
+
+-- | Computed in linear time.
+-- Uses TABULATION:
+-- results are cache for subsequent use:
+-- foldn ((0,1) f) n returns (fibf n, fibf (n + 1))
+fibf = {- fst . -} foldn ((Zero, Succ Zero), f)
+ where
+  f (m, n) = (n, plusf m n)
+
+fibi = foldi ((0, 1), f)
+ where
+  f (m, n) = (n, m + n)
+
+-- | explicit recursion instead of using fold
+fibgo n = go n (0,1)
+  where
+    go n (a, b) | n==0      = a
+                | otherwise = go (n-1) (b, a+b)
+
+fibf' i =
+  let (x,y) = fibf (itn i)
+  in (nti x, nti y)
+
+t002 :: [Test]
+t002 = U.t "t002"
+  (fibf' 11)
+  (89, 144)
 
 ------------------------------------------------------------------------------
 
 test :: IO Counts
 test =
-    runTestTT $ TestList {- $ -} t001
+    runTestTT $ TestList $ t001 ++ t002
