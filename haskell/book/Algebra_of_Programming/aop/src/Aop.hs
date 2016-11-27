@@ -1,5 +1,8 @@
 module Aop where
 
+import           Test.HUnit      (Counts, Test (TestList), runTestTT)
+import qualified Test.HUnit.Util as U (t)
+
 -- ch 1 1/18
 
 -- 1.1 Datatypes 1/18
@@ -78,15 +81,16 @@ fib 0 = 0
 fib 1 = 1
 fib n = fib n + fib (n - 1)
 
-c :: Nat
-c = undefined
-
-h :: Nat -> Nat
-h = undefined
-
 f :: Nat -> Nat
-f Zero     = c
-f (Succ n) = h (f n)
+f x = case x of
+  Zero   -> c
+  Succ n -> h (f n)
+ where
+  c :: Nat
+  c = undefined
+
+  h :: Nat -> Nat
+  h = undefined
 
 -- c, h and f capture in homomorphism of Nat:
 
@@ -94,12 +98,12 @@ foldn :: (Nat, Nat -> Nat) -> Nat -> Nat
 foldn (c, _) Zero     = c
 foldn (c, h) (Succ n) = h ((foldn (c, h)) n)
 
--- define curried version of Nat functions
+-- curried version of Nat functions
 
 plusf, multf, expnf :: Nat -> Nat -> Nat
 plusf m = foldn (m, Succ)
 multf m = foldn (Zero, plusf m)
-expnf m = foldn(Succ Zero, multf m)
+expnf m = foldn (Succ Zero, multf m)
 
 i2n :: Int -> Nat
 i2n 0 = Zero
@@ -109,12 +113,13 @@ n2i :: Nat -> Int
 n2i Zero     = 0
 n2i (Succ n) = 1 + n2i n
 
--- n2i (expnf (i2n 8) (i2n 2))
+t001 :: [Test]
+t001 = U.t "t001"
+       (n2i (expnf (i2n 8) (i2n 2)))
+       64
 
+------------------------------------------------------------------------------
 
--- factf = snd . (foldn ((Zero,Succ Zero), ff))
-
-ff :: (Nat, Nat) -> Nat -> ((Nat, Nat), Nat)
-ff (m, n) = (,) (plusf m (Succ Zero),
-                 multf (plusf m (Succ Zero))
-                        n)
+test :: IO Counts
+test =
+    runTestTT $ TestList {- $ -} t001
