@@ -1,0 +1,4 @@
+read/convert with https://sourceforge.net/projects/djvu/
+
+http://www.cs.ox.ac.uk/publications/books/algebra/
+
