@@ -1,5 +1,6 @@
 module Aop where
 
+import           Prelude         hiding (curry, uncurry)
 import           Test.HUnit      (Counts, Test (TestList), runTestTT)
 import qualified Test.HUnit.Util as U (t, tt)
 
@@ -129,6 +130,19 @@ t001 = U.tt "t001"
   ]
   (itn 64)
 
+factf = f . foldn (c, h)
+ where
+  f = snd
+  c = (Zero, Succ Zero)
+  h (m, n) = (plusf m (Succ Zero),
+              multf (plusf m (Succ Zero))
+                    n)
+
+t002 :: [Test]
+t002 = U.t "t002"
+  (factf (itn 5))
+  (itn 120)
+
 -- | Computed in linear time.
 -- Uses TABULATION:
 -- results are cache for subsequent use:
@@ -151,13 +165,110 @@ fibf' i =
   let (x,y) = fibf (itn i)
   in (nti x, nti y)
 
-t002 :: [Test]
-t002 = U.t "t002"
+t003 :: [Test]
+t003 = U.t "t003"
   (fibf' 11)
   (89, 144)
+
+-- Exercises
+
+-- 1.1 recursive equations not satisfied by a function.
+f1 n = f1 (n + 1)
+f2 n = f2 (n - 1)
+
+-- 1.2 is m a unique function?
+-- NO: m (1,2) will loop decrementing x and incrementing y forever
+m (x,y)
+  | x == y    = y + 1
+  | otherwise = m (x, m(x-1,y+1))
+
+-- 1.3
+
+data NatP = OneP | SuccP NatP deriving (Eq, Show)
+
+foldnP :: (t, t -> t) -> NatP -> t
+foldnP (c, _) OneP      = c
+foldnP (c, h) (SuccP n) = h ((foldnP (c, h)) n)
+
+ntnP n = case n of
+  Zero      -> error "partial function"
+  Succ Zero -> OneP
+  Succ n    -> SuccP (ntnP n)
+
+nPtn n = case n of
+  OneP    -> Succ Zero
+  SuccP n -> Succ (nPtn n)
+
+e1_3 = U.tt "e1_3"
+  [ (nPtn . ntnP . nPtn) (SuccP (SuccP (SuccP OneP)))
+  , (nPtn . ntnP)        (Succ  (Succ  (Succ  (Succ Zero))))
+  ]
+  (Succ  (Succ  (Succ  (Succ Zero))))
+
+-- 1.4 TODO
+
+{-
+     4^4 = 4 * 4 * 4 * 4
+-}
+sqrn :: Nat -> Nat
+sqrn = f . foldn (c, h)
+ where
+  f = undefined
+  c = undefined
+  h = undefined
+
+-- 1.5 TODO
+
+-- 1.6 TODO
+
+-- ch 1 7/18
+
+-- listr
+
+data ListR a = NilR | Cons (a, ListR a) deriving (Eq, Show)
+data ListL a = NilL | Snoc (ListL a, a) deriving (Eq, Show)
+
+-- | O(n^2)
+convert :: ListL a -> ListR a
+convert NilL          = NilR
+convert (Snoc (x, a)) = snocr (convert x, a)
+ where
+  -- O(n)
+  snocr (NilR, b)      = Cons (b, NilR)
+  snocr (Cons (a,x),b) = Cons(a, snocr (x,b))
+
+-- | replace Cons with h, nil with c
+foldR (c,h) NilR         = c
+foldR (c,h) (Cons (a,x)) = h (a, foldR (c,h) x)
+
+-- | map
+listR f = foldR (NilR, h)
+ where
+  h (a, x) = Cons(f a, x)
+mapR = listR
+
+-- | replace Snoc with h, nil with c
+foldL (c, h) NilL          = c
+foldL (c, h) (Snoc (x, a)) = h (foldL (c, h) x, a)
+
+listL f = foldL (NilL, h)
+ where
+  h (x, a) = Snoc (x, f a)
+mapL = listL
+
+catL x      = foldL (x, Snoc)
+catR (x, y) = foldR (x, Cons) y
+sumR        = foldR (Zero, plus)
+productR    = foldR (Succ Zero, mult)
+concatR     = foldR (NilR, catR)
+
+-- | pattern: any function that can be expressed as a fold after a mapping operation
+lengthR     = sumR . mapR one where one _ = (Succ Zero)
+-- | can also be expressed as a single fold
+lengthR'    = foldR (Zero, h) where h (a, n) = plusf n (Succ Zero)
 
 ------------------------------------------------------------------------------
 
 test :: IO Counts
 test =
-    runTestTT $ TestList $ t001 ++ t002
+  runTestTT $ TestList $ t001 ++ t002 ++ t003 ++ e1_3
