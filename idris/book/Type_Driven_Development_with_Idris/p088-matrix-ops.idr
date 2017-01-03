@@ -8,14 +8,14 @@ addRow :  Num numType
        => (x : Vect cols numType)
        -> (y : Vect cols numType)
        -> Vect cols numType
-addRow [] [] = []
+addRow       []        []  = []
 addRow (x :: xs) (y :: ys) = x + y :: addRow xs ys
 
 addMatrix :  Num numType
           => Vect rows (Vect cols numType)
           -> Vect rows (Vect cols numType)
           -> Vect rows (Vect cols numType)
-addMatrix [] [] = []
+addMatrix       []        []  = []
 addMatrix (x :: xs) (y :: ys) = addRow x y :: addMatrix xs ys
 
 tam : Vect 3 (Vect 2 Int)
@@ -32,16 +32,13 @@ createEmpties = replicate _ []
 transposeHelper :  (x : Vect n elem)
                 -> (xsTrans : Vect n (Vect len elem))
                 -> Vect n (Vect (S len) elem)
-transposeHelper [] [] = []
-transposeHelper (x :: xs) (y :: ys) =
-    (x :: y) :: transposeHelper xs ys
+transposeHelper       []        []  = []
+transposeHelper (x :: xs) (y :: ys) = (x :: y) :: transposeHelper xs ys
 
 transposeMat :  Vect m (Vect n elem)
              -> Vect n (Vect m elem)
 transposeMat       []  = createEmpties
-transposeMat (x :: xs) =
-    let xsTrans = transposeMat xs
-    in (transposeHelper x xsTrans)
+transposeMat (x :: xs) = let xsTrans = transposeMat xs in (transposeHelper x xsTrans)
 
 ttm1 : Vect 2 (Vect 3 Integer)
 ttm1 = transposeMat [ [1,2]
