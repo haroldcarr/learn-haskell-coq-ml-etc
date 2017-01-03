@@ -12,7 +12,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module LinearLam where
+module LinearLamFull where
 
 import Prelude hiding( (^), (*), (+))
 

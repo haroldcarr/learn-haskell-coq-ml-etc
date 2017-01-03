@@ -1,0 +1,4 @@
+- Juno
+- recursion schemes specialized to lists
+- Hasochism
+- Free in action
