@@ -1,4 +1,4 @@
 - Juno
 - recursion schemes specialized to lists
-- Hasochism
+- type-level programming : Hasochism
 - Free in action

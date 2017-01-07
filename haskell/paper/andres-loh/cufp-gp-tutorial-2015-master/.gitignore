@@ -1,7 +1,4 @@
 *.stack-work
-materials
-simple.cabal
 src/NP.hs
 src/NS.hs
 src/Use.hs
-

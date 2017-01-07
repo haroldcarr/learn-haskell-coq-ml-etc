@@ -17,6 +17,7 @@
 > {-# LANGUAGE TypeFamilies              #-}
 > {-# LANGUAGE TypeOperators             #-}
 > {-# LANGUAGE UndecidableInstances      #-}
+> {-# LANGUAGE UndecidableSuperClasses   #-}
 
 > module HC where
 > import           Data.Char (digitToInt)
@@ -318,8 +319,7 @@ liftA3 (,,) (ZipList [1,4,9]) (ZipList [2,8,1]) (ZipList [0,0,9])
 `vapply` is `<*>`
 
 > vapply :: Vec (a -> b) n -> Vec a n -> Vec b n
-> vapply           VNil             _  = VNil
-> vapply             _           VNil  = VNil
+> vapply           VNil           VNil = VNil
 > vapply (f `VCons` fs) (x `VCons` xs) = f x `VCons` vapply fs xs
 
 > va :: Vec Integer ('Suc ('Suc ('Suc 'Zero)))
@@ -625,8 +625,7 @@ but Haskell has no type-level lambda, so:
 Then use it to represent type-level function in:
 
 > hap :: NP (f -.-> g) xs -> NP f xs -> NP g xs
-> hap      Nil         _  = Nil
-> hap        _       Nil  = Nil
+> hap      Nil       Nil  = Nil
 > hap (f :* fs) (x :* xs) = apFn f x :* hap fs xs
 
 Examples
@@ -771,6 +770,7 @@ but
 
 For case of composition where result is `Constraint`:
 
+> -- UndecidableSuperClasses
 > -- UndecidableInstances
 > --       MultiParamTypeClasses
 > -- v     v
