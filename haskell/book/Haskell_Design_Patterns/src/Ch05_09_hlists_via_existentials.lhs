@@ -40,5 +40,3 @@ Using type-classes makes code more compact: instead of embedding functions, appl
 > showEq3 (LI_Eq3 v) = show v
 >
 > ch05_09_e2 = map showEq3 hListEq3
-
-

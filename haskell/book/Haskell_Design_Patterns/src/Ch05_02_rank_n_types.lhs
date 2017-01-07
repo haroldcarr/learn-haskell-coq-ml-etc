@@ -5,10 +5,13 @@ function_type_abstraction
 >
 > module Ch05_02_rank_n_types where
 
-RankNTypes enables parametric polymorphism.
+RankNTypes enables *nested* parametric polymorphism
+- function (or data type) made generic so it can handle values without depending on their type
+
+Use `forall` in Rank-n function types to indicate nested parametric polymorphism.
 
 Enables `tf` to accept a polymorphic function:
-the function has a "higher rank type", in this case Rank 2.
+- the function has a "higher rank type", in this case Rank 2.
 
 > tf :: (Show a1, Show a2)
 >    => (forall a . Show a => a -> b)

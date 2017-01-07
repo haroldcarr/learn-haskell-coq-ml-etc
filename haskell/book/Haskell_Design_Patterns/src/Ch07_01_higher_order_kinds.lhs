@@ -8,35 +8,24 @@ Beginnings of type-level programming
 
 type-level == kind-level
 
-Outline
-- Higher-order kinds
-- Higher-kinded polymorphism
-- Associated type synonyms
-- Type (synonym) families
-- Kind polymorphism
-- Type promotion
-- Type-level programming
-- Dependently-typed programming
-- Higher-order kinds
-
-Types classify values at different levels of abstraction:
+Types classify values
 
 –- Primitive types
 "a string" :: String
 3          :: Int
 
--- instances of higher-order, parameterized types
+-- higher-order, parameterized types
 Just 10  :: Maybe  Int
 Left 10  :: Either Int b
 
--- functions are first class values
+-- functions are values
 (* 2) :: Num a => a -> a
 
 -- type-constructors are functions
 Just :: a -> Maybe a
 Left :: a -> Either a b
 
-Kinds classify types.
+Kinds classify types
 
 For monomorphic types (i.e, not polymorphic) the kind signature is `*`:
 
@@ -54,11 +43,11 @@ where `* -> *` is a placeholder for `a -> Maybe a`
 Either       * -> * -> *
  --          a -> b -> Either a b
 
-kinds can distinguish
-- lifted types (of kind `*`)
-- type constructors (e.g., `* -> * -> *`).
+kinds distinguish
+- "lifted" types    : `*`
+- type constructors : e.g., `* -> * -> *`
 
-Kind signatures signify
+kind signatures signify
 - arity of parameterization of a type
 - i.e., the number and position of type parameters in a type
 

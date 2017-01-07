@@ -42,7 +42,7 @@ GADTs not expressed by syntax
 Phantom types are not expressed by syntax
 - implied by lack of appearance of a type parameter in the type constructors
 
-Subtle difference in meaning of type parameter:
+Difference in meaning of type parameter:
 - phantom: signify type of embedded value
 - gadt: expressing type metadata
 

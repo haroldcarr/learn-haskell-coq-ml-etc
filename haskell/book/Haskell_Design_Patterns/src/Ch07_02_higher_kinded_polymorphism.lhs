@@ -17,7 +17,6 @@ to match the kind of `a :: *` in `Show a`
 - use        : `Maybe' b :: *`  -- i.e, `Maybe` is conceptually applied to the `a` in `(Show a)`
 - instead of : `Maybe :: * -> *`
 
-
 The Monad type-class is of a higher-order than Show and Maybe:
 
  class Monad m :: (* -> *) -> *

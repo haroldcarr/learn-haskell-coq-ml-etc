@@ -22,5 +22,10 @@ library
                      , Ch07_01_higher_order_kinds
                      , Ch07_02_higher_kinded_polymorphism
                      , Ch07_03_associated_type_synonyms
+                     , Ch07_04_type_synonym_families
+                     , Ch07_05_kind_polymorphism
+                     , Ch07_06_type_promotion
+                     , Ch07_07_type_level_programming
+                     , Ch07_08_dependently_typed_programming
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010

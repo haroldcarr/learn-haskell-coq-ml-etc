@@ -1,8 +1,8 @@
-> module Ch05_05_phantom_types where
-
 type_abstraction
 data_type_abstraction
 phantom_type
+
+> module Ch05_05_phantom_types where
 
 Phantom Types
 

@@ -1,7 +1,7 @@
-> module Ch05_01_rank_n_types where
-
 type_abstraction
 function_type_abstraction
+
+> module Ch05_01_rank_n_types where
 
 > tf' f (x, y) = (f x, f y)
 

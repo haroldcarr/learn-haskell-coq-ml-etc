@@ -1,18 +1,16 @@
-> module Ch05_03_universal_quantification where
-
 type_abstraction
 datq_type_abstraction
 universal_quantification
 
-Universal quantification expresses parametric polymorphism in functions and datatypes.
+> module Ch05_03_universal_quantification where
 
-Use `forall` in Rank-n function types to indicate nested parametric polymorphism.
-
-Universal quantification is implicit default pattern when parameterizing types with types.
+Universal quantification
+- expresses parametric polymorphism in functions and datatypes.
+- is implicit default pattern when parameterizing types with types.
 
 > data MB a = {- forall a. -} N  | J  a
 
-Example: ADT with value and two functions on that operate on that value
+Example: ADT with value and two functions that operate on that value
 
 > data U' a = U' a
 >             (a -> Bool)

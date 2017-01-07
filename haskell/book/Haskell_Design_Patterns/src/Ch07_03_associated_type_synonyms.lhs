@@ -29,19 +29,25 @@ List' object and its type representation RList:
 functions fromL and toL to convert between the type and representation:
 
 > fromL :: List' a -> RList a
-> fromL  = undefined
-> toL   :: RList a -> List' a
-> toL    = undefined
+> fromL Nil'           = L U
+> fromL (Cons' x xs)   = R (Combo x xs)
 
-We embedded this in the container type EP as follows:
+> toL   :: RList a -> List' a
+> toL (L U)            = Nil'
+> toL (R (Combo x xs)) = Cons' x xs
+
+A container for the functions:
 
 > data EP d r = EP { from_ :: d -> r
 >                  , to_   :: r -> d
 >                  }
 
+> ch07_03_e0  = EP fromL toL
+> ch07_03_e0' = EP toL fromL -- TODO
+
 Using functional dependencies
 
-Instead of container type EP, can use multiparameter type-class with functional dependencies:
+Instead of EP container, can use multiparameter type-class with functional dependencies:
 
 -- requires FlexibleInstances, FunctionalDependencies
 
@@ -53,7 +59,7 @@ Instead of container type EP, can use multiparameter type-class with functional 
 >  -- from :: GenericFD d r => d -> r
 >     from Nil'            = L U
 >     from (Cons' x xs)    = R (Combo x xs)
->  -- to :: GenericFD d r => r -> d
+>  -- to   :: GenericFD d r => r -> d
 >     to (L U)             = Nil'
 >     to (R (Combo x xs))  = Cons' x xs
 
@@ -138,7 +144,7 @@ associated types and functional dependencies have similar expressive power
 
 associated types have clear benefits:
 
-- Associated types provide explicit type functions contrary to the implicit relations of functional dependencies
+- Associated types provide explicit type functions contrary to implicit relations of functional dependencies
 - Type functions enable reducing number of type parameters
 - Type functions are more idiomatically functional than relational-style functional dependencies
 

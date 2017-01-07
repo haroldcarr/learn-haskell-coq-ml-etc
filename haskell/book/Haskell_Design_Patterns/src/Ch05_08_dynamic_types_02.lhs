@@ -25,9 +25,8 @@ from Ch05_07
 >
 > showT (RList rep) []     = "THE END"
 > showT (RList rep) (x:xs) = showT rep x ++ ", " ++ showT (RList rep) xs
-> 
+>
 > showT RDyn (Dyn rep v)   = showT rep v -- added compared to Ch05_07
-
 
 > ch05_08_2_e1 = showT RInt 17
 > ch05_08_2_e2 = showT (RList RInt) [12,13,14]
@@ -46,4 +45,3 @@ See
   - http://www.cs.ox.ac.uk/ralf.hinze/publications/With.pdf,
 - Generalized Algebraic Data Types in Haskell, Anton Dergunov
   - https://themonadreader.files.wordpress.com/2013/08/issue221.pdf
-
