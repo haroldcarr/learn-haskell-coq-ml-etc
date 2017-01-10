@@ -96,7 +96,7 @@ GADT enables restricting
 > data Vec (a :: *) (n :: Nat) where
 >                 -- DataKinds
 >                 -- v
->     VNil  :: Vec a 'Zero
+>     VNil  ::                 Vec a  'Zero
 >     VCons :: a -> Vec a n -> Vec a ('Suc n)
 >
 > infixr 5 `VCons`
@@ -268,7 +268,7 @@ Mutually-recursive way used in remainder:
 > vreplicate :: forall a n . SNatI n => a -> Vec a n
 > --                  ScopedTypeVariables
 > --                  v
-> vreplicate x = case sNat :: SNat n of -- TODO: how does this work?
+> vreplicate x = case sNat :: SNat n of -- choice of sNat to run at runtime is made via type at compiletime
 >     SZero -> VNil
 >     SSuc  -> x `VCons` vreplicate x
 
@@ -436,7 +436,7 @@ to one of the types in the index list.
 > --            PolyKinds
 > --            v
 > data NP (f :: k -> *) (xs :: [k]) where
->     Nil  :: NP f '[]
+>     Nil  ::                   NP f      '[]
 >     (:*) :: f x -> NP f xs -> NP f (x ': xs)
 >
 > infixr 5 :*
@@ -460,14 +460,14 @@ Case where `k` is `*`:
 -- p 15
 
 > fromHList :: HList xs -> NP I xs
-> fromHList HNil = Nil
+> fromHList           HNil = Nil
 > fromHList (x `HCons` xs) = I x :* fromHList xs
 
 > toHList :: NP I xs -> HList xs
-> toHList Nil = HNil
+> toHList         Nil = HNil
 > toHList (I x :* xs) = x `HCons` toHList xs
 
-No constrains on `xs` so no need for type class.
+No constraints on `xs` so no need for type class.
 
 > npgroup :: NP I '[Char, Bool, Int]
 > npgroup = fromHList group
@@ -481,7 +481,7 @@ No constrains on `xs` so no need for type class.
 > j3 :: Num x => NP Maybe '[x]
 > j3 = Just 3 :* Nil
 
-`NP` is also a generalizationof homogeneous vectors:
+`NP` also a generalization of homogeneous vectors:
 
 > -- constant function on types
 > -- for any types a b, K a b isomorphic to a
@@ -565,8 +565,7 @@ Example
 
 -- 1.6.2 p 17 Applicative n-ary products
 
-In an applicative for `NP` compared to `vreplicate`:
-
+applicative for `NP` compared to `vreplicate`:
 - role of `n` is now the signature `xs`
 - role of 'a' is now the type constructor `f`
     - `f` must accept any type in the signature `xs`
@@ -622,7 +621,7 @@ but Haskell has no type-level lambda, so:
 > newtype (f -.-> g) a = Fn {apFn :: f a -> g a}
 > infix 1 -.->
 
-Then use it to represent type-level function in:
+Then use to represent type-level function in:
 
 > hap :: NP (f -.-> g) xs -> NP f xs -> NP g xs
 > hap      Nil       Nil  = Nil

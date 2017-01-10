@@ -2,3 +2,8 @@
 - recursion schemes specialized to lists
 - type-level programming : Hasochism
 - Free in action
+
+Schedule:
+https://docs.google.com/spreadsheets/d/16Tr-JVQA-Eemfcv3VUoTVu5GC3v2qWB3iEWtnACcfhA/edit#gid=0
+
+
