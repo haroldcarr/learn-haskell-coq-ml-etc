@@ -6,4 +6,9 @@
 Schedule:
 https://docs.google.com/spreadsheets/d/16Tr-JVQA-Eemfcv3VUoTVu5GC3v2qWB3iEWtnACcfhA/edit#gid=0
 
+initial object - can get to all other objects in universe from that object
+terminal object - can get from all objects to that objects
 
+profunctor: map over arg before applying function, map over results after apply function
+
+Control.Fold

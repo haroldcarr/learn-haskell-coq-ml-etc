@@ -8,20 +8,25 @@ module P439_state_machine_vending where
 
 import           Data.Kind
 
-data Nat = Z | S Nat
+data Nat = Z | S Nat deriving (Show)
 
 type family (m :: Nat) :+ (n :: Nat) :: Nat
 type instance Z   :+ n =         n
 type instance S m :+ n = S (m :+ n)
 
-data Natty :: Nat -> * where
-  Zy ::            Natty  Z
-  Sy :: Natty n -> Natty (S n)
+data SNat :: Nat -> * where
+  SZ ::           SNat  Z
+  SS :: SNat n -> SNat (S n)
+
+snatToNat :: SNat n -> Nat
+snatToNat SZ     = Z
+snatToNat (SS n) = (S (snatToNat n))
+
 {-
-data NattyOf = NattyOf (forall n . Natty n)
-intToNattyOf :: Int -> NattyOf
-intToNattyOf 0 = NattyOf 0
-intToNattyOf n = let NattyOf x = intToNattyOf (n - 1) in
+data SNatOf = SNatOf (forall n . SNat n)
+intToSNatOf :: Int -> SNatOf
+intToSNatOf 0 = SNatOf 0
+intToSNatOf n = let SNatOf x = intToSNatOf (n - 1) in
 -}
 {-
 type VendState = '('Nat, 'Nat)
@@ -42,7 +47,7 @@ data MachineCmd' :: * -> Nat -> Nat -> Nat -> Nat -> * where
      InsertCoin' :: MachineCmd' ()    pounds     chocs  (S pounds) chocs
      Vend'       :: MachineCmd' () (S pounds) (S chocs)    pounds  chocs
      GetCoins'   :: MachineCmd' ()    pounds     chocs     Z       chocs
-     Refill      :: Natty bars
+     Refill      :: SNat bars
                  -> MachineCmd' ()    Z          chocs     Z       (bars :+ chocs)
      Bind'       :: MachineCmd' ()    s1p        s1c       s2p     s2c
                  -> MachineCmd' ()    s2p        s2c       s3p     s3c
@@ -52,7 +57,7 @@ vend1 :: MachineCmd' () Z (S Z) Z Z
 vend1  = InsertCoin' `Bind'` Vend'
 
 vend2 :: MachineCmd' () Z Z Z (S Z)
-vend2  = Refill (Sy (Sy Zy)) `Bind'` InsertCoin' `Bind'` Vend'
+vend2  = Refill (SS (SS SZ)) `Bind'` InsertCoin' `Bind'` Vend'
 
 {-
 addNumbers = do
