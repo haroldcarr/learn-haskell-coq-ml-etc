@@ -12,3 +12,44 @@ terminal object - can get from all objects to that objects
 profunctor: map over arg before applying function, map over results after apply function
 
 Control.Fold
+
+RaftSpec
+- data - can change slots at runtime
+  - should bang pattern all fields (compiler will tell you if you forget to fill out field)
+- typeclass - have to have instances for each type - and need to specify type
+
+randomRIO
+- careful - if you need entroyp.... pseudo random
+  - source of entropy : /dev/urandom
+
+----
+
+fast-logger
+- can do data (instead of just text)
+- has multiple backends
+- part of Yesod - maintained by FPComplete
+
+monad-logger
+
+----
+
+space profiling : Neil Mitchell Monday Sept 21, 2015 : Detecting Space Leaks
+
+----
+
+time profiling :
+
+----
+
+UUID for requests
+- starts with client and carried everywhere
+- include in log
+- easy to grep log
+
+----
+
+look at yesod scafold
+
+----
+
+edward kmett's quine
