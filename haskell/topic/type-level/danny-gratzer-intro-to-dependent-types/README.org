@@ -1,0 +1,4 @@
+Introduction to Dependent Types: Haskell on Steroids
+
+August 25, 2014
+
