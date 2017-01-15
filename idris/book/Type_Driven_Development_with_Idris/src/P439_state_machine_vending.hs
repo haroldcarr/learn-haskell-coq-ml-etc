@@ -29,6 +29,7 @@ intToSNatOf 0 = SNatOf 0
 intToSNatOf n = let SNatOf x = intToSNatOf (n - 1) in
 -}
 {-
+I can't get the tuple to work at type level (so unpacked versions below).
 type VendState = '('Nat, 'Nat)
 
 data MachineCmd :: * -> VendState -> VendState -> * where
