@@ -1,0 +1,24 @@
+want to deserialize JSON that required dispatch on specific value of json key `type`
+- based on that value, parse JSON into a specific type
+
+attempts
+
+1. Ad-hoc
+2. Using a sum type
+3. Encoding expected value of `type` in type-level string
+
+mostly explored last option
+
+1. de/serialize `Proxy` values of type `Proxy (s :: Symbol)`
+  - enables encoding `type` value as  type-level string in proxy
+2. using `1` created `Payload (s :: Symbol) (a :: *)` datatype to associcate arbitrary payloads with type-level strings
+3. ca de/serialize values of  type `Payload s a`
+4. global index of types and assumed keys using type family `TypeKey`
+5. using `4` de/serialize values of type `Payload (TypeKey a) a`
+   - encoding json-key assumptions at compiletime in global, unique index
+6. added `Message a` datatype to wrap `Payload (TypeKey a) a`
+   - interface for clients
+7. compiler error if try to deserialize `Message a` where `a` has no entry in `TypeKey` type family index
+
+further inspiration, try to grok
+- reflection (https://hackage.haskell.org/package/reflection)
