@@ -23,6 +23,13 @@
 > import qualified Test.HUnit.Util      as U (t, tt)
 > import           Text.RawString.QQ
 
+> instance {-# OVERLAPPING #-} KnownSymbol s => ToJSON   (Proxy s) where
+>   toJSON = A.String . pack . symbolVal
+
+> instance {-# OVERLAPPING #-} KnownSymbol s => FromJSON (Proxy s) where
+>   parseJSON (A.String s) | s == pack (symbolVal (Proxy :: Proxy s)) = return (Proxy :: Proxy s)
+>   parseJSON _      = mzero
+
 global index of keys/type-level strings and corresponding type
 - accomplished via closed type family : serves as index
 
@@ -32,20 +39,13 @@ TypeFamilies (https://downloads.haskell.org/~ghc/7.8.2/docs/html/users_guide/typ
 >   TypeKey Int    = "int"
 >   TypeKey String = "string"
 
-> instance {-# OVERLAPPING #-} KnownSymbol s => ToJSON   (Proxy s) where
->   toJSON = A.String . pack . symbolVal
-
-> instance {-# OVERLAPPING #-} KnownSymbol s => FromJSON (Proxy s) where
->   parseJSON (A.String s) | s == pack (symbolVal (Proxy :: Proxy s)) = return (Proxy :: Proxy s)
->   parseJSON _      = mzero
-
 To incorporate type family need to update `Payload s a` as a GADT to get constructor return values of specific type
 - Generalized Algebraic Data Type (https://wiki.haskell.org/Generalised_algebraic_datatype)
 
 > data Payload (s :: Symbol) a :: * where
 >   Payload :: a -> Payload (TypeKey a) a
 
-For `ToJSON`/`FromJSON` need equality constraints to work around limitations in type-level computations.
+need equality constraints to work around limitations in type-level computations
 
 Ideal : `instance ToJSON (ToJSON a, KnownSymbol (TypeKey a)) => ToJSON (Payload (TypeKey a) a)`
 - states: if there is `ToJSON` instance for `a` and `TypeKey` mapping on `a` results in known symbol
@@ -53,22 +53,15 @@ Ideal : `instance ToJSON (ToJSON a, KnownSymbol (TypeKey a)) => ToJSON (Payload 
 
 but results in error:
 
-05-indexing-your-keys.hs|50 col 28 error| Could not deduce (s ~ Proxy.TypeKey a)
-|| from the context (GHC.TypeLits.KnownSymbol (Proxy.TypeKey a),
-||                   aeson-0.8.0.2:Data.Aeson.Types.Class.FromJSON a)
-||   bound by the instance declaration
-||   at /home/aterica/dev/tmp/blogpost/05-indexing-your-keys.hs:47:10-72
-||   ‘s’ is a rigid type variable bound by
-||       the instance declaration
-||       at /home/aterica/dev/tmp/blogpost/05-indexing-your-keys.hs:47:10
-|| Expected type: a -> Proxy.Payload s a
-||   Actual type: a -> Proxy.Payload (Proxy.TypeKey a) a
+Could not deduce (s ~ Proxy.TypeKey a)
+ Expected type: a -> Proxy.Payload s a
+   Actual type: a -> Proxy.Payload (Proxy.TypeKey a) a
 
 workaround
 - equality constraint `s ~ TypeKey a`
 
 `(s ~ TypeKey a, KnownSymbol s, ToJSON a)`
-- if `s` is constrained to be equal to `TypeKey a` (i.e. `s` is a type of kind `Symbol`)
+- if `s` is constrained to be equal to `TypeKey a`
 - and
 - `s` is also a `KnownSymbol`
 - then can create `ToJSON` instance for `Payload s a`
@@ -103,14 +96,22 @@ workaround
 
 > -- t5e2 = decode t5j :: Maybe (Payload "int" String)
 
+    Couldn't match type ‘"int"’ with ‘"string"’
+
+> -- t5e3 = decode t5j :: Maybe (Payload "string" Int)
+
     Couldn't match type ‘"string"’ with ‘"int"’
 
-> t5e2 = U.t "t5e2"
+> t5e4 = U.t "t5e4"
+>      (decode t5j :: Maybe (Payload "int" Int))
+>      Nothing
+
+> t5e5 = U.t "t5e2"
 >      (encode t5p)
 >      "{\"data\":10,\"type\":\"int\"}"
 
 ------------------------------------------------------------------------------
 
 > t5test =
->   runTestTT $ TestList $ t5e1 <> t5e2
+>   runTestTT $ TestList $ t5e1 <> t5e4 <> t5e5
 

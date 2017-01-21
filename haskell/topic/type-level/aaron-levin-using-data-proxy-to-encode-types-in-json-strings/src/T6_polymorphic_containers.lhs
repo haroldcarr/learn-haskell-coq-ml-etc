@@ -9,35 +9,39 @@
 >
 > module T6_polymorphic_containers where
 >
-> import Control.Applicative ((<$>))
-> import Control.Monad (mzero)
-> import Data.Aeson
-> import Data.Aeson.Types
-> import qualified Data.Aeson as A
+> import           Control.Applicative  ((<$>))
+> import           Control.Monad        (mzero)
+> import           Data.Aeson
+> import           Data.Aeson.Types
+> import qualified Data.Aeson           as A
 > import qualified Data.ByteString.Lazy as BL
-> import Data.Monoid ((<>))
-> import Data.Proxy (Proxy(Proxy))
-> import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
-> import Data.Text (pack)
+> import           Data.Monoid          ((<>))
+> import           Data.Proxy           (Proxy(Proxy))
+> import           GHC.TypeLits         (KnownSymbol, Symbol, symbolVal)
+> import           Data.Text            (pack)
+> import           Test.HUnit           (Counts, Test (TestList), runTestTT)
+> import qualified Test.HUnit.Util      as U (t, tt)
+> import           Text.RawString.QQ
 
 > type family TypeKey (a :: *) :: Symbol where
 >   TypeKey Int    = "int"
 >   TypeKey String = "string"
 
-> instance KnownSymbol s => ToJSON (Proxy s) where
+> instance {-# OVERLAPPING #-} KnownSymbol s => ToJSON   (Proxy s) where
 >   toJSON = A.String . pack . symbolVal
 
-> instance KnownSymbol s => FromJSON (Proxy s) where
+> instance {-# OVERLAPPING #-} KnownSymbol s => FromJSON (Proxy s) where
 >   parseJSON (A.String s) | s == pack (symbolVal (Proxy :: Proxy s)) = return (Proxy :: Proxy s)
 >   parseJSON _      = mzero
 
 > data Payload (s :: Symbol) a :: * where
 >   Payload :: a -> Payload (TypeKey a) a
 
-> instance (s ~ TypeKey a, KnownSymbol s, ToJSON a) => ToJSON (Payload s a) where
+> instance (s ~ TypeKey a, KnownSymbol s, ToJSON   a) => ToJSON   (Payload s a) where
 >   toJSON (Payload a) = object [ "type" .= (Proxy :: Proxy s)
 >                               , "data" .= a
-                                ]
+>                               ]
+
 > instance (s ~ TypeKey a, KnownSymbol s, FromJSON a) => FromJSON (Payload s a) where
 >   parseJSON (Object v) = (v .: "type" :: Parser (Proxy s))
 >                          >>
@@ -47,15 +51,9 @@
 > instance (KnownSymbol s, Show a) => Show (Payload s a) where
 >   show (Payload a) = "Payload " <> symbolVal (Proxy :: Proxy s) <> " " <> show a
 
-> t6_j :: BL.ByteString
-> t6_j  = "{\"type\": \"string\", \"data\": \"cool\"}"
-
-> t6x :: Payload "int" Int
-> t6x  = Payload 10
-
 assumptions now in type
 
-but  don't want to specify keys everywhere
+don't want to specify keys everywhere
 
 want to keep global index for a reference
 
@@ -81,14 +79,20 @@ do via GADT and UndecidableInstances (https://downloads.haskell.org/~ghc/7.8.2/d
 > instance Show a => Show (Message a) where
 >   show (Message p) = "Message ( " <> show p <> " )"
 
-> messageStringA :: BL.ByteString
-> messageStringA = "{ \"payload\": {\"type\": \"string\", \"data\": \"cool\"} }"
+> t6j :: BL.ByteString
+> t6j  = "{\"type\": \"string\", \"data\": \"cool\"}"
 
-> messageStringB :: BL.ByteString
-> messageStringB = "{ \"payload\": {\"type\": \"string\", \"data\": 10} }"
+> t6p :: Payload "int" Int
+> t6p  = Payload 10
 
-> y :: Message Int
-> y = Message (Payload 10 :: Payload "int" Int)
+> msgA :: BL.ByteString
+> msgA = "{ \"payload\": {\"type\": \"string\", \"data\": \"cool\"} }"
+
+> msgB :: BL.ByteString
+> msgB = "{ \"payload\": {\"type\": \"string\", \"data\": 10} }"
+
+> p :: Message Int
+> p = Message (Payload 10 :: Payload "int" Int)
 
 > data Env a = Env { m :: Message a }
 
@@ -96,16 +100,13 @@ do via GADT and UndecidableInstances (https://downloads.haskell.org/~ghc/7.8.2/d
 >   parseJSON (Object v) = Env <$> v .: "envelope"
 >   parseJSON _ = mzero
 
-
-> message = "{ \"payload\": {\"type\": \"string\", \"data\": \"cool\"} }" :: Data.ByteString.Lazy.ByteString
-
-> t6e1 = decode message :: Maybe (Message String)
+> t6e1 = decode msgA :: Maybe (Message String)
 > -- => Just Message ( Payload string "cool" )
 
-> t6e2 = decode message :: Maybe (Message Int)
+> t6e2 = decode msgA :: Maybe (Message Int)
 > -- => Nothing
 
-> t6e3 = Message (Payload 420) :: Message Int
+> t6e3 = Message (Payload  420)  :: Message Int
 
 > t6e4 = Message (Payload "420") :: Message String
 

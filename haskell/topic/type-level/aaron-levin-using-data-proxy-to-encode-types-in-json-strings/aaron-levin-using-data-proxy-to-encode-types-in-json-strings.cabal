@@ -11,6 +11,7 @@ library
                      , T3_more_general_proxy
                      , T4_proxy_and_payload
                      , T5_indexing_keys
+                     , T6_polymorphic_containers
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , bytestring
