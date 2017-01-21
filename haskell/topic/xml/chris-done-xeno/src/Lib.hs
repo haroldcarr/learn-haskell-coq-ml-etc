@@ -10,6 +10,7 @@ import           Data.String.Conversions
 import           Prelude                 as P
 import           Text.RawString.QQ
 import           Xeno.SAX
+import           Xeno.Types
 
 x :: ByteString
 x = "Text<tag prop='value'>Hello, World!</tag><x><y prop=\"x\">Content!</y></x>Trailing."
@@ -29,8 +30,9 @@ p1 = p x
 
 po = p opa
 
-lfo = let (Right (_,_,_,kvs)) = fo in P.length kvs
+lfo = let (Right (_,_,_,kvs)) = fo opa in P.length kvs
 
+fo :: ByteString -> Either XenoException (Bool, Bool, ByteString, HashMap ByteString ByteString)
 fo =
   fold
     openTag
@@ -38,27 +40,37 @@ fo =
     endTag
     textValue
     closeTag
-    (False, False, "", M.empty)
-    opa
+    (False, False, "", M.empty) -- (inside read element, store text value, previous tag, map)
  where
   openTag           state tag  =
     case (state, tag) of
-      ((False, setText, _, kvs), "read") -> (True,   setText, tag, kvs)
-      ((True,  setText, _, kvs), tag)    -> (True,   setText, tag, kvs)
-      ((isRead,setText, _, kvs), tag)    -> (isRead, setText, tag, kvs)
+      -- transition to inside read element
+      ((False,  _, _, kvs), "read") -> (True,   False, tag, kvs)
+      -- set current tag
+      ((isRead, _, _, kvs), tag)    -> (isRead, False, tag, kvs)
+
+  -- not using attributes
   attributeKeyValue state _ _ = state
-  endTag  state@(isRead, _, startTag, kvs) tag =
-    if (startTag /= tag)
-      then error ("bad: startTag: " <> cs' startTag <> " " <> "endTag: " <> cs' tag)
-      else (isRead, True, tag, kvs)
+
+  endTag            state tag =
+    case (state, tag) of
+      -- do not store the text value of "read"
+      ((True  , _,  "read", kvs), "read") -> (True,   False, tag, kvs)
+      ((True  , _, openTag, kvs), _) | openTag /= tag
+                                          -> error ("bad: startTag: " <> cs' openTag <> " " <> "endTag: " <> cs' tag)
+      -- set "store text value" to True so next textValue gets stored in map with current tag
+      ((isRead, _,       _, kvs), _)      -> (isRead, True,  tag, kvs)
+
   textValue         state val =
     case state of
-      (True, True, tag, kvs) -> (True, True, tag, M.insert tag val kvs)
+      -- store current tag/texValue and turn off store flag
+      (True, True, tag, kvs) -> (True, False, tag, M.insert tag val kvs)
       _                      -> state
+
   closeTag          state tag  =
     case (state, tag) of
-      ((isRead, setText, _, kvs), "read") -> (False,  False, tag, kvs)
-      ((isRead, _,       _, kvs), _)      -> (isRead, False, tag, kvs)
+      ((isRead, _, _, kvs), "read") -> (False,  False, tag, kvs)
+      ((isRead, _, _, kvs), _)      -> (isRead, False, tag, kvs)
 
 cs' = convertString
 
