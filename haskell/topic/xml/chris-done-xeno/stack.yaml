@@ -1,0 +1,10 @@
+resolver: lts-6.27
+packages:
+- '.'
+- location:
+    git: https://github.com/haroldcarr/xeno.git
+    commit: 2ea724fd5da7df9b34b8ed03a210ff7af062a81a
+  extra-dep: true
+extra-deps: []
+flags: {}
+extra-package-dbs: []
