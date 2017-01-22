@@ -40,26 +40,27 @@ fo =
     endTag
     textValue
     closeTag
-    (False, False, "", M.empty) -- (inside read element, store text value, previous tag, map)
+    (False, False, "", M.empty) -- (flag: inside read element, flag: store text value, previous tag, map)
  where
   openTag           state tag  =
-    case (state, tag) of
-      -- transition to inside read element
-      ((False,  _, _, kvs), "read") -> (True,   False, tag, kvs)
+    case state of
+      (     _, _, _, kvs) | tag == "read"
+                            -> (False,  False, tag, kvs)
       -- set current tag
-      ((isRead, _, _, kvs), tag)    -> (isRead, False, tag, kvs)
+      (isRead, _, _, kvs)   -> (isRead, False, tag, kvs)
 
   -- not using attributes
   attributeKeyValue state _ _ = state
 
   endTag            state tag =
-    case (state, tag) of
+    case state of
+      -- transition to "inside read element"
       -- do not store the text value of "read"
-      ((True  , _,  "read", kvs), "read") -> (True,   False, tag, kvs)
-      ((True  , _, openTag, kvs), _) | openTag /= tag
-                                          -> error ("bad: startTag: " <> cs' openTag <> " " <> "endTag: " <> cs' tag)
+      (   _,   _,  "read", kvs)   -> (True,   False, tag, kvs)
+      (True,   _, openTag, kvs) | openTag /= tag
+                                  -> error ("bad: startTag: " <> cs' openTag <> " " <> "endTag: " <> cs' tag)
       -- set "store text value" to True so next textValue gets stored in map with current tag
-      ((isRead, _,       _, kvs), _)      -> (isRead, True,  tag, kvs)
+      (isRead, _,       _, kvs)   -> (isRead, True,  tag, kvs)
 
   textValue         state val =
     case state of
@@ -68,9 +69,10 @@ fo =
       _                      -> state
 
   closeTag          state tag  =
-    case (state, tag) of
-      ((isRead, _, _, kvs), "read") -> (False,  False, tag, kvs)
-      ((isRead, _, _, kvs), _)      -> (isRead, False, tag, kvs)
+    case state of
+      (isRead, _, _, kvs) | tag == "read"
+                            -> (False,  False, tag, kvs)
+      (isRead, _, _, kvs)   -> (isRead, False, tag, kvs)
 
 cs' = convertString
 
