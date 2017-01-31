@@ -3,7 +3,6 @@
 
 module Lib where
 
-import           Control.Monad           (when)
 import           Data.ByteString         as BS
 import           Data.HashMap.Strict     as M
 import           Data.String.Conversions
