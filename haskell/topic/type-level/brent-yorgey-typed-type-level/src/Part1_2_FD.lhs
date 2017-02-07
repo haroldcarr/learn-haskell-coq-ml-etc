@@ -11,6 +11,7 @@ functional dependencies enable specifying that some type class parameters are de
 — i.e., the relation determined by a multi-parameter type class is a function
 
 m n -> r
+- says that every m n is related to at most one r
 - says knowing m and n determines r (i.e., function from m,n to r)
 - practice: may only have single instance of Plus for any particular combination of m and n
 - if ghc can determine m and n and finds instance matching them, will assume it is only one and pick r to match
@@ -18,6 +19,7 @@ m n -> r
 > -- | represents three-place addition *relation*
 > -- e.g., (3,5,8) are in the relation, because 3 + 5 = 8.
 > -- If there is an instance Plus m n r, then m + n = r.
+> 
 > class     Plus m n r | m n -> r
 > instance  Plus Z n n
 > instance (Plus m n r) => Plus (S m) n (S r)

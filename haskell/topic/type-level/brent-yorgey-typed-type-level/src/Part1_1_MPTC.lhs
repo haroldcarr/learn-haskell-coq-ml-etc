@@ -6,9 +6,9 @@
  https://byorgey.wordpress.com/2010/06/29/typed-type-level-programming-in-haskell-part-i-functional-dependencies/
  https://www.reddit.com/r/haskell/comments/ck459/typed_typelevel_programming_in_haskell_part_i/
 
-Haskell initially kept values and types separated.
+Haskell initially kept values and types separate
 
-1997 : multi-parameter type classes, then functional dependencies.
+1997 : multi-parameter type classes, then functional dependencies
 
 normal type classes represent predicates on types
 - a type is an instance of a type class or not
@@ -23,10 +23,10 @@ Uninhabited types to represent natural numbers:
 multi-parameter type class that encodes addition relation on natural numbers:
 
 > -- | for any types m, n, and r
-> class PlusMPTC m n r
+> class     PlusMPTC m n r
 
 > -- | (Z,n,n) are in the Plus relation
-> instance PlusMPTC Z n n
+> instance  PlusMPTC Z n n
 > -- | If (m,n,r) are in the Plus relation then so are (S m, n, S r)
 > instance (PlusMPTC m n r) => PlusMPTC (S m) n (S r)
 

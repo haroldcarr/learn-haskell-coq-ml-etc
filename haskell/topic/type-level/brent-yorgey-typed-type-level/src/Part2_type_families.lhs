@@ -17,7 +17,7 @@ type families enable writing functions on types
 > -- | for any types m and n, Plus m n is type of kind *
 > -- it is not a new type
 > -- it is an alias for some existing type
-> type family   Plus  m    n :: *
+> type family   Plus    m  n :: *
 > type instance Plus  Z    n  = n
 > type instance Plus (S m) n  = S (Plus m n)
 
@@ -43,22 +43,22 @@ type family and instances above are ~ identical to impl of value-level natural n
 > plus (S m) n = S (plus m n)
 
 
+ghci does not expand type family:
+
   :t undefined :: Plus (S Z) (S Z)
   =>                               :: Plus (S Z) (S Z)
 
-ghci does not expand type family
 
-get via error message
+but can force it via error message:
 
-  *Main> undefined :: Plus (S Z) (S Z)
+  undefined :: Plus (S Z) (S Z)
 
-  ...No instance for (Show (S (S Z)))...
+  ...No instance for (Show (S (S Z)))
 
-This is ugly, but it works: S (S Z) is the reduced form of Plus (S Z) (S Z).
+type families
+- type-level functions in functional style
+- cases where logic programming style useful
+  - with additional functional dependency can use Plus type class from last post to compute both addition and subtraction
 
-So type families let us program in a functional style. This is nice — I daresay most Haskell programmers will be more comfortable only having to use a single coding style for both the value level and the type level. There are a few cases where a logic programming style can be quite convenient (for example, with an additional functional dependency we can use the Plus type class from the last post to compute both addition and subtraction), but in my opinion, the functional style is a huge win in most cases. (And, don’t worry, FDs and TFs are equivalent in expressiveness.)
-
-Of course, there is a lot more to all of this; for example, I haven’t even mentioned data families or associated types. For more, I recommend reading the excellent tutorial by Oleg Kiselyov, Ken Shan, and Simon Peyton Jones, or the page on the GHC wiki. For full technical details, you can look at the System FC paper.
-
-Nothing is ever perfect, though — in my next post, I’ll explain what type families still leave to be desired, and what we’re doing to improve things.
+FDs and TFs are equivalent in expressiveness
 
