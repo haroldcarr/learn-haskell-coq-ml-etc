@@ -1,4 +1,6 @@
-TODO : http://dlaing.org/cofun/posts/free_and_cofree.html
+TODO
+- http://dlaing.org/cofun/posts/free_and_cofree.html
+- http://www.atamo.com/articles/free-monads-wont-detox-your-colon/
 
 free monads/applicatives:
   http://degoes.net/articles/modern-fp
