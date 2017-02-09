@@ -15,6 +15,7 @@ library
                      , FM_GG_2012_07_purify_code
                      , FM_JD_modern_fp
                      , FM_MX_Redis
+                     , F_JT_tour_of_recursive_types
                      , HA_Operational_Monad_Tutorial
                      , Test
   build-depends:       base >= 4.7 && < 5
