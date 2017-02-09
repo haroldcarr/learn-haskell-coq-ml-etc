@@ -1,3 +1,5 @@
+TODO : http://dlaing.org/cofun/posts/free_and_cofree.html
+
 free monads/applicatives:
   http://degoes.net/articles/modern-fp
   https://github.com/jdegoes/scalaworld-2015/blob/master/presentation.pdf
