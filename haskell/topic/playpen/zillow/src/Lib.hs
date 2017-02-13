@@ -5,20 +5,22 @@ import           Data.Text.IO      as T
 import           Prelude           as P
 import           Text.HTML.TagSoup
 
-w :: IO [Tag Text]
-w = do
-  d  <- T.readFile "./test/p1.html"
+a = do
+  tags <- fileParseTags "./test/p1.html"
+  return . pickData $ pickTags tags
+
+fileParseTags :: String -> IO [Tag Text]
+fileParseTags filename = do
+  d  <- T.readFile filename
   let ts = parseTags d
   return $ P.head $ partitions (~== "<article>") ts
 
-x = do
-  w' <- w
-  mapM_ print w'
+printTags tags = do
+  mapM_ print tags
 
-y :: IO [Tag Text]
-y = do
-  w' <- w
-  return $ myFilter False w'
+pickTags :: [Tag Text] -> [Tag Text]
+pickTags tags = do
+  myFilter False tags
  where
   myFilter     _    []  = []
   myFilter  True (x:xs) = x : myFilter False xs
@@ -30,9 +32,9 @@ y = do
          then x : myFilter False xs
          else     myFilter False xs
 
-z = do
-  y' <- y
-  return $ P.map f y'
+pickData :: [Tag Text] -> [Text]
+pickData tags = do
+  P.map f tags
  where
   f x = case x of
     (TagText    t) -> t
