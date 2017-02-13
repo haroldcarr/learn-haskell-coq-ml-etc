@@ -3,7 +3,7 @@
 > {-# LANGUAGE RankNTypes            #-}
 > {-# LANGUAGE UndecidableInstances  #-}
 >
-> module R2 where
+> module R2_manual_dictionaries where
 >
 > import Data.Proxy
 > import Data.Monoid

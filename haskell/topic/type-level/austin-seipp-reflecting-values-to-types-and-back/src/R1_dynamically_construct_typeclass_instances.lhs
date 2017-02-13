@@ -6,12 +6,12 @@
  https://www.schoolofhaskell.com/user/thoughtpolice/using-reflection
  https://www.reddit.com/r/haskell/comments/3hw90k/what_is_the_reflection_package_for/
 
-compare Ord-like values, but change out actual dictionary at runtime
-
-> module R1 where
+> module R1_dynamically_construct_typeclass_instances where
 >
 > import Data.Proxy
 > import Data.Reflection
+
+compare Ord-like values, but change out actual dictionary at runtime
 
 > -- Values of type 'a' in dynamically constructed 'Ord' instance
 > newtype O a s  = O { runO :: a }

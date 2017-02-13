@@ -5,9 +5,10 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     R1
-                     , R2
-                     , R3
+  exposed-modules:     R0
+                     , R1_dynamically_construct_typeclass_instances
+                     , R2_manual_dictionaries
+                     , R3_conclusion
   build-depends:       base >= 4.7 && < 5
                      , constraints
                      , reflection

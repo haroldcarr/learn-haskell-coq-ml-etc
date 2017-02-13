@@ -1,9 +1,17 @@
-> {-# LANGUAGE Rank2Types, FlexibleContexts, UndecidableInstances, TypeFamilies #-}
-> {-# LANGUAGE ConstraintKinds, KindSignatures, PolyKinds, TypeOperators #-}
-> {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables #-}
+> {-# LANGUAGE ConstraintKinds        #-}
+> {-# LANGUAGE FlexibleContexts       #-}
+> {-# LANGUAGE FlexibleInstances      #-}
 > {-# LANGUAGE FunctionalDependencies #-}
+> {-# LANGUAGE KindSignatures         #-}
+> {-# LANGUAGE MultiParamTypeClasses  #-}
+> {-# LANGUAGE PolyKinds              #-}
+> {-# LANGUAGE Rank2Types             #-}
+> {-# LANGUAGE TypeFamilies           #-}
+> {-# LANGUAGE TypeOperators          #-}
+> {-# LANGUAGE ScopedTypeVariables    #-}
+> {-# LANGUAGE UndecidableInstances   #-}
 >
-> module R3 where
+> module R3_conclusion where
 >
 > import Data.Proxy
 > import Data.Monoid
