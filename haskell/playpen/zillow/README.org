@@ -1,0 +1,20 @@
+#+BEGIN_EXAMPLE
+
+<div id="search-pagination-wrapper" class="zsg-content-item"><ol class="zsg-pagination"><li class="zsg-pagination_active"><a>1</a></li><li><a href="/homes/for_sale/84103_rb/2_p/" onclick="SearchMain.changePage(2);return false;">2</a></li><li><a href="/homes/for_sale/84103_rb/3_p/" onclick="SearchMain.changePage(3);return false;">3</a></li><li class="zsg-pagination-next"><a href="/homes/for_sale/84103_rb/2_p/" class="off" onclick="SearchMain.changePage(2);return false;">Next</a></li></ol></div></div>
+
+<div id="search-pagination-wrapper" class="zsg-content-item">
+  <ol class="zsg-pagination">
+    <li class="zsg-pagination_active"><a>1</a></li>
+    <li><a href="/homes/for_sale/84103_rb/2_p/" onclick="SearchMain.changePage(2);return false;">2</a></li>
+    <li><a href="/homes/for_sale/84103_rb/3_p/" onclick="SearchMain.changePage(3);return false;">3</a></li>
+    <li class="zsg-pagination-next">
+        <a href="/homes/for_sale/84103_rb/2_p/" class="off" onclick="SearchMain.changePage(2);return false;">Next</a></li>
+  </ol>
+</div>
+
+    [TagText "141 E Edgecombe Dr",TagText "$624,999",TagOpen "a" [("href","/homedetails/141-E-Edgecombe-Dr-Salt-Lake-City-UT-84103/12717491_zpid/"),("class","zsg-photo-card-overlay-link routable hdp-link routable mask hdp-link")],TagOpen "a" [("href","/myzillow/UpdateFavorites.htm?zpid=12717491&operation=add&ajax=false"),("rel","nofollow"),("data-fm-zpid","12717491"),("data-fm-callback","windowReloadSuccessHandler"),("data-after-auth-action-type","Event"),("data-after-auth-global-event","favoriteManager:addFavoriteProperty"),("data-target-id","register"),("title","Save this home"),("data-show-home-owner-lightbox","false"),("data-za-label","Save Map:List"),("data-address","141 E Edgecombe Dr , Salt Lake City, UT 84103"),("class","zsg-lightbox-show open-on-any-click"),("id","register_opener_0")]]
+
+
+TagOpen "a" [("href","/homedetails/141-E-Edgecombe-Dr-Salt-Lake-City-UT-84103/12717491_zpid/"),("class","zsg-photo-card-overlay-link routable hdp-link routable mask hdp-link")]
+
+#+END_EXAMPLE
