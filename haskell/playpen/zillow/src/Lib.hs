@@ -1,5 +1,6 @@
 module Lib where
 
+import           Data.List         as L
 import           Data.Text         as T
 import           Data.Text.IO      as T
 import           Prelude           as P
@@ -9,11 +10,28 @@ import           Text.HTML.TagSoup
 
 pa = do
   tags <- fileParseArticleTags "./test/p1.html"
-  mapM_ print (P.map (pickData . pickTags) tags)
+  printTags (P.map cleanse (P.map (pickData . pickTags) tags))
+
+cleanse [] = []
+cleanse (x:xs) = if T.isPrefixOf (T.pack "/homedetails/") x
+                 then x : cleanse xs
+                 else if T.isPrefixOf (T.pack "/homedetail/AuthRequired.htm") x ||
+                         T.isPrefixOf (T.pack "/") x ||
+                         P.elem (T.unpack x) ["option","zsg-lightbox-show za-track-event","http://www.zillow.com/local-info/","http://www.facebook.com/Zillow","http://twitter.com/zillow","http://plus.google.com/+Zillow","zsg-notification-bar-close","mapped-result-count","#","#","#","#","#","#","menu-label","#fore-tip-filters","#coming-soon-tip-filters","#pm-tip-filters","#pmf-tip-filters","#pre-foreclosure-tip-filters","#mmm-tip-filters","#pending-tip-filters","price-menu-label","saf-entry-link","#payment","#income","#","saf-close zsg-button","saf-pre-approval-link","beds-menu-label","type-menu-label","menu-label","#hoa-dues-tooltip","http://www.zillow.com/community-pillar/","zsg-button_primary"]
+                      then     cleanse xs
+                      else x : cleanse xs
 
 pl = do
   tags <- fileParsePageLinks "./test/p1.html"
-  mapM_ print (P.head tags)
+  printTags (L.nub (pickOutPageLinks (P.takeWhile (\x -> x /= TagClose (T.pack "ol"))
+                                                  (P.head tags))))
+
+pickOutPageLinks [] = []
+pickOutPageLinks (x:xs) =
+  case x of
+    TagOpen tagName attributes | tagName == (T.pack "a") && not (P.null attributes)
+                                 -> (snd $ P.head attributes) : pickOutPageLinks xs
+    _                            ->                             pickOutPageLinks xs
 
 printTags tags = do
   mapM_ print tags
@@ -60,7 +78,7 @@ pickData tags = do
  where
   f x = case x of
     (TagText    t) -> t
-    (TagOpen _ xs) -> snd $ P.head xs
+    (TagOpen _ xs) -> if not (P.null xs) then snd $ P.head xs else (T.pack "")
 
 {-
 
