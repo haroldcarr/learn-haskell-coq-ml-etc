@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Lib where
 
 import           Data.List         as L
@@ -13,23 +15,23 @@ pa = do
   printTags (P.map cleanse (P.map (pickData . pickTags) tags))
 
 cleanse [] = []
-cleanse (x:xs) = if T.isPrefixOf (T.pack "/homedetails/") x
+cleanse (x:xs) = if T.isPrefixOf "/homedetails/" x
                  then x : cleanse xs
-                 else if T.isPrefixOf (T.pack "/homedetail/AuthRequired.htm") x ||
-                         T.isPrefixOf (T.pack "/") x ||
-                         P.elem (T.unpack x) ["option","zsg-lightbox-show za-track-event","http://www.zillow.com/local-info/","http://www.facebook.com/Zillow","http://twitter.com/zillow","http://plus.google.com/+Zillow","zsg-notification-bar-close","mapped-result-count","#","#","#","#","#","#","menu-label","#fore-tip-filters","#coming-soon-tip-filters","#pm-tip-filters","#pmf-tip-filters","#pre-foreclosure-tip-filters","#mmm-tip-filters","#pending-tip-filters","price-menu-label","saf-entry-link","#payment","#income","#","saf-close zsg-button","saf-pre-approval-link","beds-menu-label","type-menu-label","menu-label","#hoa-dues-tooltip","http://www.zillow.com/community-pillar/","zsg-button_primary"]
+                 else if T.isPrefixOf "/homedetail/AuthRequired.htm" x ||
+                         T.isPrefixOf "/" x ||
+                         P.elem x zillowIgnore
                       then     cleanse xs
                       else x : cleanse xs
 
 pl = do
   tags <- fileParsePageLinks "./test/p1.html"
-  printTags (L.nub (pickOutPageLinks (P.takeWhile (\x -> x /= TagClose (T.pack "ol"))
+  printTags (L.nub (pickOutPageLinks (P.takeWhile (\x -> x /= TagClose "ol")
                                                   (P.head tags))))
 
 pickOutPageLinks [] = []
 pickOutPageLinks (x:xs) =
   case x of
-    TagOpen tagName attributes | tagName == (T.pack "a") && not (P.null attributes)
+    TagOpen tagName attributes | tagName == "a" && not (P.null attributes)
                                  -> (snd $ P.head attributes) : pickOutPageLinks xs
     _                            ->                             pickOutPageLinks xs
 
@@ -65,10 +67,10 @@ pickTags tags = do
   myFilter     _    []  = []
   myFilter  True (x:xs) = x : myFilter False xs
   myFilter False (x:xs) =
-    if x == TagOpen (T.pack "span") [(T.pack "itemprop", T.pack "streetAddress")] ||
-       x == TagOpen (T.pack "span") [(T.pack "class",    T.pack "zsg-photo-card-price")]
+    if x == TagOpen "span" [("itemprop", "streetAddress")] ||
+       x == TagOpen "span" [("class",    "zsg-photo-card-price")]
     then myFilter True  xs
-    else if x ~== "<a>"
+    else if x ~== ("<a>"::String)
          then x : myFilter False xs
          else     myFilter False xs
 
@@ -78,7 +80,9 @@ pickData tags = do
  where
   f x = case x of
     (TagText    t) -> t
-    (TagOpen _ xs) -> if not (P.null xs) then snd $ P.head xs else (T.pack "")
+    (TagOpen _ xs) -> if not (P.null xs) then snd $ P.head xs else ""
+
+zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.com/local-info/","http://www.facebook.com/Zillow","http://twitter.com/zillow","http://plus.google.com/+Zillow","zsg-notification-bar-close","mapped-result-count","#","#","#","#","#","#","menu-label","#fore-tip-filters","#coming-soon-tip-filters","#pm-tip-filters","#pmf-tip-filters","#pre-foreclosure-tip-filters","#mmm-tip-filters","#pending-tip-filters","price-menu-label","saf-entry-link","#payment","#income","#","saf-close zsg-button","saf-pre-approval-link","beds-menu-label","type-menu-label","menu-label","#hoa-dues-tooltip","http://www.zillow.com/community-pillar/","zsg-button_primary"]
 
 {-
 
