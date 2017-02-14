@@ -5,10 +5,46 @@ module Lib where
 import           Data.List         as L
 import           Data.Text         as T
 import           Data.Text.IO      as T
+import           Data.Thyme.Time
+import           Network.HTTP      as N
 import           Prelude           as P
 import           Text.HTML.TagSoup
 
--- curl http://www.zillow.com/homes/for_sale/84103_rb/?fromHomePage=true&shouldFireSellPageImplicitClaimGA=false&fromHomePageTab=buy
+------------------------------------------------------------------------------
+
+baseUrl = "http://www.zillow.com"
+
+page1Url =
+  baseUrl ++ "/homes/for_sale/84103_rb/?fromHomePage=true&shouldFireSellPageImplicitClaimGA=false&fromHomePageTab=buy"
+
+dataDir = "data/"
+
+openURL url = getResponseBody =<< simpleHTTP (getRequest url)
+
+download url n = do
+  date        <- getDate
+  src         <- openURL url
+  let filename = P.concat [dataDir, date, "-p", show n, ".htm"]
+  P.writeFile filename src
+  return filename
+
+downloadAll = do
+  -- filename <- download page1Url 1 -- TODO
+  let filename = P.concat [dataDir, "2017-02-13", "-p", show 1, ".htm"]
+  txt         <- T.readFile filename
+  let links    = pageLinks txt
+  filenames   <- mapM (\(pagelink,n) -> download (baseUrl ++ (T.unpack pagelink)) n)
+                      (P.zip links [2 ..])
+  return (filename : filenames)
+
+-- printTags =<< allListings ["data/2017-02-13-p1.htm", "data/2017-02-13-p2.htm", "data/2017-02-13-p3.htm"]
+allListings filenames = do
+  ls <- mapM go filenames
+  return (P.concat ls)
+ where
+  go filename = do
+    txt <- T.readFile filename
+    return (listings txt)
 
 ------------------------------------------------------------------------------
 -- page links
@@ -77,15 +113,21 @@ zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.c
 ------------------------------------------------------------------------------
 -- util
 
-printTags tags = do
-  mapM_ print tags
-
 textParseTags :: String -> Text -> [[Tag Text]]
 textParseTags tag t = do
   let ts = parseTags t
   partitions (~== tag) ts
 
+getDate = do
+  now <- getCurrentTime
+  myzone <- getCurrentTimeZone
+  let x = show (utcToZonedTime myzone now :: ZonedTime)
+  return $ P.take 10 x
+
 ppp filename f = do
   txt <- T.readFile filename
   printTags (f txt)
+
+printTags tags = do
+  mapM_ print tags
 
