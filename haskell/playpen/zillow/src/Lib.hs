@@ -2,40 +2,53 @@
 
 module Lib where
 
-import           Data.List         as L
-import           Data.Text         as T
-import           Data.Text.IO      as T
+import           Control.Lens                ((&), (.~), (^.))
+import           Data.Aeson.Lens             (_String)
+import           Data.List                   as L
+import           Data.Text                   as T
+import           Data.Text.IO                as T
 import           Data.Thyme.Time
-import           Network.HTTP      as N
-import           Prelude           as P
+import           Network.HTTP.Client.OpenSSL
+import           Network.Wreq                as W
+import           OpenSSL.Session             (context)
+import           Prelude                     as P
 import           Text.HTML.TagSoup
 
 ------------------------------------------------------------------------------
 
-baseUrl = "http://www.zillow.com"
+baseUrl = "https://www.zillow.com"
 
 page1Url =
   baseUrl ++ "/homes/for_sale/84103_rb/?fromHomePage=true&shouldFireSellPageImplicitClaimGA=false&fromHomePageTab=buy"
 
 dataDir = "data/"
 
-openURL url = getResponseBody =<< simpleHTTP (getRequest url)
-
-download url n = do
-  date        <- getDate
-  src         <- openURL url
-  let filename = P.concat [dataDir, date, "-p", show n, ".htm"]
-  P.writeFile filename src
-  return filename
+------------------------------------------------------------------------------
 
 downloadAll = do
-  -- filename <- download page1Url 1 -- TODO
-  let filename = P.concat [dataDir, "2017-02-13", "-p", show 1, ".htm"]
+  filename    <- download page1Url 1
+  -- let filename = P.concat [dataDir, "2017-02-13", "-p", show 1, ".htm"]
   txt         <- T.readFile filename
   let links    = pageLinks txt
   filenames   <- mapM (\(pagelink,n) -> download (baseUrl ++ (T.unpack pagelink)) n)
                       (P.zip links [2 ..])
   return (filename : filenames)
+
+download url n = do
+  date        <- getDate
+  src         <- openUrl url
+  let filename = P.concat [dataDir, date, "-p", show n, ".htm"]
+  P.writeFile filename src
+  return filename
+
+openUrl url =
+  withOpenSSL $ do
+    r <- getWith opts url
+    print (r ^. responseStatus)
+    print (r ^. responseHeaders)
+    return (T.unpack (r ^. responseBody . _String))
+ where
+  opts = defaults & manager .~ Left (opensslManagerSettings context)
 
 -- printTags =<< allListings ["data/2017-02-13-p1.htm", "data/2017-02-13-p2.htm", "data/2017-02-13-p3.htm"]
 allListings filenames = do

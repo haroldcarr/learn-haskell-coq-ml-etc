@@ -1,6 +1,8 @@
-resolver: lts-8.0
+resolver: lts-7.16
 packages:
 - '.'
-extra-deps: []
+extra-deps: [ ]
 flags: {}
 extra-package-dbs: []
+extra-include-dirs: [/usr/local/opt/openssl/include]
+extra-lib-dirs:     [/usr/local/opt/openssl/lib]
