@@ -35,7 +35,7 @@ downloadAll = do
   -- let filename = P.concat [dataDir, "2017-02-13", "-p", show 1, ".htm"]
   txt         <- T.readFile filename
   let links    = pageLinks txt
-  filenames   <- mapM (\(pagelink,n) -> download (baseUrl ++ (T.unpack pagelink)) n)
+  filenames   <- mapM (\(pagelink,n) -> download (baseUrl ++ T.unpack pagelink) n)
                       (P.zip links [2 ..])
   return (filename : filenames)
 
@@ -63,14 +63,14 @@ pageLinks txt =
                                        (P.head (getPageLinks txt))))
 
 getPageLinks :: Text -> [[Tag Text]]
-getPageLinks t = textParseTags "<ol class=zsg-pagination>" t
+getPageLinks = textParseTags "<ol class=zsg-pagination>"
 
 pickOutPageLinks [] = []
 pickOutPageLinks (x:xs) =
   case x of
     TagOpen tagName attributes | tagName == "a" && not (P.null attributes)
-                                 -> (snd $ P.head attributes) : pickOutPageLinks xs
-    _                            ->                             pickOutPageLinks xs
+                                 -> snd (P.head attributes) : pickOutPageLinks xs
+    _                            ->                           pickOutPageLinks xs
 
 ------------------------------------------------------------------------------
 -- listings (via <article>) in page
@@ -94,53 +94,50 @@ allListings filenames = do
 listings txt =
   sortIt
     (P.filter hasPrice
-              (P.map cleanse
-                     (P.map (pickData . pickTags)
-                            (getArticles txt))))
+              (P.map (cleanse . pickData . pickTags)
+                     (getArticles txt)))
 
 getArticles :: Text -> [[Tag Text]]
-getArticles t = textParseTags "<article>" t
+getArticles = textParseTags "<article>"
 
 pickTags :: [Tag Text] -> [Tag Text]
-pickTags tags = do
-  myFilter False tags
+pickTags = myFilter False
  where
   myFilter     _    []  = []
   myFilter  True (x:xs) = x : myFilter False xs
-  myFilter False (x:xs) =
-    if x == TagOpen "span" [("itemprop", "streetAddress")] ||
-       x == TagOpen "span" [("class",    "zsg-photo-card-price")]
-    then myFilter True  xs
-    else if x ~== ("<a>"::String) || x ~== ("<img>"::String)
-         then x : myFilter False xs
-         else     myFilter False xs
+  myFilter False (x:xs)
+    | x == TagOpen "span" [("itemprop", "streetAddress")] ||
+      x == TagOpen "span" [("class", "zsg-photo-card-price")]
+                =     myFilter True xs
+    | x ~== ("<a>" :: String) || x ~== ("<img>" :: String)
+                = x : myFilter False xs
+    | otherwise =     myFilter False xs
 
 pickData :: [Tag Text] -> [Text]
-pickData tags = do
-  P.map f tags
+pickData = P.map f
  where
   f x = case x of
     (TagText    t) -> t
     (TagOpen _ xs) -> if not (P.null xs) then snd $ P.head xs else ""
 
 cleanse [] = []
-cleanse (x:xs) =
-  if T.isPrefixOf "/homedetails/" x || T.isPrefixOf "https://photos" x
-  then      x : cleanse xs
-  else if T.isPrefixOf "/homedetail/AuthRequired.htm" x ||
-          T.isPrefixOf "/" x ||
-          T.isPrefixOf "https://dev.virtualearth.net" x ||
-          T.isPrefixOf "https://sb.scorecardresearch.com" x ||
-          P.elem x zillowIgnore
-       then     cleanse xs
-       else x : cleanse xs
+cleanse (x:xs)
+    | T.isPrefixOf "/homedetails/" x || T.isPrefixOf "https://photos" x
+                = x : cleanse xs
+    |    T.isPrefixOf "/homedetail/AuthRequired.htm" x
+      || T.isPrefixOf "/" x
+      || T.isPrefixOf "https://dev.virtualearth.net" x
+      || T.isPrefixOf "https://sb.scorecardresearch.com" x
+      || P.elem x zillowIgnore
+                =     cleanse xs
+    | otherwise = x : cleanse xs
 
 hasPrice = P.any (T.isPrefixOf "$")
 
 sortIt :: [[Text]] -> [[Text]]
 sortIt = L.sortBy (\(_:p1:_) (_:p2:_) -> n p1 `compare` n p2)
  where
-  n x = (read (T.unpack (T.filter (\x -> x /= '$' && x /= ',') x))) :: Int
+  n x = read (T.unpack (T.filter (\x -> x /= '$' && x /= ',') x)) :: Int
 
 zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.com/local-info/","http://www.facebook.com/Zillow","http://twitter.com/zillow","http://plus.google.com/+Zillow","zsg-notification-bar-close","mapped-result-count","#","#","#","#","#","#","menu-label","#fore-tip-filters","#coming-soon-tip-filters","#pm-tip-filters","#pmf-tip-filters","#pre-foreclosure-tip-filters","#mmm-tip-filters","#pending-tip-filters","price-menu-label","saf-entry-link","#payment","#income","#","saf-close zsg-button","saf-pre-approval-link","beds-menu-label","type-menu-label","menu-label","#hoa-dues-tooltip","http://www.zillow.com/community-pillar/","zsg-button_primary"]
 
@@ -155,10 +152,10 @@ writeDisplayListings = do
   -- print rl
   return $ BSLC8.writeFile "/tmp/xxx.html" rl
 
-displayListings xs = H.docTypeHtml $ do
+displayListings xs = H.docTypeHtml $
   H.head $ do
     H.title "84103 listings"
-    H.body $ do
+    H.body $
         mapM_ displayListing xs
 
 displayListing :: [Text] -> H.Html
@@ -170,7 +167,7 @@ displayListing [address, price, pagelink, photolink] = do
   H.string " "
   H.string (T.unpack price)
   H.string " "
-  H.a   H.! A.href (H.preEscapedStringValue (baseUrl ++ (T.unpack pagelink)))  $   "details"
+  H.a   H.! A.href (H.preEscapedStringValue (baseUrl ++ T.unpack pagelink))  $   "details"
 displayListing x = do
   H.hr
   H.h2 (H.string (show x))
@@ -195,6 +192,5 @@ ppp filename f = do
   txt <- T.readFile filename
   printTags (f txt)
 
-printTags tags = do
-  mapM_ print tags
+printTags = mapM_ print
 
