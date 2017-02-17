@@ -92,10 +92,11 @@ allListings filenames = do
     return (listings txt)
 
 listings txt =
-  P.filter hasPrice
-           (P.map cleanse
-                  (P.map (pickData . pickTags)
-                         (getArticles txt)))
+  sortIt
+    (P.filter hasPrice
+              (P.map cleanse
+                     (P.map (pickData . pickTags)
+                            (getArticles txt))))
 
 getArticles :: Text -> [[Tag Text]]
 getArticles t = textParseTags "<article>" t
@@ -136,6 +137,11 @@ cleanse (x:xs) =
 
 hasPrice = P.any (T.isPrefixOf "$")
 
+sortIt :: [[Text]] -> [[Text]]
+sortIt = L.sortBy (\(_:p1:_) (_:p2:_) -> n p1 `compare` n p2)
+ where
+  n x = (read (T.unpack (T.filter (\x -> x /= '$' && x /= ',') x))) :: Int
+
 zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.com/local-info/","http://www.facebook.com/Zillow","http://twitter.com/zillow","http://plus.google.com/+Zillow","zsg-notification-bar-close","mapped-result-count","#","#","#","#","#","#","menu-label","#fore-tip-filters","#coming-soon-tip-filters","#pm-tip-filters","#pmf-tip-filters","#pre-foreclosure-tip-filters","#mmm-tip-filters","#pending-tip-filters","price-menu-label","saf-entry-link","#payment","#income","#","saf-close zsg-button","saf-pre-approval-link","beds-menu-label","type-menu-label","menu-label","#hoa-dues-tooltip","http://www.zillow.com/community-pillar/","zsg-button_primary"]
 
 ------------------------------------------------------------------------------
@@ -143,10 +149,10 @@ zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.c
 
 writeDisplayListings = do
   al <- allListings ["data/2017-02-16-p1.htm", "data/2017-02-16-p2.htm", "data/2017-02-16-p3.htm"]
-  print al
+  -- print al
   let dl = displayListings al
   let rl = renderHtml dl
-  print rl
+  -- print rl
   return $ BSLC8.writeFile "/tmp/xxx.html" rl
 
 displayListings xs = H.docTypeHtml $ do
@@ -159,10 +165,15 @@ displayListing :: [Text] -> H.Html
 displayListing [address, price, pagelink, photolink] = do
   H.hr
   H.img H.! A.src  (H.preEscapedTextValue photolink) H.! A.alt (H.preEscapedTextValue photolink)
-  H.h2  $   H.string (T.unpack address)
-  H.p   $   H.string (T.unpack price)
+  H.br
+  H.string (T.unpack address)
+  H.string " "
+  H.string (T.unpack price)
+  H.string " "
   H.a   H.! A.href (H.preEscapedStringValue (baseUrl ++ (T.unpack pagelink)))  $   "details"
-displayListing x = H.h2 (H.string (show x))
+displayListing x = do
+  H.hr
+  H.h2 (H.string (show x))
 
 renderListings = renderHtml
 
