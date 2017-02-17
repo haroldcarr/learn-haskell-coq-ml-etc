@@ -75,6 +75,14 @@ pickOutPageLinks (x:xs) =
 ------------------------------------------------------------------------------
 -- listings (via <article>) in page
 
+data Listing = Listing
+  { link      :: Text -- also the identity
+  , photolink :: Maybe Text
+  , address   :: Text
+  , price     :: Int
+  , priceS    :: Text
+  } deriving (Eq, Read, Show)
+
 -- these two for quick checks
 pl = ppp "./data/2017-02-16-p1.htm" listings
 pal = do
@@ -93,9 +101,10 @@ allListings filenames = do
 
 listings txt =
   sortIt
-    (P.filter hasPrice
-              (P.map (cleanse . pickData . pickTags)
-                     (getArticles txt)))
+    (listify
+        (P.filter hasPrice
+                  (P.map (cleanse . pickData . pickTags)
+                         (getArticles txt))))
 
 getArticles :: Text -> [[Tag Text]]
 getArticles = textParseTags "<article>"
@@ -134,10 +143,19 @@ cleanse (x:xs)
 
 hasPrice = P.any (T.isPrefixOf "$")
 
-sortIt :: [[Text]] -> [[Text]]
-sortIt = L.sortBy (\(_:p1:_) (_:p2:_) -> n p1 `compare` n p2)
+listify :: [[Text]] -> [Listing]
+listify = P.map (\(address:price:link:rest) ->
+                   Listing link
+                           (if not (P.null rest) then Just (P.head rest) else Nothing)
+                           address
+                           (n price)
+                           price)
  where
   n x = read (T.unpack (T.filter (\x -> x /= '$' && x /= ',') x)) :: Int
+
+sortIt :: [Listing] -> [Listing]
+sortIt = L.sortBy (\l1 l2 -> price l1 `compare` price l2)
+
 
 zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.com/local-info/","http://www.facebook.com/Zillow","http://twitter.com/zillow","http://plus.google.com/+Zillow","zsg-notification-bar-close","mapped-result-count","#","#","#","#","#","#","menu-label","#fore-tip-filters","#coming-soon-tip-filters","#pm-tip-filters","#pmf-tip-filters","#pre-foreclosure-tip-filters","#mmm-tip-filters","#pending-tip-filters","price-menu-label","saf-entry-link","#payment","#income","#","saf-close zsg-button","saf-pre-approval-link","beds-menu-label","type-menu-label","menu-label","#hoa-dues-tooltip","http://www.zillow.com/community-pillar/","zsg-button_primary"]
 
@@ -158,19 +176,18 @@ displayListings xs = H.docTypeHtml $
     H.body $
         mapM_ displayListing xs
 
-displayListing :: [Text] -> H.Html
-displayListing [address, price, pagelink, photolink] = do
+displayListing :: Listing -> H.Html
+displayListing (Listing pagelink photolink address price priceS) = do
   H.hr
-  H.img H.! A.src  (H.preEscapedTextValue photolink) H.! A.alt (H.preEscapedTextValue photolink)
-  H.br
+  case photolink of
+    Just l -> H.img H.! A.src  (H.preEscapedTextValue l) H.! A.alt (H.preEscapedTextValue l)
+    Nothing -> H.wbr
+  H.string " "
   H.string (T.unpack address)
   H.string " "
-  H.string (T.unpack price)
+  H.string (T.unpack priceS)
   H.string " "
   H.a   H.! A.href (H.preEscapedStringValue (baseUrl ++ T.unpack pagelink))  $   "details"
-displayListing x = do
-  H.hr
-  H.h2 (H.string (show x))
 
 renderListings = renderHtml
 

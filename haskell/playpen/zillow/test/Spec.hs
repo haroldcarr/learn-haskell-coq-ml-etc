@@ -20,20 +20,23 @@ test = do
     t <- T.readFile "./data/2017-02-16-p1.htm"
     let ls = listings t
     P.take 2 ls `shouldBe`
-      [["141 E Edgecombe Dr"
-       ,"$624,999"
-       ,"/homedetails/141-E-Edgecombe-Dr-Salt-Lake-City-UT-84103/12717491_zpid/"
-       ,"https://photos.zillowstatic.com/p_e/ISe40jipyeb86a0000000000.jpg"
-       ]
-      ,["463 11th Ave"
-       ,"$699,000"
-       ,"/homedetails/463-11th-Ave-Salt-Lake-City-UT-84103/12718192_zpid/"
-       ,"https://photos.zillowstatic.com/p_e/ISyjx66u5tpae40000000000.jpg"
-       ]]
+      [ Listing { link = "/homedetails/521-E-5th-Ave-APT-602-Salt-Lake-City-UT-84103/2095378819_zpid/"
+                , photolink = Just "https://photos.zillowstatic.com/p_e/ISu867yw477gn41000000000.jpg"
+                , address = "521 E 5th Ave APT 602"
+                , price = 159900
+                , priceS = "$159,900"
+                }
+      , Listing { link = "/homedetails/143-E-1st-Ave-APT-303-Salt-Lake-City-UT-84103/83828461_zpid/"
+                , photolink = Just "https://photos.zillowstatic.com/p_e/ISm6jpgwcml9q80000000000.jpg"
+                , address = "143 E 1st Ave APT 303"
+                , price = 215000
+                , priceS = "$215,000"
+                }
+      ]
   it "allListings" $ do
     al <- allListings ["data/2017-02-16-p1.htm", "data/2017-02-16-p2.htm", "data/2017-02-16-p3.htm"]
     P.length al `shouldBe` 52
   it "displayListings" $ do
     al <- allListings ["data/2017-02-16-p1.htm", "data/2017-02-16-p2.htm", "data/2017-02-16-p3.htm"]
     let dl = displayListings al
-    BS.take 607 (renderListings dl) `shouldBe` "<!DOCTYPE HTML>\n<html><head><title>84103 listings</title><body><h2>141 E Edgecombe Dr</h2><p>$624,999</p><a href=\"/homedetails/141-E-Edgecombe-Dr-Salt-Lake-City-UT-84103/12717491_zpid/\">page</a><img src=\"https://photos.zillowstatic.com/p_e/ISe40jipyeb86a0000000000.jpg\" alt=\"https://photos.zillowstatic.com/p_e/ISe40jipyeb86a0000000000.jpg\"><h2>463 11th Ave</h2><p>$699,000</p><a href=\"/homedetails/463-11th-Ave-Salt-Lake-City-UT-84103/12718192_zpid/\">page</a><img src=\"https://photos.zillowstatic.com/p_e/ISyjx66u5tpae40000000000.jpg\" alt=\"https://photos.zillowstatic.com/p_e/ISyjx66u5tpae40000000000.jpg\">"
+    BS.take 665 (renderListings dl) `shouldBe` "<!DOCTYPE HTML>\n<html><head><title>84103 listings</title><body><hr><img src=\"https://photos.zillowstatic.com/p_e/ISu867yw477gn41000000000.jpg\" alt=\"https://photos.zillowstatic.com/p_e/ISu867yw477gn41000000000.jpg\"> 521 E 5th Ave APT 602 $159,900 <a href=\"https://www.zillow.com/homedetails/521-E-5th-Ave-APT-602-Salt-Lake-City-UT-84103/2095378819_zpid/\">details</a><hr><img src=\"https://photos.zillowstatic.com/p_e/ISm6jpgwcml9q80000000000.jpg\" alt=\"https://photos.zillowstatic.com/p_e/ISm6jpgwcml9q80000000000.jpg\"> 143 E 1st Ave APT 303 $215,000 <a href=\"https://www.zillow.com/homedetails/143-E-1st-Ave-APT-303-Salt-Lake-City-UT-84103/83828461_zpid/\">details</a>"
