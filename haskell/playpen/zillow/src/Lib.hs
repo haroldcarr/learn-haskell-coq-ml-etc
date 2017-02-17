@@ -3,7 +3,7 @@
 module Lib where
 
 import           Control.Lens                ((&), (.~), (^.))
-import           Data.Aeson.Lens             (_String)
+import           Data.ByteString.Lazy.Char8  as BSLC8
 import           Data.List                   as L
 import           Data.Text                   as T
 import           Data.Text.IO                as T
@@ -15,6 +15,7 @@ import           Prelude                     as P
 import           Text.HTML.TagSoup
 
 ------------------------------------------------------------------------------
+-- constants
 
 baseUrl = "https://www.zillow.com"
 
@@ -24,6 +25,7 @@ page1Url =
 dataDir = "data/"
 
 ------------------------------------------------------------------------------
+-- downloads
 
 downloadAll = do
   filename    <- download page1Url 1
@@ -44,20 +46,11 @@ download url n = do
 openUrl url =
   withOpenSSL $ do
     r <- getWith opts url
-    print (r ^. responseStatus)
-    print (r ^. responseHeaders)
-    return (T.unpack (r ^. responseBody . _String))
+    print  (r ^. responseStatus)
+    print  (r ^. responseHeaders)
+    return (BSLC8.unpack (r ^. responseBody))
  where
   opts = defaults & manager .~ Left (opensslManagerSettings context)
-
--- printTags =<< allListings ["data/2017-02-13-p1.htm", "data/2017-02-13-p2.htm", "data/2017-02-13-p3.htm"]
-allListings filenames = do
-  ls <- mapM go filenames
-  return (P.concat ls)
- where
-  go filename = do
-    txt <- T.readFile filename
-    return (listings txt)
 
 ------------------------------------------------------------------------------
 -- page links
@@ -81,23 +74,30 @@ pickOutPageLinks (x:xs) =
 ------------------------------------------------------------------------------
 -- listings (via <article>) in page
 
-pl = ppp "./test/p1.html" listings
+-- these two for quick checks
+pl = ppp "./data/2017-02-16-p1.htm" listings
+pal = do
+  txt <- T.readFile "./data/2017-02-16-p1.htm"
+  mapM_ (mapM_ print) (getArticles txt)
+
+-- printTags =<< allListings ["data/2017-02-16-p1.htm", "data/2017-02-16-p2.htm", "data/2017-02-16-p3.htm"]
+-- printTags =<< allListings ["data/2017-02-13-p1.htm", "data/2017-02-13-p2.htm", "data/2017-02-13-p3.htm"]
+allListings filenames = do
+  ls <- mapM go filenames
+  return (P.concat ls)
+ where
+  go filename = do
+    txt <- T.readFile filename
+    return (listings txt)
 
 listings txt =
-  P.map cleanse (P.map (pickData . pickTags) (getArticles txt))
+  P.filter hasPrice
+           (P.map cleanse
+                  (P.map (pickData . pickTags)
+                         (getArticles txt)))
 
 getArticles :: Text -> [[Tag Text]]
 getArticles t = textParseTags "<article>" t
-
-cleanse [] = []
-cleanse (x:xs) =
-  if T.isPrefixOf "/homedetails/" x
-  then      x : cleanse xs
-  else if T.isPrefixOf "/homedetail/AuthRequired.htm" x ||
-          T.isPrefixOf "/" x ||
-          P.elem x zillowIgnore
-       then     cleanse xs
-       else x : cleanse xs
 
 pickTags :: [Tag Text] -> [Tag Text]
 pickTags tags = do
@@ -109,7 +109,7 @@ pickTags tags = do
     if x == TagOpen "span" [("itemprop", "streetAddress")] ||
        x == TagOpen "span" [("class",    "zsg-photo-card-price")]
     then myFilter True  xs
-    else if x ~== ("<a>"::String)
+    else if x ~== ("<a>"::String) || x ~== ("<img>"::String)
          then x : myFilter False xs
          else     myFilter False xs
 
@@ -121,7 +121,26 @@ pickData tags = do
     (TagText    t) -> t
     (TagOpen _ xs) -> if not (P.null xs) then snd $ P.head xs else ""
 
+cleanse [] = []
+cleanse (x:xs) =
+  if T.isPrefixOf "/homedetails/" x || T.isPrefixOf "https://photos" x
+  then      x : cleanse xs
+  else if T.isPrefixOf "/homedetail/AuthRequired.htm" x ||
+          T.isPrefixOf "/" x ||
+          T.isPrefixOf "https://dev.virtualearth.net" x ||
+          T.isPrefixOf "https://sb.scorecardresearch.com" x ||
+          P.elem x zillowIgnore
+       then     cleanse xs
+       else x : cleanse xs
+
+hasPrice = P.any (T.isPrefixOf "$")
+
 zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.com/local-info/","http://www.facebook.com/Zillow","http://twitter.com/zillow","http://plus.google.com/+Zillow","zsg-notification-bar-close","mapped-result-count","#","#","#","#","#","#","menu-label","#fore-tip-filters","#coming-soon-tip-filters","#pm-tip-filters","#pmf-tip-filters","#pre-foreclosure-tip-filters","#mmm-tip-filters","#pending-tip-filters","price-menu-label","saf-entry-link","#payment","#income","#","saf-close zsg-button","saf-pre-approval-link","beds-menu-label","type-menu-label","menu-label","#hoa-dues-tooltip","http://www.zillow.com/community-pillar/","zsg-button_primary"]
+
+------------------------------------------------------------------------------
+-- display
+
+
 
 ------------------------------------------------------------------------------
 -- util
@@ -132,9 +151,9 @@ textParseTags tag t = do
   partitions (~== tag) ts
 
 getDate = do
-  now <- getCurrentTime
+  now    <- getCurrentTime
   myzone <- getCurrentTimeZone
-  let x = show (utcToZonedTime myzone now :: ZonedTime)
+  let x   = show (utcToZonedTime myzone now :: ZonedTime)
   return $ P.take 10 x
 
 ppp filename f = do
