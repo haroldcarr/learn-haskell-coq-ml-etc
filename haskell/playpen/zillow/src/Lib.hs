@@ -12,8 +12,7 @@ import           Network.HTTP.Client.OpenSSL
 import           Network.Wreq                  as W
 import           OpenSSL.Session               (context)
 import           Prelude                       as P
-import           Text.Blaze.Html.Renderer.Utf8 (renderHtml,
-                                                renderHtmlToByteStringIO)
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import qualified Text.Blaze.Html5              as H
 import qualified Text.Blaze.Html5.Attributes   as A
 import           Text.HTML.TagSoup
@@ -142,10 +141,13 @@ zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.c
 ------------------------------------------------------------------------------
 -- display
 
--- al <- allListings ["data/2017-02-16-p1.htm", "data/2017-02-16-p2.htm", "data/2017-02-16-p3.htm"]
--- let dl = displayListings al
--- import Text.Blaze.Html.Renderer.Utf8 (renderHtml, renderHtmlToByteStringIO)
--- Text.Blaze.Html.Renderer.Utf8.renderHtml dl
+writeDisplayListings = do
+  al <- allListings ["data/2017-02-16-p1.htm", "data/2017-02-16-p2.htm", "data/2017-02-16-p3.htm"]
+  print al
+  let dl = displayListings al
+  let rl = renderHtml dl
+  print rl
+  return $ BSLC8.writeFile "/tmp/xxx.html" rl
 
 displayListings xs = H.docTypeHtml $ do
   H.head $ do
@@ -155,10 +157,11 @@ displayListings xs = H.docTypeHtml $ do
 
 displayListing :: [Text] -> H.Html
 displayListing [address, price, pagelink, photolink] = do
-    H.h2  $   H.string (T.unpack address)
-    H.p   $   H.string (T.unpack price)
-    H.a   H.! A.href (H.textValue pagelink)  $   "page"
-    H.img H.! A.src  (H.textValue photolink) H.! A.alt (H.textValue photolink)
+  H.hr
+  H.img H.! A.src  (H.preEscapedTextValue photolink) H.! A.alt (H.preEscapedTextValue photolink)
+  H.h2  $   H.string (T.unpack address)
+  H.p   $   H.string (T.unpack price)
+  H.a   H.! A.href (H.preEscapedStringValue (baseUrl ++ (T.unpack pagelink)))  $   "details"
 displayListing x = H.h2 (H.string (show x))
 
 renderListings = renderHtml
