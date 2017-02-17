@@ -2,16 +2,20 @@
 
 module Lib where
 
-import           Control.Lens                ((&), (.~), (^.))
-import           Data.ByteString.Lazy.Char8  as BSLC8
-import           Data.List                   as L
-import           Data.Text                   as T
-import           Data.Text.IO                as T
+import           Control.Lens                  ((&), (.~), (^.))
+import           Data.ByteString.Lazy.Char8    as BSLC8
+import           Data.List                     as L
+import           Data.Text                     as T
+import           Data.Text.IO                  as T
 import           Data.Thyme.Time
 import           Network.HTTP.Client.OpenSSL
-import           Network.Wreq                as W
-import           OpenSSL.Session             (context)
-import           Prelude                     as P
+import           Network.Wreq                  as W
+import           OpenSSL.Session               (context)
+import           Prelude                       as P
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtml,
+                                                renderHtmlToByteStringIO)
+import qualified Text.Blaze.Html5              as H
+import qualified Text.Blaze.Html5.Attributes   as A
 import           Text.HTML.TagSoup
 
 ------------------------------------------------------------------------------
@@ -140,7 +144,24 @@ zillowIgnore = ["option","zsg-lightbox-show za-track-event","http://www.zillow.c
 ------------------------------------------------------------------------------
 -- display
 
+-- al <- allListings ["data/2017-02-16-p1.htm", "data/2017-02-16-p2.htm", "data/2017-02-16-p3.htm"]
+-- let dl = displayListings al
+-- import Text.Blaze.Html.Renderer.Utf8 (renderHtml, renderHtmlToByteStringIO)
+-- Text.Blaze.Html.Renderer.Utf8.renderHtml dl
 
+displayListings xs = H.docTypeHtml $ do
+  H.head $ do
+    H.title "84103 listings"
+    H.body $ do
+        mapM_ displayListing xs
+
+displayListing :: [Text] -> H.Html
+displayListing [address, price, pagelink, photolink] = do
+    H.h2  $   H.string (T.unpack address)
+    H.p   $   H.string (T.unpack price)
+    H.a   H.! A.href (H.textValue pagelink)  $   "page"
+    H.img H.! A.src  (H.textValue photolink) H.! A.alt (H.textValue photolink)
+displayListing x = H.h2 (H.string (show x))
 
 ------------------------------------------------------------------------------
 -- util

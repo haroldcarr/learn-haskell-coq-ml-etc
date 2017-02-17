@@ -7,6 +7,8 @@ library
   hs-source-dirs:      src
   exposed-modules:     Lib
   build-depends:       base >= 4.7 && < 5
+                     , blaze-html
+                     , blaze-markup
                      , bytestring
                      , HsOpenSSL
                      , http-client-openssl
