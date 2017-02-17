@@ -59,8 +59,6 @@ openUrl url =
 ------------------------------------------------------------------------------
 -- page links
 
-pp = ppp "./test/p1.html" pageLinks
-
 pageLinks txt =
   L.nub (pickOutPageLinks (P.takeWhile (\x -> x /= TagClose "ol")
                                        (P.head (getPageLinks txt))))
@@ -162,6 +160,8 @@ displayListing [address, price, pagelink, photolink] = do
     H.a   H.! A.href (H.textValue pagelink)  $   "page"
     H.img H.! A.src  (H.textValue photolink) H.! A.alt (H.textValue photolink)
 displayListing x = H.h2 (H.string (show x))
+
+renderListings = renderHtml
 
 ------------------------------------------------------------------------------
 -- util
