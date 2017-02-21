@@ -5,7 +5,7 @@ module Testing
 where
 
 import           PPrelude
-import           Trie.Path
+import           TriePath
 
 import           Data.Aeson           as A
 import qualified Data.ByteString      as BS

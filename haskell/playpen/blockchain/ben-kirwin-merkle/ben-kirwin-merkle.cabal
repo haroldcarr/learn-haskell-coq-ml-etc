@@ -34,12 +34,12 @@ test-suite test
 library
   exposed-modules: PPrelude
                  , RLP
-                 , RLP.Convert
-                 , RLP.Item
+                 , RLPConvert
+                 , RLPItem
                  , Trie
-                 , Trie.Internal
-                 , Trie.MapDB
-                 , Trie.Path
+                 , TrieInternal
+                 , TrieMapDB
+                 , TriePath
   build-depends:   base
                  , bytestring
                  , containers

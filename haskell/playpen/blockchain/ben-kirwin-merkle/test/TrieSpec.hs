@@ -8,8 +8,8 @@ where
 
 import           PPrelude
 import           Trie
-import           Trie.Internal
-import           Trie.MapDB
+import           TrieInternal
+import           TrieMapDB
 
 import           Testing
 

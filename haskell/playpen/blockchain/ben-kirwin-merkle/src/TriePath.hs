@@ -1,4 +1,4 @@
-module Trie.Path
+module TriePath
   (Path, encodePath, decodePath)
 where
 

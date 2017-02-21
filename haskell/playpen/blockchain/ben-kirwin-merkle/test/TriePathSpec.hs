@@ -6,7 +6,7 @@ module TriePathSpec
 where
 
 import           PPrelude
-import           Trie.Path
+import           TriePath
 
 import           Testing
 

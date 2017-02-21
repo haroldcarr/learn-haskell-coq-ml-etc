@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Trie.Internal
+module TrieInternal
   ( NodeDB, Digest(..)
   , getNode, putNode
   , lookupPath
@@ -13,7 +13,7 @@ where
 
 import           PPrelude
 import qualified RLP                 as RLP
-import           Trie.Path
+import           TriePath
 
 import           Control.Monad.State
 import qualified Crypto.Hash.SHA3    as SHA3

@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Trie.MapDB
+module TrieMapDB
   (MapDB, runMapDB)
 where
 

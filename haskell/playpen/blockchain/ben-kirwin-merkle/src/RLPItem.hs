@@ -1,4 +1,4 @@
-module RLP.Item
+module RLPItem
   (Item(String, List), encode, decode)
 where
 

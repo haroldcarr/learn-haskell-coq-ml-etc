@@ -3,12 +3,12 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE TypeOperators     #-}
 
-module RLP.Convert
+module RLPConvert
   (Convertible, toItem, fromItem, converter, asUnderlying, asProduct, tagged, Converter(..))
 where
 
 import           PPrelude
-import           RLP.Item
+import           RLPItem
 
 import           Control.Applicative
 import           Data.Foldable       (toList)

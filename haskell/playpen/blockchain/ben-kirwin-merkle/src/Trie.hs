@@ -6,7 +6,7 @@ module Trie
 where
 
 import           PPrelude
-import           Trie.Internal       as ETI
+import           TrieInternal        as TI
 
 import           Control.Monad.State
 import           Prelude             hiding (lookup)
