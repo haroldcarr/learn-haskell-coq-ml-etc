@@ -13,6 +13,11 @@ test-suite test
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Spec.hs
+  other-modules: PreludeSpec
+               , RLPSpec
+               , Testing
+               , TriePathSpec
+               , TrieSpec
   build-depends: base
                , ben-kirwin-merkle
                , attoparsec
@@ -24,6 +29,7 @@ test-suite test
                , text
                , unordered-containers
                , aeson
+  default-language:    Haskell2010
 
 library
   exposed-modules: PPrelude

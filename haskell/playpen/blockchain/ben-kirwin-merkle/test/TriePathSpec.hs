@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Trie.PathSpec
+module TriePathSpec
   (spec)
 where
 
