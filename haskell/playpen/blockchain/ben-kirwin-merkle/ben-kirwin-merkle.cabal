@@ -1,0 +1,46 @@
+name:                ben-kirwin-merkle
+version:             0.1.0.0
+license:             MIT
+license-file:        LICENSE
+author:              Ben Kirwin
+maintainer:          ben@kirw.in
+copyright:           (c) 2014 Ben Kirwin
+category:            Network
+build-type:          Simple
+cabal-version:       >=1.10
+
+test-suite test
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Spec.hs
+  build-depends: base
+               , ben-kirwin-merkle
+               , attoparsec
+               , hspec
+               , bytestring
+               , containers
+               , mtl
+               , QuickCheck
+               , text
+               , unordered-containers
+               , aeson
+
+library
+  exposed-modules: PPrelude
+                 , RLP
+                 , RLP.Convert
+                 , RLP.Item
+                 , Trie
+                 , Trie.Internal
+                 , Trie.MapDB
+                 , Trie.Path
+  build-depends:   base
+                 , bytestring
+                 , containers
+                 , attoparsec
+                 , cryptohash
+                 , free
+                 , mtl
+                 , errors
+  hs-source-dirs: src
+  default-language:    Haskell2010
