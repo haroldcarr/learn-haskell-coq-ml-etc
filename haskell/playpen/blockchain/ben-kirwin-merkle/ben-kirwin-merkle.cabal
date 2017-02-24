@@ -9,12 +9,35 @@ category:            Network
 build-type:          Simple
 cabal-version:       >=1.10
 
+library
+  exposed-modules: PPrelude
+                 , RLP
+                 , RLPConvert
+                 , RLPItem
+                 , Slides
+                 , Trie
+                 , TrieInternal
+                 , TrieMapDB
+                 , TriePath
+  build-depends:   base
+                 , attoparsec
+                 , bytestring
+                 , containers
+                 , cryptohash
+                 , errors
+                 , free
+                 , mtl
+                 , pretty-show
+  hs-source-dirs: src
+  default-language:    Haskell2010
+
 test-suite test
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Spec.hs
   other-modules: PreludeSpec
                , RLPSpec
+               , SlidesSpec
                , Testing
                , TriePathSpec
                , TrieSpec
@@ -31,22 +54,3 @@ test-suite test
                , unordered-containers
   default-language:    Haskell2010
 
-library
-  exposed-modules: PPrelude
-                 , RLP
-                 , RLPConvert
-                 , RLPItem
-                 , Trie
-                 , TrieInternal
-                 , TrieMapDB
-                 , TriePath
-  build-depends:   base
-                 , attoparsec
-                 , bytestring
-                 , containers
-                 , cryptohash
-                 , errors
-                 , free
-                 , mtl
-  hs-source-dirs: src
-  default-language:    Haskell2010
