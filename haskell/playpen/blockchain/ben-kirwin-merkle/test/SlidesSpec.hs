@@ -14,6 +14,7 @@ spec :: Spec
 spec = do
   alist
   trie
+  ptrie
 
 alist =
   describe "AssocList" $ do
@@ -139,4 +140,14 @@ trie =
     it "tlookkup food food" $
       tlookup food (mkKey "F00D") `shouldBe` (Just "F4D71E")
 
+ptrie =
+  describe "PTrie" $ do
+    it "plookup 1" $
+      plookup (PS (mkKey "F00D") (Right "F4D71E"))
+              (mkKey "F00D")
+        `shouldBe` Just "F4D71E"
+    it "plookup 2" $
+      plookup (PS (mkKey "F0") (Left (PS (mkKey "0D") (Right "F4D71E"))))
+              (mkKey "F00D")
+        `shouldBe` Just "F4D71E"
 
