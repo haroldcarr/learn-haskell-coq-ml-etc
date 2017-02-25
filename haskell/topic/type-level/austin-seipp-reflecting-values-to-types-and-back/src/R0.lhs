@@ -21,31 +21,29 @@ reflection API:
 data Proxy k = Proxy
 
 class Reifies s a | s -> a where
+  -- turns a type into a value
   reflect :: proxy s -> a
 
 newtype Magic a r = Magic (forall (s :: *). Reifies s a => Proxy s -> r)
 
+-- turn a value into a type
 reify :: forall a r. a -> (forall (s :: *). Reifies s a => Proxy s -> r) -> r
 reify a k = unsafeCoerce (Magic k :: Magic a r) (const a) Proxy
 {-# INLINE reify #-}
 
-
-> p :: Reifies s a => Proxy s -> a
-> p x = reflect x
+:t reflect
+reflect :: Reifies s a => proxy s -> a
 
 > -- e1 :: Int
-> e1 = reify 10 $ p -- \p -> reflect p + reflect p
+> e1 = reify 10 $ reflect
 
-> -- e2 :: Char
-> e2 = reify 'c' $ \p -> reflect p
-
-> -- e3 :: String
-> e3 = reify 'c' $ \p -> show (reflect p)
+> -- e2 :: String
+> e2 = reify 'c' $ show . reflect
 
 - reify value 10 over the enclosed lambda
-- inside the lambda, `reflect` `p` value to get `10 :: Int` back
+- inside the lambda, `reflect` value to get `10 :: Int` back
 - type of `reify` shows
-- lambda accepts param of type `Proxy s`
+  - lambda accepts param of type `Proxy s`
 - never had any instances of `Reifies` for the types
 - how does it know what value to return, given the `Proxy`?
 

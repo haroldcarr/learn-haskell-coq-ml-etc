@@ -128,5 +128,3 @@ e.g.: user specifies that value should be supplied to Bar constructor during dat
 > f4 =
 >   reify (read "4" :: Int, read "45" :: Int) $
 >        \(Proxy :: Proxy s) -> print . unTagged =<< generate (arbitrary :: Gen (Tagged s Foo4))
-
-
