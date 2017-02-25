@@ -9,6 +9,9 @@ module P439_state_machine_vending where
 
 import           Data.Kind
 
+import           Data.Proxy
+import           Data.Reflection hiding (Z)
+
 data Nat = Z | S Nat deriving (Show)
 
 type family (m :: Nat) :+ (n :: Nat) :: Nat
@@ -85,7 +88,8 @@ vend5  = InsertCoin' `Bind'` Vend'
 vend6 :: MachineCmd' () 'Z 'Z 'Z ('S 'Z)
 vend6  = Refill (SS (SS SZ)) `Bind'` InsertCoin' `Bind'` Vend'
 
-
+vend7 :: MachineCmd' () 'Z chocs 'Z ('S ('S chocs))
+vend7  = reify (SS (SS SZ)) $ \p -> Refill (reflect p)
 
 {-
 addNumbers = do
