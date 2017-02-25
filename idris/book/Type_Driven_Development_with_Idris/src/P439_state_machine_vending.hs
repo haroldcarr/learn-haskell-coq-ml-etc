@@ -1,8 +1,9 @@
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE GADTs         #-}
-{-# LANGUAGE RankNTypes    #-}
-{-# LANGUAGE TypeFamilies  #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds          #-}
+{-# LANGUAGE GADTs              #-}
+{-# LANGUAGE RankNTypes         #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies       #-}
+{-# LANGUAGE TypeOperators      #-}
 
 module P439_state_machine_vending where
 
@@ -18,11 +19,16 @@ data SNat :: Nat -> * where
   SZ ::           SNat  Z
   SS :: SNat n -> SNat (S n)
 
+deriving instance Show (SNat nat)
+
 snatToNat :: SNat n -> Nat
-snatToNat SZ     = Z
+snatToNat  SZ    =  Z
 snatToNat (SS n) = (S (snatToNat n))
 
 {-
+natToSNat  Z    = SZ
+natToSNat (S n) = SS (natToSNat n)
+
 data SNatOf = SNatOf (forall n . SNat n)
 intToSNatOf :: Int -> SNatOf
 intToSNatOf 0 = SNatOf 0
@@ -54,11 +60,32 @@ data MachineCmd' :: * -> Nat -> Nat -> Nat -> Nat -> * where
                  -> MachineCmd' ()    s2p        s2c       s3p     s3c
                  -> MachineCmd' ()    s1p        s1c       s3p     s3c
 
-vend1 :: MachineCmd' () Z (S Z) Z Z
-vend1  = InsertCoin' `Bind'` Vend'
+deriving instance Show (MachineCmd' any poundsBefore chocsBefore poundsAfter chocsAfter)
 
-vend2 :: MachineCmd' () Z Z Z (S Z)
-vend2  = Refill (SS (SS SZ)) `Bind'` InsertCoin' `Bind'` Vend'
+vend0 :: MachineCmd' () pounds chocs ('S pounds) chocs
+vend0  = InsertCoin'
+
+vend1 :: MachineCmd' () s1p s3c ('S ('S s1p)) s3c
+vend1  = InsertCoin' `Bind'` InsertCoin'
+
+vend2 :: MachineCmd' () ('S pounds) ('S chocs) pounds chocs
+vend2  = Vend'
+
+vend2' = vend0 `Bind'` vend2
+
+vend3 :: MachineCmd' () ('S ('S s3p)) ('S ('S s3c)) s3p s3c
+vend3  = Vend' `Bind'` Vend'
+
+vend4 :: MachineCmd' () 'Z chocs 'Z ('S ('S chocs))
+vend4  = Refill (SS (SS SZ))
+
+vend5 :: MachineCmd' () 'Z ('S 'Z) 'Z 'Z
+vend5  = InsertCoin' `Bind'` Vend'
+
+vend6 :: MachineCmd' () 'Z 'Z 'Z ('S 'Z)
+vend6  = Refill (SS (SS SZ)) `Bind'` InsertCoin' `Bind'` Vend'
+
+
 
 {-
 addNumbers = do
