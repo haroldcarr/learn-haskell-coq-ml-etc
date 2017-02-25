@@ -90,12 +90,3 @@ vend6  = Refill (SS (SS SZ)) `Bind'` InsertCoin' `Bind'` Vend'
 
 vend7 :: MachineCmd' () 'Z chocs 'Z ('S ('S chocs))
 vend7  = reify (SS (SS SZ)) $ \p -> Refill (reflect p)
-
-{-
-addNumbers = do
-  "80"
-  "60"
-  "10"
-  where (>>) = (++)
-        return = \x -> x
--}
