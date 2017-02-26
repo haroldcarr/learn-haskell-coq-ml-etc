@@ -33,50 +33,36 @@ monadic commands inside send are executed in a remote location
 - but the results of those executions need to be made available for use locally
 
 ------------------------------------------------------------------------------
-3.1 Asynchronous Command
 
-remote command
-- request to perform an action for remote effect
-- no result value
-- no temporal consequence
+--------------------------------------------------
+general infrastructure
+
+> data Device0 = Device0
+>   {
+>     -- Async Command
+>     -- o request to perform an action for remote effect
+>     -- o no result value, therefore no need for back channel, thus ()
+>     -- o no temporal consequence
+>     async0 :: String -> IO ()
+>     -- Synchronous Procedure
+>     -- o request to perform an action for its remote effects
+>     -- o there is a result value
+>     -- o or there is a temporal consequence (return signal actions completed)
+>   , sync0  :: String -> IO String
+>   }
+
+> sendAsync0 :: Device0 -> Command -> IO ()
+> sendAsync0 d m = async0 d (show m) -- serializes Command and send to remote device
+
+> sendSync0 :: Device0 -> Procedure a -> IO a
+> sendSync0 d m = do
+>   r <- sync0 d (show m)           -- serializes the Procedure, sends over synchronous channel
+>   return (readProcedureReply m r) -- interprets reply in terms of type of same Procedure
+
+--------------------------------------------------
+app-specific
 
 > data Command = Say String deriving (Read, Show)
-
-> --- | representation of remote device - no need for back channel, thus ()
-> data ASDevice = ASDevice { async :: String -> IO () }
-
-> -- | serializes Command and send to remote device
-> asSend :: ASDevice -> Command -> IO ()
-> asSend d m = async d (show m)
-
-> -- | simulation of remote device requires
-> -- - representation of commands on remote device
-> -- - deserialization function (Read) that reads commands
-> data RCommand = RSay String deriving Read
-
-> commandToRCommand :: Command -> RCommand
-> commandToRCommand (Say s) = RSay s
-
-> -- | remote execution function commands
-> execRCommand :: RCommand -> IO ()
-> execRCommand (RSay str) = putStrLn ("Remote: " ++ str)
-
-> -- | simulates remote interpreter handle
-> asDevice :: ASDevice
-> asDevice = ASDevice (execRCommand . commandToRCommand . read)
-
-> -- | test
-> asyncTest = asSend asDevice (Say "Do you want some toast?")
-
-------------------------------------------------------------------------------
-3.2 Synchronous Procedure
-
-remote procedure
-- request to perform an action for its remote effects
-- there is a result value
-- or there is a temporal consequence (return signal actions completed)
-
-> data SDevice = SDevice { sync :: String -> IO String }
 
 > -- | GADT with phantom type index denoting expected result type
 > data Procedure :: * -> * where
@@ -92,13 +78,17 @@ remote procedure
 > readProcedureReply Temperature {} i = read i
 > readProcedureReply Toast       {} i = read i
 
-> -- | sSend is polymorphic in type parameter of Procedure
-> sSend :: SDevice -> Procedure a -> IO a
-> sSend d m = do
->   r <- sync d (show m)            -- serializes the Procedure, sends over synchronous channel
->   return (readProcedureReply m r) -- interprets reply in terms of type of same Procedure
+> -- | simulation of remote device requires
+> -- - representation of commands on remote device
+> -- - deserialization function (Read + commandToRCommand) that reads commands
+> data RCommand = RSay String deriving Read
 
-simulated remote Device (note: merges serialization of result value into execution function, could be separated)
+> commandToRCommand :: Command -> RCommand
+> commandToRCommand (Say s) = RSay s
+
+> -- | remote execution function commands
+> execRCommand :: RCommand -> IO ()
+> execRCommand (RSay str) = putStrLn ("Remote: " ++ str)
 
 > data RProcedure
 >   = RTemperature
@@ -115,74 +105,80 @@ simulated remote Device (note: merges serialization of result value into executi
 >   putStrLn "Remote: Done!"
 >   return (show ())
 
-> sDevice :: SDevice
-> sDevice = SDevice (execRProcedure . read)
+> -- | simulates remote interpreter handle
+> -- note: merges serialization of result value into execution function, could be separated
+> device0 :: Device0
+> device0 = Device0 (execRCommand   . commandToRCommand . read)
+>                   (execRProcedure                     . read)
 
-> syncTest1 = sSend sDevice Temperature
-> syncTest2 = sSend sDevice (Toast 3)
+> t10 = sendAsync0 device0 (Say "Do you want some toast?")
+> t20 = sendSync0  device0 Temperature
+> t30 = sendSync0  device0 (Toast 3)
 
 ------------------------------------------------------------------------------
 4. Weak Remote Monad
 
-Above, args to send not Monad instances
+In the above, the arguments to send routines are not Monad instances.
 
-join async/synch models into monad called Remote
+weak remote monad
+- "weak" " sends each of its remote calls individually to a remote interpreter
+- e.g., does not amortize cost of communication
 
-weak remote monad : initial version : does not amortize cost of communication
+--------------------------------------------------
+general infrastructure
 
-Definition. weak remote monad :
-- sends each of its remote calls individually to a remote interpreter
+> data DeviceW = DeviceW
+>   { syncW  :: String -> IO String
+>   , asyncW :: String -> IO ()
+>   }
 
-> -- gives access to Device used to send commands
-> newtype Remote a = Remote (ReaderT WDevice IO a)
+> -- each async command invokes remote procedure call immediately
+> sendAsyncW :: Command -> Remote ()
+> sendAsyncW m = Remote $ do
+>   d <- ask
+>   liftIO (asyncW d (show m))
+>   return ()
+
+> -- each sync procedures invokes remote procedure call immediately
+> sendSyncW :: Procedure a -> Remote a
+> sendSyncW m = Remote $ do
+>   d <- ask
+>   r <- liftIO (syncW d (show m))
+>   return (readProcedureReply m r)
+
+> -- KEY POINT : this enables args to following `send` procedure to be a monad instance
+> newtype Remote a = Remote (ReaderT DeviceW IO a)
 > deriving instance Functor     Remote
 > deriving instance Applicative Remote
 > deriving instance Monad       Remote
 
-> -- | run Remote monad
-> send :: WDevice -> Remote a -> IO a
+> -- | send that takes an instance of the monad above
+> send :: DeviceW -> Remote a -> IO a
 > send d (Remote m) = runReaderT m d
 
-> data WDevice = WDevice
->   { wsync  :: String -> IO String
->   , wasync :: String -> IO ()
->   }
+--------------------------------------------------
+app-specific
 
 > -- | virtual remote Device
-> wdevice :: WDevice
-> wdevice = WDevice (execRProcedure                     . read)
+> deviceW :: DeviceW
+> deviceW = DeviceW (execRProcedure                     . read)
 >                   (execRCommand   . commandToRCommand . read)
 
-> -- each async command invokes remote procedure call immediately
-> sendCommand :: Command -> Remote ()
-> sendCommand m = Remote $ do
->   d <- ask
->   liftIO (wasync d (show m))
->   return ()
-
-> -- each sync procedures invokes remote procedure call immediately
-> sendProcedure :: Procedure a -> Remote a
-> sendProcedure m = Remote $ do
->   d <- ask
->   r <- liftIO (wsync d (show m))
->   return (readProcedureReply m r)
-
 > say :: String -> Remote ()
-> say txt = sendCommand (Say txt)
+> say txt = sendAsyncW (Say txt)
 
 > temperature :: Remote Int
-> temperature = sendProcedure Temperature
+> temperature = sendSyncW Temperature
 
 > toast :: Int -> Remote ()
-> toast n = sendProcedure (Toast n)
+> toast n = sendSyncW (Toast n)
 
-test : send with monadic argument, and chains of primitives, connected using the monad
-achieved goal: weak remote monad where commands and procedures are executed in remote location
+send with monadic argument: chains of commands and procedures connected using Remote monad
 
-> wTest1 = send wdevice $ do
+> t1w = send deviceW $ do
 >   say "Do you want some toast?" -- command
 >   t <- temperature              -- procedure
 >   say (show t ++ "F")           -- command
 >   return t
 
-> wTest2 = send wdevice (toast 3)
+> t2w = send deviceW (toast 3)
