@@ -33,11 +33,9 @@ monadic commands inside send are executed in a remote location
 - but the results of those executions need to be made available for use locally
 
 ------------------------------------------------------------------------------
-3.1 Asynchronous Remote Command Call
+3.1 Asynchronous Command
 
-Command design pattern
-
-Definition. remote command
+remote command
 - request to perform an action for remote effect
 - no result value
 - no temporal consequence
@@ -71,10 +69,9 @@ Definition. remote command
 > asyncTest = asSend asDevice (Say "Do you want some toast?")
 
 ------------------------------------------------------------------------------
+3.2 Synchronous Procedure
 
-3.2 A Synchronous Remote Call
-
-Definition. remote procedure :
+remote procedure
 - request to perform an action for its remote effects
 - there is a result value
 - or there is a temporal consequence (return signal actions completed)
@@ -125,8 +122,7 @@ simulated remote Device (note: merges serialization of result value into executi
 > syncTest2 = sSend sDevice (Toast 3)
 
 ------------------------------------------------------------------------------
-
-4. The Weak Remote Monad
+4. Weak Remote Monad
 
 Above, args to send not Monad instances
 
@@ -137,17 +133,25 @@ weak remote monad : initial version : does not amortize cost of communication
 Definition. weak remote monad :
 - sends each of its remote calls individually to a remote interpreter
 
-> -- | implemented using reader monad, where environment is Device, nested around IO monad
-> -- gives access to specific Device used to send commands to remote interpreter
+> -- gives access to Device used to send commands
 > newtype Remote a = Remote (ReaderT WDevice IO a)
 > deriving instance Functor     Remote
 > deriving instance Applicative Remote
 > deriving instance Monad       Remote
 
+> -- | run Remote monad
+> send :: WDevice -> Remote a -> IO a
+> send d (Remote m) = runReaderT m d
+
 > data WDevice = WDevice
 >   { wsync  :: String -> IO String
 >   , wasync :: String -> IO ()
 >   }
+
+> -- | virtual remote Device
+> wdevice :: WDevice
+> wdevice = WDevice (execRProcedure                     . read)
+>                   (execRCommand   . commandToRCommand . read)
 
 > -- each async command invokes remote procedure call immediately
 > sendCommand :: Command -> Remote ()
@@ -156,9 +160,6 @@ Definition. weak remote monad :
 >   liftIO (wasync d (show m))
 >   return ()
 
-> say :: String -> Remote ()
-> say txt = sendCommand (Say txt)
-
 > -- each sync procedures invokes remote procedure call immediately
 > sendProcedure :: Procedure a -> Remote a
 > sendProcedure m = Remote $ do
@@ -166,20 +167,14 @@ Definition. weak remote monad :
 >   r <- liftIO (wsync d (show m))
 >   return (readProcedureReply m r)
 
+> say :: String -> Remote ()
+> say txt = sendCommand (Say txt)
+
 > temperature :: Remote Int
 > temperature = sendProcedure Temperature
 
 > toast :: Int -> Remote ()
 > toast n = sendProcedure (Toast n)
-
-> -- | run Remote monad
-> send :: WDevice -> Remote a -> IO a
-> send d (Remote m) = runReaderT m d
-
-> -- | virtual remote Device
-> wdevice :: WDevice
-> wdevice = WDevice (execRProcedure                     . read)
->                   (execRCommand   . commandToRCommand . read)
 
 test : send with monadic argument, and chains of primitives, connected using the monad
 achieved goal: weak remote monad where commands and procedures are executed in remote location
