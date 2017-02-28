@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE RecursiveDo                #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 
 module Lib where
@@ -8,6 +9,7 @@ module Lib where
 import           Control.Concurrent
 import           Control.Monad.Reader
 import           Control.Monad.State
+import           Control.Monad.Writer
 import           System.Random
 
 ------------------------------------------------------------------------------
@@ -70,7 +72,7 @@ data Command = Say String deriving (Read, Show)
 -- - deserialization function (Read + commandToRCommand) that reads commands
 data RCommand = RSay String deriving (Read, Show)
 
-commandToRCommand :: Command -> RCommand
+commandToRCommand :: Command -> RCommand -- TODO : handle this like other R*
 commandToRCommand (Say s) = RSay s
 
 -- | GADT with phantom type index denoting expected result type
@@ -258,3 +260,73 @@ t2s = send device $ do
   toast 3                       -- procedure
   say "thanks for the toast"    -- command
   return t
+
+------------------------------------------------------------------------------
+-- 6. Remote Applicative
+{-
+applicatives are better suited to remoteness
+- applicative com putations cannot depend on results of prior computations
+
+weak :  same capabilities as weak remote monad (primitives transmitted individually)
+strong : bundle all the Commands and Procedures into a single packet
+- represented by [Prims]
+-}
+-- PRIMitive remote calls
+data Prim :: * where
+  Command   ::           Command     -> Prim -- above : Command/Procedure are types; here : constructors
+  Procedure :: Show a => Procedure a -> Prim
+instance Show Prim where
+  show (Command   c) = show c
+  show (Procedure a) = show a
+
+data RPrim
+  = RCommand   RCommand
+  | RProcedure RProcedure
+  deriving Read
+
+-- writer : queues calls
+-- state : results
+-- lazy evaluation "connects" send/receiving -- TODO
+newtype RemoteA a = RemoteA (WriterT [Prim] (State [String]) a)
+deriving instance Functor     RemoteA
+deriving instance Applicative RemoteA
+
+sendAsyncA :: Command -> RemoteA ()
+sendAsyncA cmd = RemoteA (tell [Command cmd]) -- queue
+
+-- remember the Procedure
+-- then read result from state, lazily pulling it off a list
+-- important: no external effects inside inner monad
+sendSyncA :: Show a => Procedure a -> RemoteA a
+sendSyncA p = RemoteA $ do
+  tell [Procedure p]
+  ~(r:rs) <- get
+  put rs
+  return (readProcedureReply p r)
+
+-- uses recursive do
+
+sendA :: Device -> RemoteA a -> IO a
+sendA d (RemoteA m) = do
+  rec let ((a,ps),_) = runState (runWriterT m) r -- recursively feed result list back into invocation
+      r <- if all isCommand ps
+               then do async d (show ps)       -- send all cmds at once
+                       return []
+               else do str <- sync d (show ps) -- send all cmds/procs at once : OK : no intermediate results used
+                       return (read str)
+  return a
+ where
+  isCommand (Command   {}) = True
+  isCommand (Procedure {}) = False
+
+{-
+  execRPrims :: [RPrim] -> IO [String]
+  execRPrims [] = return []
+  execRPrims (Command c : ps) = do
+           execRCommand c
+           execRPrims ps
+  execRPrims (Procedure p : ps) = do
+           r  <- execRProcedure p
+           rs <- execRPrims ps
+           return (r:rs)
+-}
