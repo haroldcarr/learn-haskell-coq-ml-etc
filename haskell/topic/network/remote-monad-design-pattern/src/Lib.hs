@@ -62,18 +62,18 @@ sendSync0 d m = do
 -- | simulates remote interpreter handle
 -- note: merges serialization of result value into execution function, could be separated
 device0 :: Device
-device0  = Device (execRCommand   . commandToRCommand . read)
-                  (execRProcedure                     . read)
+device0  = Device (execRCommand   . read)
+                  (execRProcedure . read)
 
-data Command = Say String deriving (Read, Show)
+data Command = Say String deriving Read
+
+instance Show Command where
+  show (Say s) = "RSay " ++ show s
 
 -- | simulation of remote device requires
 -- - representation of commands on remote device
 -- - deserialization function (Read + commandToRCommand) that reads commands
 data RCommand = RSay String deriving (Read, Show)
-
-commandToRCommand :: Command -> RCommand -- TODO : handle this like other R*
-commandToRCommand (Say s) = RSay s
 
 -- | GADT with phantom type index denoting expected result type
 data Procedure :: * -> * where
@@ -199,7 +199,7 @@ deriving instance Monad       Remote
 
 data Packet a = Packet [Command] (Procedure a)
 instance Show (Packet a) where
-  show (Packet cmds p) = "RPacket " ++ show (map commandToRCommand cmds) ++ " (" ++ show p ++ ")"-- NOTE: R*
+  show (Packet cmds p) = "RPacket " ++ show cmds ++ " (" ++ show p ++ ")"-- NOTE: R*
 
 data RPacket = RPacket [RCommand] RProcedure deriving Read
 
@@ -228,9 +228,9 @@ execRPacket (RPacket cs p) = do
 --------------------------------------------------
 -- app-specific
 
-device :: Device
-device  = Device (mapM_ execRCommand . map commandToRCommand . read) -- called if monad only contains commands
-                 (execRPacket                                . read) -- called if monad contains a procedure
+device :: Device              -- TODO  map id to solve : (Read (t0 RCommand))
+device  = Device (mapM_ execRCommand . map id . read) -- called if monad only contains commands
+                 (execRPacket                 . read) -- called if monad contains a procedure
 
 say :: String -> Remote ()
 say txt = sendAsync (Say txt)
