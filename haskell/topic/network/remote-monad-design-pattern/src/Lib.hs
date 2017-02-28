@@ -6,11 +6,21 @@
 
 module Lib where
 
+import           Control.Applicative
 import           Control.Concurrent
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Control.Monad.Writer
+import           Debug.Trace
 import           System.Random
+
+debugOn = True
+
+shew :: Show a => a -> String
+shew a = if debugOn then trace ("shew: " ++ (show a)) (show a) else show a
+
+reed :: Read a => String -> a
+reed a = if debugOn then trace ("reed: " ++       a)  (read a) else read a
 
 ------------------------------------------------------------------------------
 {-
@@ -155,14 +165,14 @@ sendW d (RemoteW m) = runReaderT m d
 --------------------------------------------------
 -- app-specific
 
-sayW :: String -> RemoteW ()
-sayW txt = sendAsyncW (Say txt)
+sayW         :: String -> RemoteW ()
+sayW          = sendAsyncW . Say
 
-temperatureW :: RemoteW Int
-temperatureW = sendSyncW Temperature
+temperatureW ::           RemoteW Int
+temperatureW  = sendSyncW    Temperature
 
-toastW :: Int -> RemoteW ()
-toastW n = sendSyncW (Toast n)
+toastW       :: Int    -> RemoteW ()
+toastW        = sendSyncW  . Toast
 
 --------------------------------------------------
 -- exercise
@@ -271,13 +281,16 @@ weak :  same capabilities as weak remote monad (primitives transmitted individua
 strong : bundle all the Commands and Procedures into a single packet
 - represented by [Prims]
 -}
+--------------------------------------------------
+-- general infrastructure
+
 -- PRIMitive remote calls
 data Prim :: * where
   Command   ::           Command     -> Prim -- above : Command/Procedure are types; here : constructors
   Procedure :: Show a => Procedure a -> Prim
 instance Show Prim where
-  show (Command   c) = show c
-  show (Procedure a) = show a
+  show (Command   c) = "RCommand ("   ++ show c ++ ")"
+  show (Procedure a) = "RProcedure (" ++ show a ++ ")"
 
 data RPrim
   = RCommand   RCommand
@@ -287,6 +300,7 @@ data RPrim
 -- writer : queues calls
 -- state : results
 -- lazy evaluation "connects" send/receiving -- TODO
+-- KEY POINT : this enables args to following `send` procedure to be an applicative instance
 newtype RemoteA a = RemoteA (WriterT [Prim] (State [String]) a)
 deriving instance Functor     RemoteA
 deriving instance Applicative RemoteA
@@ -308,25 +322,44 @@ sendSyncA p = RemoteA $ do
 
 sendA :: Device -> RemoteA a -> IO a
 sendA d (RemoteA m) = do
-  rec let ((a,ps),_) = runState (runWriterT m) r -- recursively feed result list back into invocation
+  rec let ((a,ps),_) = runState (runWriterT m) r -- recursively feed result back into invocation
       r <- if all isCommand ps
-               then do async d (show ps)       -- send all cmds at once
-                       return []
-               else do str <- sync d (show ps) -- send all cmds/procs at once : OK : no intermediate results used
-                       return (read str)
+           then do async       d (shew ps)       -- send all cmds at once
+                   return []
+           else do str <- sync d (shew ps)       -- send all cmds/procs at once : OK : no intermediate results used
+                   return (read str)
   return a
  where
   isCommand (Command   {}) = True
   isCommand (Procedure {}) = False
 
-{-
-  execRPrims :: [RPrim] -> IO [String]
-  execRPrims [] = return []
-  execRPrims (Command c : ps) = do
-           execRCommand c
-           execRPrims ps
-  execRPrims (Procedure p : ps) = do
-           r  <- execRProcedure p
-           rs <- execRPrims ps
-           return (r:rs)
--}
+execRPrims :: [RPrim] -> IO [String]
+execRPrims [] = return []
+execRPrims (RCommand c : ps) = do
+  execRCommand c
+  execRPrims ps
+
+execRPrims (RProcedure p : ps) = do
+  r  <- execRProcedure p
+  rs <- execRPrims ps
+  return (r:rs)
+
+--------------------------------------------------
+-- app-specific
+
+deviceA :: Device
+deviceA = Device (void       . execRPrims . reed)
+                 (liftM show . execRPrims . reed)
+
+sayA         = sendAsyncA . Say
+temperatureA = sendSyncA    Temperature
+toastA       = sendSyncA  . Toast
+
+--------------------------------------------------
+-- exercise
+
+t1a = sendA deviceA $
+  liftA2
+    (,)
+    (sayA "Good Morning" *> temperatureA)
+    (toastA 5            *> temperatureA)
