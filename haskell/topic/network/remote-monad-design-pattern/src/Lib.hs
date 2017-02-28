@@ -14,23 +14,15 @@ import           System.Random
 {-
 1. intro
 
-key idea : remote monadic commands can be locally combined before sending
-
-send device (lineWidth 10 >> strokeStyle "red")
+key idea : remote monadic commands can be locally queued then sent in batch
 
 complications
 - monadic commands can return a result, which may be used by subsequent commands.
-
-   isPointInPath :: (Double,Double) -> Canvas Bool
-
    send device $ do
      inside <- isPointInPath (0,0)
      lineWidth (if inside then 10 else 2)
-
 - invocation of send can also return a value:
-
     do res <- send device (isPointInPath (0,0))
-
 monadic commands inside send are executed in a remote location
 - but the results of those executions need to be made available for use locally
 -}
@@ -48,9 +40,9 @@ data Device = Device
     -- o no temporal consequence
     async :: String -> IO ()
     -- Synchronous Procedure
-    -- o request to perform an action for its remote effects
-    -- o there is a result value
-    -- o or there is a temporal consequence (return signal actions completed)
+    -- o request to perform an action for remote effect
+    -- o there is a result value, and/or
+    -- o there is a temporal consequence (return signal actions completed)
   , sync  :: String -> IO String
   }
 
@@ -62,14 +54,14 @@ sendSync0 d m = do
   r <- sync d (show m)            -- serializes the Procedure, sends over synchronous channel
   return (readProcedureReply m r) -- interprets reply in terms of type of same Procedure
 
+--------------------------------------------------
+-- app-specific
+
 -- | simulates remote interpreter handle
 -- note: merges serialization of result value into execution function, could be separated
 device0 :: Device
 device0  = Device (execRCommand   . commandToRCommand . read)
                   (execRProcedure                     . read)
-
---------------------------------------------------
--- app-specific
 
 data Command = Say String deriving (Read, Show)
 
@@ -87,13 +79,13 @@ data Procedure :: * -> * where
   Toast       :: Int -> Procedure ()
 
 instance Show (Procedure a) where
-  show Temperature = "RTemperature"      -- NOTE: R*
+  show Temperature = "RTemperature"      -- NOTE: R* : paper used same constructor name for both Procedure and RProcedure
   show (Toast i)   = "RToast " ++ show i -- NOTE: R*
 
 data RProcedure
   = RTemperature
   | RToast Int
-  deriving (Read, Show)
+  deriving (Read)
 
 -- | deserialization : uses the phantom type index of Procedure to determine which Read instance to use
 readProcedureReply :: Procedure a -> String -> a
@@ -161,11 +153,6 @@ sendW d (RemoteW m) = runReaderT m d
 --------------------------------------------------
 -- app-specific
 
--- | virtual remote Device
-deviceW :: Device
-deviceW  = Device (execRCommand   . commandToRCommand . read)
-                  (execRProcedure                     . read)
-
 sayW :: String -> RemoteW ()
 sayW txt = sendAsyncW (Say txt)
 
@@ -180,13 +167,13 @@ toastW n = sendSyncW (Toast n)
 
 -- send with monadic argument: chains of commands and procedures connected using RemoteW monad
 
-t1w = sendW deviceW $ do
+t1w = sendW device0 $ do
   sayW "Do you want some toast?" -- command
   t <- temperatureW              -- procedure
   sayW (show t ++ "F")           -- command
   return t
 
-t2w = sendW deviceW (toastW 3)
+t2w = sendW device0 (toastW 3)
 
 ------------------------------------------------------------------------------
 {-
@@ -209,9 +196,10 @@ deriving instance Applicative Remote
 deriving instance Monad       Remote
 
 data Packet a = Packet [Command] (Procedure a)
-
 instance Show (Packet a) where
   show (Packet cmds p) = "RPacket " ++ show (map commandToRCommand cmds) ++ " (" ++ show p ++ ")"-- NOTE: R*
+
+data RPacket = RPacket [RCommand] RProcedure deriving Read
 
 sendAsync :: Command -> Remote ()
 sendAsync cmd = Remote (modify (++ [cmd])) -- append Commands to queue
@@ -230,19 +218,17 @@ send d (Remote m) = do
   when (not (null cs)) (async d (show cs)) -- this action happens if remote monad does NOT contain a procedure
   return r
 
-data RPacket = RPacket [RCommand] RProcedure deriving Read
-
 execRPacket :: RPacket -> IO String
 execRPacket (RPacket cs p) = do
   mapM_ execRCommand cs
   execRProcedure p
 
+--------------------------------------------------
+-- app-specific
+
 device :: Device
 device  = Device (mapM_ execRCommand . map commandToRCommand . read) -- called if monad only contains commands
                  (execRPacket                                . read) -- called if monad contains a procedure
-
---------------------------------------------------
--- app-specific
 
 say :: String -> Remote ()
 say txt = sendAsync (Say txt)
