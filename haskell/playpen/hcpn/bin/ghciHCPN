@@ -1,0 +1,3 @@
+#!/bin/sh
+HCPNdir=/private/tmp/hcpn
+ghci -package wx -i$HCPNdir/src -odir $HCPNdir/bin -hidir $HCPNdir/bin $* 2>&1 | tee log.txt

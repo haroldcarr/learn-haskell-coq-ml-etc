@@ -1,0 +1,112 @@
+                           HCPN NetEdit v0.1
+
+                                a simple 
+                     graphical editor and simulator 
+                    for Haskell-coloured Petri nets
+
+                              Claus Reinke
+
+
+0. installation
+
+  (you'll need a recent ghc (6.2.1) and wxHaskell (0.8))
+
+    tar xvzf HCPN_<date>.tar.gz 
+    cd hcpn
+    make
+  
+  this will give you a small directory hierarchy (unixy tools are
+  assumed for convenience, adapting, eg., to "raw" windows should 
+  be possible):
+
+  hcpn/
+    README
+    Makefile
+    src/
+    bin/        -- will be created by make, for binaries and
+                   interface files
+      ghciHCPN  -- script for calling ghci with added paths/flags, 
+                   so that you can simply say: ghciHCPN pi.hs
+      NetEdit   -- the main executable (start, then type 'h' 
+                   for a help window with key bindings)
+    examples/   -- a few simple examples (starving philosophers
+                   plain and folded; finite automatons alone, 
+                   with stack or with tape; embedding of a 
+                   pi-calculus; the Erlang resource locker problem);
+      *.hcpn    -- net description
+      *.hs      -- net simulation code
+    html/       -- the project web page
+
+1. use
+
+  editing
+
+    The main executable is the net editor, HCPN NetEdit (bin/NetEdit).
+    As you will see when you start it, I'm not a fan of hiding the net
+    models I want to work with under heaps of menus - type 'h' to get a
+    list of key bindings. Play around with the editor (it is fairly
+    crude and simple so far, but functional), also load some of the
+    example nets (examples/*.hcpn).
+
+  simulation
+
+    For HCPN simulation, you need a correct HCPN to start with, which
+    may be a bit difficult at the moment as the editor doesn't check
+    the inscriptions. So it is best to see the HCPN NetEdit as a Haskell
+    program generator: when you're editing a HCPN, you're writing a
+    Haskell program in graphical form. See below for more info.
+
+    Once you've got a valid HCPN, you can export Haskell code, say
+    "examples/net.hs" and then use "cd examples; myghci net.hs"
+    (or set the ghci paths by hand - the generated code is just a
+     Haskell module that needs some HCPN and wxHaskell libraries,
+     as well as the HCPN itself, "net.hcpn").
+
+    [update (30/07/2004): 
+     there are now the beginnings of support for starting ghci with 
+     proper paths from withing NetEdit; you need to set the environment 
+     variable HCPNdir to your HCPN installation directory]
+
+    If all goes well, that will create another instance of HCPN NetEdit,
+    automatically loading "net.hcpn". However, this instance includes
+    the simulation code for your "net", so you can now run a simulation.
+    
+    In the current state of the tools, you will often have to look at
+    the generated code, and learn to relate errors back to the graphical
+    model (we hope to improve this in the future, when -package ghc
+    comes out). Fortunately, the embedding of HCPN in Haskell code is
+    still simple, so that the associations between graphical and code
+    elements is straightforward.
+
+      - apart from the Haskell and wxHaskell library names, the
+        generated code will use a few names from the HCPN libraries
+        and from the embedding of HCPN into Haskell that you shouldn't
+        use in your models: 
+
+          net, mark, m, select, Net, Trans, Mark, .. 
+
+TODO: give a complete list here, but make it smaller first!
+
+      - all nodes (places/transitions) need to be uniquely named
+        with valid Haskell (function) names
+
+      - place types should be valid Haskell types;
+
+        place types default to "()"
+
+      - initial markings should be valid Haskell expressions
+        of the place type, separated by commas;
+
+        initial markings default to ""
+
+      - incoming arc labels should contain valid Haskell patterns
+        of the type of the place they initiate from
+      - outgoing arc labels should contain valid Haskell expressions
+        of the type of the place they target
+
+        arc labels default to "()"; 
+        free variables in outgoing arcs and guards should be bound
+        in the incoming arcs of the transition
+
+      - Haskell code in the declaration node will be copied verbatim
+        into the generated simulation code

@@ -1,0 +1,2 @@
+#!/bin/sh
+ghci -package wx -i../src -odir ../bin -hidir ../bin $* 2>&1 | tee log.txt

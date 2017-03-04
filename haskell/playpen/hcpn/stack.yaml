@@ -1,0 +1,10 @@
+resolver: lts-6.0
+packages:
+- '.'
+extra-deps: [ wx-0.92.2.0
+            , wxcore-0.92.2.0
+            , wxc-0.92.2.0
+            , wxdirect-0.92.2.0
+            ]
+flags: {}
+extra-package-dbs: []
