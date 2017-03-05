@@ -8,14 +8,12 @@ import           Control.Applicative
 import           Crypto.Hash.SHA256
 import           Data.ByteString       as BS
 import           Data.ByteString.Char8 as BSC8
-import           Data.Text             as T
-import           Data.Text.Encoding
 import           GHC.Generics
 
 type Index      = Integer
 type Hash       = ByteString
-type Timestamp  = Text
-type BlockData  = Text
+type Timestamp  = ByteString
+type BlockData  = ByteString
 type Blockchain = [Block]
 
 data Block =
@@ -27,7 +25,7 @@ data Block =
         } deriving (Eq, Show)
 
 calculateHash :: Index -> Hash -> Timestamp -> BlockData -> Hash
-calculateHash i p t d = hash (encodeUtf8 (T.concat [T.pack (show i), T.pack (BSC8.unpack p), T.pack (show t), d]))
+calculateHash i p t d = hash (BS.concat [BSC8.pack (show i), p, BSC8.pack (show t), d])
 
 calculateHashForBlock :: Block -> Hash
 calculateHashForBlock b = calculateHash (bindex b) (previousHash b) (timestamp b) (bdata b)
@@ -48,7 +46,7 @@ generateNextBlock previousBlock timestamp blockData =
   in Block index previousHash timestamp blockData (calculateHash index previousHash timestamp blockData)
 
 -- | Returns Nothing if valid.
-isValidBlock :: Block -> Block -> Maybe Text
+isValidBlock :: Block -> Block -> Maybe String
 isValidBlock previousBlock newBlock =
   if      (bindex previousBlock) + 1       /= bindex newBlock       then Just "invalid index"
   else if bhash previousBlock              /= previousHash newBlock then Just "invalid previousHash"
@@ -62,7 +60,7 @@ addBlock :: Block -> Blockchain -> Blockchain
 addBlock b bs = b : bs
 
 -- | Returns Nothing if valid.
-isValidChain :: Blockchain -> Maybe Text
+isValidChain :: Blockchain -> Maybe String
 isValidChain (b:pb:bs) = isValidBlock pb b <|> isValidChain (pb:bs)
 isValidChain   (gb:[]) = Nothing
 isValidChain       []  = Just "empty chain"
