@@ -6,11 +6,13 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Blockchain
-                     , BlockchainIO
+                     , BlockchainJson
   build-depends:       base >= 4.7 && < 5
+                     , aeson
+                     , base64-bytestring
                      , bytestring
                      , cryptohash
-                     , thyme
+                     , text
   default-language:    Haskell2010
 
 executable lauri-hartikka-blockchain-in-200lines-exe
@@ -27,6 +29,7 @@ test-suite lauri-hartikka-blockchain-in-200lines-test
   main-is:             Spec.hs
   other-modules:       BlockchainSpec
   build-depends:       base
+                     , aeson
                      , lauri-hartikka-blockchain-in-200lines
                      , hspec
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N

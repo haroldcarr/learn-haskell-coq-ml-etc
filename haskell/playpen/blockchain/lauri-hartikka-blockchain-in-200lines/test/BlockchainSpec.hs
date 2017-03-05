@@ -3,7 +3,8 @@
 module BlockchainSpec (spec) where
 
 import           Blockchain
-import           BlockchainIO
+import           BlockchainJson
+import           Data.Aeson     (decode, encode)
 import           Test.Hspec
 
 spec :: Spec
@@ -19,3 +20,6 @@ spec = do
           it "valid"      $ isValidBlock genesisBlock nb `shouldBe` Nothing
           it "validChain" $ isValidChain (addBlock nb (addBlock genesisBlock emptyBlockchain))
                                                          `shouldBe` Nothing
+  describe "aeson" $
+    it "decode . encode" $
+      decode (encode genesisBlock) `shouldBe` Just genesisBlock

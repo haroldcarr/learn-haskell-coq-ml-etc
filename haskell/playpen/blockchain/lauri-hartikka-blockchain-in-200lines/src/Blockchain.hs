@@ -4,11 +4,11 @@
 
 module Blockchain where
 
-import           Control.Applicative
-import           Crypto.Hash.SHA256
+import           Control.Applicative   ((<|>))
+import           Crypto.Hash.SHA256    (hash)
+import           Data.ByteString       (ByteString)
 import           Data.ByteString       as BS
 import           Data.ByteString.Char8 as BSC8
-import           GHC.Generics
 
 type Index      = Integer
 type Hash       = ByteString
@@ -36,31 +36,31 @@ genesisBlock =
       previousHash = "0"
       timestamp    = "2017-03-05 10:49:02.084473 PST"
       bdata        = "GENESIS BLOCK"
-      hash         = (calculateHash index previousHash timestamp bdata)
+      hash         = calculateHash index previousHash timestamp bdata
   in Block index previousHash timestamp bdata hash
 
 generateNextBlock :: Block -> Timestamp -> BlockData -> Block
 generateNextBlock previousBlock timestamp blockData =
-  let index        = (bindex previousBlock) + 1
+  let index        = bindex previousBlock + 1
       previousHash = bhash previousBlock
   in Block index previousHash timestamp blockData (calculateHash index previousHash timestamp blockData)
 
 -- | Returns Nothing if valid.
 isValidBlock :: Block -> Block -> Maybe String
-isValidBlock previousBlock newBlock =
-  if      (bindex previousBlock) + 1       /= bindex newBlock       then Just "invalid index"
-  else if bhash previousBlock              /= previousHash newBlock then Just "invalid previousHash"
-  else if (calculateHashForBlock newBlock) /= bhash newBlock        then Just "invalid hash"
-  else                                                                   Nothing
+isValidBlock previousBlock newBlock
+  | bindex previousBlock + 1       /= bindex newBlock       = Just "invalid index"
+  | bhash previousBlock            /= previousHash newBlock = Just "invalid previousHash"
+  | calculateHashForBlock newBlock /= bhash newBlock        = Just "invalid hash"
+  | otherwise                                               = Nothing
+
+-- | Returns Nothing if valid.
+isValidChain :: Blockchain -> Maybe String
+isValidChain (b:pb:bs) = isValidBlock pb b <|> isValidChain (pb:bs)
+isValidChain      [_]  = Nothing
+isValidChain       []  = Just "empty chain"
 
 emptyBlockchain :: Blockchain
 emptyBlockchain = []
 
 addBlock :: Block -> Blockchain -> Blockchain
 addBlock b bs = b : bs
-
--- | Returns Nothing if valid.
-isValidChain :: Blockchain -> Maybe String
-isValidChain (b:pb:bs) = isValidBlock pb b <|> isValidChain (pb:bs)
-isValidChain   (gb:[]) = Nothing
-isValidChain       []  = Just "empty chain"
