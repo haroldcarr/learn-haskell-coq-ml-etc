@@ -35,22 +35,22 @@ test-suite test
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Spec.hs
-  other-modules: PreludeSpec
-               , RLPSpec
-               , SlidesSpec
-               , Testing
-               , TriePathSpec
-               , TrieSpec
-  build-depends: base
-               , ben-kirwin-merkle
-               , aeson
-               , attoparsec
-               , bytestring
-               , containers
-               , hspec
-               , mtl
-               , QuickCheck
-               , text
-               , unordered-containers
+  other-modules:   PreludeSpec
+                 , RLPSpec
+                 , SlidesSpec
+                 , Testing
+                 , TriePathSpec
+                 , TrieSpec
+  build-depends:   base
+                 , ben-kirwin-merkle
+                 , aeson
+                 , attoparsec
+                 , bytestring
+                 , containers
+                 , hspec
+                 , mtl
+                 , QuickCheck
+                 , text
+                 , unordered-containers
   default-language:    Haskell2010
 
