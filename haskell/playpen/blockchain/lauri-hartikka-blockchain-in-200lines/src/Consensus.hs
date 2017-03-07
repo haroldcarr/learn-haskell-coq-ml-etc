@@ -4,23 +4,26 @@ module Consensus where
 
 import           Control.Concurrent  (forkIO)
 import           Control.Concurrent  (MVar, modifyMVar, modifyMVar_, newMVar,
-                                      readMVar)
+                                      readMVar, takeMVar)
 import           Control.Exception   (finally)
 import           Control.Monad       (forM_, forever, unless)
 import           Control.Monad.Trans (liftIO)
+import           Data.ByteString     (ByteString)
+import           Data.ByteString     as BS
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
 import           Network.Socket      (withSocketsDo)
 import qualified Network.WebSockets  as WS
+import           Prelude             as P
 
 type Peer  = (Text, WS.Connection)
 type Peers = [Peer]
 
-runServer :: Int -> IO ()
-runServer _ = do
+runServer :: String -> Int -> IO ()
+runServer host port = do
   state <- newMVar []
-  WS.runServer "0.0.0.0" 9160 $ consensus state
+  WS.runServer host port $ consensus state
 
 consensus :: MVar Peers -> WS.ServerApp
 consensus state pending = do
@@ -48,32 +51,34 @@ broadcast msg ps = do
 talk :: WS.Connection -> MVar Peers -> Peer -> IO ()
 talk c state (user, _) = forever $ do
   msg <- WS.receiveData c
-  readMVar state >>= broadcast (user `mappend` ": " `mappend` msg)
+  -- readMVar state >>= broadcast (user `mappend` ": " `mappend` msg)
+  T.putStrLn msg
 
 addPeer :: Peer -> Peers -> Peers
 addPeer p ps = p:ps
 
 rmPeer :: Peer -> Peers -> Peers
-rmPeer p = filter ((/= fst p) . fst)
+rmPeer p = P.filter ((/= fst p) . fst)
 
 --------------------------------------------------------------------------------
 -- client
 
-runClient :: IO ()
-runClient = withSocketsDo $ WS.runClient "0.0.0.0" 9160 "/" app
+runClient :: MVar ByteString -> String -> Int -> IO ()
+runClient mvar host port = withSocketsDo $ WS.runClient host port "/" (app mvar)
 
-app :: WS.ClientApp ()
-app conn = do
-  putStrLn "Connected!"
+app :: MVar ByteString -> WS.ClientApp ()
+app mvar conn = do
+  P.putStrLn "Connected!"
   -- RECEIVE: Fork a thread that writes anything received to stdout
   forkIO $ forever $ do
     msg <- WS.receiveData conn
     liftIO $ T.putStrLn msg
-  loop conn
+  loop mvar conn
   WS.sendClose conn ("Bye!" :: Text)
 
 -- SEND: Read from stdin and write to WS
-loop :: WS.Connection -> IO ()
-loop conn = do
-  line <- T.getLine
-  unless (T.null line) $ WS.sendTextData conn line >> loop conn
+loop :: MVar ByteString -> WS.Connection -> IO ()
+loop mvar conn = do
+  msg <- takeMVar mvar
+  P.putStrLn ("LOOP: " ++ show msg)
+  WS.sendBinaryData conn msg >> loop mvar conn
