@@ -3,8 +3,9 @@
 module BlockchainSpec (spec) where
 
 import           Blockchain
-import           BlockchainJson
-import           Data.Aeson     (decode, encode)
+import           Json
+
+import           Data.Aeson (decode, encode)
 import           Test.Hspec
 
 spec :: Spec

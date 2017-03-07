@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module BlockchainJson where
+module Json where
 
 import           Blockchain
 
