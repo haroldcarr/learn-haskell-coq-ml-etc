@@ -23,8 +23,11 @@ type PeerId = Int -- scope is this server
 type Peer   = (PeerId, WS.Connection)
 type Peers  = [Peer]
 
-runServer :: String -> Int -> IO ()
-runServer host port = do
+------------------------------------------------------------------------------
+-- server
+
+runFollower :: String -> Int -> IO ()
+runFollower host port = do
   peers      <- newMVar []
   nextPeerId <- newMVar (-1)
   WS.runServer host port $ consensus peers nextPeerId
@@ -62,8 +65,8 @@ rmPeer p = P.filter ((/= fst p) . fst)
 --------------------------------------------------------------------------------
 -- client
 
-runClient :: MVar ByteString -> String -> Int -> IO ()
-runClient mvar host port = withSocketsDo $ WS.runClient host port "/" (app mvar)
+runLeader :: MVar ByteString -> String -> Int -> IO ()
+runLeader mvar host port = withSocketsDo $ WS.runClient host port "/" (app mvar)
 
 app :: MVar ByteString -> WS.ClientApp ()
 app httpToConsensus conn = do
