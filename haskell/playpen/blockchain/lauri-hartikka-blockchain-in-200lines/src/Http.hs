@@ -15,23 +15,23 @@ import           Snap.Core
 import           Snap.Http.Server
 
 site :: MVar ByteString -> IO ()
-site mvar = quickHttpServe $
+site httpToConsensus = quickHttpServe $
   ifTop (writeBS "hello world") <|>
   route [ ("blocks",       showBlocks)
-        , ("addBlock/:bd", addBlockReq mvar)
+        , ("addBlock/:bd", addBlockReq httpToConsensus)
         ]
 
 showBlocks :: Snap ()
 showBlocks = writeBS (toStrict (encode [genesisBlock]))
 
 addBlockReq :: MVar ByteString -> Snap ()
-addBlockReq mvar = do
+addBlockReq httpToConsensus = do
   bd <- getParam "bd"
   maybe (writeBS "must specify data")
         (\bd' -> do let newBlock = generateNextBlock genesisBlock "timestamp" bd'
-                    liftIO (sendAppendEntries mvar newBlock)
+                    liftIO (sendAppendEntries httpToConsensus newBlock)
                     writeBS (toStrict (encode newBlock)))
         bd
 
-sendAppendEntries mvar block = do
-  putMVar mvar (toStrict (encode (AppendEntry block)))
+sendAppendEntries httpToConsensus block = do
+  putMVar httpToConsensus (toStrict (encode (AppendEntry block)))

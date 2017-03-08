@@ -14,7 +14,7 @@ port = 9160
 
 main :: IO ()
 main = do
-  mvar <- newEmptyMVar
+  httpToConsensus <- newEmptyMVar
   forkIO $ forever (runServer host port)
-  forkIO $ forever (runClient mvar host port)
-  site mvar
+  forkIO $ forever (runClient httpToConsensus host port)
+  site httpToConsensus
