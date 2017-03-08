@@ -2,9 +2,10 @@
 
 module Consensus where
 
-import           Control.Concurrent            (forkIO)
-import           Control.Concurrent            (MVar, modifyMVar, modifyMVar_,
-                                                newMVar, readMVar, takeMVar)
+import           Control.Concurrent            (MVar, forkIO, modifyMVar,
+                                                modifyMVar_, newEmptyMVar,
+                                                newMVar, readMVar, takeMVar,
+                                                threadDelay)
 import           Control.Exception             (finally)
 import           Control.Monad                 (forM_, forever, unless)
 import           Control.Monad.Trans           (liftIO)
@@ -65,24 +66,44 @@ rmPeer p = P.filter ((/= fst p) . fst)
 --------------------------------------------------------------------------------
 -- client
 
-runLeader :: MVar ByteString -> String -> Int -> IO ()
-runLeader mvar host port = withSocketsDo $ WS.runClient host port "/" (app mvar)
+-- runLeader :: MVar ByteString -> String -> Int -> IO ()
+runLeader httpToConsensus host port = do
+  P.putStrLn "----------------------------------------------"
+  P.putStrLn ("WS C runLeader: " <> host <> " " <> show port)
+  followerConnections <- newMVar []
+  forkIO . withSocketsDo $ WS.runClient host port "/" (app followerConnections)
+  waitUntilAllConnected followerConnections
+  P.putStrLn "WS C runLeader: after waitUntilAllConnected"
+  fc <- readMVar followerConnections
+  P.putStrLn "WS C runLeader: before sendC"
+  sendC httpToConsensus fc
+  P.putStrLn "WS C runLeader: Bye!"
 
-app :: MVar ByteString -> WS.ClientApp ()
-app httpToConsensus conn = do
+waitUntilAllConnected followerConnections = do
+  P.putStrLn "WS C waitUntilAllConnected before MVAR"
+  threadDelay 100000
+  fc <- readMVar followerConnections
+  P.putStrLn "WS C waitUntilAllConnected after MVAR"
+  if P.length fc == 1 then return () else waitUntilAllConnected followerConnections
+
+-- app :: MVar ByteString -> WS.ClientApp ()
+app followerConnections conn = do
   P.putStrLn "WS C app: Connected!"
+  modifyMVar_ followerConnections $ return . (conn :)
   recC conn
-  sendC httpToConsensus conn
-  P.putStrLn "WS C app: Bye!"
 
--- Fork a thread that writes anything received to stdout
-recC conn = forkIO $ forever $ do
+-- write anything received to stdout
+recC conn = forever $ do
+  liftIO $ T.putStrLn ("WS C recC: waiting")
   msg <- WS.receiveData conn
-  liftIO $ T.putStrLn ("WS C forkIO/forever: " <> msg)
+  liftIO $ T.putStrLn ("WS C recC: rec: " <> msg)
 
 -- Read from httpToConsensus and write to WS
-sendC :: MVar ByteString -> WS.Connection -> IO ()
-sendC httpToConsensus conn = do
+-- sendC :: MVar ByteString -> WS.Connection -> IO ()
+sendC httpToConsensus followerConnections = do
+  P.putStrLn ("WS C sendC: waiting")
   msg <- takeMVar httpToConsensus
-  P.putStrLn ("WS C sendC: " ++ show msg)
-  WS.sendBinaryData conn msg >> sendC httpToConsensus conn
+  P.putStrLn ("WS C sendC: sending: " ++ show msg)
+  forM_ followerConnections $ \c -> do
+    P.putStrLn ("WS C sendC: really sending: " ++ show msg)
+    WS.sendBinaryData c msg >> sendC httpToConsensus followerConnections
