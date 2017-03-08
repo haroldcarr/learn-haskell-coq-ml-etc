@@ -28,6 +28,10 @@ addBlockReq :: MVar ByteString -> Snap ()
 addBlockReq mvar = do
   bd <- getParam "bd"
   maybe (writeBS "must specify data")
-        (\bd' -> do liftIO $ putMVar mvar bd'
-                    writeBS (toStrict (encode (generateNextBlock genesisBlock "timestamp" bd'))))
+        (\bd' -> do let newBlock = generateNextBlock genesisBlock "timestamp" bd'
+                    liftIO (sendAppendEntries mvar newBlock)
+                    writeBS (toStrict (encode newBlock)))
         bd
+
+sendAppendEntries mvar block = do
+  putMVar mvar (toStrict (encode (AppendEntry block)))

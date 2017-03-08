@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Json where
@@ -9,6 +10,7 @@ import           Data.ByteString        (ByteString)
 import           Data.ByteString.Base64 as BS64
 import           Data.Text              as T
 import           Data.Text.Encoding     (decodeUtf8, encodeUtf8)
+import           GHC.Generics
 
 -- https://github.com/bos/aeson/issues/187
 
@@ -33,3 +35,9 @@ encodeToText64   = decodeUtf8 . BS64.encode
 
 decodeFromText64 :: (Monad m) => Text -> m ByteString
 decodeFromText64 = either fail return . BS64.decode . encodeUtf8
+
+data AppendEntry         = AppendEntry         { appendEntry         :: Block } deriving (Eq, Generic, Show)
+data AppendEntryResponse = AppendEntryResponse { appendEntryResponse :: Bool}   deriving (Eq, Generic, Show)
+instance ToJSON AppendEntry
+instance ToJSON AppendEntryResponse
+

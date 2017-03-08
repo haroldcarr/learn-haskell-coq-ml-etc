@@ -10,6 +10,7 @@ import           Control.Monad       (forM_, forever, unless)
 import           Control.Monad.Trans (liftIO)
 import           Data.ByteString     (ByteString)
 import           Data.ByteString     as BS
+import           Data.Monoid         ((<>))
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
@@ -34,25 +35,25 @@ consensus state pending = do
   flip finally (disconnect client) $ do
     modifyMVar_ state $ \s -> do
       let s' = addPeer client s
-      broadcast (fst client `mappend` " joined") s'
+      broadcast (fst client <> " joined") s'
       return s'
     talk c state client
  where
   disconnect client = do
     s <- modifyMVar state $ \s ->
       let s' = rmPeer client s in return (s', s')
-    broadcast (fst client `mappend` " disconnected") s
+    broadcast (fst client <> " disconnected") s
 
 broadcast :: Text -> Peers -> IO ()
 broadcast msg ps = do
-  T.putStrLn msg
+  T.putStrLn ("WS S broadcast: " <> msg)
   forM_ ps $ \(_, c) -> WS.sendTextData c msg
 
 talk :: WS.Connection -> MVar Peers -> Peer -> IO ()
 talk c state (user, _) = forever $ do
   msg <- WS.receiveData c
   -- readMVar state >>= broadcast (user `mappend` ": " `mappend` msg)
-  T.putStrLn msg
+  T.putStrLn ("WS S talk: " <> msg)
 
 addPeer :: Peer -> Peers -> Peers
 addPeer p ps = p:ps
@@ -68,11 +69,11 @@ runClient mvar host port = withSocketsDo $ WS.runClient host port "/" (app mvar)
 
 app :: MVar ByteString -> WS.ClientApp ()
 app mvar conn = do
-  P.putStrLn "Connected!"
+  P.putStrLn "WS C app: Connected!"
   -- RECEIVE: Fork a thread that writes anything received to stdout
   forkIO $ forever $ do
     msg <- WS.receiveData conn
-    liftIO $ T.putStrLn msg
+    liftIO $ T.putStrLn ("WS C forkIO/forever: " <> msg)
   loop mvar conn
   WS.sendClose conn ("Bye!" :: Text)
 
@@ -80,5 +81,5 @@ app mvar conn = do
 loop :: MVar ByteString -> WS.Connection -> IO ()
 loop mvar conn = do
   msg <- takeMVar mvar
-  P.putStrLn ("LOOP: " ++ show msg)
+  P.putStrLn ("WS C LOOP: " ++ show msg)
   WS.sendBinaryData conn msg >> loop mvar conn
