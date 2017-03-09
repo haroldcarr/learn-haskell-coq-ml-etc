@@ -33,5 +33,5 @@ addBlockReq httpToConsensus = do
                     writeBS (toStrict (encode newBlock)))
         bd
 
-sendAppendEntries httpToConsensus block = do
+sendAppendEntries httpToConsensus block =
   putMVar httpToConsensus (toStrict (encode (AppendEntry block)))

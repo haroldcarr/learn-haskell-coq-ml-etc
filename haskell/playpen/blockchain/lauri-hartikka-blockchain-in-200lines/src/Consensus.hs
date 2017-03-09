@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Consensus where
@@ -48,7 +49,7 @@ consensus peers nextPeerId pending = do
     recS peer peers
  where
   disconnect peer@(pid,_) = do
-    s <- modifyMVar peers $ \s -> let s' = rmPeer peer s in return (s', s')
+    modifyMVar_ peers $ return . rmPeer peer
     infoM consensusFollower ("WS S disconnect: " <> show pid <> " disconnected")
 
 broadcast :: Text -> Peers -> IO ()
@@ -60,6 +61,8 @@ recS :: Peer -> MVar Peers -> IO ()
 recS (_, c) peers = forever $ do
   msg <- WS.receiveData c :: IO ByteString
   infoM consensusFollower ("WS S recS: " <> show msg)
+  if | BS.isPrefixOf "{\"appendEntry\":" msg -> infoM consensusFollower "APPENDENTRY"
+     | otherwise                             -> infoM consensusFollower "NO"
 
 addPeer :: Peer -> Peers -> Peers
 addPeer p ps = p:ps
@@ -88,7 +91,7 @@ waitUntilAllConnected followerConnections = do
   threadDelay 100000
   fc <- readMVar followerConnections
   infoM consensusLeader "WS C waitUntilAllConnected after MVAR"
-  if P.length fc == 1 then return () else waitUntilAllConnected followerConnections
+  unless (P.length fc == 1) $ waitUntilAllConnected followerConnections
 
 -- app :: MVar ByteString -> WS.ClientApp ()
 app followerConnections conn = do
