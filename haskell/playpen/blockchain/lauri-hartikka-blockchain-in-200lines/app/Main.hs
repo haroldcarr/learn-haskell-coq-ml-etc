@@ -1,6 +1,7 @@
 module Main where
 
-import           Consensus             (runFollower, runLeader)
+import           Consensus             (consensusFollower, consensusLeader,
+                                        runFollower, runLeader)
 import           Http                  (site)
 
 import           Control.Concurrent    (MVar, newEmptyMVar)
@@ -10,6 +11,7 @@ import           Data.ByteString       (ByteString)
 import           Data.ByteString.Char8 as BSC8 (pack)
 import           Data.List             (partition)
 import           System.Environment    (getArgs)
+import           System.Log.Logger
 
 host = "0.0.0.0"
 port = 9160
@@ -33,6 +35,8 @@ doIt lfs =
   mapM_ (\([leader], followers) -> doIt' leader followers) lfs
  where
   doIt' (_,leader) _ = do
+    updateGlobalLogger consensusFollower (setLevel INFO)
+    updateGlobalLogger consensusLeader   (setLevel INFO)
     httpToConsensus <- newEmptyMVar
     forkIO $ forever (runFollower host leader)
     forkIO $ forever (runLeader httpToConsensus host leader)
