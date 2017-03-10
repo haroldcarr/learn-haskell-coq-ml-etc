@@ -17,7 +17,6 @@ import           System.Log.Logger     (infoM)
 host = "0.0.0.0"
 port = 9160
 
-main :: IO ()
 main = do
   xs <- getArgs
   case xs of
@@ -27,18 +26,19 @@ main = do
         then error "Usage"
         else doIt (foo (mkHostPortPairs xs))
 
--- doIt :: [((Host, Port), [(Host, Port)])] -> IO ()
 doIt all@((leader@(host,port), followers):_) = do
   configureLogging
   initializePeers (leader:followers)
   httpToConsensus <- connectPeers all
-  site httpToConsensus
+  site httpToConsensus (10000 + port)
 
 initializePeers = mapM_ (\(host, port) -> forkIO $ forever (runAcceptConnections host port))
 
 connectPeers xs = do
-  infoM mainProgram ("connectPeers: " <> show xs)
+  infoM mainProgram ("connectPeers ENTER: " <> show xs)
   httpToConsensus <- newEmptyMVar
-  mapM (\((host,port),followers) -> forkIO $ forever (runInitiateConnection httpToConsensus host port)) xs
+  mapM (\((host,port),followers) -> forkIO $ do
+    infoM mainProgram ("connectPeers " <> host <> " " <> show port)
+    forever (runInitiateConnection httpToConsensus host port)) xs
   return httpToConsensus
 

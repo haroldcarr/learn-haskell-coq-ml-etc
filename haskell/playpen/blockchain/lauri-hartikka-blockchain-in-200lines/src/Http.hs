@@ -4,6 +4,7 @@ module Http where
 
 import           Blockchain
 import           Json
+import           Util
 
 import           Control.Applicative  ((<|>))
 import           Control.Concurrent   (MVar, putMVar)
@@ -14,12 +15,14 @@ import           Data.ByteString.Lazy (toStrict)
 import           Snap.Core
 import           Snap.Http.Server
 
-site :: MVar ByteString -> IO ()
-site httpToConsensus = quickHttpServe $
-  ifTop (writeBS "hello world") <|>
-  route [ ("blocks",       showBlocks)
-        , ("addBlock/:bd", addBlockReq httpToConsensus)
-        ]
+-- site :: MVar ByteString -> Port -> IO ()
+site httpToConsensus port = do
+  let config = setPort port mempty :: Config Snap ()
+  simpleHttpServe config $
+    ifTop (writeBS "hello world") <|>
+    route [ ("blocks",       showBlocks)
+          , ("addBlock/:bd", addBlockReq httpToConsensus)
+          ]
 
 showBlocks :: Snap ()
 showBlocks = writeBS (toStrict (encode [genesisBlock]))
