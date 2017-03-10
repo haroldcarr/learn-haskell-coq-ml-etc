@@ -6,10 +6,10 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Blockchain
-                     , Consensus
                      , Http
                      , Json
                      , Logging
+                     , TransportUDP
                      , Util
   build-depends:       base >= 4.7 && < 5
                      , aeson
@@ -19,10 +19,10 @@ library
                      , hslogger
                      , mtl
                      , network
+                     , network-multicast
                      , snap-core
                      , snap-server
                      , text
-                     , websockets
   default-language:    Haskell2010
 
 executable bc
@@ -33,6 +33,7 @@ executable bc
                      , bytestring
                      , hslogger
                      , lauri-hartikka-blockchain-in-200lines
+                     , network
   default-language:    Haskell2010
 
 test-suite lauri-hartikka-blockchain-in-200lines-test

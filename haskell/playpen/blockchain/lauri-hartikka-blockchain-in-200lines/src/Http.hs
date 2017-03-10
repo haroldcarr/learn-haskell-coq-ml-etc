@@ -18,7 +18,6 @@ import           Snap.Core
 import           Snap.Http.Server
 import           System.Log.Logger    (infoM)
 
--- site :: MVar ByteString -> Port -> IO ()
 site httpToConsensus host port = do
   let config = setErrorLog ConfigNoLog . setAccessLog ConfigNoLog $ setPort port mempty :: Config Snap ()
   simpleHttpServe config $
@@ -27,10 +26,8 @@ site httpToConsensus host port = do
           , ("addBlock/:bd", addBlockReq host port httpToConsensus)
           ]
 
-showBlocks :: Snap ()
 showBlocks = writeBS (toStrict (encode [genesisBlock]))
 
-addBlockReq :: Host -> Port -> MVar ByteString -> Snap ()
 addBlockReq host port httpToConsensus = do
   bd <- getParam "bd"
   maybe (writeBS "must specify data")
