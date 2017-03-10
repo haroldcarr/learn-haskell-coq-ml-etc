@@ -9,6 +9,7 @@ library
                      , Consensus
                      , Http
                      , Json
+                     , Util
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , base64-bytestring
@@ -38,6 +39,7 @@ test-suite lauri-hartikka-blockchain-in-200lines-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   other-modules:       BlockchainSpec
+                     , CommunicationSpec
   build-depends:       base
                      , aeson
                      , lauri-hartikka-blockchain-in-200lines

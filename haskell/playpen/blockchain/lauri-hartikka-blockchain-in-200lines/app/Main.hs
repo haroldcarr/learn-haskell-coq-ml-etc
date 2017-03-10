@@ -3,13 +3,13 @@ module Main where
 import           Consensus             (consensusFollower, consensusLeader,
                                         runFollower, runLeader)
 import           Http                  (site)
+import           Util
 
 import           Control.Concurrent    (MVar, newEmptyMVar)
 import           Control.Concurrent    (forkIO)
 import           Control.Monad         (forever)
 import           Data.ByteString       (ByteString)
 import           Data.ByteString.Char8 as BSC8 (pack)
-import           Data.List             (partition)
 import           Data.Monoid           ((<>))
 import           System.Environment    (getArgs)
 import           System.Log.Logger
@@ -48,23 +48,10 @@ doIt lfs = do
     forkIO $ forever (runLeader httpToConsensus host leader)
     site httpToConsensus
 
--- splits the list so
--- fst contains the initiator host/port
--- snd contains target host/ports
-mkPartition :: Eq a => [a] -> [([a], [a])]
-mkPartition xs =  map (\x -> partition ((==) x) xs) xs
-
--- assumes list is [ host, port, ... ]
--- assumes even check done in advance
-mkHostPortPairs []       = []
-mkHostPortPairs (h:p:xs) = (h, read p::Int) : mkHostPortPairs xs
-
 {-
-sss ["0.0.0.0", "9061", "0.0.0.0", "9062", "0.0.0.0", "9063"]
-
-ss [("0.0.0.0",9061),("0.0.0.0",9062),("0.0.0.0",9063)]
-
-
-CMD --> L --> F1
-          --> F2
+CMD <--> L <--> F1
+                ^
+                |
+                v
+           <--> F2
 -}
