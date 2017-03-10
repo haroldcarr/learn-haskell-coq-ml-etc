@@ -27,7 +27,7 @@ main = do
     xs -> do
       if not (even (length xs))
         then error "Usage [ host port ... ]"
-        else doIt (foo (mkHostPortPairs xs))
+        else doIt (mkInitiatorList (mkHostPortPairs xs))
 
 doIt all@((leader@(host,port), followers):_) = do
   configureLogging
@@ -42,6 +42,6 @@ connectPeers xs = do
   httpToConsensus <- newEmptyMVar
   forM_ xs (\((host,port),followers) -> do
     forM_ followers (\(fhost, fport) -> do
-      infoM mainProgram ("connectPeers " <> host <> " " <> show port)
-      forkIO $ forever (runInitiateConnection httpToConsensus host port fhost fport)
+      infoM mainProgram ("connectPeers " <> host <> " " <> show port <> " connecting to " <> fhost <> " " <> show port)
+      forkIO $ forever (runInitiateConnection httpToConsensus 1 host port fhost fport)
       forkIO $ site httpToConsensus (10000 + port)))
