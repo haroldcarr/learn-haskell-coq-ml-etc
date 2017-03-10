@@ -28,18 +28,16 @@ main :: IO ()
 main = do
   xs <- getArgs
   case xs of
-    [] -> doIt [([(host,port)], [(host,port)])]
+    [] -> doIt ([(host,port)], [(host,port)]) -- for testing
     xs -> do
       if not (even (length xs))
         then error "Usage"
-        else doIt (mkPartition (mkHostPortPairs xs))
+        else let hpp = mkHostPortPairs xs in doIt (mkPartition (head hpp) hpp)
 
-doIt :: (Foldable t, Show a) => t ([(a, Int)], [(a, Int)]) -> IO ()
-doIt lfs = do
-  updateGlobalLogger mainProgram       (setLevel INFO)
-  updateGlobalLogger consensusFollower (setLevel INFO)
-  updateGlobalLogger consensusLeader   (setLevel INFO)
-  mapM_ (\([leader], followers) -> doIt' leader followers) lfs
+doIt :: Show a => ([(a, Int)], [(a, Int)]) -> IO ()
+doIt ([leader], followers) = do
+  configureLogging
+  doIt' leader followers
  where
   doIt' (s,leader) fs = do
     infoM mainProgram ("doIt': " <> show s <> " " <> show leader <> " " <> show fs)
@@ -47,6 +45,11 @@ doIt lfs = do
     forkIO $ forever (runFollower host leader)
     forkIO $ forever (runLeader httpToConsensus host leader)
     site httpToConsensus
+
+configureLogging = do
+  updateGlobalLogger mainProgram       (setLevel INFO)
+  updateGlobalLogger consensusFollower (setLevel INFO)
+  updateGlobalLogger consensusLeader   (setLevel INFO)
 
 {-
 CMD <--> L <--> F1
