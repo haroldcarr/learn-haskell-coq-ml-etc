@@ -18,14 +18,20 @@ import           System.Log.Logger     (infoM)
 defaultHost = "224.0.0.99"
 defaultPort = 9160
 
+{-
+stack exec bc -- 9160 224.0.0.99 9160 &
+stack exec bc -- 9161 224.0.0.99 9160
+-}
+
 main = do
   xs <- getArgs
   case xs of
-    []    -> doIt defaultHost defaultPort
-    [h,p] -> doIt h (read p :: PortNumber)
+    []             -> doIt defaultPort            defaultHost (read (show defaultPort) :: PortNumber)
+    [httpPort,h,p] -> doIt (read httpPort :: Int) h           (read p :: PortNumber)
+    xs             -> error (show xs)
 
-doIt host port = do
+doIt httpPort host port = do
   configureLogging
   httpToConsensus <- newEmptyMVar
   startNodeComm httpToConsensus host port
-  site httpToConsensus "0.0.0.0" 9160
+  site httpToConsensus "0.0.0.0" httpPort

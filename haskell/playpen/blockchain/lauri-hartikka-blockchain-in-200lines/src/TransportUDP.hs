@@ -38,8 +38,10 @@ startRcvComm host port = withSocketsDo $ do
 
 rec host port sock = do
   infoN host port "rec: waiting"
-  msg <- N.recvFrom sock 1024
-  infoN host port  ("rec: " <> show msg)
+  (msg,addr) <- N.recvFrom sock 1024
+  infoN host port  ("rec: from: " <> show addr <> " " <> show msg)
+  if | BS.isPrefixOf "{\"appendEntry\":" msg -> infoN host port "APPENDENTRY"
+     | otherwise                             -> infoN host port "NO"
   rec host port sock
 
 startSndComm httpToConsensus host port = withSocketsDo $ do
@@ -58,9 +60,4 @@ send httpToConsensus host port sock addr = do
 
 infoN h p msg = infoM consensusFollower ("N " <> h <> ":" <> show p <> " " <> msg)
 
-recS host port (_, c) peers = forever $ do
-  let msg = (BSC8.pack "")
-  infoN host port ("recS: " <> show msg)
-  if | BS.isPrefixOf "{\"appendEntry\":" msg -> infoN host port "APPENDENTRY"
-     | otherwise                             -> infoN host port "NO"
 
