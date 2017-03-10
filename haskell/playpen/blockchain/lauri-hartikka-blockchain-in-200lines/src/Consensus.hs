@@ -77,11 +77,11 @@ infoS h p msg = infoM consensusFollower ((wsS h p) <> msg)
 -- client
 
 -- runInitiateConnection :: MVar ByteString -> String -> Int -> IO ()
-runInitiateConnection httpToConsensus host port = do
+runInitiateConnection httpToConsensus host port fhost fport = do
   infoC host port "----------------------------------------------"
   infoC host port "runInitiateConnection: ENTER"
   peers <- newMVar []
-  forkIO . withSocketsDo $ WS.runClient host port "/" (app host port peers)
+  forkIO . withSocketsDo $ WS.runClient fhost fport "/" (app host port peers)
   waitUntilAllConnected host port peers
   infoC host port "runInitiateConnection: after waitUntilAllConnected"
   fc <- readMVar peers
@@ -113,12 +113,12 @@ recC host port conn = forever $ do
 sendC host port httpToConsensus peers = do
   infoC host port "sendC: waiting"
   msg <- takeMVar httpToConsensus
-  infoC host port ("sendC: sending: " ++ show msg)
+  infoC host port ("sendC: " ++ show msg)
   broadcastC host port msg peers
   sendC host port httpToConsensus peers
 
 broadcastC host port msg peers = do
-  infoC host port ("broadcastC: really sending: " ++ show msg)
+  infoC host port ("broadcastC: " ++ show msg)
   forM_ peers (\c -> WS.sendBinaryData c msg)
 
 wsC h p = "WS C " <> h <> ":" <> show p <> " "
