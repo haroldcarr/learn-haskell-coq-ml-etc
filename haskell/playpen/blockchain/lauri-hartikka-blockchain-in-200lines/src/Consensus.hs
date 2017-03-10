@@ -52,9 +52,9 @@ consensus peers nextPeerId pending = do
     modifyMVar_ peers $ return . rmPeer peer
     infoM consensusFollower ("WS S disconnect: " <> show pid <> " disconnected")
 
-broadcast :: Text -> Peers -> IO ()
-broadcast msg ps = do
-  infoM consensusFollower ("WS S broadcast: " <> show msg)
+broadcastS :: Text -> Peers -> IO ()
+broadcastS msg ps = do
+  infoM consensusFollower ("WS S broadcastS: " <> show msg)
   forM_ ps $ \(_,c) -> WS.sendTextData c msg
 
 recS :: Peer -> MVar Peers -> IO ()
@@ -77,26 +77,26 @@ rmPeer p = P.filter ((/= fst p) . fst)
 runInitiateConnection httpToConsensus host port = do
   infoM consensusLeader "----------------------------------------------"
   infoM consensusLeader ("WS C runInitiateConnection: " <> host <> " " <> show port)
-  followerConnections <- newMVar []
-  forkIO . withSocketsDo $ WS.runClient host port "/" (app followerConnections)
-  waitUntilAllConnected followerConnections
+  peers <- newMVar []
+  forkIO . withSocketsDo $ WS.runClient host port "/" (app peers)
+  waitUntilAllConnected peers
   infoM consensusLeader "WS C runInitiateConnection: after waitUntilAllConnected"
-  fc <- readMVar followerConnections
+  fc <- readMVar peers
   infoM consensusLeader "WS C runInitiateConnection: before sendC"
   sendC httpToConsensus fc
   infoM consensusLeader "WS C runInitiateConnection: Bye!"
 
-waitUntilAllConnected followerConnections = do
+waitUntilAllConnected peers = do
   infoM consensusLeader "WS C waitUntilAllConnected before MVAR"
   threadDelay 100000
-  fc <- readMVar followerConnections
+  fc <- readMVar peers
   infoM consensusLeader "WS C waitUntilAllConnected after MVAR"
-  unless (P.length fc == 1) $ waitUntilAllConnected followerConnections
+  unless (P.length fc == 1) $ waitUntilAllConnected peers
 
 -- app :: MVar ByteString -> WS.ClientApp ()
-app followerConnections conn = do
+app peers conn = do
   infoM consensusLeader "WS C app: Connected!"
-  modifyMVar_ followerConnections $ return . (conn :)
+  modifyMVar_ peers $ return . (conn :)
   recC conn
 
 -- write anything received to stdout
@@ -107,10 +107,13 @@ recC conn = forever $ do
 
 -- Read from httpToConsensus and write to WS
 -- sendC :: MVar ByteString -> WS.Connection -> IO ()
-sendC httpToConsensus followerConnections = do
+sendC httpToConsensus peers = do
   infoM consensusLeader "WS C sendC: waiting"
   msg <- takeMVar httpToConsensus
   infoM consensusLeader ("WS C sendC: sending: " ++ show msg)
-  forM_ followerConnections $ \c -> do
-    infoM consensusLeader ("WS C sendC: really sending: " ++ show msg)
-    WS.sendBinaryData c msg >> sendC httpToConsensus followerConnections
+  broadcastC msg peers
+  sendC httpToConsensus peers
+
+broadcastC msg peers = do
+  infoM consensusLeader ("WS C broadcastC: really sending: " ++ show msg)
+  forM_ peers (\c -> WS.sendBinaryData c msg)

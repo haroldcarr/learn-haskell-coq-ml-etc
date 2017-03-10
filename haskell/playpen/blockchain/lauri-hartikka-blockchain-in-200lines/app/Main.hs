@@ -6,8 +6,7 @@ import           Consensus             (consensusFollower, consensusLeader,
 import           Http                  (site)
 import           Util
 
-import           Control.Concurrent    (MVar, newEmptyMVar)
-import           Control.Concurrent    (forkIO)
+import           Control.Concurrent    (MVar, forkIO, newEmptyMVar)
 import           Control.Monad         (forever)
 import           Data.ByteString       (ByteString)
 import           Data.ByteString.Char8 as BSC8 (pack)
@@ -31,29 +30,22 @@ main = do
         then error "Usage"
         else doIt (foo (mkHostPortPairs xs))
 
-doIt :: [((Host, Port), [(Host, Port)])] -> IO ()
-doIt ((leader@(host,port), followers):_) = do
+-- doIt :: [((Host, Port), [(Host, Port)])] -> IO ()
+doIt all@((leader@(host,port), followers):_) = do
   configureLogging
-  httpToConsensus <- doIt' leader followers
+  initializePeers (leader:followers)
+  httpToConsensus <- connectPeers all
   site httpToConsensus
 
- where
-  doIt' (s,leader) fs = do
-    infoM mainProgram ("doIt': " <> show s <> " " <> show leader <> " " <> show fs)
-    httpToConsensus <- newEmptyMVar
-    forkIO $ forever (runAcceptConnections host leader)
-    forkIO $ forever (runInitiateConnection httpToConsensus host leader)
-    return httpToConsensus
+initializePeers = mapM_ (\(host, port) -> forkIO $ forever (runAcceptConnections host port))
+
+connectPeers xs = do
+  infoM mainProgram ("connectPeers: " <> show xs)
+  httpToConsensus <- newEmptyMVar
+  mapM (\((host,port),followers) -> forkIO $ forever (runInitiateConnection httpToConsensus host port)) xs
+  return httpToConsensus
 
 configureLogging = do
   updateGlobalLogger mainProgram       (setLevel INFO)
   updateGlobalLogger consensusFollower (setLevel INFO)
   updateGlobalLogger consensusLeader   (setLevel INFO)
-
-{-
-CMD <--> L <--> F1
-                ^
-                |
-                v
-           <--> F2
--}
