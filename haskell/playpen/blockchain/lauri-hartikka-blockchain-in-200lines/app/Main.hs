@@ -1,9 +1,9 @@
 module Main where
 
-import           Consensus             (consensusFollower, consensusLeader,
-                                        runAcceptConnections,
+import           Consensus             (runAcceptConnections,
                                         runInitiateConnection)
 import           Http                  (site)
+import           Logging
 import           Util
 
 import           Control.Concurrent    (MVar, forkIO, newEmptyMVar)
@@ -12,11 +12,8 @@ import           Data.ByteString       (ByteString)
 import           Data.ByteString.Char8 as BSC8 (pack)
 import           Data.Monoid           ((<>))
 import           System.Environment    (getArgs)
-import           System.Log.Logger
+import           System.Log.Logger     (infoM)
 
-mainProgram = "main"
-type Host = String
-type Port = Int
 host = "0.0.0.0"
 port = 9160
 
@@ -45,7 +42,3 @@ connectPeers xs = do
   mapM (\((host,port),followers) -> forkIO $ forever (runInitiateConnection httpToConsensus host port)) xs
   return httpToConsensus
 
-configureLogging = do
-  updateGlobalLogger mainProgram       (setLevel INFO)
-  updateGlobalLogger consensusFollower (setLevel INFO)
-  updateGlobalLogger consensusLeader   (setLevel INFO)

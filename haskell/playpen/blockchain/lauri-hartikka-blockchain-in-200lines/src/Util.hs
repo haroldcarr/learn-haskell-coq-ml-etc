@@ -5,6 +5,9 @@ import           Data.List           (partition)
 import           Data.List           (tails)
 import           Data.Traversable    (sequenceA)
 
+type Host = String
+type Port = Int
+
 -- splits the list so
 -- fst contains the initiator host/port
 -- snd contains target host/ports

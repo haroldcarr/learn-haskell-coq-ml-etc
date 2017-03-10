@@ -3,6 +3,9 @@
 
 module Consensus where
 
+import           Logging
+import           Util
+
 import           Control.Concurrent            (MVar, forkIO, modifyMVar,
                                                 modifyMVar_, newEmptyMVar,
                                                 newMVar, readMVar, takeMVar,
@@ -20,14 +23,11 @@ import           Network.Socket                (withSocketsDo)
 import qualified Network.WebSockets            as WS
 import qualified Network.WebSockets.Connection as WS
 import           Prelude                       as P
-import           System.Log.Logger
+import           System.Log.Logger             (infoM)
 
 type PeerId = Int -- scope is this server
 type Peer   = (PeerId, WS.Connection)
 type Peers  = [Peer]
-
-consensusFollower = "Consensus.Follower"
-consensusLeader   = "Consensus.Leader"
 
 ------------------------------------------------------------------------------
 -- server
@@ -36,33 +36,33 @@ runAcceptConnections :: String -> Int -> IO ()
 runAcceptConnections host port = do
   peers      <- newMVar []
   nextPeerId <- newMVar (-1)
-  WS.runServer host port $ consensus peers nextPeerId
+  WS.runServer host port $ consensus host port peers nextPeerId
 
-consensus :: MVar Peers -> MVar PeerId -> WS.ServerApp
-consensus peers nextPeerId pending = do
+consensus :: Host -> Port -> MVar Peers -> MVar PeerId -> WS.ServerApp
+consensus host port peers nextPeerId pending = do
   c <- WS.acceptRequest pending
   WS.forkPingThread c 30
   peerId <- modifyMVar nextPeerId $ \i -> return (i+1,i+1)
   let peer = (peerId, c)
   flip finally (disconnect peer) $ do
     modifyMVar_ peers $ return . addPeer peer
-    recS peer peers
+    recS host port peer peers
  where
   disconnect peer@(pid,_) = do
     modifyMVar_ peers $ return . rmPeer peer
-    infoM consensusFollower ("WS S disconnect: " <> show pid <> " disconnected")
+    infoS host port ("disconnect: " <> show pid <> " disconnected")
 
-broadcastS :: Text -> Peers -> IO ()
-broadcastS msg ps = do
-  infoM consensusFollower ("WS S broadcastS: " <> show msg)
+broadcastS :: Host -> Port -> Text -> Peers -> IO ()
+broadcastS host port msg ps = do
+  infoS host port ("broadcastS: " <> show msg)
   forM_ ps $ \(_,c) -> WS.sendTextData c msg
 
-recS :: Peer -> MVar Peers -> IO ()
-recS (_, c) peers = forever $ do
+recS :: Host -> Port -> Peer -> MVar Peers -> IO ()
+recS host port (_, c) peers = forever $ do
   msg <- WS.receiveData c :: IO ByteString
-  infoM consensusFollower ("WS S recS: " <> show msg)
-  if | BS.isPrefixOf "{\"appendEntry\":" msg -> infoM consensusFollower "APPENDENTRY"
-     | otherwise                             -> infoM consensusFollower "NO"
+  infoS host port ("recS: " <> show msg)
+  if | BS.isPrefixOf "{\"appendEntry\":" msg -> infoS host port "APPENDENTRY"
+     | otherwise                             -> infoS host port "NO"
 
 addPeer :: Peer -> Peers -> Peers
 addPeer p ps = p:ps
@@ -70,50 +70,57 @@ addPeer p ps = p:ps
 rmPeer :: Peer -> Peers -> Peers
 rmPeer p = P.filter ((/= fst p) . fst)
 
+wsS h p = "WS S " <> h <> ":" <> show p <> " "
+infoS h p msg = infoM consensusFollower ((wsS h p) <> msg)
+
 --------------------------------------------------------------------------------
 -- client
 
 -- runInitiateConnection :: MVar ByteString -> String -> Int -> IO ()
 runInitiateConnection httpToConsensus host port = do
-  infoM consensusLeader "----------------------------------------------"
-  infoM consensusLeader ("WS C runInitiateConnection: " <> host <> " " <> show port)
+  infoC host port "----------------------------------------------"
+  infoC host port "runInitiateConnection: ENTER"
   peers <- newMVar []
-  forkIO . withSocketsDo $ WS.runClient host port "/" (app peers)
-  waitUntilAllConnected peers
-  infoM consensusLeader "WS C runInitiateConnection: after waitUntilAllConnected"
+  forkIO . withSocketsDo $ WS.runClient host port "/" (app host port peers)
+  waitUntilAllConnected host port peers
+  infoC host port "runInitiateConnection: after waitUntilAllConnected"
   fc <- readMVar peers
-  infoM consensusLeader "WS C runInitiateConnection: before sendC"
-  sendC httpToConsensus fc
-  infoM consensusLeader "WS C runInitiateConnection: Bye!"
+  infoC host port "runInitiateConnection: before sendC"
+  sendC host port httpToConsensus fc
+  infoC host port "runInitiateConnection: EXIT"
 
-waitUntilAllConnected peers = do
-  infoM consensusLeader "WS C waitUntilAllConnected before MVAR"
+waitUntilAllConnected host port peers = do
+  infoS host port "waitUntilAllConnected before MVAR"
   threadDelay 100000
   fc <- readMVar peers
-  infoM consensusLeader "WS C waitUntilAllConnected after MVAR"
-  unless (P.length fc == 1) $ waitUntilAllConnected peers
+  infoS host port "waitUntilAllConnected after MVAR"
+  unless (P.length fc == 1) $ waitUntilAllConnected host port peers
 
 -- app :: MVar ByteString -> WS.ClientApp ()
-app peers conn = do
-  infoM consensusLeader "WS C app: Connected!"
+app host port peers conn = do
+  infoC host port "app: Connected"
   modifyMVar_ peers $ return . (conn :)
-  recC conn
+  recC host port conn
 
 -- write anything received to stdout
-recC conn = forever $ do
-  liftIO $ infoM consensusLeader "WS C recC: waiting"
+recC host port conn = forever $ do
+  liftIO $ infoC host port "recC: waiting"
   msg <- WS.receiveData conn :: IO ByteString
-  liftIO $ infoM consensusLeader ("WS C recC: rec: " <> show msg)
+  liftIO $ infoC host port  ("recC: rec: " <> show msg)
 
 -- Read from httpToConsensus and write to WS
 -- sendC :: MVar ByteString -> WS.Connection -> IO ()
-sendC httpToConsensus peers = do
-  infoM consensusLeader "WS C sendC: waiting"
+sendC host port httpToConsensus peers = do
+  infoC host port "sendC: waiting"
   msg <- takeMVar httpToConsensus
-  infoM consensusLeader ("WS C sendC: sending: " ++ show msg)
-  broadcastC msg peers
-  sendC httpToConsensus peers
+  infoC host port ("sendC: sending: " ++ show msg)
+  broadcastC host port msg peers
+  sendC host port httpToConsensus peers
 
-broadcastC msg peers = do
-  infoM consensusLeader ("WS C broadcastC: really sending: " ++ show msg)
+broadcastC host port msg peers = do
+  infoC host port ("broadcastC: really sending: " ++ show msg)
   forM_ peers (\c -> WS.sendBinaryData c msg)
+
+wsC h p = "WS C " <> h <> ":" <> show p <> " "
+infoC h p msg = infoM consensusLeader ((wsC h p) <> msg)
+
