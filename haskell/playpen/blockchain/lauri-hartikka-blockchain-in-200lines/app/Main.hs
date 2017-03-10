@@ -1,7 +1,8 @@
 module Main where
 
 import           Consensus             (consensusFollower, consensusLeader,
-                                        runFollower, runLeader)
+                                        runAcceptConnections,
+                                        runInitiateConnection)
 import           Http                  (site)
 import           Util
 
@@ -33,14 +34,16 @@ main = do
 doIt :: [((Host, Port), [(Host, Port)])] -> IO ()
 doIt ((leader@(host,port), followers):_) = do
   configureLogging
-  doIt' leader followers
+  httpToConsensus <- doIt' leader followers
+  site httpToConsensus
+
  where
   doIt' (s,leader) fs = do
     infoM mainProgram ("doIt': " <> show s <> " " <> show leader <> " " <> show fs)
     httpToConsensus <- newEmptyMVar
-    forkIO $ forever (runFollower host leader)
-    forkIO $ forever (runLeader httpToConsensus host leader)
-    site httpToConsensus
+    forkIO $ forever (runAcceptConnections host leader)
+    forkIO $ forever (runInitiateConnection httpToConsensus host leader)
+    return httpToConsensus
 
 configureLogging = do
   updateGlobalLogger mainProgram       (setLevel INFO)

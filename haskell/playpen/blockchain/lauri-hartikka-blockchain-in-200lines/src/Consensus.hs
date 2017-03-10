@@ -32,8 +32,8 @@ consensusLeader   = "Consensus.Leader"
 ------------------------------------------------------------------------------
 -- server
 
-runFollower :: String -> Int -> IO ()
-runFollower host port = do
+runAcceptConnections :: String -> Int -> IO ()
+runAcceptConnections host port = do
   peers      <- newMVar []
   nextPeerId <- newMVar (-1)
   WS.runServer host port $ consensus peers nextPeerId
@@ -73,18 +73,18 @@ rmPeer p = P.filter ((/= fst p) . fst)
 --------------------------------------------------------------------------------
 -- client
 
--- runLeader :: MVar ByteString -> String -> Int -> IO ()
-runLeader httpToConsensus host port = do
+-- runInitiateConnection :: MVar ByteString -> String -> Int -> IO ()
+runInitiateConnection httpToConsensus host port = do
   infoM consensusLeader "----------------------------------------------"
-  infoM consensusLeader ("WS C runLeader: " <> host <> " " <> show port)
+  infoM consensusLeader ("WS C runInitiateConnection: " <> host <> " " <> show port)
   followerConnections <- newMVar []
   forkIO . withSocketsDo $ WS.runClient host port "/" (app followerConnections)
   waitUntilAllConnected followerConnections
-  infoM consensusLeader "WS C runLeader: after waitUntilAllConnected"
+  infoM consensusLeader "WS C runInitiateConnection: after waitUntilAllConnected"
   fc <- readMVar followerConnections
-  infoM consensusLeader "WS C runLeader: before sendC"
+  infoM consensusLeader "WS C runInitiateConnection: before sendC"
   sendC httpToConsensus fc
-  infoM consensusLeader "WS C runLeader: Bye!"
+  infoM consensusLeader "WS C runInitiateConnection: Bye!"
 
 waitUntilAllConnected followerConnections = do
   infoM consensusLeader "WS C waitUntilAllConnected before MVAR"
