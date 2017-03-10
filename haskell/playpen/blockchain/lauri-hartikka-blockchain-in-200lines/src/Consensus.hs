@@ -71,17 +71,18 @@ rmPeer :: Peer -> Peers -> Peers
 rmPeer p = P.filter ((/= fst p) . fst)
 
 wsS h p = "WS S " <> h <> ":" <> show p <> " "
-infoS h p msg = infoM consensusFollower ((wsS h p) <> msg)
+infoS h p msg = infoM consensusFollower (wsS h p <> msg)
 
 --------------------------------------------------------------------------------
 -- client
 
 -- runInitiateConnection :: MVar ByteString -> String -> Int -> IO ()
-runInitiateConnection httpToConsensus numPeers host port fhost fport = do
+runInitiateConnection httpToConsensus host port targets = do
   infoC host port "----------------------------------------------"
   infoC host port "runInitiateConnection: ENTER"
   peers <- newMVar []
-  forkIO . withSocketsDo $ WS.runClient fhost fport "/" (app host port peers)
+  forM_ targets $ \(thost, tport) -> forkIO . withSocketsDo $ WS.runClient thost tport "/" (app host port peers)
+  let numPeers = P.length targets
   waitUntilAllConnected numPeers host port peers
   infoC host port "runInitiateConnection: after waitUntilAllConnected"
   fc <- readMVar peers
@@ -122,5 +123,5 @@ broadcastC host port msg peers = do
   forM_ peers (\c -> do {  infoC host port "broadcastC to peer"; WS.sendBinaryData c msg })
 
 wsC h p = "WS C " <> h <> ":" <> show p <> " "
-infoC h p msg = infoM consensusLeader ((wsC h p) <> msg)
+infoC h p msg = infoM consensusLeader (wsC h p <> msg)
 

@@ -40,8 +40,7 @@ initializePeers = mapM_ (\(host, port) -> forkIO $ forever (runAcceptConnections
 connectPeers xs = do
   infoM mainProgram ("connectPeers ENTER: " <> show xs)
   httpToConsensus <- newEmptyMVar
-  forM_ xs (\((host,port),followers) -> do
-    forM_ followers (\(fhost, fport) -> do
-      infoM mainProgram ("connectPeers " <> host <> " " <> show port <> " connecting to " <> fhost <> " " <> show port)
-      forkIO $ forever (runInitiateConnection httpToConsensus 1 host port fhost fport)
-      forkIO $ site httpToConsensus (10000 + port)))
+  forM_ xs $ \((host,port),targets) -> do
+    infoM mainProgram ("connectPeers " <> host <> " " <> show port <> " connecting to " <> show targets)
+    forkIO $ forever (runInitiateConnection httpToConsensus host port targets)
+    forkIO $ site httpToConsensus host (10000 + port)
