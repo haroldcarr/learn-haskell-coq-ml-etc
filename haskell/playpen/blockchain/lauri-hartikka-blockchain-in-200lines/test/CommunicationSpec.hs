@@ -18,3 +18,8 @@ spec = do
       it "mkHostPortPairs" $ mkHostPortPairs input              `shouldBe` pairOut
       it "mkPartition"     $ mkPartition (head pairOut) pairOut `shouldBe` partitionOut
       it "window"          $ windows 2 (snd partitionOut)       `shouldBe` windowsOut
+      it "foo"             $ foo pairOut                        `shouldBe`
+        [(("0.0.0.0",9061), [("0.0.0.0",9062),  ("0.0.0.0",9063),  ("0.0.0.0",9064)])
+        ,                   (("0.0.0.0",9062), [("0.0.0.0",9063),  ("0.0.0.0",9064)])
+        ,                                      (("0.0.0.0",9063), [("0.0.0.0",9064)])
+        ]

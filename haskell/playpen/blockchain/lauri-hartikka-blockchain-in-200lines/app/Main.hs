@@ -15,27 +15,23 @@ import           System.Environment    (getArgs)
 import           System.Log.Logger
 
 mainProgram = "main"
-
+type Host = String
+type Port = Int
 host = "0.0.0.0"
 port = 9160
-{-
- [([9061],[9062,9063]),([9062],[9061,9063]),([9063],[9061,9062])]
- [([("0.0.0.0", 9061)],[("0.0.0.0", 9062),("0.0.0.0", 9063)])
- ,([("0.0.0.0", 9062)],[("0.0.0.0", 9061),("0.0.0.0", 9063)])
- ,([("0.0.0.0", 9063)],[("0.0.0.0", 9061),("0.0.0.0", 9062)])]
--}
+
 main :: IO ()
 main = do
   xs <- getArgs
   case xs of
-    [] -> doIt ([(host,port)], [(host,port)]) -- for testing
+    [] -> doIt [((host,port), [(host,port)])] -- for testing
     xs -> do
       if not (even (length xs))
         then error "Usage"
-        else let hpp = mkHostPortPairs xs in doIt (mkPartition (head hpp) hpp)
+        else doIt (foo (mkHostPortPairs xs))
 
-doIt :: Show a => ([(a, Int)], [(a, Int)]) -> IO ()
-doIt ([leader], followers) = do
+doIt :: [((Host, Port), [(Host, Port)])] -> IO ()
+doIt ((leader@(host,port), followers):_) = do
   configureLogging
   doIt' leader followers
  where

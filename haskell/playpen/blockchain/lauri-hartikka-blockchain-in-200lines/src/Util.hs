@@ -22,3 +22,8 @@ transpose' = getZipList . sequenceA . map ZipList
 
 windows :: Int -> [a] -> [[a]]
 windows n = transpose' . take n . tails
+
+foo = init . foo'
+ where
+  foo'    []  = []
+  foo' (x:xs) = (x, xs) : foo' xs
