@@ -1,9 +1,8 @@
 module Main where
 
 import           Http                  (site)
-import           Logging
-import           TransportUDP
-import           Util
+import           Logging               (configureLogging)
+import           TransportUDP          (startNodeComm)
 
 import           Control.Concurrent    (MVar, forkIO, newEmptyMVar, takeMVar,
                                         threadDelay)

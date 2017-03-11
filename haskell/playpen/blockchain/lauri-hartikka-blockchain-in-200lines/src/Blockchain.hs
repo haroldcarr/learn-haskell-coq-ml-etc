@@ -2,13 +2,25 @@
 
 -- https://medium.com/@lhartikk/a-blockchain-in-200-lines-of-code-963cc1cc0e54#.ufqde5iq6
 
-module Blockchain where
+module Blockchain
+  ( Block (Block)
+  , generateNextBlock
+  , genesisBlock
+    -- for testing
+  , addBlock
+  , bhash
+  , calculateHash
+  , emptyBlockchain
+  , isValidBlock
+  , isValidChain
+  )
+where
 
 import           Control.Applicative   ((<|>))
 import           Crypto.Hash.SHA256    (hash)
 import           Data.ByteString       (ByteString)
-import           Data.ByteString       as BS
-import           Data.ByteString.Char8 as BSC8
+import           Data.ByteString       as BS (concat)
+import           Data.ByteString.Char8 as BSC8 (pack)
 
 type Index      = Integer
 type Hash       = ByteString

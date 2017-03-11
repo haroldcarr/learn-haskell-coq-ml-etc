@@ -1,6 +1,14 @@
-module Logging where
+module Logging
+  ( mainProgram
+  , http
+  , consensusFollower
+  , consensusLeader
+  , configureLogging
+  )
+where
 
-import           System.Log.Logger
+import           System.Log.Logger (Priority (INFO), setLevel,
+                                    updateGlobalLogger)
 
 mainProgram       = "MAIN"
 http              = "HTTP"

@@ -1,11 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Http where
+module Http
+  (site)
+where
 
-import           Blockchain
-import           Json
-import           Logging
-import           Util
+import           Blockchain           (generateNextBlock, genesisBlock)
+import           Consensus            (AppendEntry (..))
+import           Json                 ()
+import           Logging              (http)
 
 import           Control.Applicative  ((<|>))
 import           Control.Concurrent   (MVar, putMVar)
@@ -14,8 +16,10 @@ import           Data.Aeson           (encode)
 import           Data.ByteString      (ByteString)
 import           Data.ByteString.Lazy (toStrict)
 import           Data.Monoid          ((<>))
-import           Snap.Core
-import           Snap.Http.Server
+import           Snap.Core            (Snap, getParam, ifTop, route, writeBS)
+import           Snap.Http.Server     (Config, ConfigLog (ConfigNoLog),
+                                       setAccessLog, setErrorLog, setPort,
+                                       simpleHttpServe)
 import           System.Log.Logger    (infoM)
 
 site httpToConsensus host port = do

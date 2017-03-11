@@ -1,1 +1,3 @@
-module Util where
+module Util
+  ()
+where

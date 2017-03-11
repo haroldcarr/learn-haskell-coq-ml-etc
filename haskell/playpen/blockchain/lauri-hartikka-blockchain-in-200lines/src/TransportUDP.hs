@@ -1,27 +1,20 @@
 {-# LANGUAGE MultiWayIf        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TransportUDP where
+module TransportUDP
+  (startNodeComm)
+where
 
-import           Logging
-import           Util
+import           Logging                   (consensusFollower)
 
-import           Control.Concurrent        (MVar, forkIO, modifyMVar,
-                                            modifyMVar_, newEmptyMVar, newMVar,
-                                            readMVar, takeMVar, threadDelay)
-import           Control.Exception         (finally)
-import           Control.Monad             (forM_, forever, unless)
-import           Control.Monad.Trans       (liftIO)
-import           Data.ByteString           (ByteString)
-import           Data.ByteString           as BS
-import           Data.ByteString.Char8     as BSC8
+import           Control.Concurrent        (forkIO, takeMVar)
+import           Data.ByteString           as BS (isPrefixOf)
 import           Data.Monoid               ((<>))
 import           Network.Multicast         as NM (multicastReceiver,
                                                   multicastSender)
 import           Network.Socket            as N (PortNumber, Socket,
                                                  withSocketsDo)
 import           Network.Socket.ByteString as N (recvFrom, sendTo)
-import           Prelude                   as P
 import           System.Log.Logger         (infoM)
 
 startNodeComm httpToConsensus host port = do
