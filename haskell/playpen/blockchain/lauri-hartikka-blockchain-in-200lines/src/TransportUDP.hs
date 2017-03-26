@@ -5,10 +5,14 @@ module TransportUDP
   (startNodeComm)
 where
 
+import           Consensus
+import           Json
 import           Logging                   (consensusFollower)
 
 import           Control.Concurrent        (forkIO, takeMVar)
+import           Data.Aeson                (encode)
 import           Data.ByteString           as BS (isPrefixOf)
+import           Data.ByteString.Lazy      (toStrict)
 import           Data.Monoid               ((<>))
 import           Network.Multicast         as NM (multicastReceiver,
                                                   multicastSender)
@@ -19,29 +23,28 @@ import           System.Log.Logger         (infoM)
 
 startNodeComm httpToConsensus host port = do
   infoN host port "startNodeComm: ENTER"
-  startRcvComm host port
-  startSndComm httpToConsensus host port
+  startSndRcvComm httpToConsensus host port
   infoN host port "startNodeComm: EXIT"
 
-startRcvComm host port = withSocketsDo $ do
-  infoN host port "startRcvComm: ENTER"
-  sock <- multicastReceiver host port
-  forkIO $ rec host port sock
-  infoN host port "startRcvComm: EXIT"
+startSndRcvComm httpToConsensus host port = withSocketsDo $ do
+  infoN host port "startSndRcvComm: ENTER"
+  (sendSock, sendAddr) <- multicastSender host port
+  recSock <- multicastReceiver host port
+  forkIO $ send httpToConsensus host port sendSock sendAddr
+  forkIO $ rec host port recSock sendSock sendAddr
+  infoN host port "startSndRcvComm: EXIT"
 
-rec host port sock = do
+rec host port recSock sendSock sendAddr = do
   infoN host port "rec: waiting"
-  (msg,addr) <- N.recvFrom sock 1024
+  (msg,addr) <- N.recvFrom recSock 1024
   infoN host port  ("rec: from: " <> show addr <> " " <> show msg)
-  if | BS.isPrefixOf "{\"appendEntry\":" msg -> infoN host port "APPENDENTRY"
+  if | BS.isPrefixOf "{\"appendEntry\":" msg -> do
+         infoN host port "APPENDENTRY"
+         sendTo sendSock (toStrict (encode (AppendEntryResponse True))) sendAddr
+     | BS.isPrefixOf "{\"appendEntryResponse\":" msg -> do
+         infoN host port "APPENDENTRYRESPONSE"
      | otherwise                             -> infoN host port "NO"
-  rec host port sock
-
-startSndComm httpToConsensus host port = withSocketsDo $ do
-  infoN host port "startSndComm: ENTER"
-  (sock, addr) <- multicastSender host port
-  forkIO $ send httpToConsensus host port sock addr
-  infoN host port "startSndComm: EXIT"
+  rec host port recSock sendSock sendAddr
 
 -- Read from httpToConsensus and broadcast
 send httpToConsensus host port sock addr = do
@@ -51,6 +54,7 @@ send httpToConsensus host port sock addr = do
   sendTo sock msg addr
   send httpToConsensus host port sock addr
 
-infoN h p msg = infoM consensusFollower ("N " <> h <> ":" <> show p <> " " <> msg)
-
+infoN h p msg = do
+  infoM consensusFollower ("N " <> h <> ":" <> show p <> " " <> msg)
+  return 1 -- TODO - get rid of this
 
