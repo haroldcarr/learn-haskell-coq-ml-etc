@@ -2,8 +2,8 @@
 
 module Main where
 
-import           Blockchain            (Blockchain, generateNextBlock,
-                                        genesisBlock)
+import           Blockchain            (Block, BlockData, Blockchain,
+                                        generateNextBlock, genesisBlock)
 import           BlockchainState       (initialBlockchainState)
 import           CommandDispatcher
 import           Consensus
@@ -51,17 +51,17 @@ initializeCommandDispatcher httpToConsensus = do
 listBlocks :: MVar Blockchain -> Maybe Int -> IO (Maybe Blockchain)
 listBlocks blockchain i =
   case i of
+    -- return all entries
     Nothing -> withMVar blockchain $ return . Just
+    -- return the single entry (as a one-element list)
     Just i' -> withMVar blockchain $ \x -> case x ^? element i' of
                                              Nothing -> return Nothing
                                              Just el -> return (Just [el])
 
+addBlock :: MVar Blockchain -> MVar BlockData -> BlockData -> IO Block
 addBlock blockchain httpToConsensus blockdata = do
   let newBlock = generateNextBlock genesisBlock "fake timestamp" blockdata
   -- send block to verifiers
-  sendAppendEntries httpToConsensus newBlock
+  putMVar httpToConsensus (toStrict (encode (AppendEntry newBlock)))
   -- return block to caller
   return newBlock
-
-sendAppendEntries httpToConsensus block =
-  putMVar httpToConsensus (toStrict (encode (AppendEntry block)))
