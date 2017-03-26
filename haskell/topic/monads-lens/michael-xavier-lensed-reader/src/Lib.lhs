@@ -1,14 +1,19 @@
 > {-# LANGUAGE FlexibleContexts           #-}
 > {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+> {-# LANGUAGE TemplateHaskell            #-}
 >
 > module Lib where
 >
+> import Control.Lens
+> import Control.Lens.TH
 > import Control.Monad.IO.Class
 > import Control.Monad.Reader
 > import Control.Monad.Trans.Either
 
+ http://michaelxavier.net/posts/2016-04-03-Enterprise-Haskell-Pattern-Lensed-Reader.html
+
 ------------------------------------------------------------------------------
-The Precursor: ReaderT-based Transformer Stack
+1. The Precursor: ReaderT-based Transformer Stack
 
 talk that covers many of same points
 - Next Level MTL by George Wilson
@@ -46,7 +51,7 @@ GeneralizedNewtypeDeriving (above)
 > testTop1 = runAppT1 (AppState1 3) top1
 
 ------------------------------------------------------------------------------
-Baby’s First Whitelabel App
+2. Baby’s First Whitelabel App
 
 app that logs
 
@@ -100,7 +105,7 @@ example: adding more layers in stack
 Better to be able to access logging/company AppState is available:
 
 ------------------------------------------------------------------------------
-Use the MTL!
+3. Use the MTL!
 
 Improvement:
 
@@ -131,8 +136,105 @@ No more lifts
 
 > update3 :: (MonadIO m, MonadReader AppState2 m) => EitherT String m ()
 > update3 = do
->   EitherT (tryUpdate3 True)
+>   EitherT (tryUpdate3 False)
 >   logMsg3 "Update complete"
 
+> topNoop :: AppT2 IO ()
+> topNoop = return ()
+
 > testTop3 = runAppT2 (AppState2 (Config "CPC") putStrLn)
->                     (runEitherT update3 >> top2)
+>                     (runEitherT update3 >>= \x -> case x of
+>                                                     Left x -> do
+>                                                       liftIO $ putStrLn x
+>                                                       topNoop
+>                                                     Right x -> top2)
+
+------------------------------------------------------------------------------
+4. More Granularity with Lensed Reader
+
+When just need config from AppState
+- if code uses MonadReader AppState m, then requires whole AppState
+- solution: refactor AppState into what is needed
+- via classy lenses
+
+> data Config4   = Config4   { _companyName4 :: String }
+> data AppState4 = AppState4 { _asConfig4    :: Config4
+>                            , _asLogger4    :: String -> IO ()
+>                            }
+> makeClassy ''Config4
+> makeLenses ''AppState4
+
+makeClassy creates something like:
+
+class HasConfig a where
+  config :: Lens' a Config
+  companyName :: Lens' a String
+
+instance HasConfig Config where -- ...
+
+> instance HasConfig4 AppState4 where
+>   config4 = asConfig4
+
+now have
+- way to specify data types that contain Config
+- companyName has a default implementation that pulls it off of Config
+
+this type of abstraction has been refered to as a "seam""
+- line in fabric of code that can be opened and modified if need be
+
+final piece
+- view from lens (like asks from MonadReader, but it takes a lens)
+
+> -- note : lenses compose in opposite direction of functions, therefore config, then companyName
+> getCompanyName4 :: (MonadReader r m, HasConfig4 r) => m String
+> getCompanyName4 = view (config4 . companyName4)
+
+now can provide a specific context for each function
+
+> heavyReport :: (MonadReader AppState4 m) => m String
+> heavyReport = do
+>   cn <- getCompanyName4
+>   return (cn ++ " HEAVY")
+
+> lightReport :: (MonadReader r m, HasConfig4 r) => m String
+> lightReport = do
+>   cn <- getCompanyName4
+>   return (cn ++ " LIGHT")
+
+benefits
+- do not need AppT or IO
+- lightReport can be used in a minimal Reader or in AppT
+
+> runLightReportC :: Config4 -> String
+> runLightReportC = runReader lightReport
+
+> runLightReportA :: AppState4 -> String
+> runLightReportA = runReader lightReport
+
+> testRunLightReportC = runLightReportC (Config4 "CPC")
+> testRunLightReportA = runLightReportA (AppState4 (Config4 "CPC") putStrLn)
+
+note: heaveReport can only be used in AppState4 because too specific
+
+> {- will not compile:
+> runHeavyReportC :: Config4 -> String
+> runHeavyReportC = runReader heavyReport
+> -}
+
+> runHeavyReportA :: AppState4 -> String
+> runHeavyReportA = runReader heavyReport
+> testRunHeavyReportA = runHeavyReportA (AppState4 (Config4 "CPC") putStrLn)
+
+------------------------------------------------------------------------------
+Summary
+
+- create "classy"" lenses
+  - for app’s state type and
+  - any subcomponents to access independently
+- use constraints in code instead of concrete transformer stacks
+  - only specifying the stack near main where it is run
+- use minimal set of constraints needed for functions
+  - low-level functions end up with smaller sets of constraints
+  - larger ones accumulate combined constraints
+  - constraints show functions capabilities
+- GHC 8.0 with -Wall -Werror warns about unnecessary constraints
