@@ -1,10 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Http
-  (site)
+  ( showBlocks
+  , site
+  )
 where
 
 import           Blockchain           (generateNextBlock, genesisBlock)
+import           CommandDispatcher
 import           Consensus            (AppendEntry (..))
 import           Json                 ()
 import           Logging              (http)
@@ -22,26 +25,23 @@ import           Snap.Http.Server     (Config, ConfigLog (ConfigNoLog),
                                        simpleHttpServe)
 import           System.Log.Logger    (infoM)
 
-site httpToConsensus host port = do
+site (CommandDispatcher listBlocks addBlock) host port = do
   let config = setErrorLog ConfigNoLog . setAccessLog ConfigNoLog $ setPort port mempty :: Config Snap ()
   simpleHttpServe config $
     ifTop (writeBS "hello world") <|>
-    route [ ("blocks",       showBlocks)
-          , ("addBlock/:bd", addBlockReq host port httpToConsensus)
+    route [ ("blocks",       showBlocks listBlocks)
+          , ("addBlock/:bd", addBlockReq host port addBlock)
           ]
 
-showBlocks = writeBS (toStrict (encode [genesisBlock]))
+showBlocks listBlocks = do
+  blocks <- liftIO (listBlocks Nothing)
+  writeBS (toStrict (encode blocks))
 
-addBlockReq host port httpToConsensus = do
+addBlockReq host port addBlock = do
   bd <- getParam "bd"
   maybe (writeBS "must specify data")
-        (\bd' -> do let newBlock = generateNextBlock genesisBlock "timestamp" bd'
+        (\bd' -> do newBlock <- liftIO (addBlock bd')
                     liftIO (infoM http ("http: addBlockReq: " <> host <> " " <> show port <> " " <> show newBlock))
-                    -- send block to verifiers
-                    liftIO (sendAppendEntries httpToConsensus newBlock)
-                    -- return block to caller
                     writeBS (toStrict (encode newBlock)))
         bd
 
-sendAppendEntries httpToConsensus block =
-  putMVar httpToConsensus (toStrict (encode (AppendEntry block)))

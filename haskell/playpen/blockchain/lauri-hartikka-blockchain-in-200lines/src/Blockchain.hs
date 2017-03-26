@@ -1,7 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- https://medium.com/@lhartikk/a-blockchain-in-200-lines-of-code-963cc1cc0e54#.ufqde5iq6
-
 module Blockchain
   ( Block (Block)
   , generateNextBlock
@@ -10,9 +8,11 @@ module Blockchain
   , addBlock
   , bhash
   , calculateHash
-  , emptyBlockchain
   , isValidBlock
   , isValidChain
+  , Timestamp
+  , BlockData
+  , Blockchain
   )
 where
 
@@ -70,9 +70,6 @@ isValidChain :: Blockchain -> Maybe String
 isValidChain (b:pb:bs) = isValidBlock pb b <|> isValidChain (pb:bs)
 isValidChain      [_]  = Nothing
 isValidChain       []  = Just "empty chain"
-
-emptyBlockchain :: Blockchain
-emptyBlockchain = []
 
 addBlock :: Block -> Blockchain -> Blockchain
 addBlock b bs = b : bs
