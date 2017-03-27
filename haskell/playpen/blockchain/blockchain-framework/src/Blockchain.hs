@@ -40,7 +40,6 @@ data Block =
         , bhash        :: ! Hash
         } deriving (Eq, Show)
 
-
 calculateHash :: Index -> Hash -> Timestamp -> BlockData -> Hash
 calculateHash i p t d = hash (BS.concat [BSC8.pack (show i), p, BSC8.pack (show t), d])
 

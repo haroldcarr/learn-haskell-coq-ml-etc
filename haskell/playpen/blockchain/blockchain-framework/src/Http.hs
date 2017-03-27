@@ -16,6 +16,7 @@ import           Data.ByteString       (ByteString)
 import           Data.ByteString.Char8 as BSC8 (unpack)
 import           Data.ByteString.Lazy  (toStrict)
 import           Data.Monoid           ((<>))
+import           Network.Socket        (HostName, PortNumber)
 import           Snap.Core             (Snap, getParam, ifTop, route, writeBS)
 import           Snap.Http.Server      (Config, ConfigLog (ConfigNoLog),
                                         setAccessLog, setErrorLog, setPort,
@@ -24,9 +25,9 @@ import           Snap.Internal.Core    (MonadSnap)
 import           System.Log.Logger     (infoM)
 import           Text.Read             (readMaybe)
 
-commandReceiver :: CommandDispatcher -> String -> Int -> IO ()
+commandReceiver :: CommandDispatcher -> HostName -> PortNumber -> IO ()
 commandReceiver (CommandDispatcher _ listBlocks addBlock _) host port = do
-  let config = setErrorLog ConfigNoLog . setAccessLog ConfigNoLog $ setPort port mempty :: Config Snap ()
+  let config = setErrorLog ConfigNoLog . setAccessLog ConfigNoLog $ setPort (fromEnum port) mempty :: Config Snap ()
   simpleHttpServe config $
     ifTop (writeBS "hello world") <|>
     route [ ("blocks/:i",    showBlocks listBlocks)
@@ -46,8 +47,8 @@ showBlocks listBlocks = do
         i
 
 addBlockReq :: (ToJSON a, Show a, MonadSnap m)
-            => String
-            -> Int
+            => HostName
+            -> PortNumber
             -> (ByteString -> IO a)
             -> m ()
 addBlockReq host port addBlock = do

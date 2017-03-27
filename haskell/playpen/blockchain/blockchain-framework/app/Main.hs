@@ -16,23 +16,23 @@ import           Control.Concurrent   (MVar, newEmptyMVar, putMVar, withMVar)
 import           Control.Lens         (element, (^?))
 import           Data.Aeson           (encode)
 import           Data.ByteString.Lazy (toStrict)
-import           Network.Socket       (PortNumber)
+import           Network.Socket       (HostName, PortNumber)
 import           System.Environment   (getArgs)
 
-defaultHost :: String
+defaultHost :: HostName
 defaultHost  = "224.0.0.99"
-defaultPort :: Int
+defaultPort :: PortNumber
 defaultPort  = 9160
 
 main :: IO ()
 main = do
   xs <- getArgs
   case xs of
-    []             -> doIt defaultPort            defaultHost (read (show defaultPort) :: PortNumber)
-    [httpPort,h,p] -> doIt (read httpPort :: Int) h           (read p :: PortNumber)
+    []             -> doIt defaultPort                   defaultHost (read (show defaultPort) :: PortNumber)
+    [httpPort,h,p] -> doIt (read httpPort :: PortNumber) h           (read p                  :: PortNumber)
     xss            -> error (show xss)
 
-doIt :: Int -> String -> PortNumber -> IO ()
+doIt :: PortNumber -> HostName -> PortNumber -> IO ()
 doIt httpPort host port = do
   configureLogging
   sendToConsensusNodes0 <- newEmptyMVar

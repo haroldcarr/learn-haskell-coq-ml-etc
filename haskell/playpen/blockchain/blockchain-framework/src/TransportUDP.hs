@@ -18,11 +18,12 @@ import           Data.ByteString.Lazy      (toStrict)
 import           Data.Monoid               ((<>))
 import           Network.Multicast         as NM (multicastReceiver,
                                                   multicastSender)
-import           Network.Socket            as N (PortNumber, SockAddr, Socket)
+import           Network.Socket            as N (HostName, PortNumber, SockAddr,
+                                                 Socket)
 import           Network.Socket.ByteString as N (recvFrom, sendTo)
 import           System.Log.Logger         (infoM)
 
-startNodeComm :: CommandDispatcher -> String -> PortNumber -> IO ()
+startNodeComm :: CommandDispatcher -> HostName -> PortNumber -> IO ()
 startNodeComm (CommandDispatcher sendToConsensusNodes0 _ _ isValid0) host port = do
   _ <- infoN host port "startNodeComm: ENTER"
   (sendSock, sendAddr) <- multicastSender host port
@@ -32,7 +33,7 @@ startNodeComm (CommandDispatcher sendToConsensusNodes0 _ _ isValid0) host port =
   infoN host port "startNodeComm: EXIT"
   return ()
 
-rec :: String -> PortNumber -> Socket -> Socket -> SockAddr -> (Block -> IO (Maybe t)) -> IO ()
+rec :: HostName -> PortNumber -> Socket -> Socket -> SockAddr -> (Block -> IO (Maybe t)) -> IO ()
 rec host port recSock sendSock sendAddr isValid0 = do
   infoN host port "rec: waiting"
   (msg,addr) <- N.recvFrom recSock 1024
@@ -55,7 +56,7 @@ rec host port recSock sendSock sendAddr isValid0 = do
   rec host port recSock sendSock sendAddr isValid0
 
 -- Read from sendToConsensusNodes and broadcast
-send :: MVar ByteString -> String -> PortNumber -> Socket -> SockAddr -> IO ()
+send :: MVar ByteString -> HostName -> PortNumber -> Socket -> SockAddr -> IO ()
 send sendToConsensusNodes0 host port sock addr = do
   infoN host port "send: waiting"
   msg <- takeMVar sendToConsensusNodes0
@@ -63,7 +64,7 @@ send sendToConsensusNodes0 host port sock addr = do
   sendTo sock msg addr
   send sendToConsensusNodes0 host port sock addr
 
-infoN :: String -> PortNumber -> String -> IO Int
+infoN :: HostName -> PortNumber -> String -> IO Int
 infoN h p msg = do
   infoM consensusFollower ("T " <> h <> ":" <> show p <> " " <> msg)
   return 1 -- to match sendTo
