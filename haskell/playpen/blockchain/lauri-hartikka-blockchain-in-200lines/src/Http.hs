@@ -27,7 +27,7 @@ import           Snap.Http.Server      (Config, ConfigLog (ConfigNoLog),
 import           System.Log.Logger     (infoM)
 import           Text.Read             (readMaybe)
 
-site (CommandDispatcher listBlocks addBlock) host port = do
+site (CommandDispatcher _ listBlocks addBlock _) host port = do
   let config = setErrorLog ConfigNoLog . setAccessLog ConfigNoLog $ setPort port mempty :: Config Snap ()
   simpleHttpServe config $
     ifTop (writeBS "hello world") <|>

@@ -2,8 +2,9 @@
 
 module Main where
 
-import           Blockchain            (Block, BlockData, Blockchain,
-                                        generateNextBlock, genesisBlock)
+import           Blockchain            as BC (Block, BlockData, Blockchain,
+                                              addBlock, generateNextBlock,
+                                              genesisBlock, isValidChain)
 import           BlockchainState       (initialBlockchainState)
 import           CommandDispatcher
 import           Consensus
@@ -38,15 +39,17 @@ main = do
 doIt httpPort host port = do
   configureLogging
   sendToConsensusNodes <- newEmptyMVar
-  startNodeComm sendToConsensusNodes host port
   commandDispatcher <- initializeCommandDispatcher sendToConsensusNodes
+  startNodeComm commandDispatcher host port
   site commandDispatcher "0.0.0.0" httpPort
 
 initializeCommandDispatcher sendToConsensusNodes = do
   blockchainState <- initialBlockchainState
   return (CommandDispatcher
+          sendToConsensusNodes
           (Main.listBlocks blockchainState)
-          (Main.addBlock blockchainState sendToConsensusNodes))
+          (Main.addBlock blockchainState sendToConsensusNodes)
+          (Main.isValid blockchainState))
 
 listBlocks :: MVar Blockchain -> Maybe Int -> IO (Maybe Blockchain)
 listBlocks blockchain i =
@@ -54,9 +57,9 @@ listBlocks blockchain i =
     -- return all entries
     Nothing -> withMVar blockchain $ return . Just
     -- return the single entry (as a one-element list)
-    Just i' -> withMVar blockchain $ \x -> case x ^? element i' of
-                                             Nothing -> return Nothing
-                                             Just el -> return (Just [el])
+    Just i' -> withMVar blockchain $ \bc -> case bc ^? element i' of
+                                              Nothing -> return Nothing
+                                              Just el -> return (Just [el])
 
 addBlock :: MVar Blockchain -> MVar BlockData -> BlockData -> IO Block
 addBlock blockchain sendToConsensusNodes blockdata = do
@@ -65,3 +68,7 @@ addBlock blockchain sendToConsensusNodes blockdata = do
   putMVar sendToConsensusNodes (toStrict (encode (AppendEntry newBlock)))
   -- return block to caller
   return newBlock
+
+isValid blockchain block =
+  withMVar blockchain $ \bc -> return $ isValidChain (BC.addBlock block bc)
+
