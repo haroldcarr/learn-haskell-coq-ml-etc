@@ -10,7 +10,7 @@ import           Json
 import           Logging                   (consensusFollower)
 
 import           Control.Concurrent        (forkIO, takeMVar)
-import           Data.Aeson                (encode)
+import           Data.Aeson                (decodeStrict, encode)
 import           Data.ByteString           as BS (isPrefixOf)
 import           Data.ByteString.Lazy      (toStrict)
 import           Data.Monoid               ((<>))
@@ -21,18 +21,13 @@ import           Network.Socket            as N (PortNumber, Socket,
 import           Network.Socket.ByteString as N (recvFrom, sendTo)
 import           System.Log.Logger         (infoM)
 
-startNodeComm httpToConsensus host port = do
+startNodeComm sendToConsensusNodes host port = do
   infoN host port "startNodeComm: ENTER"
-  startSndRcvComm httpToConsensus host port
-  infoN host port "startNodeComm: EXIT"
-
-startSndRcvComm httpToConsensus host port = withSocketsDo $ do
-  infoN host port "startSndRcvComm: ENTER"
   (sendSock, sendAddr) <- multicastSender host port
   recSock <- multicastReceiver host port
-  forkIO $ send httpToConsensus host port sendSock sendAddr
+  forkIO $ send sendToConsensusNodes host port sendSock sendAddr
   forkIO $ rec host port recSock sendSock sendAddr
-  infoN host port "startSndRcvComm: EXIT"
+  infoN host port "startNodeComm: EXIT"
 
 rec host port recSock sendSock sendAddr = do
   infoN host port "rec: waiting"
@@ -46,15 +41,15 @@ rec host port recSock sendSock sendAddr = do
      | otherwise                             -> infoN host port "NO"
   rec host port recSock sendSock sendAddr
 
--- Read from httpToConsensus and broadcast
-send httpToConsensus host port sock addr = do
+-- Read from sendToConsensusNodes and broadcast
+send sendToConsensusNodes host port sock addr = do
   infoN host port "send: waiting"
-  msg <- takeMVar httpToConsensus
+  msg <- takeMVar sendToConsensusNodes
   infoN host port ("send: " ++ show msg)
   sendTo sock msg addr
-  send httpToConsensus host port sock addr
+  send sendToConsensusNodes host port sock addr
 
 infoN h p msg = do
-  infoM consensusFollower ("N " <> h <> ":" <> show p <> " " <> msg)
+  infoM consensusFollower ("T " <> h <> ":" <> show p <> " " <> msg)
   return 1 -- TODO - get rid of this
 

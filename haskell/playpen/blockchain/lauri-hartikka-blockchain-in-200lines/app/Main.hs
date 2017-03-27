@@ -37,16 +37,16 @@ main = do
 
 doIt httpPort host port = do
   configureLogging
-  httpToConsensus <- newEmptyMVar
-  startNodeComm httpToConsensus host port
-  commandDispatcher <- initializeCommandDispatcher httpToConsensus
+  sendToConsensusNodes <- newEmptyMVar
+  startNodeComm sendToConsensusNodes host port
+  commandDispatcher <- initializeCommandDispatcher sendToConsensusNodes
   site commandDispatcher "0.0.0.0" httpPort
 
-initializeCommandDispatcher httpToConsensus = do
+initializeCommandDispatcher sendToConsensusNodes = do
   blockchainState <- initialBlockchainState
   return (CommandDispatcher
           (Main.listBlocks blockchainState)
-          (Main.addBlock blockchainState httpToConsensus))
+          (Main.addBlock blockchainState sendToConsensusNodes))
 
 listBlocks :: MVar Blockchain -> Maybe Int -> IO (Maybe Blockchain)
 listBlocks blockchain i =
@@ -59,9 +59,9 @@ listBlocks blockchain i =
                                              Just el -> return (Just [el])
 
 addBlock :: MVar Blockchain -> MVar BlockData -> BlockData -> IO Block
-addBlock blockchain httpToConsensus blockdata = do
+addBlock blockchain sendToConsensusNodes blockdata = do
   let newBlock = generateNextBlock genesisBlock "fake timestamp" blockdata
   -- send block to verifiers
-  putMVar httpToConsensus (toStrict (encode (AppendEntry newBlock)))
+  putMVar sendToConsensusNodes (toStrict (encode (AppendEntry newBlock)))
   -- return block to caller
   return newBlock
