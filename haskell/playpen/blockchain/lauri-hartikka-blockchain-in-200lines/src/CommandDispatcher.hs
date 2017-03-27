@@ -2,8 +2,7 @@
 
 module CommandDispatcher where
 
-import           Blockchain              (Block, BlockData, Blockchain,
-                                          Timestamp)
+import           Blockchain              (Block, BlockData, Blockchain)
 
 import           Control.Concurrent.MVar
 

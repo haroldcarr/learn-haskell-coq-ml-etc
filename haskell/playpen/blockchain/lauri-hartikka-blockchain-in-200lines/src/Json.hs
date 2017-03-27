@@ -5,8 +5,6 @@ module Json
 where
 
 import           Blockchain             (Block (..))
-import           Consensus              (AppendEntry (..),
-                                         AppendEntryResponse (..))
 
 import           Data.Aeson
 import           Data.ByteString        (ByteString)
@@ -33,13 +31,8 @@ instance FromJSON Block where
           <*> (o .: "bdata"        >>= decodeFromText64)
           <*> (o .: "bhash"        >>= decodeFromText64)
 
-encodeToText64   = decodeUtf8 . BS64.encode
+encodeToText64   :: ByteString -> Text
+encodeToText64    = decodeUtf8 . BS64.encode
 
 decodeFromText64 :: (Monad m) => Text -> m ByteString
-decodeFromText64 = either fail return . BS64.decode . encodeUtf8
-
-instance ToJSON   AppendEntry
-instance FromJSON AppendEntry
-instance ToJSON   AppendEntryResponse
-instance FromJSON AppendEntryResponse
-
+decodeFromText64  = either fail return . BS64.decode . encodeUtf8

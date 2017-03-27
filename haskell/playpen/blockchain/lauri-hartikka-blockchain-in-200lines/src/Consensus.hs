@@ -6,8 +6,10 @@ module Consensus
   )
 where
 
-import           Blockchain   (Block (Block))
+import           Blockchain   (Block)
+import           Json         ()
 
+import           Data.Aeson
 import           GHC.Generics
 
 data AppendEntry =
@@ -20,3 +22,9 @@ data AppendEntryResponse =
                       , block               :: Maybe Block
                       }
   deriving (Eq, Generic, Show)
+
+instance ToJSON   AppendEntry
+instance FromJSON AppendEntry
+instance ToJSON   AppendEntryResponse
+instance FromJSON AppendEntryResponse
+

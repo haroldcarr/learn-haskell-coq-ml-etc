@@ -1,21 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Http
-  ( showBlocks
-  , site
+  ( commandReceiver
+  , showBlocks
   )
 where
 
-import           Blockchain            (generateNextBlock, genesisBlock)
-import           CommandDispatcher
-import           Consensus             (AppendEntry (..))
+import           CommandDispatcher     (CommandDispatcher (CommandDispatcher))
 import           Json                  ()
 import           Logging               (http)
 
 import           Control.Applicative   ((<|>))
-import           Control.Concurrent    (MVar, putMVar)
 import           Control.Monad.Trans   (liftIO)
-import           Data.Aeson            (encode)
+import           Data.Aeson            (ToJSON, encode)
 import           Data.ByteString       (ByteString)
 import           Data.ByteString.Char8 as BSC8 (unpack)
 import           Data.ByteString.Lazy  (toStrict)
@@ -24,10 +21,12 @@ import           Snap.Core             (Snap, getParam, ifTop, route, writeBS)
 import           Snap.Http.Server      (Config, ConfigLog (ConfigNoLog),
                                         setAccessLog, setErrorLog, setPort,
                                         simpleHttpServe)
+import           Snap.Internal.Core    (MonadSnap)
 import           System.Log.Logger     (infoM)
 import           Text.Read             (readMaybe)
 
-site (CommandDispatcher _ listBlocks addBlock _) host port = do
+commandReceiver :: CommandDispatcher -> String -> Int -> IO ()
+commandReceiver (CommandDispatcher _ listBlocks addBlock _) host port = do
   let config = setErrorLog ConfigNoLog . setAccessLog ConfigNoLog $ setPort port mempty :: Config Snap ()
   simpleHttpServe config $
     ifTop (writeBS "hello world") <|>
@@ -35,6 +34,9 @@ site (CommandDispatcher _ listBlocks addBlock _) host port = do
           , ("addBlock/:bd", addBlockReq host port addBlock)
           ]
 
+showBlocks :: (ToJSON a, Read a1, MonadSnap m)
+           => (Maybe a1 -> IO a)
+           -> m ()
 showBlocks listBlocks = do
   i <- getParam "i"
   maybe (writeBS "must specify index")
@@ -44,6 +46,11 @@ showBlocks listBlocks = do
                                 writeBS (toStrict (encode blocks)))
         i
 
+addBlockReq :: (ToJSON a, Show a, MonadSnap m)
+            => String
+            -> Int
+            -> (ByteString -> IO a)
+            -> m ()
 addBlockReq host port addBlock = do
   bd <- getParam "bd"
   maybe (writeBS "must specify data")

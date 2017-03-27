@@ -44,18 +44,18 @@ calculateHashForBlock b = calculateHash (bindex b) (previousHash b) (timestamp b
 
 genesisBlock :: Block
 genesisBlock =
-  let index        = 0
-      previousHash = "0"
-      timestamp    = "2017-03-05 10:49:02.084473 PST"
-      bdata        = "GENESIS BLOCK"
-      hash         = calculateHash index previousHash timestamp bdata
-  in Block index previousHash timestamp bdata hash
+  let i  = 0
+      ph = "0"
+      t  = "2017-03-05 10:49:02.084473 PST"
+      d  = "GENESIS BLOCK"
+      h  = calculateHash i ph t d
+  in Block i ph t d h
 
 generateNextBlock :: Block -> Timestamp -> BlockData -> Block
-generateNextBlock previousBlock timestamp blockData =
-  let index        = bindex previousBlock + 1
-      previousHash = bhash previousBlock
-  in Block index previousHash timestamp blockData (calculateHash index previousHash timestamp blockData)
+generateNextBlock previousBlock tstamp blockData =
+  let index = bindex previousBlock + 1
+      pHash = bhash previousBlock
+  in Block index pHash tstamp blockData (calculateHash index pHash tstamp blockData)
 
 -- | Returns Nothing if valid.
 isValidBlock :: Block -> Block -> Maybe String

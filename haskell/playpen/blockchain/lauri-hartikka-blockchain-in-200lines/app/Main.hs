@@ -2,53 +2,51 @@
 
 module Main where
 
-import           Blockchain            as BC (Block, BlockData, Blockchain,
-                                              addBlock, generateNextBlock,
-                                              genesisBlock, isValidChain)
-import           BlockchainState       (initialBlockchainState)
+import           Blockchain           as BC (Block, BlockData, Blockchain,
+                                             addBlock, generateNextBlock,
+                                             genesisBlock, isValidChain)
+import           BlockchainState      (initialBlockchainState)
 import           CommandDispatcher
 import           Consensus
-import           Http                  (site)
-import           Logging               (configureLogging)
-import           TransportUDP          (startNodeComm)
+import           Http                 (commandReceiver)
+import           Logging              (configureLogging)
+import           TransportUDP         (startNodeComm)
 
-import           Control.Concurrent    (MVar, forkIO, newEmptyMVar, putMVar,
-                                        takeMVar, threadDelay, withMVar)
-import           Control.Lens          (element, (^?))
-import           Control.Monad         (forM_, forever)
-import           Data.Aeson            (encode)
-import           Data.ByteString       (ByteString)
-import           Data.ByteString       (ByteString)
-import           Data.ByteString.Char8 as BSC8 (pack)
-import           Data.ByteString.Lazy  (toStrict)
-import           Data.Monoid           ((<>))
-import           Network.Socket        (PortNumber)
-import           System.Environment    (getArgs)
-import           System.Log.Logger     (infoM)
+import           Control.Concurrent   (MVar, newEmptyMVar, putMVar, withMVar)
+import           Control.Lens         (element, (^?))
+import           Data.Aeson           (encode)
+import           Data.ByteString.Lazy (toStrict)
+import           Network.Socket       (PortNumber)
+import           System.Environment   (getArgs)
 
-defaultHost = "224.0.0.99"
-defaultPort = 9160
+defaultHost :: String
+defaultHost  = "224.0.0.99"
+defaultPort :: Int
+defaultPort  = 9160
 
+main :: IO ()
 main = do
   xs <- getArgs
   case xs of
     []             -> doIt defaultPort            defaultHost (read (show defaultPort) :: PortNumber)
     [httpPort,h,p] -> doIt (read httpPort :: Int) h           (read p :: PortNumber)
-    xs             -> error (show xs)
+    xss            -> error (show xss)
 
+doIt :: Int -> String -> PortNumber -> IO ()
 doIt httpPort host port = do
   configureLogging
-  sendToConsensusNodes <- newEmptyMVar
-  commandDispatcher <- initializeCommandDispatcher sendToConsensusNodes
+  sendToConsensusNodes0 <- newEmptyMVar
+  commandDispatcher <- initializeCommandDispatcher sendToConsensusNodes0
   startNodeComm commandDispatcher host port
-  site commandDispatcher "0.0.0.0" httpPort
+  commandReceiver commandDispatcher "0.0.0.0" httpPort
 
-initializeCommandDispatcher sendToConsensusNodes = do
+initializeCommandDispatcher :: MVar BlockData -> IO CommandDispatcher
+initializeCommandDispatcher sendToConsensusNodes0 = do
   blockchainState <- initialBlockchainState
   return (CommandDispatcher
-          sendToConsensusNodes
+          sendToConsensusNodes0
           (Main.listBlocks blockchainState)
-          (Main.addBlock blockchainState sendToConsensusNodes)
+          (Main.addBlock blockchainState sendToConsensusNodes0)
           (Main.isValid blockchainState))
 
 listBlocks :: MVar Blockchain -> Maybe Int -> IO (Maybe Blockchain)
@@ -62,13 +60,14 @@ listBlocks blockchain i =
                                               Just el -> return (Just [el])
 
 addBlock :: MVar Blockchain -> MVar BlockData -> BlockData -> IO Block
-addBlock blockchain sendToConsensusNodes blockdata = do
+addBlock _ sendToConsensusNodes0 blockdata = do
   let newBlock = generateNextBlock genesisBlock "fake timestamp" blockdata
   -- send block to verifiers
-  putMVar sendToConsensusNodes (toStrict (encode (AppendEntry newBlock)))
+  putMVar sendToConsensusNodes0 (toStrict (encode (AppendEntry newBlock)))
   -- return block to caller
   return newBlock
 
-isValid blockchain block =
-  withMVar blockchain $ \bc -> return $ isValidChain (BC.addBlock block bc)
+isValid :: MVar Blockchain -> Block -> IO (Maybe String)
+isValid blockchain blk =
+  withMVar blockchain $ \bc -> return $ isValidChain (BC.addBlock blk bc)
 

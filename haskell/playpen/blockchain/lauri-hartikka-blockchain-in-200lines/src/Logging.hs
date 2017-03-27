@@ -10,12 +10,14 @@ where
 import           System.Log.Logger (Priority (INFO), setLevel,
                                     updateGlobalLogger)
 
+mainProgram, http, consensusFollower, consensusLeader :: String
 mainProgram       = "MAIN"
 http              = "HTTP"
 consensusFollower = "Consensus.Follower"
 consensusLeader   = "Consensus.Leader"
 
-configureLogging = do
+configureLogging :: IO ()
+configureLogging  = do
   updateGlobalLogger mainProgram       (setLevel INFO)
   updateGlobalLogger http              (setLevel INFO)
   updateGlobalLogger consensusFollower (setLevel INFO)
