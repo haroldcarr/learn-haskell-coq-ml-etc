@@ -7,7 +7,6 @@ module Consensus
 where
 
 import           Blockchain   (Block)
-import           Json         ()
 
 import           Data.Aeson
 import           GHC.Generics

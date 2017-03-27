@@ -8,7 +8,6 @@ where
 import           Blockchain                (Block)
 import           CommandDispatcher
 import           Consensus
-import           Json                      ()
 import           Logging                   (consensusFollower)
 
 import           Control.Concurrent        (MVar, forkIO, takeMVar)

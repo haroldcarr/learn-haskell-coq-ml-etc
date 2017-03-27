@@ -16,11 +16,15 @@ module Blockchain
   )
 where
 
-import           Control.Applicative   ((<|>))
-import           Crypto.Hash.SHA256    (hash)
-import           Data.ByteString       (ByteString)
-import           Data.ByteString       as BS (concat)
-import           Data.ByteString.Char8 as BSC8 (pack)
+import           Control.Applicative    ((<|>))
+import           Crypto.Hash.SHA256     (hash)
+import           Data.Aeson
+import           Data.Aeson.Types       (typeMismatch)
+import           Data.ByteString        as BS (ByteString, concat)
+import           Data.ByteString.Base64 as BS64
+import           Data.ByteString.Char8  as BSC8 (pack)
+import           Data.Text              as T
+import           Data.Text.Encoding     (decodeUtf8, encodeUtf8)
 
 type Index      = Integer
 type Hash       = ByteString
@@ -35,6 +39,7 @@ data Block =
         , bdata        :: ! BlockData
         , bhash        :: ! Hash
         } deriving (Eq, Show)
+
 
 calculateHash :: Index -> Hash -> Timestamp -> BlockData -> Hash
 calculateHash i p t d = hash (BS.concat [BSC8.pack (show i), p, BSC8.pack (show t), d])
@@ -53,9 +58,9 @@ genesisBlock =
 
 generateNextBlock :: Block -> Timestamp -> BlockData -> Block
 generateNextBlock previousBlock tstamp blockData =
-  let index = bindex previousBlock + 1
-      pHash = bhash previousBlock
-  in Block index pHash tstamp blockData (calculateHash index pHash tstamp blockData)
+  let i  = bindex previousBlock + 1
+      ph = bhash previousBlock
+  in Block i ph tstamp blockData (calculateHash i ph tstamp blockData)
 
 -- | Returns Nothing if valid.
 isValidBlock :: Block -> Block -> Maybe String
@@ -73,3 +78,30 @@ isValidChain       []  = Just "empty chain"
 
 addBlock :: Block -> Blockchain -> Blockchain
 addBlock b bs = b : bs
+
+-- https://github.com/bos/aeson/issues/187
+
+instance ToJSON Block where
+  toJSON (Block i ph t d h) =
+    object [ "bindex"       .=                i
+           , "previousHash" .= encodeToText64 ph
+           , "timestamp"    .= encodeToText64 t
+           , "bdata"        .= encodeToText64 d
+           , "bhash"        .= encodeToText64 h
+           ]
+
+instance FromJSON Block where
+  parseJSON (Object o) =
+    Block <$>  o .: "bindex"
+          <*> (o .: "previousHash" >>= decodeFromText64)
+          <*> (o .: "timestamp"    >>= decodeFromText64)
+          <*> (o .: "bdata"        >>= decodeFromText64)
+          <*> (o .: "bhash"        >>= decodeFromText64)
+  parseJSON invalid    = typeMismatch "Block" invalid
+
+encodeToText64   :: ByteString -> Text
+encodeToText64    = decodeUtf8 . BS64.encode
+
+decodeFromText64 :: (Monad m) => Text -> m ByteString
+decodeFromText64  = either fail return . BS64.decode . encodeUtf8
+

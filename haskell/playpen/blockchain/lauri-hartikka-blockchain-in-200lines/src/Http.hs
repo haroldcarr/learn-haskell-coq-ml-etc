@@ -7,7 +7,6 @@ module Http
 where
 
 import           CommandDispatcher     (CommandDispatcher (CommandDispatcher))
-import           Json                  ()
 import           Logging               (http)
 
 import           Control.Applicative   ((<|>))
