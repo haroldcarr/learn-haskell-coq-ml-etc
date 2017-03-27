@@ -38,6 +38,8 @@ encodeToText64   = decodeUtf8 . BS64.encode
 decodeFromText64 :: (Monad m) => Text -> m ByteString
 decodeFromText64 = either fail return . BS64.decode . encodeUtf8
 
-instance ToJSON AppendEntry
-instance ToJSON AppendEntryResponse
+instance ToJSON   AppendEntry
+instance FromJSON AppendEntry
+instance ToJSON   AppendEntryResponse
+instance FromJSON AppendEntryResponse
 

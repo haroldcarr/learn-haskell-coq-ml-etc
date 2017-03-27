@@ -35,9 +35,14 @@ rec host port recSock sendSock sendAddr = do
   infoN host port  ("rec: from: " <> show addr <> " " <> show msg)
   if | BS.isPrefixOf "{\"appendEntry\":" msg -> do
          infoN host port "APPENDENTRY"
-         sendTo sendSock (toStrict (encode (AppendEntryResponse True))) sendAddr
+         case decodeStrict msg of
+           Just (AppendEntry block) -> sendTo sendSock (toStrict (encode (AppendEntryResponse True ))) sendAddr
+           Nothing                  -> sendTo sendSock (toStrict (encode (AppendEntryResponse False))) sendAddr
      | BS.isPrefixOf "{\"appendEntryResponse\":" msg -> do
          infoN host port "APPENDENTRYRESPONSE"
+         case decodeStrict msg of
+           Just (AppendEntryResponse b) -> infoN host port "AER OK"
+           Nothing                      -> infoN host port "AER NOT OK"
      | otherwise                             -> infoN host port "NO"
   rec host port recSock sendSock sendAddr
 
