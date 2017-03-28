@@ -12,7 +12,8 @@ import           Http                 (commandReceiver)
 import           Logging              (configureLogging)
 import           TransportUDP         (startNodeComm)
 
-import           Control.Concurrent   (MVar, newEmptyMVar, putMVar, withMVar)
+import           Control.Concurrent   (MVar, newEmptyMVar, putMVar, takeMVar,
+                                       withMVar)
 import           Control.Lens         (element, (^?))
 import           Data.Aeson           (encode)
 import           Data.ByteString.Lazy (toStrict)
@@ -35,19 +36,27 @@ main = do
 doIt :: PortNumber -> HostName -> PortNumber -> IO ()
 doIt httpPort host port = do
   configureLogging
-  sendToConsensusNodes0 <- newEmptyMVar
-  commandDispatcher <- initializeCommandDispatcher sendToConsensusNodes0
+  commandDispatcher <- initializeCommandDispatcher
   startNodeComm commandDispatcher host port
   commandReceiver commandDispatcher "0.0.0.0" httpPort
 
-initializeCommandDispatcher :: MVar BlockData -> IO CommandDispatcher
-initializeCommandDispatcher sendToConsensusNodes0 = do
+initializeCommandDispatcher :: IO CommandDispatcher
+initializeCommandDispatcher = do
   blockchainState <- initialBlockchainState
+  mv <- newEmptyMVar
   return (CommandDispatcher
-          sendToConsensusNodes0
+          Consensus.handleConsensusMessage
+          (getMsgsToSendToConsensusNodes mv)
+          (sendToConsensusNodes mv)
           (Main.listBlocks blockchainState)
-          (Main.addBlock blockchainState sendToConsensusNodes0)
+          (Main.addBlock mv)
           (Main.isValid blockchainState))
+
+getMsgsToSendToConsensusNodes :: MVar BlockData -> IO BlockData
+getMsgsToSendToConsensusNodes  = takeMVar
+
+sendToConsensusNodes :: MVar BlockData -> BlockData -> IO ()
+sendToConsensusNodes  = putMVar
 
 listBlocks :: MVar Blockchain -> Maybe Int -> IO (Maybe Blockchain)
 listBlocks blockchain i =
@@ -59,11 +68,11 @@ listBlocks blockchain i =
                                               Nothing -> return Nothing
                                               Just el -> return (Just [el])
 
-addBlock :: MVar Blockchain -> MVar BlockData -> BlockData -> IO Block
-addBlock _ sendToConsensusNodes0 blockdata = do
+addBlock :: MVar BlockData -> BlockData -> IO Block
+addBlock sendToConsensusNodesMV blockdata = do
   let newBlock = generateNextBlock genesisBlock "fake timestamp" blockdata
   -- send block to verifiers
-  putMVar sendToConsensusNodes0 (toStrict (encode (AppendEntry newBlock)))
+  putMVar sendToConsensusNodesMV (toStrict (encode (AppendEntry newBlock)))
   -- return block to caller
   return newBlock
 

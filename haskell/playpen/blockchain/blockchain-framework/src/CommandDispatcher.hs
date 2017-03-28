@@ -1,15 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CommandDispatcher where
+module CommandDispatcher
+  ( HandleConsensusMessage
+  , CommandDispatcher (CommandDispatcher)
+  )
+where
 
-import           Blockchain              (Block, BlockData, Blockchain)
-
-import           Control.Concurrent.MVar
+import           Blockchain (Block, BlockData, Blockchain)
+import           Consensus  (HandleConsensusMessage)
 
 data CommandDispatcher =
-  CommandDispatcher {
-    sendToConsensusNodes :: MVar BlockData
-  , listBlocks           :: Maybe Int -> IO (Maybe Blockchain) -- Nothing: return all; Just i: return block at index i
-  , addBlock             :: BlockData -> IO Block
-  , isValid              :: Block     -> IO (Maybe String)
-  }
+  CommandDispatcher
+  -- CONSENSUS
+  {-  handleConsensusMessage       :: -} HandleConsensusMessage
+  {-, getMsgToSendToConsensusNodes :: -} (IO BlockData)
+  {-, sendToConsensusNodes         :: -} (BlockData -> IO ())
+  -- BLOCKCHAIN
+    -- Nothing: return all; Just i: return block at index i
+  {-, listBlocks                   :: -} (Maybe Int -> IO (Maybe Blockchain))
+  {-, addBlock                     :: -} (BlockData -> IO Block)  -- TODO : split into Blockchain and Consensus ops
+  {-, isValid                      :: -} (Block     -> IO (Maybe String))

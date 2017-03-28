@@ -26,7 +26,7 @@ import           System.Log.Logger     (infoM)
 import           Text.Read             (readMaybe)
 
 commandReceiver :: CommandDispatcher -> HostName -> PortNumber -> IO ()
-commandReceiver (CommandDispatcher _ listBlocks addBlock _) host port = do
+commandReceiver (CommandDispatcher _ _ _ listBlocks addBlock _) host port = do
   let config = setErrorLog ConfigNoLog . setAccessLog ConfigNoLog $ setPort (fromEnum port) mempty :: Config Snap ()
   simpleHttpServe config $
     ifTop (writeBS "hello world") <|>
