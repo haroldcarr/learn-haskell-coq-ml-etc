@@ -1,0 +1,6 @@
+- type-level Idris
+  file://~/ftptmp/ebooks-music-pics/tech/programming-language/idris/book/Type_Driven_Development_with_Idris/src/P439_state_machine_vending.hs
+
+- type-level Juno/Tangaroa
+
+- 
