@@ -3,9 +3,10 @@
 {-# LANGUAGE RankNTypes         #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies       #-}
+{-# LANGUAGE TypeInType         #-}
 {-# LANGUAGE TypeOperators      #-}
 
-module P439_state_machine_vending where
+module P439_state_machine_vending_p1 where
 
 import           Data.Kind
 
@@ -24,33 +25,20 @@ data SNat :: Nat -> * where
 
 deriving instance Show (SNat nat)
 
-snatToNat :: SNat n -> Nat
-snatToNat  SZ    =  Z
-snatToNat (SS n) = (S (snatToNat n))
-
 {-
-natToSNat  Z    = SZ
-natToSNat (S n) = SS (natToSNat n)
+-- I can't get the tuple to work at type level (so unpacked versions below).
+type VendState = '( Nat , Nat )
 
-data SNatOf = SNatOf (forall n . SNat n)
-intToSNatOf :: Int -> SNatOf
-intToSNatOf 0 = SNatOf 0
-intToSNatOf n = let SNatOf x = intToSNatOf (n - 1) in
--}
-{-
-I can't get the tuple to work at type level (so unpacked versions below).
-type VendState = '('Nat, 'Nat)
+data MachineCmd' :: * -> VendState -> VendState -> * where
+     InsertCoin' :: MachineCmd' () (  pounds,   chocs) (S pounds, chocs)
+     Vend'       :: MachineCmd' () (S pounds, S chocs) (  pounds, chocs)
+     GetCoins'   :: MachineCmd' () (  pounds,   chocs) (Z,        chocs)
+     Bind'       :: MachineCmd' () state1              state2
+                 -> MachineCmd' () state2              state3
+                 -> MachineCmd' () state1              rstate3
 
-data MachineCmd :: * -> VendState -> VendState -> * where
-     InsertCoin :: MachineCmd () (  pounds,   chocs) (S pounds, chocs)
-     Vend       :: MachineCmd () (S pounds, S chocs) (  pounds, chocs)
-     GetCoins   :: MachineCmd () (  pounds,   chocs) (Z,        chocs)
-     Bind       :: MachineCmd () state1              state2
-                -> MachineCmd () state2              state3
-                -> MachineCmd () state1              rstate3
-
-vend :: MachineCmd () (Z, S Z) (Z, Z)
-  InsertCoin `Bind` Vend
+vend :: MachineCmd' () (Z, S Z) (Z, Z)
+vend  = InsertCoin' `Bind'` Vend'
 -}
 
 data MachineCmd ::            * ->  Nat ->     Nat -> Nat ->     Nat    -> * where

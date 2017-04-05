@@ -8,7 +8,8 @@ library
   hs-source-dirs:      src
   exposed-modules:     P024
                      , P434_state_machine_door
-                     , P439_state_machine_vending
+                     , P439_state_machine_vending_p1
+                     , P439_state_machine_vending_p2
   build-depends:       base >= 4.7 && < 5
                      , reflection
   default-language:    Haskell2010
