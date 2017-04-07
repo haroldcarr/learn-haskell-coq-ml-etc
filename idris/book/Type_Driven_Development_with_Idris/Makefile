@@ -1,2 +1,2 @@
 clean:
-	rm *.ibc
+	rm src/*.ibc

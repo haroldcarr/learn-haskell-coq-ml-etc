@@ -24,9 +24,9 @@ Power source is an index of the Vehicle family.
 The index tells you exactly which Vehicle type you mean.
 -}
 data Vehicle : PowerSource -> Type where
-    Bicycle :                 Vehicle Pedal
-    Car     : (fuel : Nat) -> Vehicle Petrol
-    Bus     : (fuel : Nat) -> Vehicle Petrol
+  Bicycle :                 Vehicle Pedal
+  Car     : (fuel : Nat) -> Vehicle Petrol
+  Bus     : (fuel : Nat) -> Vehicle Petrol
 
 wheels : Vehicle _ -> Nat
 wheels Bicycle    = 2

@@ -8,9 +8,9 @@
 {-# LANGUAGE TypeOperators      #-}
 
 
-module P439_state_machine_vending_p2 where
+module P358_state_machine_vending_p2 where
 
-import           P439_state_machine_vending_p1
+import           P358_state_machine_vending_p1
 
 import           Data.Proxy
 import           Data.Reflection               hiding (Z)
@@ -67,3 +67,26 @@ v9 n = reify n $ \p -> do
   InsertCoin
   Vend
 
+{-
+machineLoop :: MachineIO p c
+machineLoop  = do
+  x <- GetInput
+  case x of
+    Nothing -> do
+      Display "Invalid input"
+      machineLoop
+    Just x ->
+      case x of
+        COIN -> do
+          InsertCoin
+          machineLoop
+        VEND -> vend
+        CHANGE -> do
+          GetCoins
+          Display "Change returned"
+          machineLoop
+        REFILL n -> refill n
+ where
+  (>>) = machineDoBind
+  (>>=) = machineDoBind
+-}

@@ -6,14 +6,14 @@
 {-# LANGUAGE TypeInType         #-}
 {-# LANGUAGE TypeOperators      #-}
 
-module P439_state_machine_vending_p1 where
+module P358_state_machine_vending_p1 where
 
 import           Data.Kind
 
 import           Data.Proxy
 import           Data.Reflection hiding (Z)
 
-data Nat = Z | S Nat deriving (Show)
+data Nat = Z | S Nat deriving (Eq, Read, Show) -- TODO: this complains on RebindableSyntax
 
 type family (m :: Nat) :+ (n :: Nat) :: Nat
 type instance Z   :+ n =         n
@@ -26,7 +26,7 @@ data SNat :: Nat -> * where
 deriving instance Show (SNat nat)
 
 {-
--- I can't get the tuple to work at type level (so unpacked versions below).
+-- TODO: I can't get the tuple to work at type level (so unpacked versions below).
 type VendState = '( Nat , Nat )
 
 data MachineCmd' :: * -> VendState -> VendState -> * where
@@ -41,17 +41,43 @@ vend :: MachineCmd' () (Z, S Z) (Z, Z)
 vend  = InsertCoin' `Bind'` Vend'
 -}
 
+data Input = COIN | VEND | CHANGE | REFILL Nat deriving (Eq, Read, Show)
+
 data MachineCmd ::            * ->  Nat ->     Nat -> Nat ->     Nat    -> * where
      InsertCoin :: MachineCmd ()    pounds     chocs  (S pounds) chocs
      Vend       :: MachineCmd () (S pounds) (S chocs)    pounds  chocs
      GetCoins   :: MachineCmd ()    pounds     chocs     Z       chocs
+     -- Refill only valid if NO coins in machine.
      Refill     :: SNat bars
                 -> MachineCmd ()    Z          chocs     Z       (bars :+ chocs)
+     -- Display/GetInput do not effect state.
+     Display    :: String
+                -> MachineCmd ()    pounds     chocs     pounds  chocs
+     GetInput   :: MachineCmd (Maybe Input)
+                                    pounds     chocs     pounds  chocs
+     Pure       :: r -- result
+                -> MachineCmd r     pound      chocs     pounds  chocs
      Bind       :: MachineCmd ()    s1p        s1c       s2p     s2c
                 -> MachineCmd ()    s2p        s2c       s3p     s3c
                 -> MachineCmd ()    s1p        s1c       s3p     s3c
 
-deriving instance Show (MachineCmd any poundsBefore chocsBefore poundsAfter chocsAfter)
+-- this works if Pure is commented out
+-- deriving instance Show (MachineCmd any poundsBefore chocsBefore poundsAfter chocsAfter)
+
+-- | Infinite sequence of machine state transitions.
+-- The two Nats are the starting state of the machine.
+data MachineIO :: Nat -> Nat -> * where
+  Do :: MachineCmd a pb cb pa ca -> (a -> (MachineIO pa ca))
+
+-- | for do notation for infinite sequences of machine state transitions
+machineDoBind :: MachineCmd a pb cb pa ca -> (a -> (MachineIO pa ca))
+machineDoBind  = Do
+
+vend :: MachineIO p c
+vend  = undefined
+
+refill :: SNat bars -> MachineIO p c
+refill  = undefined
 
 vend0 :: MachineCmd () pounds chocs ('S pounds) chocs
 vend0  = InsertCoin
@@ -88,3 +114,5 @@ vend9 :: (bars :+ s1c) ~ 'S s3c
       -> MachineCmd () 'Z s1c 'Z s3c
 vend9 n = reify n $ \p -> Refill (reflect p) `Bind` InsertCoin `Bind` Vend
 
+vend10 :: MachineIO pa ca
+vend10  = GetInput `machineDoBind` (Just COIN)

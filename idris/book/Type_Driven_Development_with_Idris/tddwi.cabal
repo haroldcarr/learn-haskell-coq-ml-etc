@@ -6,10 +6,11 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     P024
-                     , P434_state_machine_door
-                     , P439_state_machine_vending_p1
-                     , P439_state_machine_vending_p2
+  exposed-modules:     P022
+                     , P139_read_vect
+                     , P355_state_machine_door
+                     , P358_state_machine_vending_p1
+                     , P358_state_machine_vending_p2
   build-depends:       base >= 4.7 && < 5
                      , reflection
   default-language:    Haskell2010
