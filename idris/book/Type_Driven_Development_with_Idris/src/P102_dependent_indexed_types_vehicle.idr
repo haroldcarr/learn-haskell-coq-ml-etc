@@ -8,12 +8,12 @@ data PowerSource = Petrol | Pedal
 4.2 Defining dependent data types
 ---------------------------------
 
-A dependent data type is a *type* computed from some other value.
+A dependent data type is a *type* computed from a value.
 
-E.g., : Vect : the type of a Vect depends on its length.
+E.g., : Vect : type of Vect depends on its length.
 
 core idea : because there is no syntactic distinction between types and expressions,
-types can be computed from any expression.
+            types can be computed from any expression.
 
 Families of types
 -----------------

@@ -7,6 +7,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     P022
+                     , P102_dependent_indexed_types_vehicle
                      , P139_read_vect
                      , P355_state_machine_door
                      , P358_state_machine_vending_p1

@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module P024 where
+module P022 where
 
 type family StringOrInt b where
   StringOrInt 'True  = Int
