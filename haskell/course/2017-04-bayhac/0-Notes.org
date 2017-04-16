@@ -1,6 +1,164 @@
-- type-level Idris
-  file://~/ftptmp/ebooks-music-pics/tech/programming-language/idris/book/Type_Driven_Development_with_Idris/src/P439_state_machine_vending.hs
+------------------------------------------------------------------------------
+Dan Burton
 
-- type-level Juno/Tangaroa
+https://twitter.com/drb226
+https://www.linkedin.com/in/danburtonhaskeller/
 
-- 
+clojure developer at Funding Circle
+https://www.linkedin.com/company-beta/2596914/
+
+------------------------------------------------------------------------------
+http://takt.com/
+https://github.com/TaktInc
+
+Haskell/Nix
+
+Crafted customer experiences for businesses.
+
+Evaluates nuanced histories and patterns of individuals.
+Craft engagements unique to each customer
+— ensuring interaction is welcome, on-point, and well timed.
+
+orchestration via A.I.
+- broad array of data, real-time contextual signals, preference filters.
+- match workflows to recipients
+
+platform learns and adapts
+- feedback via employee, chatbot, implied by customer’s action
+- makes each experience better than the last.
+
+------------------------------------------------------------------------------
+
+https://wiki.haskell.org/BayHac2017
+
+--------------------------------------------------
+projects
+
+- Cabal dependency solver: The dependency solver for the cabal build tool
+- Clash: Functional hardware description language
+- CodeWorld: Educational computer programming environment using Haskell
+- dynobud: Your dynamic optimization buddy
+- Juno: Byzantine Fault Tolerant Raft With Smart Contracts
+- Karya: Music sequencer
+- snowdrift.coop: Crowdmatching for public goods
+- tensorflow: Haskell bindings for TensorFlow (machine intelligence lib)
+- Unison: Distributed purely functional programming platform
+- MongoDB: MongoDB driver for Haskell
+
+--------------------------------------------------
+talks
+
+Friday
+
++ Greg Horn: Haskell for Flight Control at Kittyhawk
++ Tikhon Jelvis: Haskell for Supply Chain Optimization at Target
+
+Saturday
+
+  Julie Moronuki: Introduction to Monoids
++ John Leo: Dependent Types in GHC
++ Gabriel Gonzalez: How to create a new Haskell project
++ John Wiegley: Putting lenses to work
+  - https://github.com/jwiegley/putting-lenses-to-work
+  Michael Litchard: Next Step Haskell
++ Dimitri DeFigueiredo: Functional Reactive Bitcoin Trading
+  - https://github.com/dimitri-xyz
+  Chris Smith: CodeWorld - Teaching Haskell to Children
+  Judah Jacobson and Frederick Mayle: Haskell Bindings for TensorFlow
+
+Sunday
+
+  James Bowen: Type Level APIs with Servant
++ Adelbert Chang: All About Applicative
+  - https://github.com/adelbertc/bayhac17
+  Doug Beardsley: Real World UIs with Reflex
+  Luite Stegeman: Something GHCJS
+  Greg Hale: Full-stack typesafe Haskell
++ Sandy Maguire: Don't Eff It Up: Free Monads in Action
+  - http://reasonablypolymorphic.com
+  - https://hackage.haskell.org/package/freer-effects
+  - https://github.com/IxpertaSolutions/freer-effects
+  - http://reasonablypolymorphic.com/dont-eff-it-up/#/title
++ Rúnar Bjarnason: Adjunctions in Everyday Life
+  - https://www.dropbox.com/s/lasx6zxkoe07jyq/AdjunctionsHaskell.pdf?dl=0
+
+--------------------------------------------------
+Hangout:
+
+-------------------------
+Awake Networks
+http://www.awakenetworks.com/
+https://www.linkedin.com/company-beta/4832976/
+
+Security Operations
+
+----------
+Jeff Polakow
+- http://functorial.com/Embedding-a-Full-Linear-Lambda-Calculus-in-Haskell/linearlam.pdf
+
+----------
+Gabriel Gonzalez
+- https://www.linkedin.com/in/gabriel439/
+- https://github.com/Gabriel439/post-rfc/blob/master/sotu.md
+
+-------------------------
+https://twitter.com/zmanian
+
+- impromptu raft overview (that I missed)
+- ideas
+  - non-BTF : consensus
+  - BTF     : business validation
+- https://twitter.com/skuchain - supply chain
+- hyperledger fabric as a cryptographic research platform
+  - BPASE '17, January 27th 2017, Stanford University : Stanford Cyber Initiative
+  - https://cyber.stanford.edu/blockchainconf
+  - https://www.youtube.com/watch?list=PLxiUDysqkJ9x6VsYjjphSA79pEHiMwdI_&v=X65hV4mkulM
+  - https://cyber.stanford.edu/sites/default/files/zakimanian.pdf
+
+blockchain : authoritative record (e.g., two companies and their banks)
+
+fabric 1.0 : platform for exploring blockchain model of computation
+
+blockchain provides
+- total order : distributed consensus
+- peer-to-peer network
+- private/public computation channels
+  - private total order part of global total order (but not visible to all)
+
+FABRIC | QUORUM | ASSEMBLY follow above abstraction
+
+FABRIC
+- opaque blobs - the data upon which it is operating
+
+CONSENSUS API
+- submit blobs
+- get a block of blobs at a given block height
+
+CHAINCODE
+- the actual transaction code and evaluators
+- agreeing on/executing on shared data
+- transforms user provided blob and current state of merkle tree into new state of merkle tree
+
+CHAINCODE ?
+- who is the admin
+- BFT immutability/liveness
+- authoritative info utility
+
+FABRIC has a PKI system
+- available from within chaincode
+
+Business logic + crypto
+- BL attached to arbitrary credentials
+- signatures, SNARKS, oblivious Bloom filters...
+- strongly order computations
+
+PEERS are not USERS
+- neutral multilateral authoritative platform enforces cryptographic computation
+- delegate authority to end users
+- end users should not have to transfer all privacy interests to peers
+- private channels (preserver interests of real users)
+
+HE THINKS ABOUT
+- predicate systems where all possible signers are not enumerated when the
+  predicate is specified but are replay resistant.
+- signature systems for partial and redacted time series data records.

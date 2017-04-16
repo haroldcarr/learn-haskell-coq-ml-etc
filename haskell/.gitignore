@@ -8,5 +8,5 @@ cabal.sandbox.config
 .virthualenv
 .stack-work
 
-0Notes*.org
-0Review.org
+0-Notes*.org
+0-Review*.org
