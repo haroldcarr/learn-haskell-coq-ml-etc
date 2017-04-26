@@ -7,6 +7,6 @@ cabal.sandbox.config
 *.chs.h
 .virthualenv
 .stack-work
-
+RCS
 0-Notes*.org
 0-Review*.org
