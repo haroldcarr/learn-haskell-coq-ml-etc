@@ -1,7 +1,6 @@
 name:                monad-reader-issue22
 version:             0.1.0.0
 build-type:          Simple
-extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library

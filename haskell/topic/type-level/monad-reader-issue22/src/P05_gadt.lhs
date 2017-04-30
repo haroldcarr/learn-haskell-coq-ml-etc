@@ -1,5 +1,5 @@
 Created       : 2013 Aug 18 (Sun) 11:14:50 by carr.
-Last Modified : 2017 Jan 12 (Thu) 22:11:05 by Harold Carr.
+Last Modified : 2017 Apr 29 (Sat) 20:02:44 by Harold Carr.
 
 Generalized Algebraic Data Types in Haskell by Anton Dergunov
 
@@ -13,7 +13,7 @@ page numbers refer to Anton's tutorial
 > -- {-# LANGUAGE ExistentialQuantification #-}
 > -- {-# LANGUAGE FlexibleInstances #-}
 > -- {-# LANGUAGE MultiParamTypeClasses #-}
-> -- {-# LANGUAGE GADTs #-}
+> {-# LANGUAGE GADTs #-}
 > -- {-# LANGUAGE TypeFamilies #-}
 > -- {-# LANGUAGE TypeOperators #-}
 >

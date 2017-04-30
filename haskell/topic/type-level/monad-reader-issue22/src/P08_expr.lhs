@@ -2,7 +2,7 @@
 > -- {-# LANGUAGE ExistentialQuantification #-}
 > -- {-# LANGUAGE FlexibleInstances #-}
 > -- {-# LANGUAGE MultiParamTypeClasses #-}
-> -- {-# LANGUAGE GADTs #-}
+> {-# LANGUAGE GADTs #-}
 > -- {-# LANGUAGE TypeFamilies #-}
 > -- {-# LANGUAGE TypeOperators #-}
 >
@@ -137,7 +137,6 @@ Exactly what GADTs do.
 >   BoolVal'''' :: Bool                                       -> PhantomExpr'''' t
 >   AddInt''''  :: PhantomExpr'''' Int -> PhantomExpr'''' Int -> PhantomExpr'''' t
 >   IsZero''''  :: PhantomExpr'''' Int                        -> PhantomExpr'''' t
-#+END_SRC
 
 FIX: Final (useful) GADT version (value constructors return specific types) (p. 11):
 
