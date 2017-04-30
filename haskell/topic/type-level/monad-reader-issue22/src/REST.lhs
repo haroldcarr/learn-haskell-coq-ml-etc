@@ -3,12 +3,15 @@
 > {-# LANGUAGE FlexibleInstances         #-}
 > {-# LANGUAGE GADTs                     #-}
 > {-# LANGUAGE MultiParamTypeClasses     #-}
+> {-# LANGUAGE StandaloneDeriving        #-}
 > {-# LANGUAGE TypeFamilies              #-}
 > {-# LANGUAGE TypeOperators             #-}
 >
 > module REST where
 
-> import Data.Char (ord)
+> import           Data.Char       (ord)
+> import           Test.HUnit      (Counts, Test (TestList), runTestTT)
+> import qualified Test.HUnit.Util as U (t, tt, e)
 
 import Debug.Trace
 
@@ -39,8 +42,8 @@ Representation type : values represent types:
 
 Since Haskell =String= is =[Char]=, define value constructor:
 
-tString :: Type String
-tString = TList TChar
+> tString :: Type String
+> tString = TList TChar
 
 Output of encoding function is list of bits:
 
@@ -59,7 +62,6 @@ Encoding function (p. 13):
 
 [[http://stackoverflow.com/questions/9166148/how-to-implement-decimal-to-binary-function-in-haskell]] :
 
-
 > encodeInt :: Int -> [Bit]
 > encodeInt 0 = [F]
 > encodeInt n = reverse $ helper n
@@ -70,63 +72,59 @@ Encoding function (p. 13):
 > encodeChar :: Char -> [Bit]
 > encodeChar c = encodeInt $ ord c
 
+> tei0 = U.t "tei0" (encodeInt 0) [F]
+> tei5 = U.t "tei5" (encodeInt 5) [T,F,T]
+> tei331 = U.t "tei331" (encode TInt 331) [T,F,T,F,F,T,F,T,T]
+> tei333 = U.t "tei333" (encode TInt 333) [T,F,T,F,F,T,T,F,T]
+> -- Note: paper shows [T,F,T,...,F,F,F] for this
+> tei1 = U.t "tei1" (encode TInt 1)   [T]
+> tei2 = U.t "tei2" (encode TInt 2) [T,F]
+> tei3 = U.t "tei3" (encode TInt 3) [T,T]
 
- #+BEGIN_EXAMPLE
-encodeInt 0 == [F]
-encodeInt 5 == [T,F,T]
-encode TInt 331 == [T,F,T,F,F,T,F,T,T]
-encode TInt 333 == [T,F,T,F,F,T,T,F,T]
--- Note: paper shows [T,F,T,...,F,F,F] for this
-
-encode TInt 1 == [T]
-encode TInt 2 == [T,F]
-encode TInt 3 == [T,T]
-
-    encode TInt 1 ++      encode TInt 2 ++       encode TInt 3         == [  T,  T,F,  T,T]
-T : encode TInt 1 ++ (T : encode TInt 2) ++ (T : encode TInt 3) ++ [F] == [T,T,T,T,F,T,T,T,F]
-encode (TList TInt) [1,2,3]                                            == [T,T,T,T,F,T,T,T,F]
--- Note: paper shows [T,T,F,...,F,F,F]
- #+END_EXAMPLE
+> t1 = U.t "t1"
+>       (encode TInt 1 ++      encode TInt 2 ++       encode TInt 3)         [  T,  T,F,  T,T]
+> t2 = U.t "t2"
+>   (T : encode TInt 1 ++ (T : encode TInt 2) ++ (T : encode TInt 3) ++ [F]) [T,T,T,T,F,T,T,T,F]
+> t3 = U.t "t3"
+>   (encode (TList TInt) [1,2,3])                                            [T,T,T,T,F,T,T,T,F]
+> -- Note: paper shows [T,T,F,...,F,F,F]
 
 [[http://thid.thesa.com/thid-0513-0671-th-1425-3196][Universal Data Type]] : Organize around single universal type
 (e.g., APL/real number arrays; SNOBOL/strings; LISP/lists; fun prog/exprs, Object/Java - except unboxed primitives).
 
 Pair representation type with value (requires =ExistentialQuantification=) (p. 13):
 
- #+BEGIN_SRC haskell
-data Dynamic' = forall t. Dyn' (Type t) t
- #+END_SRC
+> data Dynamic' = forall t. Dyn' (Type t) t
 
 Previous defines [[http://en.wikibooks.org/wiki/Haskell/Existentially_quantified_types][existential data type]]:
 way of "squashing" a group of types into one, single type (in Haskell).
 
 Can also be represented as GADT:
 
- #+BEGIN_SRC haskell
-
 > data Dynamic where
 >    Dyn :: Type t -> t -> Dynamic
 
-encode' :: Dynamic -> [Bit]
-encode' (Dyn t v) = encode t v
- #+END_SRC
+> encode' :: Dynamic -> [Bit]
+> encode' (Dyn t v) = encode t v
 
- #+BEGIN_EXAMPLE
-let c = Dyn (TList TInt) [1,2,3]
+> c = Dyn (TList TInt) [1,2,3]
+
 :t c
 -- c :: Dynamic
-encode' c == encode (TList TInt) [1,2,3]
-encode' c == [T,T,T,T,F,T,T,T,F]
- #+END_EXAMPLE
+
+> tec = U.tt "tec"
+>   [ encode' c
+>   , encode (TList TInt) [1,2,3]
+>   ]
+>   [T,T,T,T,F,T,T,T,F]
 
 Define heterogeneous lists (p. 14):
 
- #+BEGIN_EXAMPLE
-let d = [Dyn TInt 10, Dyn tString "test"]
+> d = [Dyn TInt 10, Dyn tString "test"]
+
 :t d
 --      [Dyn TInt 10, Dyn tString "test"] :: [Dynamic]
 -- (Note: paper had : Dyn TString "test")
- #+END_EXAMPLE
 
 But cannot make this list =Dynamic=.
 
@@ -134,22 +132,21 @@ FIX:
 - extend representation, adding value constructor (done above in =data Type t=).
 - add to patterns of encode functions (done above in =encode TDyn=).
 
-@@html:&nbsp;@@
- #+BEGIN_EXAMPLE
-let e = Dyn (TList TDyn) d
+> e = Dyn (TList TDyn) d
+
 :t e
 -- e :: Dynamic
-encode' e == [T,T,F,T,F,T,T,T,T,T,F,T,F,F,T,T,T,F,F,T,F,T,T,T,T,T,F,F,T,T,T,T,T,T,F,T,F,F,F,F]
- #+END_EXAMPLE
+
+> tee = U.t "tee"
+>   (encode' e)
+>   [T,T,F,T,F,T,T,T,T,T,F,T,F,F,T,T,T,F,F,T,F,T,T,T,T,T,F,F,T,T,T,T,T,T,F,T,F,F,F,F]
 
 Dynamic data type is useful for communication with env when type not known in advance.
 Then a type cast is required (p. 14):
 
- #+BEGIN_SRC haskell
-castInt :: Dynamic -> Maybe Int
-castInt (Dyn TInt i) = Just i
-castInt (Dyn _    _) = Nothing
- #+END_SRC
+> castInt :: Dynamic -> Maybe Int
+> castInt (Dyn TInt i) = Just i
+> castInt (Dyn _    _) = Nothing
 
 More generic solution that works for all types referenced (but not shown) in paper.
 
@@ -163,177 +160,148 @@ Conclusion:
 Types can ensure only a non-empty List is passed to =head=.
 Types can encode other properties: e.g., non-empty lists; lists of certain length.
 
- #+BEGIN_SRC haskell
--- ADT:
--- data List t = Nil | Cons t (List t)
+ADT:
+data List t = Nil | Cons t (List t)
 
 -- GADT:
-data List t where
-    Nil  ::                List t
-    Cons :: t -> List t -> List t
 
-listHead :: List t -> t
-listHead (Cons a _) = a
-listHead Nil        = error "empty list"
- #+END_SRC
+> data List t where
+>   Nil  ::                List t
+>   Cons :: t -> List t -> List t
 
- # --------------------------------------------------
+> listHead :: List t -> t
+> listHead (Cons a _) = a
+> listHead Nil        = error "empty list"
+
+--------------------------------------------------
 ** Encode empty/non-empty list in type
 
 To ensure no failure, define non-empty lists:
 
- #+BEGIN_SRC haskell
-data Empty
-data NonEmpty
+> data Empty
+> data NonEmpty
 
--- param f is Empty when list is empty, NonEmpty otherwise
-data SafeList' t f where
-    Nil'  ::                       SafeList' t Empty
-    Cons' :: t -> SafeList' t f -> SafeList' t NonEmpty
+> -- param f is Empty when list is empty, NonEmpty otherwise
+> data SafeList1 t f where
+>   Nil1  ::                       SafeList1 t Empty
+>   Cons1 :: t -> SafeList1 t f -> SafeList1 t NonEmpty
 
--- head that can ONLY take non-empty lists (p. 16):
-headSafe' :: SafeList' t NonEmpty -> t
-headSafe' (Cons' t _) = t
- #+END_SRC
+> -- head that can ONLY take non-empty lists (p. 16):
+> headSafe1 :: SafeList1 t NonEmpty -> t
+> headSafe1 (Cons1 t _) = t
 
- #+BEGIN_EXAMPLE
-headSafe' Nil'
+headSafe1 Nil1
 --    Couldn't match type `Empty' with `NonEmpty'
---    Expected type: SafeList' t0 NonEmpty
---      Actual type: SafeList' t0 Empty
-let hs = Cons' 1 $ Cons' 2 $ Cons' 3 Nil'
+--    Expected type: SafeList1 t0 NonEmpty
+--      Actual type: SafeList1 t0 Empty
+
+> hs = Cons1 1 $ Cons1 2 $ Cons1 3 Nil1
+
 :t hs
-hs :: SafeList' Integer NonEmpty
-headSafe' hs
--- 1
- #+END_EXAMPLE
+hs :: SafeList1 Integer NonEmpty
+
+> ths1 = U.t "ths1" (headSafe1 hs) 1
 
 PROBLEM:
 
- #+BEGIN_EXAMPLE
-repeatElem' :: a -> Int -> SafeList' a ???
-repeatElem' a 0 = Nil'
-repeatElem' a n = Cons' a (repeatElem a (n-1))
- #+END_EXAMPLE
+repeatElem1 :: a -> Int -> SafeList1 a ???
+repeatElem1 a 0 = Nil1
+repeatElem1 a n = Cons1 a (repeatElem a (n-1))
 
 Cannot determine return type because =Empty= / =NonEmpty= lists have completely different types.
 
-FIX: relax =Cons=' value constructor:
+FIX: relax =Cons1= value constructor:
 
- #+BEGIN_SRC haskell
-data SafeList'' t f where
-    Nil''  ::                        SafeList'' t Empty
-    Cons'' :: t -> SafeList'' t f -> SafeList'' t f'     -- note f'
- #+END_SRC
+> data SafeList2 t f where
+>   Nil2  ::                       SafeList2 t Empty
+>   Cons2 :: t -> SafeList2 t f -> SafeList2 t f'     -- note f'
+>
+> deriving instance Show t => Show (SafeList2 t f)
 
 Now =SafeList t Empty= is a type of possibly empty lists:
 
- #+BEGIN_EXAMPLE
-:t Nil''
--- Nil'' :: SafeList'' t Empty
-:t Cons'' 'a' Nil''
--- Cons'' 'a' Nil'' :: SafeList'' Char f'
-:t Cons'' 'a' Nil'' :: SafeList'' Char Empty
--- Cons'' 'a' Nil'' :: SafeList'' Char Empty    :: SafeList'' Char Empty
-:t Cons'' 'a' Nil'' :: SafeList'' Char NonEmpty
--- Cons'' 'a' Nil'' :: SafeList'' Char NonEmpty :: SafeList'' Char NonEmpty
- #+END_EXAMPLE
+:t Nil2
+-- Nil2 :: SafeList2 t Empty
+:t Cons2 'a' Nil2
+-- Cons2 'a' Nil2 :: SafeList2 Char f'
+:t Cons2 'a' Nil2 :: SafeList2 Char Empty
+-- Cons2 'a' Nil2 :: SafeList2 Char Empty    :: SafeList2 Char Empty
+:t Cons2 'a' Nil2 :: SafeList2 Char NonEmpty
+-- Cons2 'a' Nil2 :: SafeList2 Char NonEmpty :: SafeList2 Char NonEmpty
 
 Now can define (p. 17):
 
- #+BEGIN_SRC haskell
-repeatElem'' :: a -> Int -> SafeList'' a Empty
-repeatElem'' a 0 = Nil''
-repeatElem'' a n = Cons'' a (repeatElem'' a (n-1))
- #+END_SRC
+> repeatElem2 :: a -> Int -> SafeList2 a Empty
+> repeatElem2 a 0 = Nil2
+> repeatElem2 a n = Cons2 a (repeatElem2 a (n-1))
 
- #+BEGIN_EXAMPLE
--- note: cannot Show it
-let a = repeatElem'' 'c' 3
+> a = repeatElem2 'c' 3
+
 :t a
--- a :: SafeList'' Char Empty
- #+END_EXAMPLE
+-- a :: SafeList2 Char Empty
 
 PROBLEM: anything can slip through =f=':
 
- #+BEGIN_EXAMPLE
-:t Cons'' 'a' Nil'' :: SafeList'' Char Bool
--- Cons'' 'a' Nil'' :: SafeList'' Char Bool :: SafeList'' Char Bool
+:t Cons2 'a' Nil2 :: SafeList2 Char Bool
+-- Cons2 'a' Nil2 :: SafeList2 Char Bool :: SafeList2 Char Bool
 
-:t Cons'' 'a' Nil'' :: SafeList'' Char Int
--- Cons'' 'a' Nil'' :: SafeList'' Char Int :: SafeList'' Char Int
- #+END_EXAMPLE
+:t Cons2 'a' Nil2 :: SafeList2 Char Int
+-- Cons2 'a' Nil2 :: SafeList2 Char Int :: SafeList2 Char Int
 
 FIX: give =Empty= / =NonEmpty= same kind.   Discussed later for =Nat=.
 
- # --------------------------------------------------
+--------------------------------------------------
 ** Encode list length in type
 
 Stronger invariant: list length (p. 17):
 
 Note:  =Empty= / =NonEmpty= not enough.  Need to encode length in type.
 
- #+BEGIN_COMMENT
--- TODO: understand DataKinds
--- TODO: understand these data type syntax and semantics
- #+END_COMMENT
-
 (Requires =DataKinds=.)
 
- #+BEGIN_SRC haskell
--- Peano numbers
-data Zero'''
-data Succ''' n
+> -- Peano numbers
+> data Zero3
+> data Succ3 n
 
-data List''' a n where
-    Nil'''  ::                     List''' a Zero'''
-    Cons''' :: a -> List''' a n -> List''' a (Succ''' n)
+> data List3 a n where
+>   Nil3  ::                   List3 a Zero3
+>   Cons3 :: a -> List3 a n -> List3 a (Succ3 n)
 
-headSafe''' :: List''' t (Succ''' n) -> t
-headSafe''' (Cons''' t _) = t
+> headSafe3 :: List3 t (Succ3 n) -> t
+> headSafe3 (Cons3 t _) = t
 
--- type encode that map does not change length
-mapSafe''' :: (a -> b) -> List''' a n -> List''' b n
-mapSafe''' _         Nil''' = Nil'''
-mapSafe''' f (Cons''' x xs) = Cons''' (f x) (mapSafe''' f xs)
- #+END_SRC
+> -- type encode that map does not change length
+> mapSafe3 :: (a -> b) -> List3 a n -> List3 b n
+> mapSafe3 _         Nil3 = Nil3
+> mapSafe3 f (Cons3 x xs) = Cons3 (f x) (mapSafe3 f xs)
 
- #+BEGIN_EXAMPLE
-let hs = headSafe''' $ Cons''' 1 $ Cons''' 2 $ Nil'''
-:t hs
--- hs :: Integer
+> hs3 = headSafe3 $ Cons3 1 $ Cons3 2 $ Nil3
 
-let ms = mapSafe''' (\x -> x + 1) $ Cons''' 1 $ Cons''' 2 $ Nil'''
+:t hs3
+-- hs3 :: Integer
+
+> ms = mapSafe3 (\x -> x + 1) $ Cons3 1 $ Cons3 2 $ Nil3
+
 :t ms
--- ms :: List''' Integer (Succ''' (Succ''' Zero'''))
- #+END_EXAMPLE
-
- #+BEGIN_COMMENT
-TODO: understand where 'Succ comes from (probably DataKinds)
- #+END_COMMENT
+-- ms :: List3 Integer (Succ3 (Succ3 Zero3))
 
 To implement concatenation need type-level Peano addition.
 - One way: type families (here understood as type-level function)
 - Requires =TypeFamilies=
 - p. 18
 
-@@html:&nbsp;@@
- #+BEGIN_SRC haskell
-type family Plus''' a b
-type instance Plus''' Zero'''     n = n
-type instance Plus''' (Succ''' m) n = Succ''' (Plus''' m n)
+> type family Plus3 a b
+> type instance Plus3 Zero3     n = n
+> type instance Plus3 (Succ3 m) n = Succ3 (Plus3 m n)
 
-concatenate''' :: List''' a m -> List''' a n -> List''' a (Plus''' m n)
-concatenate''' Nil''' ys = ys
-concatenate''' (Cons''' x xs) ys = Cons''' x (concatenate''' xs ys)
- #+END_SRC
+> concatenate3 :: List3 a m -> List3 a n -> List3 a (Plus3 m n)
+> concatenate3 Nil3 ys = ys
+> concatenate3 (Cons3 x xs) ys = Cons3 x (concatenate3 xs ys)
 
-@@html:&nbsp;@@
- #+BEGIN_EXAMPLE
-let c = concatenate''' (Cons''' 1 $ Cons''' 2 $ Nil''') (Cons''' 3 $ Cons''' 4 $ Nil''')
-:t c
--- c :: List''' Integer (Succ''' (Succ''' (Succ''' (Succ''' Zero'''))))
- #+END_EXAMPLE
+> c3 = concatenate3 (Cons3 1 $ Cons3 2 $ Nil3) (Cons3 3 $ Cons3 4 $ Nil3)
+
+:t c3
+-- c3 :: List3 Integer (Succ3 (Succ3 (Succ3 (Succ3 Zero3))))
 
 PROBLEM: =Succ= has a type parameter of =kind *=.
 - allows nonsense: =Succ Int=
@@ -344,79 +312,59 @@ TODO: I get: Not in scope: data constructor `Succ'
 
 FIX: Types classify values.  Kinds classify types.  So declare a new kind:
 
-- =Nat=' is a type, =Zero=' / =Succ=' are value constructors.
-- But, due to promotion, =Nat=' also a kind; =Zero=' / =Succ=' also types.
+- =Nat'= is a type, =Zero'= / =Succ'= are value constructors.
+- But, due to promotion, =Nat'= also a kind; =Zero'= / =Succ'= also types.
 - Sometimes necessary to prepend quote (e.g., '=Succ=') to refer to *type* (not value constructor)
 
-@@html:&nbsp;@@
- #+BEGIN_SRC haskell
-data Nat'''' = Zero'''' | Succ'''' Nat''''
- #+END_SRC
+> data Nat4 = Zero4 | Succ4 Nat4
 
-@@html:&nbsp;@@
- #+BEGIN_EXAMPLE
--- Type-level representation of number two (although prepended quote not necessary here):
-type    Two = 'Succ'''' ('Succ'''' 'Zero'''')
+> -- Type-level representation of number two (although prepended quote not necessary here):
+> type    Two = 'Succ4 ('Succ4 'Zero4)
+
 :i Two
--- type Two = 'Succ'''' ('Succ'''' 'Zero'''')
- #+END_EXAMPLE
+-- type Two = 'Succ4 ('Succ4 'Zero4)
 
 Now =Succ Int= will be rejected.
 
 Specify type of second parameter has kind Nat (p. 19):
 
- #+BEGIN_SRC haskell
-data List'''' a (n::Nat'''') where
-    Nil''''  ::                      List'''' a 'Zero''''
-    Cons'''' :: a -> List'''' a n -> List'''' a ('Succ'''' n)
- #+END_SRC
+> data List4 a (n::Nat4) where
+>   Nil4  ::                   List4 a  'Zero4
+>   Cons4 :: a -> List4 a n -> List4 a ('Succ4 n)
 
 PROBLEM: But can't write return type for:
 
- #+BEGIN_EXAMPLE
-repeatElem'''' :: a -> Int -> List'''' ????
- #+END_EXAMPLE
+repeatElem4 :: a -> Int -> List4 ????
 
 Need count both a runtime and type-check time.
 
 FIX: singleton types (types with only one value other than bottom):
 
- #+BEGIN_SRC haskell
-data NatSing (n::Nat'''') where
-    ZeroSing ::              NatSing 'Zero''''
-    SuccSing :: NatSing n -> NatSing ('Succ'''' n)
- #+END_SRC
+> data NatSing (n::Nat4) where
+>   ZeroSing ::              NatSing  'Zero4
+>   SuccSing :: NatSing n -> NatSing ('Succ4 n)
 
- #+BEGIN_COMMENT
-TODO: understand
- #+END_COMMENT
-
-=NatSing= constructors mirror =Nat='''' constructors.
+=NatSing= constructors mirror =Nat=4 constructors.
 Thus every TYPE of kind =Nat= corresponds to exactly *one* VALUE of the singleton data type where parameter =n= has exactly this type.
 
- #+BEGIN_EXAMPLE
 :t ZeroSing
--- ZeroSing :: NatSing 'Zero''''
+-- ZeroSing :: NatSing 'Zero4
 
 :t SuccSing $ SuccSing ZeroSing
--- SuccSing $ SuccSing ZeroSing :: NatSing ('Succ'''' ('Succ'''' 'Zero''''))
- #+END_EXAMPLE
+-- SuccSing $ SuccSing ZeroSing :: NatSing ('Succ4 ('Succ4 'Zero4))
 
 Can now define:
 
- #+BEGIN_SRC haskell
-repeatElem'''' :: a -> NatSing n -> List'''' a n
-repeatElem'''' _ ZeroSing     = Nil''''
-repeatElem'''' x (SuccSing n) = Cons'''' x (repeatElem'''' x n)  -- note: subtraction done by structural induction
- #+END_SRC
+> repeatElem4 :: a -> NatSing n -> List4 a n
+> repeatElem4 _ ZeroSing     = Nil4
+> repeatElem4 x (SuccSing n) = Cons4 x (repeatElem4 x n)  -- note: subtraction done by structural induction
 
- #+BEGIN_EXAMPLE
-let re = repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing)
+> re4 = repeatElem4 'C' (SuccSing $ SuccSing ZeroSing)
+
 :t re
--- re :: List'''' Char ('Succ'''' ('Succ'''' 'Zero''''))
- #+END_EXAMPLE
+-- re :: List4 Char ('Succ4 ('Succ4 'Zero4))
 
- # --------------------------------------------------
+--------------------------------------------------
 ** Encode length comparison in type
 
 Example: do not exceed list length
@@ -425,12 +373,10 @@ Requires =TypeOperators=
 
 Requires type-level magnitude comparison function (defined by structural induction):
 
- #+BEGIN_SRC haskell
-type family   (m::Nat'''')  :< (n::Nat'''') :: Bool
-type instance  m            :< 'Zero''''     = 'False
-type instance 'Zero''''     :< ('Succ'''' n) = 'True
-type instance ('Succ'''' m) :< ('Succ'''' n) = m :< n
- #+END_SRC
+> type family   (m::Nat4)  :< (n::Nat4) :: Bool
+> type instance  m         :< 'Zero4     = 'False
+> type instance 'Zero4     :< ('Succ4 n) = 'True
+> type instance ('Succ4 m) :< ('Succ4 n) = m :< n
 
 - given
   - list of length      =m=
@@ -438,27 +384,22 @@ type instance ('Succ'''' m) :< ('Succ'''' n) = m :< n
 - ensure           =n :< m=
 - note: =~= is equality constraint
 
-@@html:&nbsp;@@
- #+BEGIN_SRC haskell
-nthElem'''' :: (n :< m) ~ 'True => List'''' a m -> NatSing n -> a
-nthElem'''' (Cons'''' x  _) ZeroSing     = x
-nthElem'''' (Cons'''' _ xs) (SuccSing n) = nthElem'''' xs n
- #+END_SRC
+> nthElem4 :: (n :< m) ~ 'True => List4 a m -> NatSing n -> a
+> nthElem4 (Cons4 x  _) ZeroSing     = x
+> nthElem4 (Cons4 _ xs) (SuccSing n) = nthElem4 xs n
 
-@@html:&nbsp;@@
- #+BEGIN_EXAMPLE
-let ne = nthElem'''' (repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing)) (SuccSing $ SuccSing ZeroSing)
+ne4 = nthElem4 (repeatElem4 'C' (SuccSing $ SuccSing ZeroSing)) (SuccSing $ SuccSing ZeroSing)
 --    Couldn't match type 'False with 'True
 --    Expected type: 'True
---      Actual type: 'Succ'''' ('Succ'''' 'Zero'''')
---                   :< 'Succ'''' ('Succ'''' 'Zero'''')
+--      Actual type: 'Succ4 ('Succ4 'Zero4)
+--                   :< 'Succ4 ('Succ4 'Zero4)
 
-let ne = nthElem'''' (repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing))            (SuccSing ZeroSing)
+> ne4 = nthElem4 (repeatElem4 'C' (SuccSing $ SuccSing ZeroSing))            (SuccSing ZeroSing)
+
 :t ne
 -- ne :: Char
- #+END_EXAMPLE
 
- # --------------------------------------------------
+--------------------------------------------------
 ** LIST SUMMARY (p. 21):
 
 - Used GADTs to specify correctness of list operations verified by type-checker.
@@ -466,7 +407,6 @@ let ne = nthElem'''' (repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing))        
 - Set of properties motivated by the actual operations to be performed.
 - =head= : only needed =Empty= / =NonEmpty=
 - Other operations need count of elements it contains.
-
 
 ------------------------------------------------------------------------------
 * Proving Correctness of Red-Black Tree Insert (p. 21)
@@ -476,23 +416,18 @@ let ne = nthElem'''' (repeatElem'''' 'C' (SuccSing $ SuccSing ZeroSing))        
   - slides ([[http://www.seas.upenn.edu/~sweirich/talks/flops2012.pdf][pdf]]) for reference [7] (p. 33)
   - [[http://www.seas.upenn.edu/~cis552/12fa/schedule.html][course/code]] - scroll down to RedBlack[1|2|3]
 
-@@html:&nbsp;@@
- #+BEGIN_SRC haskell
-data Color   = R | B deriving (Eq, Show)
-data Node' a = E' | N' Color (Node' a) a (Node' a)
-type Tree' a = Node' a
- #+END_SRC
+> data Color   = R | B deriving (Eq, Show)
+> data Node' a = E' | N' Color (Node' a) a (Node' a)
+> type Tree' a = Node' a
 
 For any node =N c l x r=, values less than =x= are stored in =l=, otherwise =r=:
 
- #+BEGIN_SRC haskell
-member' :: Ord a => a -> Tree' a -> Bool
-member' _ E' = False
-member' x (N' _ l a r)
-    | x < a = member' x l
-    | x > a = member' x r
-    | otherwise = True
- #+END_SRC
+> member' :: Ord a => a -> Tree' a -> Bool
+> member' _ E' = False
+> member' x (N' _ l a r)
+>   | x < a = member' x l
+>   | x > a = member' x r
+>   | otherwise = True
 
 Invariants (guarantee tree is balanced) (p. 22)
 - ensure longest path from root
@@ -509,17 +444,14 @@ Ensure operations take /O/ (log /n/ ) time,
 -  /Black Height/: For each node, all paths from that node to leaf
    contain same number of black nodes.
 
-@@html:&nbsp;@@
- #+BEGIN_SRC haskell
-insert' :: Ord a => Tree' a -> a -> Tree' a
-insert' t v = blacken (insert'' t v) where
-    insert'' n@(N' c l a r) x
-        | x < a = leftBalance'  (N' c (insert'' l x) a           r)
-        | x > a = rightBalance' (N' c           l    a (insert'' r x))
-        | otherwise = n
-    insert''    E'     x    = N' R E' x E'
-    blacken    (N' _ l x r) = N' B l  x r
- #+END_SRC
+> insert' :: Ord a => Tree' a -> a -> Tree' a
+> insert' t v = blacken (insert'' t v) where
+>     insert'' n@(N' c l a r) x
+>         | x < a = leftBalance'  (N' c (insert'' l x) a           r)
+>         | x > a = rightBalance' (N' c           l    a (insert'' r x))
+>         | otherwise = n
+>     insert''    E'     x    = N' R E' x E'
+>     blacken    (N' _ l x r) = N' B l  x r
 
 Same recursive descent to leaf nodes as binary search trees, except
 ensuring invariants:
@@ -527,71 +459,57 @@ ensuring invariants:
 - 1: blacken root
 - 3: =leftBalance= / =rightBalance=
 
-@@html:&nbsp;@@
- #+BEGIN_SRC haskell
-leftBalance' :: Node' a -> Node' a
-leftBalance' (N' B (N' R (N' R a x       b) y       c)  z d) =
-              N' R (N' B       a x       b) y (N' B c   z d)
-leftBalance' (N' B (N' R       a x (N' R b  y       c)) z d) =
-              N' R (N' B       a x       b) y (N' B c   z d)
-leftBalance' n = n
+> leftBalance' :: Node' a -> Node' a
+> leftBalance' (N' B (N' R (N' R a x       b) y       c)  z d) =
+>               N' R (N' B       a x       b) y (N' B c   z d)
+> leftBalance' (N' B (N' R       a x (N' R b  y       c)) z d) =
+>               N' R (N' B       a x       b) y (N' B c   z d)
+> leftBalance' n = n
 
-rightBalance' :: Node' a -> Node' a
-rightBalance' (N' B       a x (N' R       b  y (N' R c  z d))) =
-               N' R (N' B a x             b) y (N' B c  z d)
-rightBalance' (N' B       a x (N' R (N' R b  y       c) z d))  =
-               N' R (N' B a x             b) y (N' B c  z d)
- #+END_SRC
+> rightBalance' :: Node' a -> Node' a
+> rightBalance' (N' B       a x (N' R       b  y (N' R c  z d))) =
+>                N' R (N' B a x             b) y (N' B c  z d)
+> rightBalance' (N' B       a x (N' R (N' R b  y       c) z d))  =
+>                N' R (N' B a x             b) y (N' B c  z d)
 
- # --------------------------------------------------
+--------------------------------------------------
 ** Proving 4th invariant maintained by insert (p. 23)
 
 Add black height:
 
- #+BEGIN_SRC haskell
-data Nat = Zero | Succ Nat deriving (Eq, Show)
- #+END_SRC
+> data Nat = Zero | Succ Nat deriving (Eq, Show)
 
- #+BEGIN_EXAMPLE
-{-
 data Node a (bh::Nat) where
     -- leaf has bh 0
     E :: Node a 'Zero
     -- bh must be conditionally incremented based on color
     N :: Color -> Node a bh -> a -> Node a bh -> Node a ???
 -}
- #+END_EXAMPLE
 
 Increment done via type family (requires =TypeFamilies=, =DataKinds=) (p. 24):
 
- #+BEGIN_SRC haskell
-type family IncBH (c::Color) (bh::Nat) :: Nat
-type instance IncBH R bh =      bh
-type instance IncBH B bh = Succ bh
- #+END_SRC
+> type family IncBH (c::Color) (bh::Nat) :: Nat
+> type instance IncBH R bh =      bh
+> type instance IncBH B bh = Succ bh
 
 Requires color to be passed as type (for =IncBH=) and as a value (for
 =Node= value constructor).  Use singleton type as bridge:
 
- #+BEGIN_SRC haskell
-data ColorSingleton (c::Color) where
-    SR :: ColorSingleton R
-    SB :: ColorSingleton B
+> data ColorSingleton (c::Color) where
+>   SR :: ColorSingleton R
+>   SB :: ColorSingleton B
 
-instance Show (ColorSingleton c) where
-    show SR = "R"
-    show SB = "B"
- #+END_SRC
+> instance Show (ColorSingleton c) where
+>   show SR = "R"
+>   show SB = "B"
 
 Value of singleton type passed to =Node= value constructor and
 color type used for =IncBH=:
 
- #+BEGIN_SRC haskell
-data Node4 a (bh::Nat) where
-    E4 :: Node4 a 'Zero
-    N4 :: ColorSingleton c -> Node4 a bh -> a -> Node4 a bh
-                           -> Node4 a (IncBH c bh)
- #+END_SRC
+> data Node4 a (bh::Nat) where
+>   E4 :: Node4 a 'Zero
+>   N4 :: ColorSingleton c -> Node4 a bh -> a -> Node4 a bh
+>                          -> Node4 a (IncBH c bh)
 
 In Haskell, when creating a new type, every type variable on
 right-hand side of definition must also appear on left-hand
@@ -599,26 +517,19 @@ side. Therefore (p. 24):
 
 PROBLEM: cannot write:
 
- #+BEGIN_EXAMPLE
 type Tree4 a = Node4 a bh
- #+BEGIN_EXAMPLE
 
 FIX 1: use /existential types/ (requires =RankNTypes=):
 
- #+BEGIN_EXAMPLE
 type Tree4 a = forall bh. Node4 a bh
- #+END_EXAMPLE
 
 FIX 2: GADT:
 
- #+BEGIN_SRC haskell
-data Tree4 a where
-    Root4 :: Node4 a bh -> Tree4 a
- #+END_SRC
+> data Tree4 a where
+>   Root4 :: Node4 a bh -> Tree4 a
 
 =insert= same as above except type annotations (p. 36):
 
- #+BEGIN_SRC haskell
 insert4 :: Ord a => Tree4 a -> a -> Tree4 a
 insert4 (Root4 t) v = blacken (insert' t v) where
     insert' :: Ord a => Node4 a n -> a -> Node4 a n
@@ -629,22 +540,20 @@ insert4 (Root4 t) v = blacken (insert' t v) where
     insert'    E4     x    =        N4 SR E4 x E4
     blacken   (N4 _ l x r) = Root4 (N4 SB l x r)
 
+> leftBalance4  :: Node4 a bh -> Node4 a bh
+> leftBalance4  (N4 SB (N4 SR (N4 SR a x        b) y        c)  z d) =
+>                N4 SR (N4 SB        a x        b) y (N4 SB c   z d)
+> leftBalance4  (N4 SB (N4 SR        a x (N4 SR b  y        c)) z d) =
+>                N4 SR (N4 SB        a x        b) y (N4 SB c   z d)
+> leftBalance4 n = n
 
-leftBalance4  :: Node4 a bh -> Node4 a bh
-leftBalance4  (N4 SB (N4 SR (N4 SR a x        b) y        c)  z d) =
-               N4 SR (N4 SB        a x        b) y (N4 SB c   z d)
-leftBalance4  (N4 SB (N4 SR        a x (N4 SR b  y        c)) z d) =
-               N4 SR (N4 SB        a x        b) y (N4 SB c   z d)
-leftBalance4 n = n
+> rightBalance4 :: Node4 a bh -> Node4 a bh
+> rightBalance4 (N4 SB        a x (N4 SR        b  y (N4 SR c   z d))) =
+>                N4 SR (N4 SB a x               b) y (N4 SB c   z d)
+> rightBalance4 (N4 SB        a x (N4 SR (N4 SR b  y        c)  z d))  =
+>                N4 SR (N4 SB a x               b) y (N4 SB c   z d)
 
-rightBalance4 :: Node4 a bh -> Node4 a bh
-rightBalance4 (N4 SB        a x (N4 SR        b  y (N4 SR c   z d))) =
-               N4 SR (N4 SB a x               b) y (N4 SB c   z d)
-rightBalance4 (N4 SB        a x (N4 SR (N4 SR b  y        c)  z d))  =
-               N4 SR (N4 SB a x               b) y (N4 SB c   z d)
- #+END_SRC
-
- # --------------------------------------------------
+--------------------------------------------------
 ** Proving 3rd invariant maintained by insert (p. 25)
 
 Valid colors for a node on type level.  Can be done via type families
@@ -885,3 +794,9 @@ let ten   = insert nine  17
 
  # END OF FILE.
 
+------------------------------------------------------------------------------
+
+> testR :: IO Counts
+> testR =
+>     runTestTT $ TestList $ tei0 ++ tei5 ++ tei331 ++ tei333 ++ tei1 ++ tei2 ++ tei3 ++ t1 ++ t2 ++ t3 ++
+>                            tec ++ tee ++ ths1

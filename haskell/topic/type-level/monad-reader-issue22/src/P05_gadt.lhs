@@ -1,5 +1,9 @@
+> {-# LANGUAGE GADTs #-}
+>
+> module P05_gadt where
+
 Created       : 2013 Aug 18 (Sun) 11:14:50 by carr.
-Last Modified : 2017 Apr 29 (Sat) 20:02:44 by Harold Carr.
+Last Modified : 2017 Apr 29 (Sat) 20:17:38 by Harold Carr.
 
 Generalized Algebraic Data Types in Haskell by Anton Dergunov
 
@@ -9,77 +13,63 @@ Monad Reader Issue 22
 
 page numbers refer to Anton's tutorial
 
-> -- {-# LANGUAGE DataKinds #-}
-> -- {-# LANGUAGE ExistentialQuantification #-}
-> -- {-# LANGUAGE FlexibleInstances #-}
-> -- {-# LANGUAGE MultiParamTypeClasses #-}
-> {-# LANGUAGE GADTs #-}
-> -- {-# LANGUAGE TypeFamilies #-}
-> -- {-# LANGUAGE TypeOperators #-}
->
-> module P05_gadt where
-
-import Data.Char
-import Debug.Trace
-
-debug = flip trace
-
 ------------------------------------------------------------------------------
 * Intro (p. 5)
 
 GADTs enable value constructors to return specific types (instance of more general type being defined).
 
-Use-cases:
+use-cases
 - DSLs
 - generic programming
-- ensuring correctness.
+- ensuring correctness
 
 > -- ADT
 > -- Test   : type constructor
+> -- a      : type parameter
 > -- TI, TS : value constructors
 > -- each value constructor can specify zero or more components
-> data Test a
+> data TestA a
 >   = TI Int
 >   | TS String a
 
 :t TI
--- TI :: Int -> Test a
+-- TI :: Int -> TestA a
 
 :t TI 10
--- TI 10 :: Test a
+-- TI 10 :: TestA a
 
 :t TS
--- TS :: String -> a -> Test a
+-- TS :: String -> a -> TestA a
 
 :t TS "test" 'c'
--- TS "test" 'c' :: Test Char
+-- TS "test" 'c' :: TestA Char
 
 Equivalent using GADT (p. 7):
 
-> data Test' a where
->   TI' :: Int         -> Test' a
->   TS' :: String -> a -> Test' a
+> data TestG1 a where
+>   TIG1 :: Int         -> TestG1 a
+>   TSG1 :: String -> a -> TestG1 a
 
 GADT version that specifies return type:
 
-> data Test'' a where
->   TI'' :: Int         -> Test'' Int  -- locks down return type HERE
->   TS'' :: String -> a -> Test'' a
+> data TestG2 a where
+>   TIG2 :: Int         -> TestG2 Int  -- locks down return type
+>   TSG2 :: String -> a -> TestG2 a
 
-:t TI''
--- TI'' :: Int -> Test'' Int
-:t TI'' 10
--- TI'' 10 :: Test'' Int
+:t TIG2
+-- TIG2 :: Int -> TestG2 Int
+:t TIG2 10
+-- TIG2 10 :: TestG2 Int
 
--- TS'' same as TS
-:t TS'' "foo" 'c'
--- TS'' "foo" 'c' :: Test'' Char
+-- TSG2 same as TS
+:t TSG2 "foo" 'c'
+-- TSG2 "foo" 'c' :: TestG2 Char
 
 
 Key GADT feature: pattern matching causes type refinement, so guaranteed =Int=:
 
-f :: Test'' a -> a
-f (TI'' i) = i + 10
+f :: TestG2 a -> a
+f (TIG2 i) = i + 10
 
-f (TI'' 3)
+f (TIG2 3)
 -- 13
