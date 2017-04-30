@@ -9,4 +9,6 @@ library
   exposed-modules:     HC
   build-depends:       base >= 4.7 && < 5
                      , generics-sop
+                     , HUnit
+                     , test-hunit-util
   default-language:    Haskell2010

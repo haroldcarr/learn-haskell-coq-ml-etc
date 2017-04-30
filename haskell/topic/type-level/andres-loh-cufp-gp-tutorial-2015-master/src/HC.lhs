@@ -20,14 +20,16 @@
 > {-# LANGUAGE UndecidableSuperClasses   #-}
 
 > module HC where
-> import           Data.Char (digitToInt)
-> import           GHC.Exts (Constraint)
+> import           Data.Char             (digitToInt)
+> import           GHC.Exts              (Constraint)
+> import           Test.HUnit            (Counts, Test (TestList), runTestTT)
+> import qualified Test.HUnit.Util       as U (t, e)
 
 -- p 7
 
 Type-level programming in Haskell.
 
-Exposition moves step-by-step
+step-by-step exposition
 - normal list
 - length-indexed vectors
 - heterogeneous lists
@@ -76,11 +78,11 @@ But they may appear as
 
 -- 1.3.1 p 9 Vectors
 
-Generalize lists to length-indexed lists (aka vectors)
+length-indexed lists (aka vectors)
 
 > data Nat = Zero | Suc Nat
 
-This will be used in promoted form:
+used in promoted form:
 
 ~~~{.haskell}
 'Zero :: Nat
@@ -88,7 +90,7 @@ This will be used in promoted form:
 ~~~
 
 GADT enables restricting
-- `VNil` to `Zero
+- `VNil`  to `Zero
 - `VCons` to non-zero
 
 > --       KindSignatures      GADT
@@ -102,9 +104,10 @@ GADT enables restricting
 > infixr 5 `VCons`
 >
 > -- StandaloneDeriving
+> deriving instance Eq   a => Eq   (Vec a n)
 > deriving instance Show a => Show (Vec a n)
 
-`Nat` used as an "index" (it is not inhabited).
+`Nat` used as a type "index" (it is not inhabited) into family of types.
 Used to specify more info about vectors.
 
 > type Two   =      'Suc ('Suc 'Zero)
@@ -122,7 +125,7 @@ Power of GADT apparent in pattern matching.  Type-safe/total:
 > vtail :: Vec a ('Suc n) -> Vec a n
 > vtail (VCons _ xs) = xs
 
-Do not need a `VNil` case.  Impossible and guaranteed by type checking:
+Do not need `VNil` case.  Impossible and guaranteed by type checking:
 
 ~~~{.haskell}
 vtail VNil = VNil
@@ -158,8 +161,7 @@ Use the type system to avoid:
 
 > xsum :: [Int] -> Int
 > xsum xs = head xs + xsum (tail xs)
-> -- xsum [1,2,3]
-> -- *** Exception: Prelude.head: empty list
+> txsum = U.e "txsum" (xsum [1,2,3]) "Prelude.head: empty list"
 
 via:
 
@@ -195,7 +197,7 @@ replicate n x
     | otherwise = x : replicate (n - 1) x
 ~~~
 
-In a vector, the size is known at the type-level.
+vector size known at type-level.
 Assume number of copies to `replicate` is also known at type-level.
 QUESTION: How is it passed?
 
@@ -214,10 +216,7 @@ Option: use a type class (they work with data kinds):
 
 > v3 :: Vec Char Three
 > v3 = vreplicateC 'x'
-
-~~~{.haskell}
-VCons 'x' (VCons 'x' (VCons 'x' VNil))
-~~~
+> tv3 = U.t "tv3" v3 (VCons 'x' (VCons 'x' (VCons 'x' VNil)))
 
 PROS:
 - compiletime resolution of type-level values
@@ -248,7 +247,7 @@ One way:
 
 -- p 12
 
-Mutually-recursive way used in remainder:
+Another way: mutually-recursive (used in remainder of paper):
 
 > data SNat (n :: Nat) where
 >     SZero :: SNat 'Zero
@@ -274,6 +273,7 @@ Mutually-recursive way used in remainder:
 
 > vr3 :: Vec Char Three
 > vr3 = vreplicate 'x'
+> tvr3 = U.t "tvr3" vr3 (VCons 'x' (VCons 'x' (VCons 'x' VNil)))
 
 -- 1.4.2 p 12
 
@@ -293,7 +293,7 @@ CONS
 
 -- p 13
 
-https://en.wikibooks.org/wiki/Haskell/Applicative_functors
+ https://en.wikibooks.org/wiki/Haskell/Applicative_functors
 
 ~~~{.haskell}
 newtype ZipList a = ZipList { getZipList :: [a] }
@@ -326,9 +326,7 @@ liftA3 (,,) (ZipList [1,4,9]) (ZipList [2,8,1]) (ZipList [0,0,9])
 > va = ((2*) `VCons` (5*) `VCons` (9*) `VCons` VNil) `vapply`
 >      ( 1   `VCons`  4   `VCons`  7   `VCons` VNil)
 
-~~~{.haskell}
-VCons 2 (VCons 20 (VCons 63 VNil))
-~~~
+> tva = U.t "tva" va (VCons 2 (VCons 20 (VCons 63 VNil)))
 
 Note: `Vec` cannot be made `Applicative` instance because its parameters are in the wrong order.
 
@@ -354,10 +352,11 @@ vapply vfff vbc
     Expected type: Vec Char Three
       Actual type: Vec Char Two
     In the second argument of ‘vapply’, namely ‘vbc’
-
-vapply vfff vabc
-VCons 10 (VCons 11 (VCons 12 VNil))
 ~~~
+
+> tvfffvabc = U.t "tvfffvabc"
+>     (vapply vfff vabc)
+>     (VCons 10 (VCons 11 (VCons 12 VNil)))
 
 -- X END
 
@@ -859,3 +858,9 @@ Composing `hcpure` with `hap` also provides mapping of constrained functions ove
 > hcmap :: (SListI xs, All c xs)
 >       => Proxy c -> (forall a . c a => f a -> g a) -> NP f xs -> NP g xs
 > hcmap p f xs = hcpure p (Fn f) `hap` xs
+
+------------------------------------------------------------------------------
+
+> test :: IO Counts
+> test  =
+>     runTestTT $ TestList $ txsum ++ tv3 ++ tvr3 ++ tva ++ tvfffvabc
