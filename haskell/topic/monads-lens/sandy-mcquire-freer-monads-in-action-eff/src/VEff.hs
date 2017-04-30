@@ -125,22 +125,24 @@ withdraw :: ( Member (State  Int)    r
             , Member (Writer String) r
             )
          => Int
-         -> Eff r (Maybe Int)
+         -> Eff r (Maybe (Int,Int,Int))
 withdraw desired = do
-  amount :: Int <- get
-  if amount < desired
+  balance :: Int <- get
+  if balance < desired
      then do
        tell ("not enough funds"::String)
        return Nothing
      else do
-       put $ amount - desired
-       return $ Just amount
+       let newBalance = balance - desired
+       put newBalance
+       return $ Just (balance, desired, newBalance)
 
-d :: Int -> Int -> ((Maybe Int, String), Int)
+-- https://www.reddit.com/r/haskell/comments/3joxd7/freer_monads_more_extensible_effects/curyrp3/?st=j25a1ebj&sh=43a8ccb9
+d :: Int -> Int -> ((Maybe (Int,Int,Int), String), Int)
 d initialBalance w = run . flip runState initialBalance . runWriter $ withdraw w
 
-td1 = U.t "td1" (d 19 100) ((Nothing ,"not enough funds"), 19)
-td2 = U.t "td2" (d 100 19) ((Just 100,                ""), 81)
+td2 = U.t "td2" (d 100 15) ((Just (100,15,85),                ""), 85)
+td1 = U.t "td1" (d 15 100) ((Nothing         ,"not enough funds"), 15)
 
 ------------------------------------------------------------------------------
 
