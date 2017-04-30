@@ -19,7 +19,8 @@ import           Prelude hiding             (log)
 import           Test.HUnit                 (Counts, Test (TestList), runTestTT)
 import qualified Test.HUnit.Util            as U (t, e)
 
-import Data.Open.Union.Internal
+------------------------------------------------------------------------------
+-- custom version
 
 data Bank a where
   GetCurrentBalance :: Bank Int
@@ -118,6 +119,7 @@ twd1 = U.t "twd1" (wdTest 100 15) (Just (100,15,85))
 twd2 = U.t "twd2" (wdTest   0 15) Nothing
 
 ------------------------------------------------------------------------------
+-- replace Bank with State and Logger with Writer
 
 withdraw :: ( Member (State  Int)    r
             , Member (Writer String) r
@@ -134,57 +136,8 @@ withdraw desired = do
        put $ amount - desired
        return $ Just amount
 
-{-
-:t runState . withdraw
-  :: (Data.Open.Union.Internal.Member'
-        (Writer String)
-        (r' : rs')
-        (Data.Open.Union.Internal.FindElem (Writer String) (r' : rs')),
-      Data.Open.Union.Internal.Member'
-        (State Int)
-        (State s : r' : rs')
-        (Data.Open.Union.Internal.FindElem
-           (State Int) (State s : r' : rs'))) =>
-     Int -> s -> Eff (r' : rs') (Maybe Int, s)
-
-:t (runState . withdraw) 10
-(runState . withdraw) 10
-  :: (Data.Open.Union.Internal.Member'
-        (Writer String)
-        (r' : rs')
-        (Data.Open.Union.Internal.FindElem (Writer String) (r' : rs')),
-      Data.Open.Union.Internal.Member'
-        (State Int)
-        (State s : r' : rs')
-        (Data.Open.Union.Internal.FindElem
-           (State Int) (State s : r' : rs'))) =>
-     s -> Eff (r' : rs') (Maybe Int, s)
--}
-
-{-
-:t ((runState . withdraw) 10 100)
-:t runState . runWriter $ withdraw 100
-:t (runState . runWriter $ withdraw 100) 100
-:t run . flip runState (100 ::Int)
-:t run . flip runState (100 ::Int) . runWriter
-:t (run . flip runState (100 ::Int) . runWriter) (withdraw 100)
-:t run . flip runState  (19::Int)                       . runWriter $ withdraw (100::Int)
-:: (Data.Open.Union.Internal.Member'
-        (Writer String)
-        '[Writer o, State Int]
-        (Data.Open.Union.Internal.FindElem
-           (Writer String) '[Writer o, State Int]),
-      Monoid o) =>
-     ((Maybe Int, o), Int)
--}
-
-d :: (Data.Open.Union.Internal.Member'
-       (Writer String)
-       '[Writer String, State Int]
-       (Data.Open.Union.Internal.FindElem
-         (Writer String) '[Writer String, State Int]))
-  => Int -> Int -> ((Maybe Int, String), Int)
-d initialBalance w = run . flip runState initialBalance  . runWriter $ withdraw w
+d :: Int -> Int -> ((Maybe Int, String), Int)
+d initialBalance w = run . flip runState initialBalance . runWriter $ withdraw w
 
 td1 = U.t "td1" (d 19 100) ((Nothing ,"not enough funds"), 19)
 td2 = U.t "td2" (d 100 19) ((Just 100,                ""), 81)
