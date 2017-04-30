@@ -1,0 +1,13 @@
+name:                sandy-mcquire-freer-monads-in-action-eff
+version:             0.1.0.0
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     VEff
+  build-depends:       base >= 4.7 && < 5
+                     , freer
+                     , HUnit
+                     , test-hunit-util
+  default-language:    Haskell2010
