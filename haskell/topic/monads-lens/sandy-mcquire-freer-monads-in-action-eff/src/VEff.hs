@@ -48,14 +48,13 @@ log l = send $ Log l
 withdraw0 :: (Member Bank r, Member Logger r) => Int -> Eff r (Maybe (Int,Int,Int))
 withdraw0 desired = do
   balance <- getCurrentBalance
-  if balance < desired
-    then do
-      log "not enough funds"
-      return Nothing
-    else do
-      let newBalance = balance - desired
-      putCurrentBalance newBalance
-      return $ Just (balance, desired, newBalance)
+  if balance < desired then do
+    log "not enough funds"
+    return Nothing
+  else do
+    let newBalance = balance - desired
+    putCurrentBalance newBalance
+    return $ Just (balance, desired, newBalance)
 
 -- production interpreters
 
@@ -73,8 +72,8 @@ runBank :: Member IO r
 runBank = runNat bank2io
   where
     bank2io :: Bank x -> IO x
-    bank2io GetCurrentBalance            = putStr "> " >> getLine >>= return . read
-    bank2io (PutCurrentBalance newValue) = putStrLn $ show newValue
+    bank2io GetCurrentBalance            = fmap read (putStr "> " >> getLine)
+    bank2io (PutCurrentBalance newValue) = print newValue
 
 doit :: Eff '[Bank, Logger, IO] a -> IO a
 doit = runM . runLogger . runBank
@@ -128,14 +127,13 @@ withdraw :: ( Member (State  Int)    r
          -> Eff r (Maybe (Int,Int,Int))
 withdraw desired = do
   balance :: Int <- get
-  if balance < desired
-     then do
-       tell ("not enough funds"::String)
-       return Nothing
-     else do
-       let newBalance = balance - desired
-       put newBalance
-       return $ Just (balance, desired, newBalance)
+  if balance < desired then do
+    tell ("not enough funds"::String)
+    return Nothing
+   else do
+    let newBalance = balance - desired
+    put newBalance
+    return $ Just (balance, desired, newBalance)
 
 -- https://www.reddit.com/r/haskell/comments/3joxd7/freer_monads_more_extensible_effects/curyrp3/?st=j25a1ebj&sh=43a8ccb9
 d :: Int -> Int -> ((Maybe (Int,Int,Int), String), Int)
