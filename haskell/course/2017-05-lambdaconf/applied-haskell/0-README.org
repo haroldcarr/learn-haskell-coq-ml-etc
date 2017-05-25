@@ -1,0 +1,170 @@
+http://www.snoyman.com/blog/
+
+https://github.com/fpco/applied-haskell
+
+https://github.com/juhp/stackage-query
+
+stack upgrade
+stack build --install-ghc --resolver lts-8.12 classy-prelude-yesod
+stack ghci                --resolver lts-8.12 --package http-conduit
+
+https://hackage.haskell.org/package/bytestring-0.10.8.1/docs/Data-ByteString-Builder.html
+
+do not use bytestring for unicode data
+
+catch exceptions
+https://hackage.haskell.org/package/spoon-0.3.1/docs/Control-Spoon.html
+
+general recommendation
+- functions lazy
+- data strict (but do explicitly on fields, not with language extension)
+
+http://www.snoyman.com/blog/2017/01/functors-applicatives-and-monads
+
+https://downloads.haskell.org/~ghc/latest/docs/html/
+
+https://haskelliseasy.readthedocs.io/en/latest/
+
+https://donsbot.wordpress.com/2009/01/31/reviving-the-gofer-standard-prelude-circa-1994/
+
+------------------------------------------------------------------------------
+
+stack --resolver lts-8.12 exec -- ghc -02 Main.hs && ./Main +RTS -s
+stack --resolver lts-8.12 exec -- ghc -O2 Main.hs -threaded -rtsopts && ./Main +RTS -N16
+
+http://haskell-lang.org/libraries
+http://commercialhaskell.com/
+https://groups.google.com/forum/#!forum/commercialhaskell
+
+http://www.snoyman.com/blog/2016/11/haskells-missing-concurrency-basics
+
+do not use forkio - use async library
+
+forkos - pins to an OS thread (thread still shared, but thing pinned will always run on specified thread)
+
+try to use STM first
+
+https://functionalcs.github.io/curriculum/
+
+https://github.com/fpco/applied-haskell/blob/master/logging.md
+Pure implementation
+Running in IO is the common case - but can replace IO with Identity
+
+https://en.wikipedia.org/wiki/TOML
+
+An example of tagstream-conduit for parsing HTML: https://github.com/fpco/spiderweb
+
+exception best practices
+https://www.fpcomplete.com/blog/2016/11/exceptions-best-practices-haskell
+
+------
+
+app dev flow
+
+- data types
+- define top level monad stack
+- use Has<Foo>
+- separate modules/packages - connect with *.yaml/packages
+
+------------------------------------------------------------------------------
+libraries to use
+
+Text, ByteString, Vector, Containers, Safe, Async
+
+------------------------------------------------------------------------------
+
+RWST implemented in terms of IORefs
+https://gist.github.com/snoyberg/7ac111bc873be6a361e452adb5454cb9
+
+------------------------------------------------------------------------------
+
+./S_GetUrlsContentsServer.hs
+./S_GetUrlsContents.hs S_GetUrlsContents.txt
+
+------------------------------------------------------------------------------
+haskell program coverage
+
+ghc -fhpc
+
+------------------------------------------------------------------------------
+
+stack new foo simple-hpack
+
+------------------------------------------------------------------------------
+
+optimization
+
+generally use -O
+
+performance
+https://github.com/fpco/applied-haskell/blob/master/profiling.md
+
+slop:
+https://ghc.haskell.org/trac/ghc/wiki/Commentary/Rts/Storage/Slop
+
+------------------------------------------------------------------------------
+
+The full rate limit example: https://github.com/snoyberg/rate-limit
+
+------------------------------------------------------------------------------
+
+foldl' consumes list in streaming fashion
+
+foldr deconstructs list
+
+Gabriel's Control.Fold
+
+------------------------------------------------------------------------------
+Chris Allend |
+             v
+
+repl
+
+:sprint
+
+:set -ddump-simpl
+
+------------------------------------------------------------------------------
+
+Protolude is a prelude construction kit.
+
+classy-prelude IS a prelude.
+
+------------------------------------------------------------------------------
+
+default-extensions:
+- DeriveDataTypeable
+- DeriveGeneric
+- EmptyDataDecls
+- FlexibleContexts
+- FlexibleInstances
+- GADTs
+- GeneralizedNewtypeDeriving
+- MultiParamTypeClasses
+- NoImplicitPrelude
+- NoMonomorphismRestriction
+- OverloadedStrings
+- QuasiQuotes
+- RankNTypes
+- RecordWildCards
+- ScopedTypeVariables
+- TemplateHaskell
+- TupleSections
+- TypeFamilies
+- ViewPatterns
+
+------------------------------------------------------------------------------
+
+ConstraintKinds : to make "type synonyms" for constraints
+
+see : https://github.com/alexeyzab/cards-with-comrades
+
+------------------------------------------------------------------------------
+
+Persistent + Esquelito
+
+github : pseudo???/dovetail
+
+------------------------------------------------------------------------------
+
+

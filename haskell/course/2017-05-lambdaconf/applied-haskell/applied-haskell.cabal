@@ -1,0 +1,52 @@
+name:                applied-haskell
+version:             0.1.0.0
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     E1FileCopy
+                     , E2CountLinesInFile
+                     , E4LongestLineInFile
+                     , E5RepeatLineIntoFile
+                     , E6ReadUtf8WriteUtf16
+                     , E7SortVecOfRandom
+                     , E8ConcurrentFibsTVar
+                     , S1HttpLBS
+                     , S2BytestringReadwriteFile
+                     , S3BytestringBuilder
+                     , S4FFICWrite
+                     , S5Baton
+                     , S5Logging
+                     , S6LogTrick
+                     , S7TypedProcess
+                     , S8AesonBytestring
+                     , S_GetUrlsContents
+                     , S_GetUrlsContentsServer
+                     , S_MonadReader
+                     , S_RWST
+  build-depends:       aeson
+                     , async
+                     , base >= 4.7 && < 5
+                     , base64-bytestring
+                     , bytestring
+                     , http-conduit
+                     , http-types
+                     , monad-logger
+                     , mtl
+                     , random
+                     , safe-exceptions
+                     , say
+                     , stm
+                     , stm-chans
+                     , text
+                     , transformers
+                     , typed-process
+                     , vector
+                     , vector-algorithms
+                     , wai
+                     , wai-extra
+                     , warp
+                     , word8
+  ghc-options:         -Wall -Werror
+  default-language:    Haskell2010
+
