@@ -8,5 +8,6 @@ cabal.sandbox.config
 .virthualenv
 .stack-work
 RCS
+TAGS
 0-Notes*.org
 0-Review*.org

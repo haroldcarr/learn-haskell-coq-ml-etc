@@ -6,6 +6,10 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     ValidResponses
+                     , ReaderFun
                      , RebindableSyntax
+                     , Seq
   build-depends:       base >= 4.7 && < 5
+                     , containers
+                     , protolude
   default-language:    Haskell2010
