@@ -1,0 +1,10 @@
+resolver: lts-8.15
+packages:
+- '.'
+- location:
+    git: git@github.com:haroldcarr/test-hunit-util.git
+    commit: 76246854236d38ae569c0c7907abbd506902cd05
+  extra-dep: true
+extra-deps: [monadplus-1.4.2]
+flags: {}
+extra-package-dbs: []
