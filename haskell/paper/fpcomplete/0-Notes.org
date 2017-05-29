@@ -1,0 +1,6 @@
+Created       : 2013 Oct 04 (Fri) 20:50:06 by carr.
+Last Modified : 2013 Oct 04 (Fri) 20:50:12 by carr.
+
+- [[https://www.fpcomplete.com/school/how-to-use-the-school-of-haskell/soh-markdown]]
+
+-- End of file.

@@ -7,7 +7,7 @@ cabal.sandbox.config
 *.chs.h
 .virthualenv
 .stack-work
+0-0
 RCS
 TAGS
-0-Notes*.org
-0-Review*.org
+
