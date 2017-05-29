@@ -24,46 +24,51 @@ Usage: Compile the code and execute the resulting program.
 -}
 
 -- everything you need to know about sheep
-data Sheep = Sheep {name::String, mother::Maybe Sheep, father::Maybe Sheep} deriving Eq
+data Sheep = Sheep
+  {
+    name   :: String
+  , mother :: Maybe Sheep
+  , father :: Maybe Sheep
+  } deriving Eq
 
 -- we show sheep by name
 instance Show Sheep where
   show s = show (name s)
 
--- the Maybe type is already declared as an instance of the Monad class
--- in the standard prelude, so we don't actually need to define it here.
--- just remember that it looks something like this:
 -- instance Monad Maybe where
 --    Nothing  >>= f = Nothing
 --    (Just x) >>= f = f x
 --    return         = Just
 
--- we can use do-notation to build complicated sequences
+-- can use do-notation
 maternalGrandfather :: Sheep -> Maybe Sheep
-maternalGrandfather s = do m <- mother s
-                           father m
+maternalGrandfather s = do
+  m <- mother s
+  father m
 
 fathersMaternalGrandmother :: Sheep -> Maybe Sheep
-fathersMaternalGrandmother s = do f  <- father s
-                                  gm <- mother f
-				  mother gm
+fathersMaternalGrandmother s = do
+  f  <- father s
+  gm <- mother f
+  mother gm
 
 mothersPaternalGrandfather :: Sheep -> Maybe Sheep
-mothersPaternalGrandfather s = do m  <- mother s
-                                  gf <- father m
-				  father gf
+mothersPaternalGrandfather s = do
+  m  <- mother s
+  gf <- father m
+  father gf
 
--- this builds our sheep family tree
+-- build sheep family tree
 breedSheep :: Sheep
 breedSheep = let adam   = Sheep "Adam"   Nothing      Nothing
                  eve    = Sheep "Eve"    Nothing      Nothing
-		 uranus = Sheep "Uranus" Nothing      Nothing
-		 gaea   = Sheep "Gaea"   Nothing      Nothing
-		 kronos = Sheep "Kronos" (Just gaea)  (Just uranus)
+                 uranus = Sheep "Uranus" Nothing      Nothing
+                 gaea   = Sheep "Gaea"   Nothing      Nothing
+                 kronos = Sheep "Kronos" (Just gaea)  (Just uranus)
                  holly  = Sheep "Holly"  (Just eve)   (Just adam)
-	         roger  = Sheep "Roger"  (Just eve)   (Just kronos)
-	         molly  = Sheep "Molly"  (Just holly) (Just roger)
-	     in           Sheep "Dolly"  (Just molly) Nothing
+                 roger  = Sheep "Roger"  (Just eve)   (Just kronos)
+                 molly  = Sheep "Molly"  (Just holly) (Just roger)
+             in           Sheep "Dolly"  (Just molly) Nothing
 
 {-
 5.1 Exercise 1: Do notation

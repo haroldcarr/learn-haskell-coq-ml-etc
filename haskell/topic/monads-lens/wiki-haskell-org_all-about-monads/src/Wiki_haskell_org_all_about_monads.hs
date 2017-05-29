@@ -1,4 +1,11 @@
-{-# LANGUAGE OverloadedStrings, PackageImports #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults      #-}
+{-# OPTIONS_GHC -fno-warn-unused-do-bind     #-}
+
+-- FlexibleContexts for getRan'
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports    #-}
 {-
 :set -XOverloadedStrings
 -}
@@ -14,7 +21,7 @@ module Wiki_haskell_org_all_about_monads
 where
 
 import           Control.Arrow      ((&&&))
-import           Control.Monad      (MonadPlus (..), ap, foldM, guard, liftM,
+import           Control.Monad      (MonadPlus (..), ap, foldM, guard,
                                      liftM2, mapM, mapM_, msum, sequence,
                                      sequence_, zipWithM, zipWithM_)
 import "mtl"     Control.Monad.Cont
@@ -23,13 +30,11 @@ import           Control.Monad.Plus (mfromMaybe)
 import "mtl"     Control.Monad.Reader
 import "mtl"     Control.Monad.State
 import "mtl"     Control.Monad.Writer
-import           Data.Char          (chr, digitToInt, intToDigit, isAlpha, isDigit, isHexDigit, isSpace)
+import           Data.Char          (chr, digitToInt, isAlpha, isDigit, isHexDigit, isSpace)
 import qualified Data.Map     as Map
 import           Data.Maybe         (fromJust, mapMaybe)
-import           Data.Text          as T hiding (break, dropWhile, foldM, foldl,
-                                          foldr, length, head, map, reverse, tail, words, zip)
 import           System.Random      (Random(..), StdGen, getStdGen, mkStdGen, randomR)
-import qualified Test.HUnit         as T
+import qualified Test.HUnit         as TT
 import qualified Test.HUnit.Util    as U
 import           X_02_example       hiding (parent)
 
@@ -49,7 +54,7 @@ Monads : structuring functional programs
   - computations composed from other computations
   - separate combination strategy from computations
 - Flexibility
-  - programs more adaptable than programs written without monads
+j  - programs more adaptable than programs written without monads
   - monad puts computational strategy in single place
     (instead of distributed in entire program)
 - Isolation
@@ -80,16 +85,18 @@ Container analogy
 -}
 
 maternalGF1 :: Sheep -> Maybe Sheep
-maternalGF1 s = case mother s of
-                    Nothing -> Nothing
-                    Just m  -> father m
+maternalGF1 s =
+  case mother s of
+    Nothing -> Nothing
+    Just m  -> father m
 
 momsPaternalGF1 :: Sheep -> Maybe Sheep
-momsPaternalGF1 s = case mother s of
-                        Nothing -> Nothing
-                        Just m  -> case father m of
-                                       Nothing -> Nothing
-                                       Just gf -> father gf
+momsPaternalGF1 s =
+  case mother s of
+    Nothing -> Nothing
+    Just m  -> case father m of
+                 Nothing -> Nothing
+                 Just gf -> father gf
 
 mom1  = U.t "mom1"  (show (mother breedSheep))           (show (Just "Molly"))
 dad1  = U.t "dad1"  (show (father breedSheep))           (show (Nothing::Maybe Sheep))
@@ -397,8 +404,9 @@ swapNames s = let (ln,fn) = break (==',') s
               in dropWhile isSpace (tail fn) ++ " " ++ ln
 
 getName :: String -> Maybe String
-getName name = do let db = [("John", "Smith, John"), ("Mike", "Caine, Michael")]
-                  liftM swapNames (lookup name db)
+getName name0 = do
+  let db = [("John", "Smith, John"), ("Mike", "Caine, Michael")]
+  fmap swapNames (lookup name0 db)
 
 {- Without using the liftM operation, we would have had to do something
    that is less succinct, like this:
@@ -420,7 +428,7 @@ Lifting enables concise higher-order functions.
 -- returns list containing result of folding the given binary operator
 -- through all combinations of elements of the given lists.
 allCombinations :: (a -> a -> a) -> [[a]] -> [a]
-allCombinations fn []     = []
+allCombinations  _ []     = []
 allCombinations fn (l:ls) = foldl (liftM2 fn) l ls
 
 -- e.g., allCombinations (+) [[0,1],[1,2,3]]
@@ -667,23 +675,23 @@ data MailPref = HTML | Plain deriving (Eq, Show)
 
 data MailSystem = MS { fullNameDB::[(String,EmailAddr)],
                        nickNameDB::[(String,EmailAddr)],
-		       prefsDB   ::[(EmailAddr,MailPref)] }
+                       prefsDB   ::[(EmailAddr,MailPref)] }
 
 data UserInfo = User { msName::String,
                        nick::String,
-		       email::EmailAddr,
-		       prefs::MailPref }
+                       email::EmailAddr,
+                       prefs::MailPref }
 
 makeMailSystem :: [UserInfo] -> MailSystem
 makeMailSystem users = let fullLst = map (msName &&& email) users
                            nickLst = map (nick   &&& email) users
-			   prefLst = map (email  &&& prefs) users
-		       in MS fullLst nickLst prefLst
+                           prefLst = map (email  &&& prefs) users
+                       in MS fullLst nickLst prefLst
 
 -- skips next steps if any returns Nothing
 getMailPrefs :: MailSystem -> String -> Maybe MailPref
-getMailPrefs sys name = do
-    addr <- lookup name (fullNameDB sys) `mplus` lookup name (nickNameDB sys)
+getMailPrefs sys name0 = do
+    addr <- lookup name0 (fullNameDB sys) `mplus` lookup name0 (nickNameDB sys)
     lookup addr (prefsDB sys)
 
 mailSystem = makeMailSystem
@@ -768,15 +776,15 @@ type ParseMonad = Either ParseError
 parseHexDigit :: Char -> Int -> ParseMonad Integer
 parseHexDigit c idx = if isHexDigit c then
                         return (toInteger (digitToInt c))
-		      else
-		        throwError (Err idx ("Invalid character '" ++ [c] ++ "'"))
+                      else
+                        throwError (Err idx ("Invalid character '" ++ [c] ++ "'"))
 
 -- idx is current location in parse
 parseHex :: String -> ParseMonad Integer
 parseHex s = parseHex' s 0 1
   where parseHex' []      val _   = return val
         parseHex' (c:cs)  val idx = do d <- parseHexDigit c idx
-	                               parseHex' cs ((val * 16) + d) (idx + 1)
+                                       parseHex' cs ((val * 16) + d) (idx + 1)
 
 toString :: Integer -> ParseMonad String
 toString n = return $ show n
@@ -830,7 +838,7 @@ Hex overlaps decimal and alphanumeric: ambiguous grammar.
 data Parsed = Digit Integer | Hex Integer | Word String deriving (Eq, Show)
 
 parseCommon :: (Char -> Bool) -> Char -> Parsed -> [Parsed]
-parseCommon test c ret = if test c then return ret else mzero
+parseCommon test0 c ret = if test0 c then return ret else mzero
 
 -- try to add char to parsed rep of hex digit
 parseHexDigt :: Parsed -> Char -> [Parsed]
@@ -854,8 +862,9 @@ parse p c = parseHexDigt p c `mplus` parseDigit p c `mplus` parseWord p c
 
 -- parse an entire String and return list of possible parsed values
 parseArg :: String -> [Parsed]
-parseArg s = do init <- return (Hex 0) `mplus` return (Digit 0) `mplus` return (Word "")
-                foldM parse init s
+parseArg s = do
+  init0 <- return (Hex 0) `mplus` return (Digit 0) `mplus` return (Word "")
+  foldM parse init0 s
 
 sr1 = U.t "sr1" (parseArg "dead") [Hex 57005,Word "dead"]
 sr2 = U.t "sr2" (parseArg   "10") [Hex 16,Digit 10]
@@ -944,9 +953,10 @@ translateString :: String -> String -> String -> String
 translateString set1 set2 = map (translate set1 set2)
 
 usage :: IOError -> IO ()
-usage e = do putStrLn "Usage: ex14 set1 set2"
-             putStrLn "Translates characters in set1 on stdin to the corresponding"
-             putStrLn "characters from set2 and writes the translation to stdout."
+usage _ = do
+  putStrLn "Usage: ex14 set1 set2"
+  putStrLn "Translates characters in set1 on stdin to the corresponding"
+  putStrLn "characters from set2 and writes the translation to stdout."
 
 -- translates stdin to stdout based on commandline arguments
 -- main2
@@ -1090,17 +1100,18 @@ incB x =
 
 incB' :: Int -> State Int Char
 incB' x =
-    state (\g -> (    g,     g)) >>= \i ->
-    state (\_ -> (   (), i + x)) >>
-    state (\s -> (chr i,     s))
+  state (\g -> (    g,     g)) >>= \i ->
+  state (\_ -> (   (), i + x)) >>
+  state (\s -> (chr i,     s))
 
 incB'' :: Int -> State Int Char
 incB'' x =
-    state $ \s ->
-      let (v,s') = (\g -> (g, g)) s
-      in runState ((\i -> state $ \s -> let (v,s') = (\_ -> ((), i + x)) s
-                                        in runState ((\_ -> state (\r -> (chr i, r))) v) s')
-                   v) s'
+  state $ \s ->
+    let (v,s') = (\g -> (g, g)) s
+    in runState ((\i -> state $ \s ->
+                          let (v,s') = (\_ -> ((), i + x)) s
+                          in runState ((\_ -> state (\r -> (chr i, r))) v) s')
+                 v) s'
 
 incB''' :: Int -> (Int -> (Char, Int))
 incB''' x =
@@ -1687,7 +1698,7 @@ instance (MonadPlus m) => MonadPlus (StateT s m) where
 ------------------------------------------------------------------------------
 
 testing =
-    T.runTestTT $ T.TestList $
+    TT.runTestTT $ TT.TestList $
         mom1 ++ dad1 ++ mgf1 ++ mpgf1 ++ listEx ++ mgf2 ++ dmgf2 ++ mgf3 ++ dmgf3 ++ prnt1 ++ prnt2 ++
         seqExM ++ seqExL ++ mapMExM ++ fm ++ mff ++ mff ++ zipWithMHC ++ gn ++ ac1 ++ ac2 ++ ac3 ++
         apEx1 ++ apEx2 ++ apEx3 ++ ms1 ++ ms2 ++ ms3 ++ gyt1 ++ gyt2 ++
