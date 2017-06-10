@@ -2,12 +2,25 @@
 
 module Reader where
 
-import Control.Monad.Reader
+import           Control.Monad.Reader
+import           Test.HUnit           as T (Test (TestList), runTestTT)
+import           Test.HUnit.Util      as U
 
-mult :: Reader [String] [String]
-mult = do
+------------------------------------------------------------------------------
+
+w :: Reader [String] [String]
+w = do
   a <- ask
   b <- asks (["XXX"]++)
   return (a++b)
 
-doit = runReader mult ["X","y","ZZ"]
+dow = runReader w ["initial"]
+
+tdow = U.t "tdow"
+    dow
+    ["initial","XXX","initial"]
+
+------------------------------------------------------------------------------
+
+testReader =
+  runTestTT $ TestList {- $ -} tdow
