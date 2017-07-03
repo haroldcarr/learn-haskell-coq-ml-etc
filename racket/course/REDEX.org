@@ -1,0 +1,10 @@
+https://plt.eecs.northwestern.edu/snapshots/current/doc/redex/redex2015.html
+
+pi-calculus
+https://en.wikipedia.org/wiki/%CE%A0-calculus
+https://en.wikipedia.org/wiki/Communicating_sequential_processes
+http://www.cnd.mcgill.ca/~ivan/functions_as_processes_BFb0032030.pdf
+https://github.com/racket/redex/blob/master/redex-examples/redex/examples/pi-calculus.rkt
+
+The Network as a Language Construct
+http://www.ccs.neu.edu/home/tonyg/esop2014/
