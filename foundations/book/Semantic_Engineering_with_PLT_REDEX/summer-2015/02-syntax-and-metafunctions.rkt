@@ -215,10 +215,10 @@ The function is a good example of accumulator-functions in Redex:
 ; (sd e) computes the static distance version of e
 
 (define-extended-language SD Lambda
-  (e ::= .... (K n))
+  (e ::= .... (K n n)) ;; DIFF (K n)
   (n ::= natural))
 
-(define sd1 (term (K 1)))
+(define sd1 (term (K 1 1))) ;; DIFF (K 1)
 (define sd2 (term 1))
 
 (define SD? (redex-match? SD e))
@@ -264,7 +264,7 @@ extend the language definition instead.
    (lambda () (sd/ae e_1 ((x ...) e_rest ...)))]
   [(sd/ae (e_fun e_arg ...) (e_rib ...))
    ((sd/ae e_fun (e_rib ...)) (sd/ae e_arg (e_rib ...)) ...)]
-  [(sd/ae e_1 e)
+  [(sd/ae e_1 e_rib ...) ;; DIFF e_1 e
    ; a free variable is left alone
    e_1])
 

@@ -1,5 +1,5 @@
 Created       : 2015 Jul 11 (Sat) 15:38:08 by Harold Carr.
-Last Modified : 2015 Sep 11 (Fri) 20:41:10 by Harold Carr.
+Last Modified : 2017 Jul 03 (Mon) 14:51:57 by Harold Carr.
 
 update
    ~/.sync/.esync/bin/hcPathRacketBin
@@ -17,3 +17,14 @@ http://docs.racket-lang.org/drracket/Keyboard_Shortcuts.html?q=keybindings#%28pa
 install keybindings:
 http://docs.racket-lang.org/drracket/Keyboard_Shortcuts.html?q=keybindings#%28part._defining-shortcuts%29
 
+------------------------------------------------------------------------------
+
+Quick: An Introduction to Racket with Pictures https://docs.racket-lang.org/quick/index.html
+
+* Systems Programming with Racket https://docs.racket-lang.org/more/index.html
+
+* Realm of Racket’s last chapter, titled “)” or “close paren”.
+
+* F*dging up a Racket:  http://www.hashcollision.org/brainfudge/
+
+redex: Peg Solitaire: https://www.leafac.com/prose/playing-the-game-with-plt-redex/

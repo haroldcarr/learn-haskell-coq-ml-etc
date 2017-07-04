@@ -128,3 +128,40 @@
 (define-metafunction L+Γ
   [(different x_1 x_1) #f]
   [(different x_1 x_2) #t])
+
+;; 1.3 Testing Typing
+
+(judgment-holds
+   (types ·
+          ((λ (x num) (amb x 1))
+           (+ 1 2))
+          t)
+   t)
+
+(judgment-holds
+   (types ·
+          (λ (f (→ num (→ num num))) (f (amb 1 2)))
+          (→ t_1 t_2))
+   t_2)
+
+(test-equal
+   (judgment-holds
+    (types · (λ (x num) x) t)
+    t)
+   (list (term (→ num num))))
+
+(test-equal
+   (judgment-holds
+    (types · (amb 1 2 3) t)
+    t)
+   (list (term num)))
+
+;; this fails as expected
+(test-equal
+   (judgment-holds
+    (types · (+ 1 2) t)
+    t)
+   (list (term (→ num num))))
+
+
+
