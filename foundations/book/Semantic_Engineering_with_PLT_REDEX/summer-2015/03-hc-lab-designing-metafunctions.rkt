@@ -13,7 +13,8 @@
 ; (subtract (x ...) x_1 ...) removes x_1 ... from (x ...)
 
 (module+ test
-  (test-equal (term (subtract (x y z x) x z)) (term (y))))
+  (test-equal (term (subtract (x y z x) x z)) (term (y)))
+)
 
 (define-metafunction Lambda
   subtract : (x ...) x ... -> (x ...)
@@ -23,7 +24,8 @@
 
 ; (subtract1 (x ...) x_1) removes x_1  from (x ...)
 (module+ test
-  (test-equal (term (subtract1 (x y z x) x)) (term (y z))))
+  (test-equal (term (subtract1 (x y z x) x)) (term (y z)))
+)
 
 (define-metafunction Lambda
   subtract1 : (x ...) x -> (x ...)
@@ -34,8 +36,8 @@
   [(subtract1 (x ...) x_1) (x ...)])
 
 ; (fv e) computes the sequence of free variables of e
-; a variable occurrence of x is free in e 
-; if no (lambda (... x ...) ...) dominates its occurrence 
+; a variable occurrence of x is free in e
+; if no (lambda (... x ...) ...) dominates its occurrence
 
 (define-metafunction Lambda
   fv : e -> (x ...)
@@ -51,7 +53,8 @@
 (module+ test
   (test-equal (term (fv x)) (term (x)))
   (test-equal (term (fv (lambda (x) x))) (term ()))
-  (test-equal (term (fv (lambda (x) (y z x)))) (term (y z))))
+  (test-equal (term (fv (lambda (x) (y z x)))) (term (y z)))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 1.
@@ -72,7 +75,11 @@
 ; (add (x ...) x_1 ...) adds x_1 ... to (x ...)
 
 (module+ test
-  (test-equal (term (add (y z) w x)) (term (x w y z)))) ;; NOTE: "reverse" order of result
+  ;; NOTE: "reverse" order of result
+  (test-equal (term (add (y z) w x)) (term (x w y z)))
+  (test-equal (term (add (y z) z y)) (term (y z)))
+  (test-equal (term (add (y z) y z)) (term (y z)))
+)
 
 (define-metafunction Lambda
   add : (x ...) x ... -> (x ...)
@@ -82,7 +89,8 @@
 
 ; (add (x ...) x_1) adds x_1 to (x ...)
 (module+ test
-  (test-equal (term (add1 (x y z) w)) (term (w x y z))))
+  (test-equal (term (add1 (x y z) w)) (term (w x y z)))
+)
 
 (define-metafunction Lambda
   add1 : (x ...) x -> (x ...)
@@ -113,7 +121,8 @@
   (test-equal (term (bv (lambda (x) x)))
               (term (x)))
   (test-equal (term (bv (lambda (x) (y z x))))
-              (term (x))))
+              (term (x)))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 2.
@@ -131,8 +140,7 @@
 (define-metafunction Env
   lookup : x env -> e-or-f
   [(lookup x ((x_1 e_1) ... (x e) (x_2 e_2) ...)) e]
-  [(lookup _ _) #f]
-  )
+  [(lookup _ _) #f])
 
 (module+ test
   (test-equal (env? (term ()))        #t)
@@ -140,13 +148,13 @@
   (test-equal (env? (term a))         #f)
   (test-equal (env? (term ((a))))     #f)
   (test-equal (env? (term ((a b) c))) #f)
-  )
+)
 
 (module+ test
   (test-equal (term (lookup x ()))      #f)
   (test-equal (term (lookup x ((x 1)))) 1)
   (test-equal (term (lookup x ((y 1)))) #f)
-  )
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exercise 3.
@@ -177,7 +185,7 @@
                            (y (lambda (x) x)))
                        (x y y y))))
               '(y x c b a x))
-  )
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
