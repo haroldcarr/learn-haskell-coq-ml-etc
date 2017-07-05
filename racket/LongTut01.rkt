@@ -108,7 +108,8 @@
 
 ;; (sd e) computes the static distance version of e (aka de Bruijn index)
 (define-extended-language SD Lambda
-  (e ::= .... (K n n))
+  (e ::= .... (K n n)
+              n)
   (n ::= natural))
 
 (define sd1 (term (K 1 2)))

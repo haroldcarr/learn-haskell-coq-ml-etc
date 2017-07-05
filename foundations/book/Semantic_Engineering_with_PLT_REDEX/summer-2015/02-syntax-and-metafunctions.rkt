@@ -264,7 +264,7 @@ extend the language definition instead.
    (lambda () (sd/ae e_1 ((x ...) e_rest ...)))]
   [(sd/ae (e_fun e_arg ...) (e_rib ...))
    ((sd/ae e_fun (e_rib ...)) (sd/ae e_arg (e_rib ...)) ...)]
-  [(sd/ae e_1 e_rib ...) ;; DIFF e_1 e
+  [(sd/ae e_1 (e_rib ...)) ;; DIFF e_1 e
    ; a free variable is left alone
    e_1])
 
@@ -285,7 +285,7 @@ Now α equivalence is straightforward:
   (test-equal (term (=α (lambda (x) (x 1)) (lambda (y) (y 1))))   #true)
   (test-equal (term (=α (lambda (x) x) (lambda (y) z)))           #false))
 
-(define-metafunction SD
+(define-metafunction Lambda/n
   =α : e e -> boolean
   [(=α e_1 e_2) ,(equal? (term (sd e_1)) (term (sd e_2)))])
 
@@ -372,7 +372,7 @@ future extensions in mind.
               (term ((lambda (x) (1 x)) 2))
               #:equiv =α/racket))
 
-(define-metafunction Lambda
+(define-metafunction Lambda/n
   subst : ((any x) ...) any -> any
   [(subst [(any_1 x_1) ... (any_x x) (any_2 x_2) ...] x) any_x]
   [(subst [(any_1 x_1) ...]  x) x]
@@ -384,7 +384,7 @@ future extensions in mind.
   [(subst [(any_1 x_1) ...]  (any ...)) ((subst [(any_1 x_1) ...]  any) ...)]
   [(subst [(any_1 x_1) ...]  any_*) any_*])
 
-(define-metafunction Lambda
+(define-metafunction Lambda/n
   subst-raw : ((x x) ...) any -> any
   [(subst-raw ((x_n1 x_o1) ... (x_new x) (x_n2 x_o2) ...) x) x_new]
   [(subst-raw ((x_n1 x_o1) ...)  x) x]
