@@ -1,0 +1,39 @@
+(define-language Lambda
+  (e ::= x
+         (lambda (x) e)
+         (e e))
+  (x ::= variable-not-otherwise-mentioned)
+  #:binding-forms
+  (lambda (x) e #:refers-to x))
+
+(default-language Lambda)
+
+(module test+
+  (term (substitute ,e1 y x))
+  (term (substitute ,e2 y x)))
+
+(define-extended-language Lambda-calculus Lambda
+  (C ::=
+     hole
+     (lambda (x) C)
+     (C e)
+     (e C)))
+
+(define ->beta
+  (reduction-relation
+   Lambda-calculus
+   #:domain e
+   (--> (in-hole C ((lambda (x) e_1) e_2))
+        (in-hole C (substitute e_2 x e_1))
+        beta-name)))
+
+(apply-reduction-relation ->beta (term (,e1 ,e2)))
+
+(define e3
+  (term
+   ((lambda (x) (lambda (y) x))
+    ((lambda (x) x) z))))
+
+(traces ->beta e3)
+
+
