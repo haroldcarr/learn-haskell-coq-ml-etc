@@ -2,7 +2,10 @@
 
 (require redex)
 
-(define-language λα
+;; ------------------------------------------------------------------------------
+;; syntax
+
+(define-language λα-syntax
   ;; types
   (τ ::=
      1                      ;; unit type
@@ -17,8 +20,8 @@
   (v ::=
      unit                   ;; unit value
      x                      ;; variable value
-     (lambda (x) e)         ;; function value           ;; ** 04-reductions-...
-     (rec x (lambda (x) e)) ;; recursive function value ;; ** 04-reductions-...
+     (λ (x) e)              ;; function value
+     (rec x (λ (x) e))      ;; recursive function value
      (inj1 v)               ;; sum value
      (inj2 v)               ;; sum value
      (prod v v)             ;; product value
@@ -29,6 +32,7 @@
      v                      ;; values
      (let ((x e)) e)        ;; local binding
      (v v)                  ;; call-by-value application
+                            ;; administrative normal form
      (case v v v)           ;; elimination of sum type
      (prj1 v)               ;; projection of product
      (prj2 v)               ;; projection of product
@@ -38,52 +42,110 @@
      )
   ;; variables
   (x ::= variable-not-otherwise-mentioned)
+  #:binding-forms
+  (let ((x e_1)) e_2 #:refers-to x)
+  (λ (x) e #:refers to x)
+  (rec x_1 (λ (x_2) e #:refers-to x_2)) ;; AND to x_1
 )
 
-(define λα-τ? (redex-match? λα τ))
-(define λα-e? (redex-match? λα e))
+(define λα-syntax-τ? (redex-match? λα-syntax τ))
+(define λα-syntax-e? (redex-match? λα-syntax e))
 
 (module+ test
   ;; types
-  (test-equal (λα-τ? (term (1 -> 1))) #t)
+  (test-equal (λα-syntax-τ? (term (1 -> 1))) #t)
   ;; values
-  (test-equal (λα-e? (term unit)) #t)
-  (test-equal (λα-e? (term z)) #t)
-  (test-equal (λα-e? (term (lambda (w) z))) #t)
-  (test-equal (λα-e? (term (inj1 unit))) #t)
-  (test-equal (λα-e? (term (inj2 z))) #t)
-  (test-equal (λα-e? (term (unit unit))) #t)
-  (test-equal (λα-e? (term (roll z))) #t)
+  (test-equal (λα-syntax-e? (term unit)) #t)
+  (test-equal (λα-syntax-e? (term z)) #t)
+  (test-equal (λα-syntax-e? (term (λ (w) z))) #t)
+  (test-equal (λα-syntax-e? (term (inj1 unit))) #t)
+  (test-equal (λα-syntax-e? (term (inj2 z))) #t)
+  (test-equal (λα-syntax-e? (term (unit unit))) #t)
+  (test-equal (λα-syntax-e? (term (roll z))) #t)
   ;; expressions
-  (test-equal (λα-e? (term (let ((z unit)) (inj1 z)))) #t)
-  (test-equal (λα-e? (term (w z))) #t)
-  (test-equal (λα-e? (term (case unit (lambda (w) w) (lambda (z) z)))) #t)
-  )
-#;
-(define-judgment-form λα
-  #:mode (α I I I O)
-  [(α x e v ,(subst (((v x)) e)))])
-#;
-(module+ test
-  (test-equal
-      (judgment-holds (α x x unit unit))
-    #t)
+  (test-equal (λα-syntax-e? (term (let ((z unit)) (inj1 z)))) #t)
+  (test-equal (λα-syntax-e? (term (w z))) #t)
+  (test-equal (λα-syntax-e? (term (case unit (λ (w) w) (λ (z) z)))) #t)
   )
 
-(define-judgment-form λα
-  #:mode (δ I I O)
-  [(δ prj1 (prod v_1 v_2) v_1)]
-  [(δ prj2 (prod v_1 v_2) v_2)])
+;; ------------------------------------------------------------------------------
+;; evaluation
+
+(define-extended-language λα λα-syntax
+  (E ::=
+     hole
+     (let ((x E)) e)
+     ))
+
+(define λα-E? (redex-match? λα E))
 
 (module+ test
-  (test-equal (judgment-holds (δ prj1
-                                 (prod (prod unit unit) unit)
-                                 (prod unit unit)))
-              #t)
-  (test-equal (judgment-holds (δ prj2
-                                 (prod (prod unit unit) unit)
-                                 unit))
-              #t)
+  (test-equal (λα-E? (term hole)) #t)
+  (test-equal (λα-E? (term (let ((x hole)) x))) #t)
+  )
+
+(define -->βv
+  (reduction-relation
+   λα
+   #:domain e
+   (--> (in-hole E ((λ (x_1) e_1) v_1))
+        (in-hole E (subst ([v_1 x_1]) e_1))
+        "βv-apply")
+   ;; TODO "βv-rec"
+   (--> (in-hole E (let ((x_1 v_1)) e_2))
+        (in-hole E (subst ([v_1 x_1]) e_2))
+        "βv-let")
+   (--> (in-hole E (case (inj1 v_1) v_2 v_3))
+        (in-hole E (v_2 v_1))
+        "βv-case-inj1")
+   (--> (in-hole E (case (inj2 v_1) v_2 v_3))
+        (in-hole E (v_3 v_1))
+        "βv-case-inj2")
+   (--> (in-hole E (prj1 (prod v_1 v_2)))
+        (in-hole E v_1)
+        "βv-prj1")
+   (--> (in-hole E (prj2 (prod v_1 v_2)))
+        (in-hole E v_2)
+        "βv-prj2")
+   (--> (in-hole E (unroll (roll v_1)))
+        (in-hole E v_1)
+        "βv-unroll-roll")
+   ))
+
+(module+ test
+  (test--> -->βv
+           (term ((λ (x) x) unit))
+           (term unit))
+  ;; TODO "βv-rec"
+  (test-->> -->βv
+           (term (let ((x (prj1 (prod (prod unit unit)
+                                      unit))))
+                   x))
+           (term (prod unit unit)))
+  (test--> -->βv
+           (term (case (inj1 unit)
+                    (λ (x) x)
+                    (λ (y) y)))
+           (term ((λ (x) x) unit)))
+  (test--> -->βv
+           (term (case (inj2 unit)
+                    (λ (x) x)
+                    (λ (y) y)))
+           (term ((λ (y) y) unit)))
+  (test-->> -->βv
+            (term (case (inj1 unit)
+                    (λ (x) x)
+                    (λ (y) y)))
+            (term unit))
+  (test--> -->βv
+           (term (prj1 (prod (prod unit unit) unit)))
+           (term (prod unit unit)))
+  (test--> -->βv
+           (term (prj2 (prod (prod unit unit) unit)))
+           (term unit))
+  (test--> -->βv
+           (term (unroll (roll unit)))
+           (term unit))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -106,9 +168,9 @@
 ;; (=α e_1 e_2) determines whether e_1 and e_2 are α equivalent
 
 (module+ test
-  (test-equal (term (=α (lambda (x) x) (lambda (y) y))) #true)
-  (test-equal (term (=α (lambda (x) (x 1)) (lambda (y) (y 1)))) #true)
-  (test-equal (term (=α (lambda (x) x) (lambda (y) z))) #false))
+  (test-equal (term (=α (λ (x) x) (λ (y) y))) #true)
+  (test-equal (term (=α (λ (x) (x 1)) (λ (y) (y 1)))) #true)
+  (test-equal (term (=α (λ (x) x) (λ (y) z))) #false))
 
 (define-metafunction λα
   =α : any any -> boolean
@@ -137,12 +199,12 @@
 (module+ test
   (test-equal (term (sd/a x ())) (term x))
   (test-equal (term (sd/a x ((y) (z) (x)))) (term (K 2 0)))
-  (test-equal (term (sd/a ((lambda (x) x) (lambda (y) y)) ()))
-              (term ((lambda () (K 0 0)) (lambda () (K 0 0)))))
-  (test-equal (term (sd/a (lambda (x) (x (lambda (y) y))) ()))
-              (term (lambda () ((K 0 0) (lambda () (K 0 0))))))
-  (test-equal (term (sd/a (lambda (z x) (x (lambda (y) z))) ()))
-              (term (lambda () ((K 0 1) (lambda () (K 1 0)))))))
+  (test-equal (term (sd/a ((λ (x) x) (λ (y) y)) ()))
+              (term ((λ () (K 0 0)) (λ () (K 0 0)))))
+  (test-equal (term (sd/a (λ (x) (x (λ (y) y))) ()))
+              (term (λ () ((K 0 0) (λ () (K 0 0))))))
+  (test-equal (term (sd/a (λ (z x) (x (λ (y) z))) ()))
+              (term (λ () ((K 0 1) (λ () (K 1 0)))))))
 
 (define-metafunction SD
   sd/a : any ((x ...) ...) -> any
@@ -152,8 +214,8 @@
    (where n_rib ,(length (term ((x_1 ...) ...))))
    (where n_pos ,(length (term (x_0 ...))))
    (where #false (in x (x_1 ... ...)))]
-  [(sd/a (lambda (x ...) any_1) (any_rest ...))
-   (lambda () (sd/a any_1 ((x ...) any_rest ...)))]
+  [(sd/a (λ (x ...) any_1) (any_rest ...))
+   (λ () (sd/a any_1 ((x ...) any_rest ...)))]
   [(sd/a (any_fun any_arg ...) (any_rib ...))
    ((sd/a any_fun (any_rib ...)) (sd/a any_arg (any_rib ...)) ...)]
   [(sd/a any_1 any)
@@ -167,21 +229,21 @@
   (test-equal (term (subst ([1 x][2 y]) x)) 1)
   (test-equal (term (subst ([1 x][2 y]) y)) 2)
   (test-equal (term (subst ([1 x][2 y]) z)) (term z))
-  (test-equal (term (subst ([1 x][2 y]) (lambda (z w) (x y))))
-              (term (lambda (z w) (1 2))))
-  (test-equal (term (subst ([1 x][2 y]) (lambda (z w) (lambda (x) (x y)))))
-              (term (lambda (z w) (lambda (x) (x 2))))
+  (test-equal (term (subst ([1 x][2 y]) (λ (z w) (x y))))
+              (term (λ (z w) (1 2))))
+  (test-equal (term (subst ([1 x][2 y]) (λ (z w) (λ (x) (x y)))))
+              (term (λ (z w) (λ (x) (x 2))))
               #:equiv =α/racket)
-  (test-equal (term (subst ((2 x)) ((lambda (x) (1 x)) x)))
-              (term ((lambda (x) (1 x)) 2))
+  (test-equal (term (subst ((2 x)) ((λ (x) (1 x)) x)))
+              (term ((λ (x) (1 x)) 2))
               #:equiv =α/racket))
 
 (define-metafunction λα
   subst : ((any x) ...) any -> any
   [(subst [(any_1 x_1) ... (any_x x) (any_2 x_2) ...] x) any_x]
   [(subst [(any_1 x_1) ... ] x) x]
-  [(subst [(any_1 x_1) ... ] (lambda (x ...) any_body))
-   (lambda (x_new ...)
+  [(subst [(any_1 x_1) ... ] (λ (x ...) any_body))
+   (λ (x_new ...)
      (subst ((any_1 x_1) ...)
             (subst-raw ((x_new x) ...) any_body)))
    (where  (x_new ...)  ,(variables-not-in (term any_body) (term (x ...)))) ]
@@ -192,8 +254,8 @@
   subst-raw : ((x x) ...) any -> any
   [(subst-raw ((x_n1 x_o1) ... (x_new x) (x_n2 x_o2) ...) x) x_new]
   [(subst-raw ((x_n1 x_o1) ... ) x) x]
-  [(subst-raw ((x_n1 x_o1) ... ) (lambda (x ...) any))
-   (lambda (x ...) (subst-raw ((x_n1 x_o1) ... ) any))]
+  [(subst-raw ((x_n1 x_o1) ... ) (λ (x ...) any))
+   (λ (x ...) (subst-raw ((x_n1 x_o1) ... ) any))]
   [(subst-raw [(any_1 x_1) ... ] (any ...))
    ((subst-raw [(any_1 x_1) ... ] any) ...)]
   [(subst-raw [(any_1 x_1) ... ] any_*) any_*])
