@@ -51,6 +51,12 @@
 (define λα-syntax-τ? (redex-match? λα-syntax τ))
 (define λα-syntax-e? (redex-match? λα-syntax e))
 
+(define p1 (term (let [(f (λ (z) (prod (prod z z) z)))]
+                   (f unit))))
+(define p2 (term (let ((f (λ (z) (prod (prod z z) z))))
+                   (let ((c (case (inj1 unit) f f)))
+                     (prj1 c)))))
+
 (module+ test
   ;; types
   (test-equal (λα-syntax-τ? (term (1 -> 1))) #t)
@@ -66,6 +72,8 @@
   (test-equal (λα-syntax-e? (term (let ((z unit)) (inj1 z)))) #t)
   (test-equal (λα-syntax-e? (term (w z))) #t)
   (test-equal (λα-syntax-e? (term (case unit (λ (w) w) (λ (z) z)))) #t)
+  (test-equal (λα-syntax-e? p1) #t)
+  (test-equal (λα-syntax-e? p2) #t)
   )
 
 ;; ------------------------------------------------------------------------------
@@ -146,6 +154,12 @@
   (test--> -->βv
            (term (unroll (roll unit)))
            (term unit))
+  (test-->> -->βv
+            p1
+            (term (prod (prod unit unit) unit)))
+  (test-->> -->βv
+            p2
+            (term (prod unit unit)))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
