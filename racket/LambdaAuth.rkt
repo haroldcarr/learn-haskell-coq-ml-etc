@@ -6,6 +6,11 @@
 ;; syntax
 
 (define-language λα-syntax
+  (P ::=
+     (prog Π e))
+  ;; proof streams
+  (Π :: =
+     (π (integer ... )))
   ;; types
   (τ ::=
      1                      ;; unit type
@@ -50,16 +55,17 @@
 
 (define λα-syntax-τ? (redex-match? λα-syntax τ))
 (define λα-syntax-e? (redex-match? λα-syntax e))
+(define λα-syntax-P? (redex-match? λα-syntax P))
 
-(define p-rec-1 (term ((rec x (λ (y) y))
-                  unit)))
-(define p-rec-2 (term ((rec x (λ (y) (x y)))
-                  unit)))
-(define p1 (term (let [(f (λ (z) (prod (prod z z) z)))]
-                   (f unit))))
-(define p2 (term (let ((f (λ (z) (prod (prod z z) z))))
-                   (let ((c (case (inj1 unit) f f)))
-                     (prj1 c)))))
+(define p-rec-1 (term (prog (π ()) ((rec x (λ (y) y))
+                                    unit))))
+(define p-rec-2 (term (prog (π ()) ((rec x (λ (y) (x y)))
+                                    unit))))
+(define p1 (term (prog (π ()) (let [(f (λ (z) (prod (prod z z) z)))]
+                                (f unit)))))
+(define p2 (term (prog (π ()) (let ((f (λ (z) (prod (prod z z) z))))
+                                (let ((c (case (inj1 unit) f f)))
+                                  (prj1 c))))))
 
 (module+ test
   ;; types
@@ -77,10 +83,11 @@
   (test-equal (λα-syntax-e? (term (let ((z unit)) (inj1 z)))) #t)
   (test-equal (λα-syntax-e? (term (w z))) #t)
   (test-equal (λα-syntax-e? (term (case unit (λ (w) w) (λ (z) z)))) #t)
-  (test-equal (λα-syntax-e? p-rec-1) #t)
-  (test-equal (λα-syntax-e? p-rec-2) #t)
-  (test-equal (λα-syntax-e? p1) #t)
-  (test-equal (λα-syntax-e? p2) #t)
+  ;; programs
+  (test-equal (λα-syntax-P? p-rec-1) #t)
+  (test-equal (λα-syntax-P? p-rec-2) #t)
+  (test-equal (λα-syntax-P? p1) #t)
+  (test-equal (λα-syntax-P? p2) #t)
   )
 
 ;; ------------------------------------------------------------------------------
@@ -102,88 +109,89 @@
 (define -->βv
   (reduction-relation
    λα
-   #:domain e
-   (--> (in-hole E ((λ (x_1) e_1) v_1))
-        (in-hole E (subst ([v_1 x_1]) e_1))
+   #:domain P
+   (--> (in-hole E (prog Π ((λ (x_1) e_1) v_1)))
+        (in-hole E (prog Π (subst ([v_1 x_1]) e_1)))
         "βv-apply")
-   (--> (in-hole E ((rec x_1 (λ (x_2) e_1))
-                    v_1))
-        (in-hole E ((λ (x_2) e_2)
-                    v_1))
+   (--> (in-hole E (prog Π ((rec x_1 (λ (x_2) e_1))
+                              v_1)))
+        (in-hole E (prog Π ((λ (x_2) e_2)
+                              v_1)))
         (where e_2 (subst [((rec x_1 (λ (x_2) e_1))
                             x_1)]
                           e_1))
         "βv-rec")
-   (--> (in-hole E (let ((x_1 v_1)) e_2))
-        (in-hole E (subst ([v_1 x_1]) e_2))
+   (--> (in-hole E (prog Π (let ((x_1 v_1)) e_2)))
+        (in-hole E (prog Π (subst ([v_1 x_1]) e_2)))
         "βv-let")
-   (--> (in-hole E (case (inj1 v_1) v_2 v_3))
-        (in-hole E (v_2 v_1))
+   (--> (in-hole E (prog Π (case (inj1 v_1) v_2 v_3)))
+        (in-hole E (prog Π (v_2 v_1)))
         "βv-case-inj1")
-   (--> (in-hole E (case (inj2 v_1) v_2 v_3))
-        (in-hole E (v_3 v_1))
+   (--> (in-hole E (prog Π (case (inj2 v_1) v_2 v_3)))
+        (in-hole E (prog Π (v_3 v_1)))
         "βv-case-inj2")
-   (--> (in-hole E (prj1 (prod v_1 v_2)))
-        (in-hole E v_1)
+   (--> (in-hole E (prog Π (prj1 (prod v_1 v_2))))
+        (in-hole E (prog Π v_1))
         "βv-prj1")
-   (--> (in-hole E (prj2 (prod v_1 v_2)))
-        (in-hole E v_2)
+   (--> (in-hole E (prog Π (prj2 (prod v_1 v_2))))
+        (in-hole E (prog Π v_2))
         "βv-prj2")
-   (--> (in-hole E (unroll (roll v_1)))
-        (in-hole E v_1)
+   (--> (in-hole E (prog Π (unroll (roll v_1))))
+        (in-hole E (prog Π v_1))
         "βv-unroll-roll")
    ))
 
 (module+ test
   (test--> -->βv
-           (term ((λ (x) x) unit))
-           (term unit))
+           (term (prog (π ()) ((λ (x) x) unit)))
+           (term (prog (π ()) unit)))
   ;(traces -->βv p-rec-1)
   (test-->> -->βv
            p-rec-1
-           (term unit))
+           (term (prog (π ()) unit)))
   ;(traces -->βv p-rec-2)
   #;
   (test--> -->βv
           p-rec-2
-          (term ((λ (y) ((rec x (λ (y) (x y)))
-                         y))
-                 unit)))
+          (term (prog (π ()) ((λ (y) ((rec x (λ (y) (x y)))
+                                      y))
+                              unit))))
   (test-->> -->βv
-           (term (let ((x (prj1 (prod (prod unit unit)
-                                      unit))))
-                   x))
-           (term (prod unit unit)))
+            (term (prog (π ())
+                        (let ((x (prj1 (prod (prod unit unit)
+                                             unit))))
+                          x)))
+            (term (prog (π ()) (prod unit unit))))
   (test--> -->βv
-           (term (case (inj1 unit)
-                    (λ (x) x)
-                    (λ (y) y)))
-           (term ((λ (x) x) unit)))
+           (term (prog (π ()) (case (inj1 unit)
+                                (λ (x) x)
+                                (λ (y) y))))
+           (term (prog (π ()) ((λ (x) x) unit))))
   (test--> -->βv
-           (term (case (inj2 unit)
-                    (λ (x) x)
-                    (λ (y) y)))
-           (term ((λ (y) y) unit)))
+           (term (prog (π ()) (case (inj2 unit)
+                                (λ (x) x)
+                                (λ (y) y))))
+           (term (prog (π ()) ((λ (y) y) unit))))
   (test-->> -->βv
-            (term (case (inj1 unit)
-                    (λ (x) x)
-                    (λ (y) y)))
-            (term unit))
+            (term (prog (π ()) (case (inj1 unit)
+                                 (λ (x) x)
+                                 (λ (y) y))))
+            (term (prog (π ()) unit)))
   (test--> -->βv
-           (term (prj1 (prod (prod unit unit) unit)))
-           (term (prod unit unit)))
+           (term (prog (π ()) (prj1 (prod (prod unit unit) unit))))
+           (term (prog (π ()) (prod unit unit))))
   (test--> -->βv
-           (term (prj2 (prod (prod unit unit) unit)))
-           (term unit))
+           (term (prog (π ()) (prj2 (prod (prod unit unit) unit))))
+           (term (prog (π ()) unit)))
   (test--> -->βv
-           (term (unroll (roll unit)))
-           (term unit))
+           (term (prog (π ()) (unroll (roll unit))))
+           (term (prog (π ()) unit)))
   (test-->> -->βv
             p1
-            (term (prod (prod unit unit) unit)))
+            (term (prog (π ()) (prod (prod unit unit) unit))))
   (test-->> -->βv
             p2
-            (term (prod unit unit)))
+            (term (prog (π ()) (prod unit unit))))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
