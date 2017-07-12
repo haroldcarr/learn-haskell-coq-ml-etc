@@ -51,6 +51,10 @@
 (define λα-syntax-τ? (redex-match? λα-syntax τ))
 (define λα-syntax-e? (redex-match? λα-syntax e))
 
+(define p-rec-1 (term ((rec x (λ (y) y))
+                  unit)))
+(define p-rec-2 (term ((rec x (λ (y) (x y)))
+                  unit)))
 (define p1 (term (let [(f (λ (z) (prod (prod z z) z)))]
                    (f unit))))
 (define p2 (term (let ((f (λ (z) (prod (prod z z) z))))
@@ -64,6 +68,7 @@
   (test-equal (λα-syntax-e? (term unit)) #t)
   (test-equal (λα-syntax-e? (term z)) #t)
   (test-equal (λα-syntax-e? (term (λ (w) z))) #t)
+  (test-equal (λα-syntax-e? (term (rec x (λ (x) e)))) #t)
   (test-equal (λα-syntax-e? (term (inj1 unit))) #t)
   (test-equal (λα-syntax-e? (term (inj2 z))) #t)
   (test-equal (λα-syntax-e? (term (unit unit))) #t)
@@ -72,6 +77,8 @@
   (test-equal (λα-syntax-e? (term (let ((z unit)) (inj1 z)))) #t)
   (test-equal (λα-syntax-e? (term (w z))) #t)
   (test-equal (λα-syntax-e? (term (case unit (λ (w) w) (λ (z) z)))) #t)
+  (test-equal (λα-syntax-e? p-rec-1) #t)
+  (test-equal (λα-syntax-e? p-rec-2) #t)
   (test-equal (λα-syntax-e? p1) #t)
   (test-equal (λα-syntax-e? p2) #t)
   )
@@ -99,7 +106,14 @@
    (--> (in-hole E ((λ (x_1) e_1) v_1))
         (in-hole E (subst ([v_1 x_1]) e_1))
         "βv-apply")
-   ;; TODO "βv-rec"
+   (--> (in-hole E ((rec x_1 (λ (x_2) e_1))
+                    v_1))
+        (in-hole E ((λ (x_2) e_2)
+                    v_1))
+        (where e_2 (subst [((rec x_1 (λ (x_2) e_1))
+                            x_1)]
+                          e_1))
+        "βv-rec")
    (--> (in-hole E (let ((x_1 v_1)) e_2))
         (in-hole E (subst ([v_1 x_1]) e_2))
         "βv-let")
@@ -124,7 +138,17 @@
   (test--> -->βv
            (term ((λ (x) x) unit))
            (term unit))
-  ;; TODO "βv-rec"
+  ;(traces -->βv p-rec-1)
+  (test-->> -->βv
+           p-rec-1
+           (term unit))
+  ;(traces -->βv p-rec-2)
+  #;
+  (test--> -->βv
+          p-rec-2
+          (term ((λ (y) ((rec x (λ (y) (x y)))
+                         y))
+                 unit)))
   (test-->> -->βv
            (term (let ((x (prj1 (prod (prod unit unit)
                                       unit))))
