@@ -9,8 +9,8 @@
   ;; Program
   (P ::= (prog Π e))
   ;; proof streams
-  (Π ::= (π (i ... )))
-  (i ::= integer)
+  (Π ::= (π (h ... )))
+  (h ::= integer)
   ;; types
   (τ ::=
      1                      ;; unit type
@@ -204,11 +204,54 @@
 ;; =============================================================================
 ;; authentication
 
-(define-metafunction λα
-  authP : v -> v
-  [(authP unit) unit])
+(define-language λα-auth-syntax
+  ;; Program
+  (P ::= (prog Π v))
+  ;; proof streams
+  (Π ::= (π (h ... )))
+  (h ::= integer)
+  (v ::=
+     unit                   ;; unit value
+     x                      ;; variable value
+     (λ (x) e)              ;; function value
+     (rec x (λ (x) e))      ;; recursive function value
+     (inj1 v)               ;; sum value
+     (inj2 v)               ;; sum value
+     (prod v v)             ;; product value
+     (roll v)               ;; introduce 1 level of recursive value
+     h
+     (auth v)
+     (unauth v)
+     (unauth (α h v))
+     (α h v)
+     )
+  )
 
-(define xxx (term (authP unit)))
+(define-extended-language λα-auth λα-auth-syntax
+  (H ::=
+     hole
+     (auth H)
+     (unauth H)))
+
+(define -->auth-p
+  (reduction-relation
+   λα-auth
+   #:domain P
+   (--> (prog Π (in-hole H (auth v)))
+        (prog Π (in-hole H (α h v)))
+        (where h (hash-shallow v))
+        "-->auth-p-auth")
+   ))
+
+(define-metafunction λα-auth
+  hash-shallow : v -> h
+  [(hash-shallow v) 45])
+
+(module+ test
+  (test--> -->auth-p
+           (term (prog (π ()) (auth unit)))
+           (term (prog (π ()) (α 45 unit))))
+  )
 
 ;; =============================================================================
 ;; UTIL
