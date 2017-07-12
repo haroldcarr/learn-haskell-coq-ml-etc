@@ -6,11 +6,11 @@
 ;; syntax
 
 (define-language λα-syntax
-  (P ::=
-     (prog Π e))
+  ;; Program
+  (P ::= (prog Π e))
   ;; proof streams
-  (Π :: =
-     (π (integer ... )))
+  (Π ::= (π (i ... )))
+  (i ::= integer)
   ;; types
   (τ ::=
      1                      ;; unit type
@@ -63,8 +63,8 @@
                                     unit))))
 (define p1 (term (prog (π ()) (let [(f (λ (z) (prod (prod z z) z)))]
                                 (f unit)))))
-(define p2 (term (prog (π ()) (let ((f (λ (z) (prod (prod z z) z))))
-                                (let ((c (case (inj1 unit) f f)))
+(define p2 (term (prog (π ()) (let [(f (λ (z) (prod (prod z z) z)))]
+                                (let [(c (case (inj1 unit) f f))]
                                   (prj1 c))))))
 
 (module+ test
@@ -110,34 +110,34 @@
   (reduction-relation
    λα
    #:domain P
-   (--> (in-hole E (prog Π ((λ (x_1) e_1) v_1)))
-        (in-hole E (prog Π (subst ([v_1 x_1]) e_1)))
+   (--> (prog Π (in-hole E ((λ (x_1) e_1) v_1)))
+        (prog Π (in-hole E (subst ([v_1 x_1]) e_1)))
         "βv-apply")
-   (--> (in-hole E (prog Π ((rec x_1 (λ (x_2) e_1))
-                              v_1)))
-        (in-hole E (prog Π ((λ (x_2) e_2)
-                              v_1)))
+   (--> (prog Π (in-hole E ((rec x_1 (λ (x_2) e_1))
+                            v_1)))
+        (prog Π (in-hole E ((λ (x_2) e_2)
+                            v_1)))
         (where e_2 (subst [((rec x_1 (λ (x_2) e_1))
                             x_1)]
                           e_1))
         "βv-rec")
-   (--> (in-hole E (prog Π (let ((x_1 v_1)) e_2)))
-        (in-hole E (prog Π (subst ([v_1 x_1]) e_2)))
+   (--> (prog Π (in-hole E (let ((x_1 v_1)) e_2)))
+        (prog Π (in-hole E (subst ([v_1 x_1]) e_2)))
         "βv-let")
-   (--> (in-hole E (prog Π (case (inj1 v_1) v_2 v_3)))
-        (in-hole E (prog Π (v_2 v_1)))
+   (--> (prog Π (in-hole E (case (inj1 v_1) v_2 v_3)))
+        (prog Π (in-hole E (v_2 v_1)))
         "βv-case-inj1")
-   (--> (in-hole E (prog Π (case (inj2 v_1) v_2 v_3)))
-        (in-hole E (prog Π (v_3 v_1)))
+   (--> (prog Π (in-hole E (case (inj2 v_1) v_2 v_3)))
+        (prog Π (in-hole E (v_3 v_1)))
         "βv-case-inj2")
-   (--> (in-hole E (prog Π (prj1 (prod v_1 v_2))))
-        (in-hole E (prog Π v_1))
+   (--> (prog Π (in-hole E (prj1 (prod v_1 v_2))))
+        (prog Π (in-hole E v_1))
         "βv-prj1")
-   (--> (in-hole E (prog Π (prj2 (prod v_1 v_2))))
-        (in-hole E (prog Π v_2))
+   (--> (prog Π (in-hole E (prj2 (prod v_1 v_2))))
+        (prog Π (in-hole E v_2))
         "βv-prj2")
-   (--> (in-hole E (prog Π (unroll (roll v_1))))
-        (in-hole E (prog Π v_1))
+   (--> (prog Π (in-hole E (unroll (roll v_1))))
+        (prog Π (in-hole E v_1))
         "βv-unroll-roll")
    ))
 
@@ -158,10 +158,17 @@
                               unit))))
   (test-->> -->βv
             (term (prog (π ())
+                        (let ((x       (prod (prod unit unit)
+                                             unit)))
+                          x)))
+            (term (prog (π ())         (prod (prod unit unit)
+                                             unit))))
+  (test-->> -->βv
+            (term (prog (π ())
                         (let ((x (prj1 (prod (prod unit unit)
                                              unit))))
                           x)))
-            (term (prog (π ()) (prod unit unit))))
+            (term (prog (π ())               (prod unit unit))))
   (test--> -->βv
            (term (prog (π ()) (case (inj1 unit)
                                 (λ (x) x)
@@ -194,7 +201,16 @@
             (term (prog (π ()) (prod unit unit))))
   )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; =============================================================================
+;; authentication
+
+(define-metafunction λα
+  authP : v -> v
+  [(authP unit) unit])
+
+(define xxx (term (authP unit)))
+
+;; =============================================================================
 ;; UTIL
 
 ;; -----------------------------------------------------------------------------
@@ -222,7 +238,7 @@
   =α : any any -> boolean
   [(=α any_1 any_2) ,(equal? (term (sd any_1)) (term (sd any_2)))])
 
-;; a Racket definition for use in Racket positions 
+;; a Racket definition for use in Racket positions
 (define (=α/racket x y) (term (=α ,x ,y)))
 
 ;; (sd e) computes the static distance version of e
