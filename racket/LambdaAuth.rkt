@@ -218,6 +218,10 @@
         (prog Π (in-hole E (α h_1 v_1)))
         (where h_1 (hash-shallow v_1))
         "-->P-auth")
+   (--> (prog (π (h ...)) (in-hole E (α h_1 v_1)))
+        (prog (π (h ... v_2)) (in-hole E v_1))
+        (where v_2 (shallow-projection v_1))
+        "-->P-unauth")
    ))
 
 (define-metafunction λα-auth
@@ -226,52 +230,62 @@
    (where h ,(hash (term (shallow-projection v))))])
 
 (define-metafunction λα-auth
-  shallow-projection : v -> v
-  [(shallow-projection unit)
+  shallow-projection : v -> h
+  [(shallow-projection any) h
+   (where h ,(format "~s" (term (shallow-projection-aux any))))])
+
+(define-metafunction λα-auth
+  shallow-projection-aux : v -> v
+  [(shallow-projection-aux unit)
    unit]
-  [(shallow-projection x)
+  [(shallow-projection-aux x)
    x]
-  [(shallow-projection (α h v))
+  [(shallow-projection-aux (α h v))
    h]
-  [(shallow-projection (λ (x) e))
-   (λ (x) (shallow-projection e))]
-  [(shallow-projection (auth v))
-   (auth (shallow-projection v))]
-  [(shallow-projection (unauth v))
-   (unauth (shallow-projection v))]
-  [(shallow-projection (prod v_1 v_2))
-   (prod (shallow-projection v_1) (shallow-projection v_2))]
-  [(shallow-projection (prj1 v))
-   (prj1 (shallow-projection v))]
-  [(shallow-projection (prj2 v))
-   (prj2 (shallow-projection v))]
-  [(shallow-projection (roll v))
-   (roll (shallow-projection v))]
-  [(shallow-projection (unroll v))
-   (unroll (shallow-projection v))]
-  [(shallow-projection (rec x_1 (λ (x_2) e)))
-   (rec x_1 (shallow-projection (λ (x_2) e)))]
-  [(shallow-projection (inj1 v))
-   (inj1 (shallow-projection v))]
-  [(shallow-projection (inj2 v))
-   (inj2 (shallow-projection v))]
-  [(shallow-projection (case v_1 v_2 v_3))
-   (case (shallow-projection v_1)
-         (shallow-projection v_2)
-         (shallow-projection v_3))]
-  [(shallow-projection (let ((x e_1)) e_2))
-   (let ((x (shallow-projections e_1)))
-     (shallow-projections e_2))]
+  [(shallow-projection-aux (λ (x) e))
+   (λ (x) (shallow-projection-aux e))]
+  [(shallow-projection-aux (auth v))
+   (auth (shallow-projection-aux v))]
+  [(shallow-projection-aux (unauth v))
+   (unauth (shallow-projection-aux v))]
+  [(shallow-projection-aux (prod v_1 v_2))
+   (prod (shallow-projection-aux v_1) (shallow-projection-aux v_2))]
+  [(shallow-projection-aux (prj1 v))
+   (prj1 (shallow-projection-aux v))]
+  [(shallow-projection-aux (prj2 v))
+   (prj2 (shallow-projection-aux v))]
+  [(shallow-projection-aux (roll v))
+   (roll (shallow-projection-aux v))]
+  [(shallow-projection-aux (unroll v))
+   (unroll (shallow-projection-aux v))]
+  [(shallow-projection-aux (rec x_1 (λ (x_2) e)))
+   (rec x_1 (shallow-projection-aux (λ (x_2) e)))]
+  [(shallow-projection-aux (inj1 v))
+   (inj1 (shallow-projection-aux v))]
+  [(shallow-projection-aux (inj2 v))
+   (inj2 (shallow-projection-aux v))]
+  [(shallow-projection-aux (case v_1 v_2 v_3))
+   (case (shallow-projection-aux v_1)
+         (shallow-projection-aux v_2)
+         (shallow-projection-aux v_3))]
+  [(shallow-projection-aux (let ((x e_1)) e_2))
+   (let ((x (shallow-projection-aux e_1)))
+     (shallow-projection-aux e_2))]
   )
 
 (define (hash x)
-  (sha1 (open-input-string (format "~s" x))))
+  (sha1 (open-input-string x)))
 
 (module+ test
   (test--> -->P
            (term (prog (π ()) (auth unit)))
            (term (prog (π ()) (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
                                  unit))))
+  (test--> -->P
+           (term (prog (π ()) (unauth (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
+                                         unit))))
+           (term (prog (π ("0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"))
+                       unit)))
   (test--> -->P
            (term (prog (π ()) (auth x)))
            (term (prog (π ()) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072"
