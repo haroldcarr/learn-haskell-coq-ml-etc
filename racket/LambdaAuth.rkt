@@ -10,7 +10,7 @@
   ;; Program
   (P ::= (prog Π e))
   ;; proof streams
-  (Π ::= (π (h ... )))
+  (Π ::= (π h ...))
   (h ::= string)
   ;; types
   (τ ::=
@@ -58,15 +58,15 @@
 (define λα-syntax-e? (redex-match? λα-syntax e))
 (define λα-syntax-P? (redex-match? λα-syntax P))
 
-(define p-rec-1 (term (prog (π ()) ((rec x (λ (y) y))
-                                    unit))))
-(define p-rec-2 (term (prog (π ()) ((rec x (λ (y) (x y)))
-                                    unit))))
-(define p1 (term (prog (π ()) (let [(f (λ (z) (prod (prod z z) z)))]
-                                (f unit)))))
-(define p2 (term (prog (π ()) (let [(f (λ (z) (prod (prod z z) z)))]
-                                (let [(c (case (inj1 unit) f f))]
-                                  (prj1 c))))))
+(define p-rec-1 (term (prog (π) ((rec x (λ (y) y))
+                                 unit))))
+(define p-rec-2 (term (prog (π) ((rec x (λ (y) (x y)))
+                                 unit))))
+(define p1 (term (prog (π) (let [(f (λ (z) (prod (prod z z) z)))]
+                             (f unit)))))
+(define p2 (term (prog (π) (let [(f (λ (z) (prod (prod z z) z)))]
+                             (let [(c (case (inj1 unit) f f))]
+                               (prj1 c))))))
 
 (module+ test
   ;; types
@@ -144,12 +144,12 @@
 
 (module+ test
   (test--> -->βv
-           (term (prog (π ()) ((λ (x) x) unit)))
-           (term (prog (π ()) unit)))
+           (term (prog (π) ((λ (x) x) unit)))
+           (term (prog (π) unit)))
   ;(traces -->βv p-rec-1)
   (test-->> -->βv
            p-rec-1
-           (term (prog (π ()) unit)))
+           (term (prog (π) unit)))
   ;(traces -->βv p-rec-2)
   #;
   (test--> -->βv
@@ -158,48 +158,48 @@
                                       y))
                               unit))))
   (test-->> -->βv
-            (term (prog (π ())
+            (term (prog (π)
                         (let ((x       (prod (prod unit unit)
                                              unit)))
                           x)))
-            (term (prog (π ())         (prod (prod unit unit)
+            (term (prog (π)            (prod (prod unit unit)
                                              unit))))
   (test-->> -->βv
-            (term (prog (π ())
+            (term (prog (π)
                         (let ((x (prj1 (prod (prod unit unit)
                                              unit))))
                           x)))
-            (term (prog (π ())               (prod unit unit))))
+            (term (prog (π)                  (prod unit unit))))
   (test--> -->βv
-           (term (prog (π ()) (case (inj1 unit)
-                                (λ (x) x)
-                                (λ (y) y))))
-           (term (prog (π ()) ((λ (x) x) unit))))
+           (term (prog (π) (case (inj1 unit)
+                             (λ (x) x)
+                             (λ (y) y))))
+           (term (prog (π) ((λ (x) x) unit))))
   (test--> -->βv
-           (term (prog (π ()) (case (inj2 unit)
-                                (λ (x) x)
-                                (λ (y) y))))
-           (term (prog (π ()) ((λ (y) y) unit))))
+           (term (prog (π) (case (inj2 unit)
+                             (λ (x) x)
+                             (λ (y) y))))
+           (term (prog (π) ((λ (y) y) unit))))
   (test-->> -->βv
-            (term (prog (π ()) (case (inj1 unit)
-                                 (λ (x) x)
-                                 (λ (y) y))))
-            (term (prog (π ()) unit)))
+            (term (prog (π) (case (inj1 unit)
+                              (λ (x) x)
+                              (λ (y) y))))
+            (term (prog (π) unit)))
   (test--> -->βv
-           (term (prog (π ()) (prj1 (prod (prod unit unit) unit))))
-           (term (prog (π ()) (prod unit unit))))
+           (term (prog (π) (prj1 (prod (prod unit unit) unit))))
+           (term (prog (π) (prod unit unit))))
   (test--> -->βv
-           (term (prog (π ()) (prj2 (prod (prod unit unit) unit))))
-           (term (prog (π ()) unit)))
+           (term (prog (π) (prj2 (prod (prod unit unit) unit))))
+           (term (prog (π) unit)))
   (test--> -->βv
-           (term (prog (π ()) (unroll (roll unit))))
-           (term (prog (π ()) unit)))
+           (term (prog (π) (unroll (roll unit))))
+           (term (prog (π) unit)))
   (test-->> -->βv
             p1
-            (term (prog (π ()) (prod (prod unit unit) unit))))
+            (term (prog (π) (prod (prod unit unit) unit))))
   (test-->> -->βv
             p2
-            (term (prog (π ()) (prod unit unit))))
+            (term (prog (π) (prod unit unit))))
   )
 
 ;; =============================================================================
@@ -218,8 +218,8 @@
         (prog Π (in-hole E (α h_1 v_1)))
         (where h_1 (hash-shallow v_1))
         "-->P-auth")
-   (--> (prog (π (h ...)) (in-hole E (unauth (α h_1 v_1))))
-        (prog (π (h ... v_2)) (in-hole E v_1))
+   (--> (prog (π h ...) (in-hole E (unauth (α h_1 v_1))))
+        (prog (π h ... v_2) (in-hole E v_1))
         (where v_2 (shallow-projection v_1))
         "-->P-unauth")
    ))
@@ -231,9 +231,9 @@
         (prog Π (in-hole E h_1))
         (where h_1 ,(hash (term v_1)))
         "-->V-auth")
-   (--> (prog (π (h_0 h_1 ...))
+   (--> (prog (π h_0 h_1 ...)
               (in-hole E (unauth h_3)))
-        (prog (π (h_1 ...))
+        (prog (π h_1 ...)
               (in-hole E h_0))
         (side-condition (equal? (hash (term h_0)) (term h_3)))
         "-->V-unauth")
@@ -293,31 +293,31 @@
 
 (module+ test
   (test--> -->P
-           (term (prog (π ()) (auth unit)))
-           (term (prog (π ()) (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
-                                 unit))))
+           (term (prog (π) (auth unit)))
+           (term (prog (π) (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
+                              unit))))
   (test--> -->P
-           (term (prog (π ()) (unauth (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
-                                         unit))))
-           (term (prog (π ("unit")) unit)))
+           (term (prog (π) (unauth (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
+                                      unit))))
+           (term (prog (π "unit") unit)))
   (test--> -->P
-           (term (prog (π ()) (auth x)))
-           (term (prog (π ()) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072"
-                                 x))))
+           (term (prog (π) (auth x)))
+           (term (prog (π) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072"
+                              x))))
   (test--> -->P
-           (term (prog (π ()) (auth (λ (x) unit))))
-           (term (prog (π ()) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c"
-                                 (λ (x) unit)))))
+           (term (prog (π) (auth (λ (x) unit))))
+           (term (prog (π) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c"
+                              (λ (x) unit)))))
   )
 
 (module+ test
   (test--> -->V
-           (term (prog (π ()) (auth "unit")))
-           (term (prog (π ()) "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e")))
+           (term (prog (π) (auth "unit")))
+           (term (prog (π) "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e")))
   (test--> -->V
-           (term (prog (π ("unit"))
+           (term (prog (π "unit")
                        (unauth "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e")))
-           (term (prog (π ()) "unit")))
+           (term (prog (π) "unit")))
   )
 
 ;; =============================================================================
