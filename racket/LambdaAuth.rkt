@@ -221,7 +221,7 @@
      (auth H)
      (unauth H)))
 
-(define -->auth-p
+(define -->P
   (reduction-relation
    λα-auth
    #:domain S
@@ -232,19 +232,19 @@
    ))
 
 (define-metafunction λα-auth
-  hash-shallow : v -> v
-  [(hash-shallow v_1) s
-   (where s (shallow-projection v_1))])
+  hash-shallow : v -> h
+  [(hash-shallow unit) h
+   (where h (shallow-projection unit))])
 
 (define-metafunction λα-auth
-  shallow-projection : v -> v
+  shallow-projection : v -> h
   [(shallow-projection unit) 45]
   )
 
-(define hash (lambda (x) 45))
+;;(define hash (lambda (x) 45))
 
 (module+ test
-  (test--> -->auth-p
+  (test--> -->P
            (term (stream (π ()) (auth unit)))
            (term (stream (π ()) (α 45 unit))))
   )
