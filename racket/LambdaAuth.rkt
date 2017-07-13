@@ -51,7 +51,7 @@
   #:binding-forms
   (let ((x e_1)) e_2 #:refers-to x)
   (λ (x) e #:refers to x)
-  (rec x_1 (λ (x_2) e #:refers-to x_2)) ;; AND to x_1
+  (rec x_1 (λ (x_2) e #:refers-to (shadow x_1 x_2)))
 )
 
 (define λα-syntax-τ? (redex-match? λα-syntax τ))
@@ -300,17 +300,6 @@
            (term (prog (π) (unauth (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
                                       unit))))
            (term (prog (π "unit") unit)))
-  (test--> -->P
-           (term (prog (π) (auth x)))
-           (term (prog (π) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072"
-                              x))))
-  (test--> -->P
-           (term (prog (π) (auth (λ (x) unit))))
-           (term (prog (π) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c"
-                              (λ (x) unit)))))
-  )
-
-(module+ test
   (test--> -->V
            (term (prog (π) (auth "unit")))
            (term (prog (π) "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e")))
@@ -318,6 +307,24 @@
            (term (prog (π "unit")
                        (unauth "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e")))
            (term (prog (π) "unit")))
+  ;; -------------------------
+  (test--> -->P
+           (term (prog (π) (auth x)))
+           (term (prog (π) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072"
+                              x))))
+  ;; -------------------------
+  (test--> -->P
+           (term (prog (π) (auth (λ (x) unit))))
+           (term (prog (π) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c"
+                              (λ (x) unit)))))
+  ;; =========================
+  (test-->> -->P
+            (term (prog (π) (let ((a (auth unit)))
+                              (let ((b (auth unit)))
+                                (let ((c (prod a b)))
+                                  (prj1 c))))))
+            (term (prog (π)
+                        (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e" unit))))
   )
 
 ;; =============================================================================
