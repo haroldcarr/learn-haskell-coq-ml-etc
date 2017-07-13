@@ -218,7 +218,7 @@
         (prog Π (in-hole E (α h_1 v_1)))
         (where h_1 (hash-shallow v_1))
         "-->P-auth")
-   (--> (prog (π (h ...)) (in-hole E (α h_1 v_1)))
+   (--> (prog (π (h ...)) (in-hole E (unauth (α h_1 v_1))))
         (prog (π (h ... v_2)) (in-hole E v_1))
         (where v_2 (shallow-projection v_1))
         "-->P-unauth")
@@ -284,8 +284,7 @@
   (test--> -->P
            (term (prog (π ()) (unauth (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
                                          unit))))
-           (term (prog (π ("0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"))
-                       unit)))
+           (term (prog (π ("unit")) unit)))
   (test--> -->P
            (term (prog (π ()) (auth x)))
            (term (prog (π ()) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072"
