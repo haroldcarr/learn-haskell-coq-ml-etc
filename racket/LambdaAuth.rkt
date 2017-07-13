@@ -224,6 +224,21 @@
         "-->P-unauth")
    ))
 
+(define -->V
+  (extend-reduction-relation -->βv λα-auth
+   #:domain P
+   (--> (prog Π (in-hole E (auth v_1)))
+        (prog Π (in-hole E h_1))
+        (where h_1 ,(hash (term v_1)))
+        "-->V-auth")
+   (--> (prog (π (h_0 h_1 ...))
+              (in-hole E (unauth h_3)))
+        (prog (π (h_1 ...))
+              (in-hole E h_0))
+        (side-condition (equal? (hash (term h_0)) (term h_3)))
+        "-->V-unauth")
+   ))
+
 (define-metafunction λα-auth
   hash-shallow : v -> h
   [(hash-shallow v) h
@@ -293,6 +308,16 @@
            (term (prog (π ()) (auth (λ (x) unit))))
            (term (prog (π ()) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c"
                                  (λ (x) unit)))))
+  )
+
+(module+ test
+  (test--> -->V
+           (term (prog (π ()) (auth "unit")))
+           (term (prog (π ()) "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e")))
+  (test--> -->V
+           (term (prog (π ("unit"))
+                       (unauth "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e")))
+           (term (prog (π ()) "unit")))
   )
 
 ;; =============================================================================
