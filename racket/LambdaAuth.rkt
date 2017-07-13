@@ -3,7 +3,6 @@
 (require redex)
 (require openssl/sha1)
 
-
 ;; ------------------------------------------------------------------------------
 ;; syntax
 
@@ -206,31 +205,19 @@
 ;; =============================================================================
 ;; authentication
 
-(define-extended-language λα-auth-syntax λα-syntax
-  ;; Program
-  (S ::= (stream Π v))
+(define-extended-language λα-auth λα
   (v ::= ....
-     (auth v)
-     (unauth v)
-     (unauth (α h v))
-     (α h v)
-     )
+     h
+     (α h v))
   )
 
-(define-extended-language λα-auth λα-auth-syntax
-  (H ::=
-     hole
-     (auth H)
-     (unauth H)))
-
 (define -->P
-  (reduction-relation
-   λα-auth
-   #:domain S
-   (--> (stream Π (in-hole H (auth v_1)))
-        (stream Π (in-hole H (α h_1 v_1)))
+  (extend-reduction-relation -->βv λα-auth
+   #:domain P
+   (--> (prog Π (in-hole E (auth v_1)))
+        (prog Π (in-hole E (α h_1 v_1)))
         (where h_1 (hash-shallow v_1))
-        "-->auth-p-auth")
+        "-->P-auth")
    ))
 
 (define-metafunction λα-auth
@@ -277,21 +264,22 @@
      (shallow-projections e_2))]
   )
 
-(define hash
-  (lambda (x)
-    (sha1 (open-input-string (format "~s" x)))))
-
+(define (hash x)
+  (sha1 (open-input-string (format "~s" x))))
 
 (module+ test
   (test--> -->P
-           (term (stream (π ()) (auth unit)))
-           (term (stream (π ()) (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e" unit))))
+           (term (prog (π ()) (auth unit)))
+           (term (prog (π ()) (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e"
+                                 unit))))
   (test--> -->P
-           (term (stream (π ()) (auth x)))
-           (term (stream (π ()) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072" x))))
+           (term (prog (π ()) (auth x)))
+           (term (prog (π ()) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072"
+                                 x))))
   (test--> -->P
-           (term (stream (π ()) (auth (λ (x) unit))))
-           (term (stream (π ()) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c" (λ (x) unit)))))
+           (term (prog (π ()) (auth (λ (x) unit))))
+           (term (prog (π ()) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c"
+                                 (λ (x) unit)))))
   )
 
 ;; =============================================================================
