@@ -1,6 +1,8 @@
 #lang racket
 
 (require redex)
+(require openssl/sha1)
+
 
 ;; ------------------------------------------------------------------------------
 ;; syntax
@@ -10,7 +12,7 @@
   (P ::= (prog Π e))
   ;; proof streams
   (Π ::= (π (h ... )))
-  (h ::= integer)
+  (h ::= string)
   ;; types
   (τ ::=
      1                      ;; unit type
@@ -233,20 +235,63 @@
 
 (define-metafunction λα-auth
   hash-shallow : v -> h
-  [(hash-shallow unit) h
-   (where h (shallow-projection unit))])
+  [(hash-shallow v) h
+   (where h ,(hash (term (shallow-projection v))))])
 
 (define-metafunction λα-auth
-  shallow-projection : v -> h
-  [(shallow-projection unit) 45]
+  shallow-projection : v -> v
+  [(shallow-projection unit)
+   unit]
+  [(shallow-projection x)
+   x]
+  [(shallow-projection (α h v))
+   h]
+  [(shallow-projection (λ (x) e))
+   (λ (x) (shallow-projection e))]
+  [(shallow-projection (auth v))
+   (auth (shallow-projection v))]
+  [(shallow-projection (unauth v))
+   (unauth (shallow-projection v))]
+  [(shallow-projection (prod v_1 v_2))
+   (prod (shallow-projection v_1) (shallow-projection v_2))]
+  [(shallow-projection (prj1 v))
+   (prj1 (shallow-projection v))]
+  [(shallow-projection (prj2 v))
+   (prj2 (shallow-projection v))]
+  [(shallow-projection (roll v))
+   (roll (shallow-projection v))]
+  [(shallow-projection (unroll v))
+   (unroll (shallow-projection v))]
+  [(shallow-projection (rec x_1 (λ (x_2) e)))
+   (rec x_1 (shallow-projection (λ (x_2) e)))]
+  [(shallow-projection (inj1 v))
+   (inj1 (shallow-projection v))]
+  [(shallow-projection (inj2 v))
+   (inj2 (shallow-projection v))]
+  [(shallow-projection (case v_1 v_2 v_3))
+   (case (shallow-projection v_1)
+         (shallow-projection v_2)
+         (shallow-projection v_3))]
+  [(shallow-projection (let ((x e_1)) e_2))
+   (let ((x (shallow-projections e_1)))
+     (shallow-projections e_2))]
   )
 
-;;(define hash (lambda (x) 45))
+(define hash
+  (lambda (x)
+    (sha1 (open-input-string (format "~s" x)))))
+
 
 (module+ test
   (test--> -->P
            (term (stream (π ()) (auth unit)))
-           (term (stream (π ()) (α 45 unit))))
+           (term (stream (π ()) (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e" unit))))
+  (test--> -->P
+           (term (stream (π ()) (auth x)))
+           (term (stream (π ()) (α "11f6ad8ec52a2984abaafd7c3b516503785c2072" x))))
+  (test--> -->P
+           (term (stream (π ()) (auth (λ (x) unit))))
+           (term (stream (π ()) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c" (λ (x) unit)))))
   )
 
 ;; =============================================================================
