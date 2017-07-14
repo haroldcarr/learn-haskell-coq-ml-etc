@@ -12,16 +12,6 @@
   ;; proof streams
   (Π ::= (π h ...))
   (h ::= string)
-  ;; types
-  (τ ::=
-     1                      ;; unit type
-     α                      ;; variable types
-     (τ -> τ)               ;; function type
-     (+ τ τ)                ;; sum type
-     (* τ τ)                ;; product type
-     (μ α τ)                ;; recursive type
-     (auth τ)               ;; authenticated type
-     )
   ;; values
   (v ::=
      unit                   ;; unit value
@@ -54,7 +44,6 @@
   (rec x_1 (λ (x_2) e #:refers-to (shadow x_1 x_2)))
 )
 
-(define λα-syntax-τ? (redex-match? λα-syntax τ))
 (define λα-syntax-e? (redex-match? λα-syntax e))
 (define λα-syntax-P? (redex-match? λα-syntax P))
 
@@ -69,8 +58,6 @@
                                (prj1 c))))))
 
 (module+ test
-  ;; types
-  (test-equal (λα-syntax-τ? (term (1 -> 1))) #t)
   ;; values
   (test-equal (λα-syntax-e? (term unit)) #t)
   (test-equal (λα-syntax-e? (term z)) #t)
