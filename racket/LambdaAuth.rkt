@@ -47,17 +47,17 @@
 (define λα-syntax-e? (redex-match? λα-syntax e))
 (define λα-syntax-P? (redex-match? λα-syntax P))
 
-(define p-rec-1 (term (prog (π) ((rec x (λ (y) y))
-                                 unit))))
-(define p-rec-2 (term (prog (π) ((rec x (λ (y) (x y)))
-                                 unit))))
-(define p1 (term (prog (π) (let [(f (λ (z) (prod (prod z z) z)))]
-                             (f unit)))))
-(define p2 (term (prog (π) (let [(f (λ (z) (prod (prod z z) z)))]
-                             (let [(c (case (inj1 unit) f f))]
-                               (prj1 c))))))
-
 (module+ test
+  ;; examples
+  (define p-rec-1 (term (prog (π) ((rec x (λ (y) y))
+                                   unit))))
+  (define p-rec-2 (term (prog (π) ((rec x (λ (y) (x y)))
+                                   unit))))
+  (define p1 (term (prog (π) (let [(f (λ (z) (prod (prod z z) z)))]
+                               (f unit)))))
+  (define p2 (term (prog (π) (let [(f (λ (z) (prod (prod z z) z)))]
+                               (let [(c (case (inj1 unit) f f))]
+                                 (prj1 c))))))
   ;; values
   (test-equal (λα-syntax-e? (term unit)) #t)
   (test-equal (λα-syntax-e? (term z)) #t)
