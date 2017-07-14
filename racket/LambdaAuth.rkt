@@ -215,22 +215,25 @@
   (extend-reduction-relation -->βv λα-auth
    #:domain P
    (--> (prog Π (in-hole E (auth v)))
-        (prog Π (in-hole E h))
-        (where h ,(hash (term v))) ;; TODO make hash metafu
+        (prog Π (in-hole E (hash v)))
         "-->V-auth")
    (--> (prog (π h_s0 h_1 ...)
               (in-hole E (unauth h)))
         (prog (π h_1 ...)
               (in-hole E h_s0))
-        (side-condition (equal? (hash (term h_s0))
+        (side-condition (equal? (rhash (term h_s0))
                                 (term h)))
         "-->V-unauth")
    ))
 
 (define-metafunction λα-auth
+  hash : v -> h
+  [(hash v) h
+   (where h ,(rhash (term v)))])
+
+(define-metafunction λα-auth
   hash-shallow : v -> h
-  [(hash-shallow v) h
-   (where h ,(hash (term (shallow-projection v))))])
+  [(hash-shallow v) (hash (shallow-projection v))])
 
 (define-metafunction λα-auth
   shallow-projection : v -> h
@@ -276,7 +279,7 @@
      (sp e_2))]
   )
 
-(define (hash x)
+(define (rhash x)
   (sha1 (open-input-string x)))
 
 (module+ test
@@ -306,11 +309,14 @@
            (term (prog (π) (α "238a0d5fb845295966f12fa741b8bcd8ec51d22c"
                               (λ (x) unit)))))
   ;; =========================
+  (define ppp
+    (term (prog (π) (let ((a (auth unit)))
+                      (let ((b (prod a a)))
+                        (let ((c (prod a b)))
+                          (prj2 c)))))))
+  ;(traces -->P ppp)
   (test-->> -->P
-            (term (prog (π) (let ((a (auth unit)))
-                              (let ((b (prod a a)))
-                                (let ((c (prod a b)))
-                                  (prj2 c))))))
+            ppp
             (term (prog (π)
                         (prod
                          (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e" unit)
