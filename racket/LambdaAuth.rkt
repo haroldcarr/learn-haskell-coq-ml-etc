@@ -100,17 +100,17 @@
   (reduction-relation
    λα
    #:domain P
-   (--> (prog Π (in-hole E ((λ (x_1) e_1) v_1)))
-        (prog Π (in-hole E (substitute e_1 x_1 v_1)))
+   (--> (prog Π (in-hole E ((λ (x) e) v)))
+        (prog Π (in-hole E (substitute e x v)))
         "βv-apply")
    (--> (prog Π (in-hole E ((rec x_1 (λ (x_2) e_1))
-                            v_1)))
+                            v)))
         (prog Π (in-hole E ((λ (x_2) e_2)
-                            v_1)))
+                            v)))
         (where e_2 (substitute e_1 x_1 (rec x_1 (λ (x_2) e_1))))
         "βv-rec")
-   (--> (prog Π (in-hole E (let ((x_1 v_1)) e_2)))
-        (prog Π (in-hole E (substitute e_2 x_1 v_1)))
+   (--> (prog Π (in-hole E (let ((x v)) e)))
+        (prog Π (in-hole E (substitute e x v)))
         "βv-let")
    (--> (prog Π (in-hole E (case (inj1 v_1) v_2 v_3)))
         (prog Π (in-hole E (v_2 v_1)))
@@ -124,8 +124,8 @@
    (--> (prog Π (in-hole E (prj2 (prod v_1 v_2))))
         (prog Π (in-hole E v_2))
         "βv-prj2")
-   (--> (prog Π (in-hole E (unroll (roll v_1))))
-        (prog Π (in-hole E v_1))
+   (--> (prog Π (in-hole E (unroll (roll v))))
+        (prog Π (in-hole E v))
         "βv-unroll-roll")
    ))
 
@@ -201,11 +201,11 @@
 (define -->P
   (extend-reduction-relation -->βv λα-auth
    #:domain P
-   (--> (prog Π (in-hole E (auth v_1)))
-        (prog Π (in-hole E (α h_1 v_1)))
-        (where h_1 (hash-shallow v_1))
+   (--> (prog Π (in-hole E (auth v)))
+        (prog Π (in-hole E (α (hash-shallow v) v)))
         "-->P-auth")
-   (--> (prog (π h ...) (in-hole E (unauth (α h_1 v_1))))
+   (--> (prog (π h ...)
+              (in-hole E (unauth (α h_1 v_1))))
         (prog (π h ... (shallow-projection v_1))
               (in-hole E v_1))
         "-->P-unauth")
