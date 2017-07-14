@@ -247,45 +247,45 @@
 (define-metafunction λα-auth
   shallow-projection : v -> h
   [(shallow-projection any) h
-   (where h ,(format "~s" (term (shallow-projection-aux any))))])
+   (where h ,(format "~s" (term (sp any))))])
 
 (define-metafunction λα-auth
-  shallow-projection-aux : v -> v
-  [(shallow-projection-aux unit)
+  sp : v -> v
+  [(sp unit)
    unit]
-  [(shallow-projection-aux x)
+  [(sp x)
    x]
-  [(shallow-projection-aux (α h v))
+  [(sp (α h v))
    h]
-  [(shallow-projection-aux (λ (x) e))
-   (λ (x) (shallow-projection-aux e))]
-  [(shallow-projection-aux (auth v))
-   (auth (shallow-projection-aux v))]
-  [(shallow-projection-aux (unauth v))
-   (unauth (shallow-projection-aux v))]
-  [(shallow-projection-aux (prod v_1 v_2))
-   (prod (shallow-projection-aux v_1) (shallow-projection-aux v_2))]
-  [(shallow-projection-aux (prj1 v))
-   (prj1 (shallow-projection-aux v))]
-  [(shallow-projection-aux (prj2 v))
-   (prj2 (shallow-projection-aux v))]
-  [(shallow-projection-aux (roll v))
-   (roll (shallow-projection-aux v))]
-  [(shallow-projection-aux (unroll v))
-   (unroll (shallow-projection-aux v))]
-  [(shallow-projection-aux (rec x_1 (λ (x_2) e)))
-   (rec x_1 (shallow-projection-aux (λ (x_2) e)))]
-  [(shallow-projection-aux (inj1 v))
-   (inj1 (shallow-projection-aux v))]
-  [(shallow-projection-aux (inj2 v))
-   (inj2 (shallow-projection-aux v))]
-  [(shallow-projection-aux (case v_1 v_2 v_3))
-   (case (shallow-projection-aux v_1)
-         (shallow-projection-aux v_2)
-         (shallow-projection-aux v_3))]
-  [(shallow-projection-aux (let ((x e_1)) e_2))
-   (let ((x (shallow-projection-aux e_1)))
-     (shallow-projection-aux e_2))]
+  [(sp (λ (x) e))
+   (λ (x) (sp e))]
+  [(sp (auth v))
+   (auth (sp v))]
+  [(sp (unauth v))
+   (unauth (sp v))]
+  [(sp (prod v_1 v_2))
+   (prod (sp v_1) (sp v_2))]
+  [(sp (prj1 v))
+   (prj1 (sp v))]
+  [(sp (prj2 v))
+   (prj2 (sp v))]
+  [(sp (roll v))
+   (roll (sp v))]
+  [(sp (unroll v))
+   (unroll (sp v))]
+  [(sp (rec x_1 (λ (x_2) e)))
+   (rec x_1 (sp (λ (x_2) e)))]
+  [(sp (inj1 v))
+   (inj1 (sp v))]
+  [(sp (inj2 v))
+   (inj2 (sp v))]
+  [(sp (case v_1 v_2 v_3))
+   (case (sp v_1)
+         (sp v_2)
+         (sp v_3))]
+  [(sp (let ((x e_1)) e_2))
+   (let ((x (sp e_1)))
+     (sp e_2))]
   )
 
 (define (hash x)
@@ -320,11 +320,13 @@
   ;; =========================
   (test-->> -->P
             (term (prog (π) (let ((a (auth unit)))
-                              (let ((b (auth unit)))
+                              (let ((b (prod a a)))
                                 (let ((c (prod a b)))
-                                  (prj1 c))))))
+                                  (prj2 c))))))
             (term (prog (π)
-                        (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e" unit))))
+                        (prod
+                         (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e" unit)
+                         (α "0df9eea0bad5a55395db9ec290dfcf4a883d5d3e" unit)))))
   )
 
 ;; =============================================================================
