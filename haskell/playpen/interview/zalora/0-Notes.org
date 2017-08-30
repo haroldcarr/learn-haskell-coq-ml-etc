@@ -1,5 +1,5 @@
 Created       : 2013 Dec 23 (Mon) 22:22:50 by carr.
-Last Modified : 2016 Feb 15 (Mon) 15:52:08 by Harold Carr.
+Last Modified : 2017 Jul 24 (Mon) 08:45:56 by Harold Carr.
 
 ------------------------------------------------------------------------------
 * task
@@ -7,55 +7,10 @@ Last Modified : 2016 Feb 15 (Mon) 15:52:08 by Harold Carr.
 https://github.com/projectdeltasea/projectdelta/blob/master/README.md
 
 ------------------------------------------------------------------------------
-* Jena Fuseki
+* use Jena Fuseki to load up data
 
-http://jena.apache.org/documentation/serving_data/
-
-pushd /tmp
-rm -rf jena-fuseki1-1.3.1
-unzip ~/Downloads/jena-fuseki1-1.3.1-distribution.zip
-pushd /tmp/jena-fuseki1-1.3.1
-chmod +x s-*
-export f=`pwd`
-
-# this creates a ./run directory
-./fuseki-server             --update --mem /ds &
-
-java -cp ~/.m2/repository/ws-commons/tcpmon/1.0/tcpmon-1.0.jar  org.apache.ws.commons.tcpmon.TCPMon 3030 127.0.0.1 3029 &
-./fuseki-server --port 3029 --update --mem /ds &
-
-
-** load data
-
-pushd ~/.sync/.esync/java/org/openhc/venuetime/metadata/
-$f/s-put http://localhost:3030/ds/data --verbose default events.n3
-$f/s-put http://localhost:3030/ds/data           default participants.n3
-$f/s-put http://localhost:3030/ds/data           default places.n3
-$f/s-put http://localhost:3030/ds/data           default sponsors.n3
-
-pushd ~/.sync/.esync/java/org/openhc/rdf-triple-browser/data-private/
-$f/s-put http://localhost:3030/ds/data           default hc-x.rdf
-$f/s-put http://localhost:3030/ds/data           default wordnet_glossary-20010201.rdf
-
-** test update
-
-$f/s-update      --service http://localhost:3030/ds/update 'PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT DATA {  <http://example/book1> dc:title "A new book" ; dc:creator "A.N.Other" . }'
-$f/s-update-form --service http://localhost:3030/ds/update 'PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT DATA {  <http://example/book2> dc:title "A foo book" ; dc:creator "A.B.Other" . }'
-
-** test data access
-
-# default output is turtle
-$f/s-get http://localhost:3030/ds/data default
-$f/s-query --service http://localhost:3030/ds/query 'SELECT * {?s ?p ?o}'
-
-# get default representation
-curl http://localhost:3030/ds/data?default
-# get RDF/XML
-curl http://localhost:3030/ds/data?default -H "Accept: application/xml"
-# get RDF/JSON
-curl http://localhost:3030/ds/data?default -H "Accept: application/rdf+json"
-# DOES NOT WORK
-curl http://localhost:3030/ds/data?default -H "Accept: application/sparql-results+json"
+see
+file:~/.sync/.esync/semantic-web/fuseki.org
 
 ------------------------------------------------------------------------------
 * hsparql
