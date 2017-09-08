@@ -8,7 +8,7 @@
 > import Control.Monad.State
 > import Data.Text as T (Text, pack)
 
-Existential Types - March 31, 2017
+Existential Types - March 31, 2017 : http://abailly.github.io/posts/existential-types.html
 
 Example use-case : quiz made up of different types of questions
 
@@ -18,18 +18,20 @@ Example use-case : quiz made up of different types of questions
 >   = MCQuestion     { mquestion :: [Text], mcorrect :: Int }
 > data RatingQuestion
 >   = RatingQuestion { rquestion ::  Text,  rcorrect :: Float }
+> data ConstantQuestion
+>   = ConstantQuestion
 
 Key issue:
-- define a list of different types of questions
-  that work with current and future question types in a uniform way.
+- define a container that can hold different types of questions
+  that works with current and future question types.
 
 Possible solution:
 - wrap in constructor : "tags" each question with type:
 
-> data QuestionX
->   = MCQ    MCQuestion
->   | Open   OpenQuestion
->   | Rating RatingQuestion
+data QuestionX
+  = MCQ    MCQuestion
+  | Open   OpenQuestion
+  | Rating RatingQuestion
 
 PRO: simple; amenable to pattern-matching
 CON: expression problem
@@ -40,16 +42,17 @@ Solution using type class and existentials :
 >   type Answer    q  :: *
 >   type TQuestion q  :: *
 >   isCorrectAnswer   :: Answer q -> q -> Bool
->   question          :: q -> TQuestion q
+>   question          :: q -> TQuestion q        -- not used
 >   qprint            :: q -> IO ()
->   convertUserAnswer :: q -> String -> Answer q
+>   convertUserAnswer :: q -> String -> Answer q -- 1st q arg only to get type
+>                                                -- to pass to `Answer`
 
 Make each type of question an instance of Questionable interface.
 
 > instance Questionable OpenQuestion where
 >   type Answer         OpenQuestion         = Text
 >   type TQuestion      OpenQuestion         = Text
->   isCorrectAnswer t1 (OpenQuestion _ t2)   = t1 == t2
+>   isCorrectAnswer u  (OpenQuestion _ c)    = u == c
 >   question           (OpenQuestion q _)    = q
 >   qprint             (OpenQuestion q _)    = print q
 >   convertUserAnswer _                      = T.pack
@@ -57,7 +60,7 @@ Make each type of question an instance of Questionable interface.
 > instance Questionable MCQuestion where
 >   type Answer         MCQuestion           = Int
 >   type TQuestion      MCQuestion           = [Text]
->   isCorrectAnswer i1 (MCQuestion _ i2)     = i1 == i2
+>   isCorrectAnswer u  (MCQuestion _ c)      = u == c
 >   question           (MCQuestion q _)      = q
 >   qprint             (MCQuestion q _)      = print q
 >   convertUserAnswer _                      = read
@@ -65,17 +68,25 @@ Make each type of question an instance of Questionable interface.
 > instance Questionable RatingQuestion where
 >   type Answer         RatingQuestion       = Float
 >   type TQuestion      RatingQuestion       = Text
->   isCorrectAnswer f1 (RatingQuestion _ f2) = f1 == f2
+>   isCorrectAnswer u  (RatingQuestion _ c)  = u == c
 >   question           (RatingQuestion q _)  = q
 >   qprint             (RatingQuestion q _)  = print q
 >   convertUserAnswer _                      = read
 
-Wrap them with Question using existential quantification.
+> instance Questionable ConstantQuestion where
+>   type Answer         ConstantQuestion     = [Int]
+>   type TQuestion      ConstantQuestion     = [Int]
+>   isCorrectAnswer u   ConstantQuestion     = u == [1,2,3]
+>   question            ConstantQuestion     = [1,2,3]
+>   qprint              ConstantQuestion     = print [1,2,3::Int]
+>   convertUserAnswer _                      = read
+
+Wrap them in `Question` using existential quantification.
 
 ADT syntax:
 
-> data QuestionADT =
->   forall q . Questionable q => QuestionADT q
+data Question =
+  forall q . Questionable q => QuestionADT q
 
 GADT syntax:
 
@@ -84,15 +95,16 @@ GADT syntax:
 
 Existential limits scope of type variable q.
 Ensures `q`, whatever its type, stays within scope of its appearance.
-E.g., : can't do (gives compiler error) : getQ (Question question) = question
-because type of result question :: q would let type variable q escape context of constructor where `getQ` gets used.
+E.g., : can't do (gives compiler error) : getQ (Question q) = q
+because result would let type variable q escape context where `getQ` is used.
 
 Use it:
 
 > questions :: [Question]
-> questions = [ Question $ OpenQuestion   "What is the open question?" "D-"
->             , Question $ MCQuestion     ["1","2"]                    2
->             , Question $ RatingQuestion "How does this rate?"        6.9
+> questions = [ Question $ OpenQuestion     "What is the open question?" "D-"
+>             , Question $ MCQuestion       ["1","2"]                    2
+>             , Question $ RatingQuestion   "How does this rate?"        6.9
+>             , Question   ConstantQuestion
 >             ]
 
 > loop :: [Question] -> IO ()
@@ -101,7 +113,7 @@ Use it:
 >   loop' :: [Question] -> StateT (Int,Int) IO ()
 >   loop' [] = do
 >     (c,t) <- get
->     lift $ putStr (show c); lift $ putStr "/"; lift $ print t;
+>     lift $ putStrLn $ show c ++ "/" ++ show t
 >   loop' (Question q:qs) = do
 >     lift $ qprint q
 >     a <- lift getLine
