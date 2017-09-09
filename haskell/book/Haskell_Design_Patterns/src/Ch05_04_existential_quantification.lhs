@@ -10,7 +10,7 @@ Existential quantification and abstract datatypes
 
 instead of universally qualified
 
-> data U a = forall a. U a (a -> Bool) (a -> String)
+> data U a =           U a (a -> Bool) (a -> String)
 
 the existentially qualified
 
