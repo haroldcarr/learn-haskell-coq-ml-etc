@@ -70,12 +70,14 @@ ps k v@(Fix (Add _ _)) = k v
 
 e1, e2 :: [Test]
 e1 = T.tt "e1"
-     [ eval (Fix (Val 3))
-     , adi ph ps (Fix (Val 3))
+     [ eval                                                           (Fix (Val 3))
+     , adi ph ps                                                      (Fix (Val 3))
      , ps (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix) (Fix (Val 3))
      ,    (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix) (Fix (Val 3))
      ,    (fmap (fmap ph . sequenceA) . traverse (adi ph ps))              (Val 3)
-     ,     fmap (fmap ph . sequenceA)                                   ((),Val 3)
+     ,     fmap (fmap ph . sequenceA)  (traverse (adi ph ps)               (Val 3))
+     ,     fmap (fmap ph . sequenceA)  (traverse (ps (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix))               (Val 3))
+     ,     fmap (fmap ph . sequenceA)           ((),                        Val 3)
      ,                                          ((), (fmap ph . sequenceA) (Val 3))
      ,                                          ((), (fmap ph . sequenceA) (Val 3))
      ,                                          ((),  fmap ph   (Just      (Val 3)))
@@ -84,6 +86,16 @@ e1 = T.tt "e1"
      ,                                          ((),             Just           3)
      ]
      ((), Just 3)
+{-
+traverse :: (Applicative f, Traversable t)
+         => (a -> f b)
+         -> t a
+         -> f (t b)
+
+       _ :: (Fix ExprF -> (b0, s0 Int))
+         -> ExprF r0
+         -> ((), ExprF (Maybe Int))
+-}
 e2 = T.t "e2"
      (eval (Fix (Add (Fix (Val 2)) (Fix (Val 3)))))
      ((), Just 5)
