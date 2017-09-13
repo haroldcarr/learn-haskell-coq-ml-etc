@@ -1,27 +1,29 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Darais where
 
-import Debug.Trace
--- import Control.Monad.State
-import Control.Monad.Writer
+-- import Control.Monad
+import           Control.Monad.Writer
+-- import Data.Functor.Identity
+import           Debug.Trace
+import           Test.HUnit
+import           Test.HUnit.Util as T
 
 newtype Fix f = Fix { unFix :: f (Fix f) }
 
-data ExprF r = Val Int | Add r r
-    deriving (Functor, Foldable, Traversable)
-
+data ExprF r = Val Int | Add r r deriving (Foldable, Functor, Show, Traversable)
 type Expr = Fix ExprF
 
-cata' :: Monoid b
-      => (ExprF a -> a)
-      -> ((Expr -> (b, Maybe a)) -> (Expr -> (b, Maybe a)))
-      -> (Expr -> (b, Maybe a))
-cata' f g = g (fmap (fmap f . sequenceA) . traverse (cata' f g) . unFix)
+adi :: (Monoid b, Applicative s, Traversable t)
+    => (t a -> a)
+    -> ((Fix t -> (b, s a)) -> Fix t -> (b, s a))
+    -> Fix t -> (b, s a)
+adi f g = g (go . traverse (adi f g) . unFix)
+  where
+    go = fmap (fmap f . sequenceA)
 
 cata :: Functor f
      => (f a -> a)
@@ -38,9 +40,12 @@ cataM2 :: (Monoid b, Applicative m, Monad m, Traversable t)
        => (t a -> m a)
        -> ((Fix t -> m (b, Maybe a)) -> (Fix t -> m (b, Maybe a)))
        -> (Fix t -> m (b, Maybe a))
-cataM2 f g (Fix t) = do
-  let _tcm = traverse (cataM2 f g) t
-  undefined
+cataM2 _f _g _t = undefined
+  {-
+  let tcm = traverse (cataM2 f g) (unFix t)
+  aa <- (tcm >>= (f . fmap))
+  g aa
+  -}
 
 cataM :: (Applicative m, Monad m, Traversable t)
       => (t a -> m a)
@@ -48,17 +53,40 @@ cataM :: (Applicative m, Monad m, Traversable t)
       -> m a
 cataM f = (f =<<) . traverse (cataM f) . unFix
 
-eval' :: Expr -> ((), Maybe Int)
-eval' = cata' phi psi
+eval :: Expr -> ((), Maybe Int)
+eval  = adi phi psi
   where
     phi          (Val x)    = x
     phi          (Add x y)  = x + y
     psi k v@(Fix (Val _))   = trace "Evaluating Val" $ k v
     psi k v@(Fix (Add _ _)) = trace "Evaluating Add" $ k v
 
-e1, e2 :: ((), Maybe Int)
-e1 = eval' (Fix (Val 3))
-e2 = eval' (Fix (Add (Fix (Val 2)) (Fix (Val 3))))
+ph :: ExprF Int -> Int
+ph (Val x)   = x
+ph (Add x y) = x + y
+ps :: (Fix ExprF -> t) -> Fix ExprF -> t
+ps k v@(Fix (Val _))   = k v
+ps k v@(Fix (Add _ _)) = k v
+
+e1, e2 :: [Test]
+e1 = T.tt "e1"
+     [ eval (Fix (Val 3))
+     , adi ph ps (Fix (Val 3))
+     , ps (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix) (Fix (Val 3))
+     ,    (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix) (Fix (Val 3))
+     ,    (fmap (fmap ph . sequenceA) . traverse (adi ph ps))              (Val 3)
+     ,     fmap (fmap ph . sequenceA)                                   ((),Val 3)
+     ,                                          ((), (fmap ph . sequenceA) (Val 3))
+     ,                                          ((), (fmap ph . sequenceA) (Val 3))
+     ,                                          ((),  fmap ph   (Just      (Val 3)))
+     ,                                          ((),             Just (ph  (Val 3)))
+     ,                                          ((),             Just (ph  (Val 3)))
+     ,                                          ((),             Just           3)
+     ]
+     ((), Just 3)
+e2 = T.t "e2"
+     (eval (Fix (Add (Fix (Val 2)) (Fix (Val 3)))))
+     ((), Just 5)
 
 -- evalM :: (Applicative m, Monad m) => Expr -> m Int
 evalM' :: Expr -> WriterT (Sum Int) [] (Sum Int)
@@ -79,3 +107,13 @@ evalM'2 = cataM' phi psi
 
 em2 :: WriterT (Sum Int) [] (Sum Int)
 em2 = evalM'2 (Fix (Add (Fix (Val 1)) (Fix (Val 2))))
+
+emt2 :: [Test]
+emt2 = T.t "emt2"
+       (runWriterT em2)
+       [(Sum {getSum = 3},Sum {getSum = 10})]
+
+------------------------------------------------------------------------------
+
+runTests :: IO Counts
+runTests = runTestTT $ TestList $ e1 ++ e2 ++ emt2
