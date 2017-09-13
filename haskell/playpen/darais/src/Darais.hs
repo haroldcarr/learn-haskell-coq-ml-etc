@@ -77,6 +77,7 @@ e1 = T.tt "e1"
      ,    (fmap (fmap ph . sequenceA) . traverse (adi ph ps))              (Val 3)
      ,     fmap (fmap ph . sequenceA)  (traverse (adi ph ps)               (Val 3))
      ,     fmap (fmap ph . sequenceA)  (traverse (ps (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix))               (Val 3))
+     ,     fmap (fmap ph . sequenceA)  (traverse (ps (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix))               (Val 3 :: ExprF (Fix ExprF)))
      ,     fmap (fmap ph . sequenceA)           ((),                        Val 3)
      ,                                          ((), (fmap ph . sequenceA) (Val 3))
      ,                                          ((), (fmap ph . sequenceA) (Val 3))
