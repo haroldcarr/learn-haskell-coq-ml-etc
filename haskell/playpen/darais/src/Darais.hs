@@ -83,6 +83,8 @@ e1 = T.tt "e1"
      ,     fmap (fmap ph . sequenceA)  (traverse (adi ph ps)               (Val 3))
      ,     fmap (fmap ph . sequenceA)  (traverse (ps (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix))               (Val 3))
      ,     fmap (fmap ph . sequenceA)  (traverse (ps (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix))               (Val 3 :: ExprF (Fix ExprF)))
+     --                                          _ Fix ExprF -> ((), Maybe Int)
+     ,     fmap (fmap ph . sequenceA)  (traverse (ps (fmap (fmap ph . sequenceA) . traverse (adi ph ps) . unFix))               (Val 3 :: ExprF (Fix ExprF)))
      ,     fmap (fmap ph . sequenceA)           ((),                        Val 3)
      ,                                          ((), (fmap ph . sequenceA) (Val 3))
      ,                                          ((),  fmap ph   (Just      (Val 3)))
@@ -90,6 +92,10 @@ e1 = T.tt "e1"
      ,                                          ((),             Just           3)
      ]
      ((), Just 3)
+
+xx,xxx :: ((), ExprF Int)
+xx  = traverse ( \(Fix (Val x)) -> ((), x))          (Val 3 :: ExprF (Fix ExprF))
+xxx = traverse ((\     (Val x)  -> ((), x)) . unFix) (Val 3 :: ExprF (Fix ExprF))
 {-
 traverse :: (Applicative f, Traversable t)
          => (a -> f b)
@@ -267,6 +273,16 @@ xm3 = T.t "xm3"
       ((=<<)    (     \x  -> [x + 1])  [1,2,3::Int])
       [2,3,4]
 
+------------------------------------------------------------------------------
+
+seqq :: Monad m => [m a] -> m [a]
+seqq = foldr mcons (return [])
+
+mcons :: Monad m => m t -> m [t] -> m [t]
+mcons x y = do
+  x' <- x
+  y' <- y
+  return (x': y')
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
