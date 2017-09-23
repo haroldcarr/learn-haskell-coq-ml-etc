@@ -5,6 +5,9 @@ existential_quantification
 > {-# LANGUAGE ExistentialQuantification #-}
 >
 > module Ch05_04_existential_quantification where
+>
+> import Test.HUnit      as U
+> import Test.HUnit.Util as U hiding (e)
 
 Existential quantification and abstract datatypes
 
@@ -29,12 +32,12 @@ type parameter is also "hidden" in type signatures:
 > ef2 (E v _ f2) = f2 v
 >
 > e   = E 3 even show
-> ee3 = ef1 e -- even 3
-> se3 = ef2 e -- show 3
+> ee3 = U.t "ee3" (ef1 e) False -- even 3
+> se3 = U.t "se3" (ef2 e) "3"   -- show 3
 
 Encapsulated value can only be accessed via functions packaged with the value.
 
-Can not apply functions:
+Can NOT apply functions:
 
 > -- INVALID
 > -- getV (E v _ _) = v
@@ -56,3 +59,5 @@ parametric polymorphism      encapsulation
 user of data specifies type  implementer of data specifies type
 
 forall = "for all"           forall = "for some"
+
+> runTests_Ch05_04 = runTestTT $ TestList $ ee3 ++ se3

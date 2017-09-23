@@ -127,7 +127,7 @@ instance must specify a value for the type function `Rep`
 >     toA   (L U)            = Nil'
 >     toA   (R (Combo x xs)) = Cons' x xs
 
-> ch07_03_e5 = fromA (Cons' 1 Nil')
+> ch07_03_e5 = fromA (Cons' (1::Integer) Nil')
 >
 > -- needs signature to compile
 > -- gets error if try to show

@@ -5,6 +5,9 @@ gadt
 > {-# LANGUAGE GADTs #-}
 >
 > module Ch05_06_gadt where
+>
+> import Test.HUnit      as U
+> import Test.HUnit.Util as U
 
 Generalized Algebraic Datatypes
 
@@ -34,7 +37,9 @@ GADT smart constructors built into type so pattern matching possible.  Now can d
 > eval (B v) = v
 > eval (Add x y) = eval x + eval y
 >
-> eg = eval (Add (I 1) (I 2))
+> eg = U.t "eq"
+>   (eval (Add (I 1) (I 2)))
+>   3
 
 GADTs not expressed by syntax
 - rather by relationship between type parameters and constructor return types.
@@ -46,4 +51,4 @@ Difference in meaning of type parameter:
 - phantom: signify type of embedded value
 - gadt: expressing type metadata
 
-
+> runTests_Ch05_06 = runTestTT $ TestList {- $ -} eg

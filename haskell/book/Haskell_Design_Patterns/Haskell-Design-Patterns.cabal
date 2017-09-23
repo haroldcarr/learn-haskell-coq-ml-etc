@@ -6,7 +6,8 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Ch05_01_rank_n_types
+  exposed-modules:     Ch00_Tests
+                     , Ch05_01_rank_n_types
                      , Ch05_02_rank_n_types
                      , Ch05_03_universal_quantification
                      , Ch05_04_existential_quantification
@@ -28,4 +29,6 @@ library
                      , Ch07_07_type_level_programming
                      , Ch07_08_dependently_typed_programming
   build-depends:       base >= 4.7 && < 5
+                     , HUnit
+                     , test-hunit-util
   default-language:    Haskell2010
