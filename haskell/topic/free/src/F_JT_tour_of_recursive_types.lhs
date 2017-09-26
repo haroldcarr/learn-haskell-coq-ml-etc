@@ -73,7 +73,7 @@ have similar recursion
 > -- Forms a comonad : "cofree comonad"
 > -- | cannot implementing TOTAL cofree
 > cofree :: f (Cofree f a) -> Cofree f a
-> cofree f = Cofree (error "cannot come up with arbitrary value of type `a`") f
+> cofree {-f-} = Cofree (error "cannot come up with arbitrary value of type `a`") {-f-}
 > -- projection
 > uncofree :: Cofree f a -> f (Cofree f a)
 > uncofree (Cofree _ f) = f
@@ -87,7 +87,7 @@ no recursion functor (type param `r` is not used)
 > noRecursion        :: NoRecursion
 > noRecursion         = fix NoRecursionF
 
-infinite recursiion (no base case)
+infinite recursion (no base case)
 
 > newtype InfiniteF r = InfiniteF r deriving (Functor, Show)
 > type    Infinite    = Fix InfiniteF
@@ -168,8 +168,8 @@ one recursive point plus one base (terminating) case
 > remaining :: InstructionCofree Int -> Int
 > remaining = loop where
 >   loop (Cofree a f) = case f of
->     IncrementF p -> 1 + (loop p)
->     DecrementF p -> 1 + (loop p)
+>     IncrementF p -> 1 + loop p
+>     DecrementF p -> 1 + loop p
 >     TerminateF   -> 1 + a
 
 > programCofree :: InstructionCofree Int

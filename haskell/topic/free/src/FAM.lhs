@@ -1,15 +1,28 @@
+> {-# LANGUAGE StandaloneDeriving #-}
+> {-# LANGUAGE UndecidableInstances #-}
 > module FAM where
+>
+> import           Data.Maybe
+> import           Test.HUnit      (Counts, Test (TestList), runTestTT)
+> import qualified Test.HUnit.Util as U (t, tt)
 
 https://medium.com/@fintan.halpenny/free-me-exploring-the-free-data-type-c863499a82f8
 
 Edward Kmett
 https://www.stackage.org/haddock/lts-9.4/free-4.12.4/Control-Monad-Free.html#t:Free
 
+------------------------------------------------------------------------------
+FREE
+
 > -- an abstract syntax tree for general computation
 > data Free f a
 >   = Pure a
 >   | Free (f (Free f a))
 
+> deriving instance (Eq   a, Eq   (f (Free   f a))) => Eq   (Free   f a)
+> deriving instance (Show a, Show (f (Free   f a))) => Show (Free   f a)
+
+------------------------------------------------------------------------------
 FUNCTOR
 
 > -- the `f` "inside" must be a Functor (need `fmap` to access the structure)
@@ -31,6 +44,38 @@ FUNCTOR
 >   --   ii :: Free f a -> Free f b
 >   fmap fn af@(Free fr) = Free $ fmap (fmap fn) fr
 
+> -- each level of recursion shows up in the type signature
+> jjj :: Maybe (Maybe (Maybe Int))
+> jjj = Just (Just (Just 3))
+> -- type signature constant regardless of depth of recursion
+> p :: Free f (Maybe Int)
+> p = Pure (Just 3)
+> fffp :: Free Maybe (Maybe Int)
+> fffp = Free (Just (Free (Just (Free (Just (Pure (Just 3)))))))
+
+> fam_e1 :: Free Maybe a
+> fam_e1 = Free Nothing
+> unfree :: Free f a -> f (Free f a)
+> unfree (Free a) = a
+> fam_e1uf :: Maybe (Free Maybe Int) -- Maybe (Free Maybe a)
+> fam_e1uf = unfree fam_e1
+> fam_e1uft = U.t "fam_e1uft" fam_e1uf Nothing
+> fam_e2 :: Free Maybe (Maybe Int) -- Free f (Maybe Int)
+> fam_e2 = Pure (Just 1)
+> -- fmap gets to the value, no matter how deep
+> fam_e2e :: Free Maybe String
+> fam_e2e = fmap (\x -> case x of; Nothing -> "N"; Just a -> show a)  fam_e2
+> fam_e2et = U.t "fam_e2et" fam_e2e (Pure "1")
+> famFffp :: Free Maybe String
+> famFffp = fmap (\x -> case x of; Nothing -> "N"; Just a -> show a)  fffp
+> famFffpt = U.t "famFffpt" famFffp (Free (Just (Free (Just (Free (Just (Pure "3")))))))
+> unpure :: Free f a -> a
+> unpure (Pure a) = a
+> fam_e2uf :: String
+> fam_e2uf = unpure fam_e2e
+> fam_e2uft = U.t "fam_e2uft" fam_e2uf "1"
+
+------------------------------------------------------------------------------
 APPLICATIVE
 
 > -- f must be a Functor to enable 'fmap' to get "inside"
@@ -85,6 +130,7 @@ APPLICATIVE
 >   -- (Free freeFunc) <*> freer = Free $ fmap (<*> freer) freeFunc
 >   -- fmap into the inner part of freeFunc, and use <*> to get at Free a (ie freer)
 
+------------------------------------------------------------------------------
 MONAD
 
 > instance Functor f => Monad (Free f) where
@@ -145,3 +191,7 @@ http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
 https://youtu.be/eKkxmVFcd74?list=WL
 
 https://stackoverflow.com/questions/17307416/difference-between-free-monads-and-fixpoints-of-functors
+
+> test :: IO Counts
+> test =
+>   runTestTT $ TestList $ fam_e1uft ++ fam_e2et ++ famFffpt ++ fam_e2uft
