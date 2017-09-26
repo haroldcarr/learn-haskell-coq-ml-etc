@@ -7,6 +7,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     FA
+                     , FAM
                      , FA_EK_ValidationForm
                      , FM_2013_09_andres_loeh_monads_for_free
                      , FM_DL_free_cofree
