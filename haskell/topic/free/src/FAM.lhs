@@ -1,8 +1,10 @@
-> {-# LANGUAGE StandaloneDeriving #-}
+> {-# LANGUAGE StandaloneDeriving   #-}
 > {-# LANGUAGE UndecidableInstances #-}
+>
 > module FAM where
 >
-> import           Data.Maybe
+> import           Data.Monoid     (Sum (..))
+> import           Prelude         hiding (pi)
 > import           Test.HUnit      (Counts, Test (TestList), runTestTT)
 > import qualified Test.HUnit.Util as U (t, tt)
 
@@ -18,21 +20,21 @@ FREE
 > data Free f a
 >   = Pure a
 >   | Free (f (Free f a))
-
-> deriving instance (Eq   a, Eq   (f (Free   f a))) => Eq   (Free   f a)
-> deriving instance (Show a, Show (f (Free   f a))) => Show (Free   f a)
+>
+> deriving instance (Eq   a, Eq   (f (Free f a))) => Eq   (Free f a)
+> deriving instance (Show a, Show (f (Free f a))) => Show (Free f a)
 
 ------------------------------------------------------------------------------
 FUNCTOR
 
-> -- the `f` "inside" must be a Functor (need `fmap` to access the structure)
+> -- the `f` "inside" `Free` must be a Functor (need `fmap` to access the structure)
 > instance Functor f => Functor (Free f) where
 >   fmap fn (Pure a) = Pure (fn a) -- no recursion, so just unwrap, apply, rewrap
 >
->   -- fmap :: (a -> b) ->      f a -> f b
+>   -- fmap :: (a -> b) ->      f a ->      f b
 >   -- substitute `Free f` for `f`:
 >   -- fmap :: (a -> b) -> Free f a -> Free f b
->   -- fmap _fn (Free _fr) = _x
+>   -- fmap fn af@(Free fr) = _x
 >   --   _x :: Free f b (and `f` is a Functor)
 >   --   fn :: a -> b
 >   --   af :: Free f a
@@ -40,40 +42,48 @@ FUNCTOR
 >   --            want to change to 'Free f b' using 'fn'
 >   --            so need to get 'fn' two-levels inside
 >   --            and when done "rewrap" back to starting level
->   -- fmap fn af@(Free fr) = Free $ fmap ii fr
+>   -- fmap fn (Free fr) = Free $ fmap ii fr
 >   --   ii :: Free f a -> Free f b
->   fmap fn af@(Free fr) = Free $ fmap (fmap fn) fr
+>   fmap fn (Free fr) = Free $ fmap (fmap fn) fr
+
+> unpure :: Free f a -> a
+> unpure (Pure a) = a
+> unfree :: Free f a -> f (Free f a)
+> unfree (Free a) = a
 
 > -- each level of recursion shows up in the type signature
 > jjj :: Maybe (Maybe (Maybe Int))
 > jjj = Just (Just (Just 3))
-> -- type signature constant regardless of depth of recursion
-> p :: Free f (Maybe Int)
-> p = Pure (Just 3)
-> fffp :: Free Maybe (Maybe Int)
-> fffp = Free (Just (Free (Just (Free (Just (Pure (Just 3)))))))
-
-> fam_e1 :: Free Maybe a
-> fam_e1 = Free Nothing
-> unfree :: Free f a -> f (Free f a)
-> unfree (Free a) = a
-> fam_e1uf :: Maybe (Free Maybe Int) -- Maybe (Free Maybe a)
-> fam_e1uf = unfree fam_e1
-> fam_e1uft = U.t "fam_e1uft" fam_e1uf Nothing
-> fam_e2 :: Free Maybe (Maybe Int) -- Free f (Maybe Int)
-> fam_e2 = Pure (Just 1)
+> -- type signature constant regardless of depth/kind of recursion
+> pn,pj,fn,fjn,fjjjp :: Free Maybe (Maybe Int)
 > -- fmap gets to the value, no matter how deep
-> fam_e2e :: Free Maybe String
-> fam_e2e = fmap (\x -> case x of; Nothing -> "N"; Just a -> show a)  fam_e2
-> fam_e2et = U.t "fam_e2et" fam_e2e (Pure "1")
-> famFffp :: Free Maybe String
-> famFffp = fmap (\x -> case x of; Nothing -> "N"; Just a -> show a)  fffp
-> famFffpt = U.t "famFffpt" famFffp (Free (Just (Free (Just (Free (Just (Pure "3")))))))
-> unpure :: Free f a -> a
-> unpure (Pure a) = a
-> fam_e2uf :: String
-> fam_e2uf = unpure fam_e2e
-> fam_e2uft = U.t "fam_e2uft" fam_e2uf "1"
+> fm :: Free Maybe (Maybe Int) -> Free Maybe String
+> fm = fmap (\x -> case x of; Nothing -> "N"; Just a -> "J" ++ show a)
+> pn      =                           Pure  Nothing
+> famPnt  = U.t "famPnt" (unpure pn)        Nothing
+> famPn   = U.t "famPn"  (fm pn)     (Pure "N")
+> pj      =                           Pure (Just 3)
+> famPjt  = U.t "famPjt" (unpure pj)       (Just 3)
+> famPj   = U.t "famPj"  (fm pj)     (Pure "J3")
+> fn      =                          Free Nothing
+> famFnt  = U.t "famFnt" (unfree fn)      Nothing
+> fjn     =                        Free (Just (Free Nothing))
+> famFjn  = U.t "famFjn" (fm fjn) (Free (Just (Free Nothing))) -- TODO think more
+> fjjjp   = Free (Just (Free (Just (Free (Just (Pure (Just 3)))))))
+> famFffp = U.t "famFffp"
+>          (fm fjjjp)
+>          (Free (Just (Free (Just (Free (Just (Pure "J3")))))))
+
+> pi,fjjjpi          :: Free Maybe Int
+> pi      =                          Pure 3
+> famPit  = U.t "famPit" (unpure pi)      3
+> fjjjpi  = Free (Just (Free (Just (Free (Just (Pure 3))))))
+> famFjjjpi = U.t "famFjjjpi"
+>                (unfree fjjjpi)
+>                (Just (Free (Just (Free (Just (Pure 3))))))
+> famPlus1 = U.t "famPlus1"
+>     (fmap (+1) (Free (Just (Free (Just (Free (Just (Pure (Sum 3)))))))))
+>                (Free (Just (Free (Just (Free (Just (Pure (Sum 4))))))))
 
 ------------------------------------------------------------------------------
 APPLICATIVE
@@ -194,4 +204,6 @@ https://stackoverflow.com/questions/17307416/difference-between-free-monads-and-
 
 > test :: IO Counts
 > test =
->   runTestTT $ TestList $ fam_e1uft ++ fam_e2et ++ famFffpt ++ fam_e2uft
+>   runTestTT $ TestList $
+>     famPnt ++ famPn ++ famPjt ++ famPj ++ famFnt ++ famFjn ++ famFffp ++
+>     famPit ++ famFjjjpi ++ famPlus1
