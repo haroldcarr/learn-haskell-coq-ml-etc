@@ -1,0 +1,16 @@
+git clone https://github.com/basvandijk/nix-workshop
+nix-env -i nix-repl
+nix-repl
+"Hello, world."
+mypkgs = import <nixpkgs> { system = "x86_64-linux"; }
+<exit nix-repl>
+
+Gabriel's haskell version of nix derivation:
+https://hackage.haskell.org/package/nix-derivation-1.0.0
+
+# run stuff in : nix-workshop/00-introduction-to-nix/run.sh
+
+~/nix-defexpr/pkgs/top-level/all-packages.nix
+
+nix-shell -p haskell.compiler.ghc821
+

@@ -1,0 +1,6 @@
+Extensible Denotational Language Specification  : Cartwright / Felliesen
+
+OpenUnion42 (not on website) does not use unsafe - but is linear time
+OpenUnion52 is constant time
+
+A Pair of Twin Functional Pearls - Olin Shivers
