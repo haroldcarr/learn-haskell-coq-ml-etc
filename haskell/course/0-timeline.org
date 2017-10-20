@@ -1,6 +1,11 @@
+This is my first "Haskell" job.  Many have asked how I got it.
+First, (continue to) learn Haskell.  My path so far:
+
+(Not included below, but most important, are the many generous people I interacted with at these events and since.
+Thank you.)
+
 2013-07    : attended   : Oregon Programming Languages Summer School, Eugene, Oregon (two weeks)
-2013       :            : Darais
-2013-11... : self-study : NICTA (online)
+2013-11... : self-study : [[https://github.com/data61/fp-course][Data61]] FP course (formerly NICTA) 
 2013-11    : completed  : Coursera Odersky FP in Scala (online, did in Haskell too)
 2014-02    : presented  : "Monads", Utah Lambda Lounge, SLC, Utah
 2014-04    : presented  : "Monads", LambdaConf, Boulder, Colorado
@@ -17,6 +22,12 @@
 2016-04    : presented  : "Recursion Schemes", Utah Lambda Lounge, SLC, Utah
 2017-01    : attended   : LambdaConf Winter Retreat, Crested Butte
 2017-04    : attended   : BayHac, Takt, San Francisco, CA
+2017-05    : attended   : [[http://lambdaconf.us/training/lcusc/applied-haskell.html][Applied Haskell]], Michael Snoyman, Boulder, Colorado (2 days)
 2017-05    : presented  : "Recursion Schemes" (without Fix), LambdaConf, Boulder, Colorado
 2017-07    : attended   : Redex Summer School, University of Utah, SLC, Utah (one week)
 2017-09    : attended   : ICFP/CUFP, Oxford, England
+2017-10    : attended   : Haskell Exchange, London, England
+2017-10    : hired      : blockchain scalability/accountability research in Haskell, Oracle Labs
+
+Also not included are the many papers, blogs, books I read and tried.
+See: https://github.com/haroldcarr/learn-haskell-coq-ml-etc
