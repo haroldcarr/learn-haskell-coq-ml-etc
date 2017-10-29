@@ -16,13 +16,42 @@ https://www.stackage.org/haddock/lts-9.4/free-4.12.4/Control-Monad-Free.html#t:F
 ------------------------------------------------------------------------------
 FREE
 
-> -- an abstract syntax tree for general computation
+> -- | an abstract syntax tree for general computation
+> -- `f` is the structure to be made recursive
+> -- `a' is the base value
 > data Free f a
->   = Pure a
->   | Free (f (Free f a))
+>   = Pure a              -- ^ base case of value of type `a`
+>   | Free (f (Free f a)) -- ^ recursion on `f` of type `Free f a`
 >
 > deriving instance (Eq   a, Eq   (f (Free f a))) => Eq   (Free f a)
 > deriving instance (Show a, Show (f (Free f a))) => Show (Free f a)
+
+https://hackage.haskell.org/package/free-4.12.1/docs/src/Control-Monad-Free.html#Free
+
+~~~{.haskell}
+instance (Functor f, Eq1 f) => Eq1 (Free f) where
+  Pure  a ==# Pure  b =             a ==              b
+  Free fa ==# Free fb = fmap Lift1 fa ==# fmap Lift1 fb
+  _       ==# _       = False
+
+instance (Eq (f (Free f a)), Eq a) => Eq (Free f a) where
+  Pure  a == Pure  b =  a ==  b
+  Free fa == Free fb = fa == fb
+  _       == _       = False
+
+instance (Functor f, Ord1 f) => Ord1 (Free f) where
+  Pure a `compare1` Pure b = a `compare` b
+  Pure _ `compare1` Free _ = LT
+  Free _ `compare1` Pure _ = GT
+  Free fa `compare1` Free fb = fmap Lift1 fa `compare1` fmap Lift1 fb
+~~~
+
+- to compare values of type (Free f a) for equality
+  - need to be able to compare the constructors : `Pure` and `Free`
+  - and the fields of the constructors : `a` and `fa :: (f (Free f a))`
+- circular because Free is circular
+- GHC uses the provided instance in the implementation, yielding recursion.
+  - means it may go into an infinite loop if the instances are defined that way
 
 ------------------------------------------------------------------------------
 FUNCTOR
@@ -34,22 +63,26 @@ FUNCTOR
 >   -- fmap :: (a -> b) ->      f a ->      f b
 >   -- substitute `Free f` for `f`:
 >   -- fmap :: (a -> b) -> Free f a -> Free f b
->   -- fmap fn af@(Free fr) = _x
->   --   _x :: Free f b (and `f` is a Functor)
+>   -- fmap fn af@(Free fa) = _x
+>   --   _x :: Free f b (`f` is a Functor)
 >   --   fn :: a -> b
 >   --   af :: Free f a
->   --   fr :: f (Free f a) -- says 'Free f a' inside 'f'
->   --            want to change to 'Free f b' using 'fn'
+>   --   fa :: f (Free f a) -- says type 'Free f a' inside Functor 'f'
+>   --            want to change to type 'Free f b' using 'fn'
 >   --            so need to get 'fn' two-levels inside
->   --            and when done "rewrap" back to starting level
->   -- fmap fn (Free fr) = Free $ fmap ii fr
+>   --            (the `Free` level and the level of the specific `Functor`)
+>   --            then "rewrap" back to starting level
+>   -- fmap fn (Free fa) = Free $ fmap ii fa
 >   --   ii :: Free f a -> Free f b
->   fmap fn (Free fr) = Free $ fmap (fmap fn) fr
+>   fmap fn (Free fa) = Free $ fmap (fmap fn) fa
+>   --                           ^       ^
+>   --                      functor    Free
+>   --                      level      level
 
-> unpure :: Free f a -> a
-> unpure (Pure a) = a
-> unfree :: Free f a -> f (Free f a)
-> unfree (Free a) = a
+> unpure          :: Free f a ->           a
+> unpure (Pure  a) =  a
+> unfree          :: Free f a -> f (Free f a)
+> unfree (Free fa) = fa
 
 > -- each level of recursion shows up in the type signature
 > jjj :: Maybe (Maybe (Maybe Int))
@@ -98,30 +131,30 @@ APPLICATIVE
 >   (Pure f) <*> (Pure a) = Pure $ f a -- Unwrap fun and val, apply, rewrap.
 >
 > -- CASE 2
->   (Pure f) <*> (Free freer) = Free $ fmap (fmap f) freer -- right same as fmap, so:
-> -- (Pure f) <*> freer = fmap f freer
+>   (Pure f) <*> (Free fa) = Free $ fmap (fmap f) fa -- right same as fmap, so:
+> -- (Pure f) <*> fa = fmap f fa
 >
 > -- CASE 3
 > -- need to unwrap some structure
 > -- need to apply <*> recursively
 > -- to get inside the following, use fmap
 > --   freeFunc :: f (Free f (a -> ... a ... -> b))
-> --   freer    :: f (Free f a)
-> -- (Free freeFunc) <*> (Free freer) = _innerFunc Main.<*> _innerFreer
+> --   fa       :: f (Free f a)
+> -- (Free freeFunc) <*> (Free fa) = _innerFunc Main.<*> _innerFa
 > --
-> --   _innerFreer :: Free f t, and need to use freer
-> -- (Free freeFunc) <*> (Free freer) =
-> --    Free $ fmap (\innerFunc -> innerFunc Main.<*> _innerFreer) freeFunc
+> --   _innerFa :: Free f t, and need to use fa
+> -- (Free freeFunc) <*> (Free fa) =
+> --    Free $ fmap (\innerFunc -> innerFunc Main.<*> _innerFa) freeFunc
 > --
-> -- (Free freeFunc) <*> (Free freer) =
-> --    Free $ fmap (\innerFunc -> fmap (\inner -> innerFunc Main.<*> inner) freer) freeFunc
+> -- (Free freeFunc) <*> (Free fa) =
+> --    Free $ fmap (\innerFunc -> fmap (\inner -> innerFunc Main.<*> inner) fa) freeFunc
 > --    Expected type: Free (Free f) a
 > --      Actual type: Free f a
 >
 > -- Missing rewrap, so
->   (Free freeFunc) <*> (Free freer) =
+>   (Free freeFunc) <*> (Free fa) =
 >      Free $ fmap (\innerFunc -> Free $ fmap (\inner -> innerFunc <*> inner)
->                   freer)
+>                   fa)
 >             freeFunc
 >
 > -- CASE 4
@@ -135,10 +168,14 @@ APPLICATIVE
 >      Free $ fmap (\innerFunc -> innerFunc <*> Pure a) freeFunc
 >   -- alternate/better:
 >   --  freeFunc :: f (Free f (a -> b))
->   --  freer    :: Free f a
+>   --  fa    :: Free f a
 >   -- apply <*> recursively
->   -- (Free freeFunc) <*> freer = Free $ fmap (<*> freer) freeFunc
->   -- fmap into the inner part of freeFunc, and use <*> to get at Free a (ie freer)
+>   -- (Free freeFunc) <*> fa = Free $ fmap (<*> fa) freeFunc
+>   -- fmap into the inner part of freeFunc, and use <*> to get at Free a (ie fa)
+
+> famap = U.t "famap"
+>   (Pure (*) <*> Free (Just (Free (Just (Pure 3)))) <*> Free (Just (Free (Just (Pure 3)))))
+>                (Free (Just (Free (Just                (Free (Just (Free (Just (Pure 9)))))))))
 
 ------------------------------------------------------------------------------
 MONAD
@@ -148,10 +185,10 @@ MONAD
 >   (Pure a) >>= k = k a -- unwrap a, apply k (k returns Free f b)
 
 . Moving onto the Free constructor case.
-instance Functor f => Monad (Free f) where (Pure a) >>= k = k a (Free freer) >>= k =
+instance Functor f => Monad (Free f) where (Pure a) >>= k = k a (Free fa) >>= k =
 _iWantToBreakFree Hmmmm, what should we do? Oh ya, the same as every other time! fmap over, apply
 recursively and wrap it all up again.  instance Functor f => Monad (Free f) where (Pure a) >>= k = k
-a (Free freer) >>= k = Free $ fmap (>>= k) freer Some Helpers From my Friends This is awesome, we
+a (Free fa) >>= k = Free $ fmap (>>= k) fa Some Helpers From my Friends This is awesome, we
 have our instances, which from the look of the free there can be many more! But instead, we will
 define two functions that will help us in our endeavour of writing a DSL using Free. These two
 functions will be liftF and foldFree. liftF allows us to lift any Functor into a Free structure and
@@ -170,21 +207,21 @@ fold down our Free f x structure to the Monad , m. Let’s get into the thick of
 Let’s do the easy case first: foldFree :: Monad m => (forall x. f x -> m x) -> Free f x -> m x
 foldFree _ (Pure a) = pure a We extract our a from Pure and use the Monad's pure to place in that
 context instead. Next up: foldFree :: Monad m => (forall x. f x -> m x) -> Free f x -> m x foldFree
-k (Free freer) = _iWantToFoldFree Let’s see what we have here: k :: f x -> m x freer :: f (Free f a)
+k (Free fa) = _iWantToFoldFree Let’s see what we have here: k :: f x -> m x fa :: f (Free f a)
 We don’t have our trusty fmap here because we never said f was a functor, so there’s really only one
-thing we can do, and that’s apply k to freer!  foldFree :: Monad m => (forall x. f x -> m x) -> Free
-f x -> m x foldFree k (Free freer) = _iWantToFoldFree (k freer) Let’s just think about what this
-gives us in terms of types: k :: f x -> m x freer :: f (Free f a) k freer :: m (Free f a) So when we
+thing we can do, and that’s apply k to fa!  foldFree :: Monad m => (forall x. f x -> m x) -> Free
+f x -> m x foldFree k (Free fa) = _iWantToFoldFree (k fa) Let’s just think about what this
+gives us in terms of types: k :: f x -> m x fa :: f (Free f a) k fa :: m (Free f a) So when we
 apply it we actually have a Monad with Free f a inside it. Well what can we do next to break down
 that inner Free even further? Well since we are working with a Monad we can utilise (>>=).  foldFree
-:: Monad m => (forall x. f x -> m x) -> Free f x -> m x foldFree k (Free freer) = k freer >>=
+:: Monad m => (forall x. f x -> m x) -> Free f x -> m x foldFree k (Free fa) = k fa >>=
 _iWantToFoldFree Again we should ask, what is the type of _iWantToFoldFree? Well using the type
-signature of (>>=) we can figure this out. If k freer is m (Free f a) and our result should be m x
+signature of (>>=) we can figure this out. If k fa is m (Free f a) and our result should be m x
 due to our foldFree type signature, then we would expect: (>>=) :: m (Free f a) -> (Free f a -> m x)
 -> m x Hmmm, that function in the middle of our signature looks pretty familiar… That’s right! It’s
 our foldFree with the natural transformation already applied! And of course we can feel at ease with
 this solution because it’s recursive.  foldFree :: Monad m => (forall x. f x -> m x) -> Free f x ->
-m x foldFree k (Free freer) = k freer >>= foldFree k Final Words Well damn, that turned out to be
+m x foldFree k (Free fa) = k fa >>= foldFree k Final Words Well damn, that turned out to be
 quite the lengthy article just to explain a few functions, but this actually gives us enough power
 to write as many DSLs as we want. On top of this we now understand how Free actually works and not
 just how to use it! That’s something extremely useful in itself.  Something else we can learn from
@@ -206,4 +243,5 @@ https://stackoverflow.com/questions/17307416/difference-between-free-monads-and-
 > test =
 >   runTestTT $ TestList $
 >     famPnt ++ famPn ++ famPjt ++ famPj ++ famFnt ++ famFjn ++ famFffp ++
->     famPit ++ famFjjjpi ++ famPlus1
+>     famPit ++ famFjjjpi ++ famPlus1 ++
+>     famap
