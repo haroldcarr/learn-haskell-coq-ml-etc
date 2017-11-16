@@ -1,0 +1,43 @@
+From: Chris Smith <cdsmith@gmail.com>
+Subject: Re: What Does Graham Hutton Mean by Effect
+Newsgroups: gmane.comp.lang.haskell.cafe
+To: Steven Leiva <leiva.steven@gmail.com>
+Cc: haskell-cafe <haskell-cafe@haskell.org>
+Date: Mon, 30 Oct 2017 20:08:47 -0700 (4 days, 10 hours, 51 minutes ago)
+
+The meaning of "pure", and the meaning of "effect" are closely
+intertwined, because essentially, "pure" (in this usage) means "not
+having any effects", and "effect" means "the part of the function
+result that isn't pure". If what you have in your mind is a function
+`div :: Int -> Int -> Int`, and instead have to settle for `div :: Int
+-> Int -> Maybe Int`, they you could consider the first the type it
+should have "if it were pure", and call the Maybe type "an
+effect". The words are relative to your starting assumption of what
+type div should have, though. As you mention, you could also quite
+reasonably admit that `Maybe Int` is a perfectly good type on its own,
+and consider `safeDiv` to be a pure function with this type as a
+codomain.
+
+You can even pull the same trick with more powerful effects. The type
+`IO Int` is a (more or less) defined type, and its values are ACTIONS
+that your computer could take, which if they don't fail return an
+Int. From this perspective, even a function like `readFile :: FilePath
+-> IO ByteString` is a "pure" function, which maps file paths to
+actions. But if you consider it as a map from file paths to
+bytestrings, then it is effectful. Again, these words are defined
+relative to what you consider the result to be. (I'm ignoring, here,
+some questions about what the correct semantics for IO types even
+is...)
+
+If you want a more formal (but less intuitive) way to think about
+this, then you can turn to category theory. In category theory, a
+monad (say, F) is an endofunctor in some category -- for us, typically
+the category of Haskell types and functions. But F also defines a
+SECOND category, called the Kleisli category of F: the set of types
+here the same, but a "Kleisli arrow" between two objects A and B is a
+function A -> F B in the base category. Notice that any Kleisli arrow
+IS an arrow in the base category, so in that sense you could claim
+that it's "pure". But IF you choose to think about it as an arrow from
+A to B, THEN you must be talking about the Kleisli category, and it
+has an effect captured by F. If that wasn't what you were looking for,
+though, feel free to ignore it.
