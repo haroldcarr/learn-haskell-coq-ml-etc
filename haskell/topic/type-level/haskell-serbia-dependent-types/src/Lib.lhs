@@ -34,12 +34,12 @@ Outline:
 Terms vs. Types
 
 term :: type :: kind
+- term is of type
+- type is of kind (the "type" of a type)
 
-term is of type, type is of kind (the "type" of a type)
+https://wiki.haskell.org/Kind
 
- https://wiki.haskell.org/Kind
-
-Standard Haskell (no extensions)
+standard Haskell (no extensions)
 - terms present at runtime
 - types erased at runtime
 
@@ -53,10 +53,10 @@ A type has a set of possible term-level values.
 > instance Show Void where -- there will not be any instances, so this is useless, but used below
 >   show x = "Void"
 
-- type with one inhabitant
+-- type with one inhabitant
 data () = ()
 
-- type with two inhabitants
+-- type with two inhabitants
 data Bool = True | False
 
 Types can also contain type level data.
@@ -98,10 +98,10 @@ Framework for exploring forms of abstraction.
 
 2.. Values depending on Types (classes)
 
-> mbi = (maxBound :: Int)  == 9223372036854775807
+> mbi =   (maxBound :: Int) == 9223372036854775807
 > mbb = if maxBound :: Bool then "yes" else "no"
 
-Type is determining the values maxBound will have.
+Type determines the values maxBound will have.
 
 3. Types depending on Types (type functions)
 
@@ -128,7 +128,7 @@ https://hackage.haskell.org/package/type-list-0.5.0.0/docs/src/Data-Type-List.ht
 >   ReverseAcc '[] acc = acc
 >   ReverseAcc (x ': xs) acc = ReverseAcc xs (x ': acc)
 >
-> -- |type level funcion on type level data
+> -- | type level funcion on type level data
 > type family Reverse (xs :: [a]) :: [a] where
 >   Reverse xs = ReverseAcc xs '[]
 
@@ -265,8 +265,8 @@ After pattern match, can use local assumptions about y which is the term level.
 
 Π : type level generalization of product types
 
-    A   ->  B
-Π  (x :: A) B(x)
+   A    -> B
+Π (x :: A) B(x)
 
 type of result of B depend on its input
 
