@@ -1,0 +1,11 @@
+name:                cli
+version:             0.1.0.0
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable main
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , cmdargs
+  default-language:    Haskell2010

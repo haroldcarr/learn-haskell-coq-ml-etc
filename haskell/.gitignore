@@ -8,6 +8,7 @@ cabal.sandbox.config
 .virthualenv
 .stack-work
 0-0
+group-like-structures.png
 haskell-variables-by-trupil.jpg
 RCS
 TAGS
