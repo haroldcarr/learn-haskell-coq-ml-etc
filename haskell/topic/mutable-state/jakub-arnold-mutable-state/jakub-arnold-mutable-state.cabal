@@ -1,9 +1,9 @@
-name:                phantom
+name:                jakub-arnold-mutable-state
 version:             0.1.0.0
-build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     PT
+  exposed-modules:     MS
   build-depends:       base >= 4.7 && < 5
+                     , stm
   default-language:    Haskell2010
