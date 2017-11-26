@@ -1,0 +1,6 @@
+resolver: lts-9.14
+packages:
+- .
+extra-deps: [ th-pprint-0.1.0.0 ]
+flags: {}
+extra-package-dbs: []
