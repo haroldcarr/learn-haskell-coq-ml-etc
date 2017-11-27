@@ -1,0 +1,11 @@
+name:                chris-penner-avoid-io-monad-io
+version:             0.1.0.0
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     AMIO
+  build-depends:       base >= 4.7 && < 5
+                     , containers
+                     , mtl
+  default-language:    Haskell2010
