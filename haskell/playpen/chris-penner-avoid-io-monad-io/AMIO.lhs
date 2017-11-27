@@ -1,11 +1,16 @@
-> {-# LANGUAGE ConstraintKinds  #-}
-> {-# LANGUAGE FlexibleContexts #-}
+> {-# LANGUAGE ConstraintKinds      #-}
+> {-# LANGUAGE FlexibleContexts     #-}
+> {-# LANGUAGE FlexibleInstances    #-}
+> {-# LANGUAGE TypeSynonymInstances #-}
 >
 > module AMIO where
 >
 > import Control.Monad.Reader
 > import Control.Monad.State
 > import Data.Map as M
+> import Data.Maybe (fromMaybe)
+>
+> {-# ANN module "HLint: ignore Reduce duplication" #-}
 
 IO and MonadIO are too general.
 
@@ -94,7 +99,7 @@ Also : different instance for testing:
 >     files <- get
 >     let contents = fromMaybe "" (M.lookup fileName files)
 >     return contents
->   writeAFile fileName contents = do
+>   writeAFile fileName contents =
 >     modify (M.insert fileName contents)
 
 More granularity.
@@ -103,10 +108,9 @@ More granularity.
 >   readAFileX :: FilePath -> m String -- X to avoid dup
 >
 > class MonadFileWriter m where
->   writeAFileX :: FilePath -> String -> IO ()
+>   writeAFileX :: FilePath -> String -> m ()
 
 Can combine via ConstraintKinds
   https://kseo.github.io/posts/2017-01-13-constraint-kinds.html
 
 > type MonadFilesX m = (MonadFileReader m, MonadFileWriter m)
-
