@@ -123,22 +123,29 @@ issue: combining code in free monads with different functor types
 - solved by making the actual functor type polymorphic
 - then using functor injection as shown in : http://degoes.net/articles/modern-fp-part-2
 
-Apply this to terminal example:
+Add logging functor to terminal example:
 
+> class Monad m => MonadLog m where
+>   logM        :: String -> m ()
+>
 > class (Functor f, Functor g) => Inject f g where
->   inject  :: f a -> g a
->   project :: g a -> Maybe (f a)
+>   inject      :: f a -> g a
+>   project     :: g a -> Maybe (f a)
 >
-> getLineC :: Inject Terminal f => Free f String
-> getLineC = Free (inject $ GetLine return)
+> getLineC      :: Inject Terminal f => Free f String
+> getLineC       = Free (inject $ GetLine return)
 >
-> printLineC :: Inject Terminal f => String -> Free f ()
+> printLineC    :: Inject Terminal f => String -> Free f ()
 > printLineC str = liftF (inject $ PrintLine str ())
 >
-> myProgramC :: Inject Terminal f => Free f ()
+> logC          :: Inject Log f => String -> Free f ()
+> logC       str = liftF (inject $ Log str ())
+>
+> myProgramC    :: (Inject Terminal f, Inject Log f) => Free f ()
 > myProgramC = do
 >   a <- getLineC
 >   b <- getLineC
+>   logC b
 >   printLineC (a ++ b)
 
 above gives composable code with free monads
@@ -191,7 +198,7 @@ for performance : use INLINEABLE and SPECIALIZE pragmas
 Inspection
 
 prefer writing in polymorphic monads to writing in free monads
-- more powerful : can recover the same data structure by defining an instance of MonadTerm:
+- can recover the Free data structure by defining an instance of MonadTerm:
 
 > instance MonadTerm TerminalM where
 >   getLineM       = Free (GetLine return)
@@ -201,7 +208,7 @@ prefer writing in polymorphic monads to writing in free monads
 > myFreeProgram = myProgramM
 
 - effects in myProgram constrained to methods of MonadTerm
-- we can turn it into efficient runable code without needing to first construct a data structure and then interpret it
+- can turn into efficient runable code without first construct a data structure and then interpreting it
 - can do everything that can be done via writing myProgram in free monad directly
 
 ------------------------------------------------------------------------------
@@ -209,9 +216,6 @@ Composability
 
 combine actions from two different type classes : merge constraints:
 
-> class Monad m => MonadLog m where
->   logM :: String -> m ()
->
 > myProgramMC :: (MonadTerm m, MonadLog m) => m ()
 > myProgramMC = do
 >   a <- getLineM
@@ -219,6 +223,9 @@ combine actions from two different type classes : merge constraints:
 >   b <- getLineM
 >   logM "got b"
 >   printLineM (a ++ b)
+
+------------------------------------------------------------------------------
+Inspection when composed
 
 can recover the data structure as if written in free monad
 go from type class-based representation to free representation
