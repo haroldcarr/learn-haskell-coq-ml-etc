@@ -5,11 +5,13 @@
 > {-# LANGUAGE LambdaCase                 #-}
 > {-# LANGUAGE MultiParamTypeClasses      #-}
 > {-# LANGUAGE RankNTypes                 #-}
+> {-# LANGUAGE StandaloneDeriving         #-}
 > {-# LANGUAGE TypeSynonymInstances       #-}
 > {-# LANGUAGE UndecidableInstances       #-}
 >
 > module F where
 >
+> import           Control.Monad.State
 > import           Prelude   as P
 > import qualified System.IO as SIO
 
@@ -27,7 +29,15 @@ http://www.parsonsmatt.org/2017/09/22/what_does_free_buy_us.html
 >
 > data Free f a
 >   = Pure a
->  | Free (f (Free f a))
+>   | Free (f (Free f a))
+>
+> deriving instance (Eq   a, Eq   (f (Free f a))) => Eq   (Free f a)
+> deriving instance (Show a, Show (f (Free f a))) => Show (Free f a)
+>
+> unpure          :: Free f a ->           a
+> unpure (Pure  a) =  a
+> unfree          :: Free f a -> f (Free f a)
+> unfree (Free fa) = fa
 >
 > instance Functor f => Functor (Free f) where
 >   fmap f (Pure a)   = Pure (f a)
@@ -43,11 +53,6 @@ http://www.parsonsmatt.org/2017/09/22/what_does_free_buy_us.html
 >   return = pure
 >   Pure a >>= f      = f a
 >   Free x >>= f      = Free ((>>= f) <$> x)
->
-> -- | The very definition of a free monad is that given a natural transformation you get a monad homomorphism.
-> foldFree :: Monad m => (forall x . f x -> m x) -> Free f a -> m a
-> foldFree _ (Pure a)  = return a
-> foldFree f (Free as) = f as >>= foldFree f
 
 a free monad can only build a data structure representing monadic computation
 - can then be inspected or interpreted
@@ -58,20 +63,56 @@ a free monad can only build a data structure representing monadic computation
 >   | PrintLine String a
 >   deriving Functor
 >
+> instance Show a => Show (Terminal a) where
+>   show (GetLine f) = "GetLine f"
+>   show (PrintLine s a) = "PrintLine " ++ s ++ " " ++ show a
+
+:t GetLine id
+ :: Terminal String
+
+:t PrintLine "x" ()
+ :: Terminal ()
+
 > -- |  the free monad
 > type TerminalM = Free Terminal
->
-> -- | lift a functor value into the free monad
-> liftF :: Functor f => f a -> Free f a
-> liftF = Free . fmap return
 >
 > -- | an action in the free monad
 > getLineF :: TerminalM String
 > getLineF = Free (GetLine return)
->
+
+:t GetLine return
+ :: Monad m => Terminal (m String)
+:t GetLine return :: Terminal (Maybe String)
+ :: Terminal (Maybe String)
+:t GetLine return :: Terminal [String]
+ :: Terminal [String]
+
+:t Free (GetLine (\_ -> return 'c'))
+ :: Free Terminal Char
+:t Free (GetLine (\_ -> return "s"))
+ :: Free Terminal [Char]
+:t Free (GetLine (\_ -> return 1))
+ :: Num a => Free Terminal a
+
+> -- | lift a functor value into the free monad
+> liftF :: Functor f => f a -> Free f a
+> liftF = Free . fmap return
+
+:t liftF (Just 3)
+ :: Num a => Free Maybe a
+liftF (Just 3)
+ Free (Just (Pure 3))
+
 > -- | an action in the free monad
 > printLineF :: String -> TerminalM ()
 > printLineF str = liftF (PrintLine str ())
+
+:t PrintLine "s" ()
+ :: Terminal ()
+:t PrintLine "s" 1
+ :: Num a => Terminal a
+:t liftF (PrintLine "s" ())
+ :: Free Terminal ()
 
 > -- | an entire program consisting of actions bound together using monadic bind
 > myProgramF :: TerminalM ()
@@ -80,12 +121,37 @@ a free monad can only build a data structure representing monadic computation
 >   b <- getLineF
 >   printLineF (a ++ b)
 
+:t unfree myProgramF
+ :: Terminal (Free Terminal ())
+let (GetLine gl1) = unfree myProgramF
+:t x
+ :: String -> Free Terminal ()
+:t unfree (gl1 "s")
+let (GetLine gl2) = unfree (gl1 "s")
+let (PrintLine s r) = unfree (gl2 "s")
+:t s
+ :: String
+:t r
+ r :: Free Terminal ()
+:t unfree r
+ :: Terminal (Free Terminal ())
+r
+=> Pure ()
+
 could interpret or transform 'myProgram' value
+
+> -- | definition of free monad : given a natural transformation, get a monad homomorphism
+> foldFree :: Monad m => (forall x . f x -> m x) -> Free f a -> m a
+> foldFree _ (Pure a)  = return a
+> foldFree f (Free as) = f as >>= foldFree f
 
 > interpretF :: TerminalM a -> IO a
 > interpretF = foldFree $ \case
->   GetLine next       -> next <$> SIO.getLine
->   PrintLine str next -> next <$ putStrLn str
+>   GetLine       next -> next <$> SIO.getLine
+>   PrintLine str next -> next <$  putStrLn str
+
+:t interpretF myProgramF
+ :: IO ()
 
 ------------------------------------------------------------------------------
 Inspection
@@ -125,6 +191,10 @@ issue: combining code in free monads with different functor types
 
 Add logging functor to terminal example:
 
+> data Log a
+>   = Log String a
+>   deriving Functor
+>
 > class Monad m => MonadLog m where
 >   logM        :: String -> m ()
 >
@@ -211,6 +281,16 @@ prefer writing in polymorphic monads to writing in free monads
 - can turn into efficient runable code without first construct a data structure and then interpreting it
 - can do everything that can be done via writing myProgram in free monad directly
 
+> analyzeGP :: TerminalM a -> (Int, Int, [String])
+> analyzeGP t = let (_, g, p, s) = execState (a t) (['a' ..],0,0,[]) in (g,p,s)
+>  where
+>   a = foldFree $ \case
+>     GetLine       next -> do (i:is,g,p,ss) <- get; put (is,g+1,p  ,ss    ); return (next [i])
+>     PrintLine str next -> do (  is,g,p,ss) <- get; put (is,g  ,p+1,str:ss); return  next
+
+analyzeGP myProgramF
+=> (2,1,["ab"])
+
 ------------------------------------------------------------------------------
 Composability
 
@@ -227,15 +307,11 @@ combine actions from two different type classes : merge constraints:
 ------------------------------------------------------------------------------
 Inspection when composed
 
-can recover the data structure as if written in free monad
-go from type class-based representation to free representation
+can recover data structure as if written in free monad
+i.e., transform from type class-based representation to free representation
 
 https://github.com/gallais gave example:
 
-> data Log a
->   = Log String a
->   deriving Functor
->
 > newtype LogTerm f a = LogTerm { runLogTerm :: Free f a }
 >   deriving (Functor, Applicative, Monad)
 >
@@ -246,9 +322,9 @@ https://github.com/gallais gave example:
 > instance Inject Log      f => MonadLog  (LogTerm f) where
 >   logM str       = LogTerm (liftF $ inject (Log str ()))
 >
-> liberate :: (Inject Terminal f, Inject Log f)
->          => (forall m. (MonadTerm m, MonadLog m) => m a)
->          -> Free f a
-> liberate = runLogTerm
+> toFree :: (Inject Terminal f, Inject Log f)
+>        => (forall m. (MonadTerm m, MonadLog m) => m a)
+>        -> Free f a
+> toFree = runLogTerm
 
 
