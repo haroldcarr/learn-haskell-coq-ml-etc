@@ -1,3 +1,4 @@
+> {-# OPTIONS_GHC -Wno-unused-do-bind                     #-}
 > {-# OPTIONS_GHC -fno-warn-missing-signatures            #-}
 > {-# OPTIONS_GHC -Wno-missing-pattern-synonym-signatures #-}
 >
@@ -15,6 +16,8 @@
 > import Control.Monad.State
 > import Control.Monad.Free
 > import Data.Attoparsec.ByteString.Char8
+> import Data.Functor
+> import Debug.Trace
 
 https://stackoverflow.com/questions/34631446/parsing-to-free-monads/34643032#34643032
 
@@ -53,7 +56,7 @@ Note
 - 1st arg to analyze is type-specific
 - must change type declaration to handle another type (but code the same)
 
-> analyze :: Example () -> (Int, Int, [String], [Int], [Int])
+> analyze :: Example a -> (Int, Int, [String], [Int], [Int])
 > analyze t =
 >   let (_, ng, np, go1, go2, po) = execState
 >         (a t) ( [1::Int ..] -- input to GL 2nd arg fun
@@ -103,7 +106,7 @@ BNF:
 >
 > parsePL :: Parser (Example ())
 > parsePL = string "pl " *> fmap pl int
->
+
 
 how to give a type to composition of these two parsers?
 
@@ -135,8 +138,9 @@ common technique
 wrap Example value with GADT evidence
 
 > data Ty a where
->   IntTy  :: Ty Int
->   UnitTy :: Ty ()
+>   IntTy     :: Ty Int
+>   ListIntTy :: Ty [Int]
+>   UnitTy    :: Ty ()
 >
 > -- | functor product
 > -- pairs up two type constructors, ensuring that their parameters are equal; thus, pattern matching on the Ty tells you about its accompanying Example.
@@ -181,7 +185,7 @@ TODO: separate parsing and typechecking: first parsing into untyped syntax tree;
 > parseFully :: Result r -> r
 > parseFully r0 = case handlePartial r0 of
 >   Fail _u _ctxs msg -> error  msg
->   Done _u r         -> r
+>   Done _u r         -> trace ("Done unconsumed : " ++ show _u) r
 >   _                 -> error "impossible"
 >  where
 >   handlePartial r = case r of
@@ -196,13 +200,79 @@ TODO: separate parsing and typechecking: first parsing into untyped syntax tree;
 >   Wrap (IntTy  :&: Free (PL i _next)) -> putStrLn ("ITPL " ++ show i)
 >   Wrap (UnitTy :&: Pure s)            -> print s
 >   Wrap (IntTy  :&: Pure i)            -> print i
+>   _                                   -> error "interpretF"
 
 > xxx :: Sig Ty Example -> (Int, Int, [String], [Int], [Int])
 > xxx x = case x of
 >   Wrap (UnitTy :&: f) -> analyze f
->   Wrap (IntTy  :&: _) -> error "IntTy not implemented"
+>   Wrap (IntTy  :&: f) -> analyze f
+>   _                   -> error "xxx"
 
-xxx (parseFully exunit)
-xxx (parseFully exint)
+> au = xxx (parseFully exunit)
+> ai = xxx (parseFully exint)
 
+------------------------------------------------------------------------------
 
+> data HmfCmdF a
+>  = FlushPage   [Int]    a
+>  | PageMisses ([Int] -> a)
+>  deriving Functor
+>
+> type HmfCmd = Free HmfCmdF
+>
+> fp :: [Int] -> HmfCmd ()
+> fp is = liftF $ FlushPage is ()
+>
+> pm :: HmfCmd [Int]
+> pm = liftF $ PageMisses id
+>
+> parseList :: Parser [Int]
+> parseList = do char '['; t <- decimal `sepBy` char ','; char ']'; return t
+>
+> parseFP :: Parser (HmfCmd ())
+> parseFP = string "flushPage " *> fmap fp parseList
+>
+> parsePM :: Parser (HmfCmd [Int])
+> parsePM = string "pageMisses" $> pm
+>
+> type    SigH a b = Ex   (a :*: b)
+> pattern SigH x y = Wrap (x :&: y)
+>
+> parseFPorPM :: Parser (SigH Ty HmfCmd)
+> parseFPorPM =  fmap (SigH UnitTy)    parseFP
+>            <|> fmap (SigH ListIntTy) parsePM
+>
+> parseHmf :: Parser (SigH Ty HmfCmd)
+> parseHmf = fmap (foldr1 combine) $ parseFPorPM `sepBy1` char '\n'
+>  where combine (SigH _ val) (SigH ty acc) = SigH ty (val >> acc)
+>        combine          _            _  = error "parseHmf"
+
+> analyzeHmf :: HmfCmd a -> ([[Int]], Int, Int, [[Int]], [[Int]])
+> analyzeHmf t = execState
+>         (a t) ( [[1,2,3],[4,5,6]] -- input to PM
+>               , 0                 -- num FP
+>               , 0                 -- num PM
+>               , []                -- output of FP
+>               , []                -- output of PM
+>               )
+>  where
+>   a = foldFree $ \case
+>     FlushPage ps next -> do
+>       (    ipm, nfp,   npm,    ofp,   opm ) <- get
+>       put (ipm, nfp+1, npm, ps:ofp,   opm )
+>       return next
+>     PageMisses next -> do
+>       (  i:ipm, nfp,   npm,    ofp,   opm ) <- get
+>       put (ipm, nfp,   npm+1,  ofp, i:opm )
+>       return  (next i)
+>
+>
+> xhmf :: SigH Ty HmfCmd -> ([[Int]], Int, Int, [[Int]], [[Int]])
+> xhmf x = case x of
+>   Wrap (UnitTy    :&: f) -> analyzeHmf f
+>   Wrap (ListIntTy :&: f) -> analyzeHmf f
+>   _                      -> error "xhmf"
+>
+> a1 = xhmf (parseFully (parse parseFPorPM "flushPage [11,22,33]"))
+> a2 = xhmf (parseFully (parse parseFPorPM "pageMisses"))
+> a3 = xhmf (parseFully (parse parseFPorPM "flushPage [11,22,33]\npageMisses\nflushPage[111,222,333]"))
