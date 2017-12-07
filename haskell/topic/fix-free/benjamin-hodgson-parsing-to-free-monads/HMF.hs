@@ -5,16 +5,19 @@
 {-# LANGUAGE DeriveFunctor             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE LambdaCase                #-}
 {-# LANGUAGE OverloadedStrings         #-}
 {-# LANGUAGE PatternSynonyms           #-}
 {-# LANGUAGE TypeOperators             #-}
 
 module HMF where
 
+import           Common
+------------------------------------------------------------------------------
 import           Control.Applicative
 import           Control.Monad.Free
 import           Data.Attoparsec.ByteString.Char8
-import           Data.ByteString                  hiding (foldr1)
+import           Data.ByteString                  hiding (foldr1, getLine)
 import           Data.Functor
 
 data Ex a = forall i. Wrap (a i)
@@ -35,9 +38,9 @@ type    Sig a b = Ex   (a :*: b)
 pattern Sig x y = Wrap (x :&: y)
 
 data HmfCmdF a
- = FlushPage   [Int]    a
- | PageMisses ([Int] -> a)
- deriving Functor
+  = FlushPage   [Int]    a
+  | PageMisses ([Int] -> a)
+  deriving Functor
 
 type HmfCmd = Free HmfCmdF
 
@@ -71,3 +74,33 @@ parseHmfParser = fmap (foldr1 combine) $ parseFPPM `sepBy1` parseSeparator
 parseHmf :: ByteString -> Result (Sig Ty HmfCmd)
 parseHmf = parse parseHmfParser
 
+------------------------------------------------------------------------------
+
+ioHmf :: ByteString -> Either String (IO ())
+ioHmf s = do
+  (_u, r) <- parseFully (parseHmf s)
+  let a = ioHmfAux r
+  return a
+
+ioHmfAux :: Sig Ty HmfCmd -> IO ()
+ioHmfAux (Sig _ f) = do doHmf f; return ()
+ioHmfAux _         = return ()
+
+doHmf :: HmfCmd a -> IO a
+doHmf =
+  foldFree $ \case
+    FlushPage ps next -> do
+      print ps
+      return next
+    PageMisses next -> do
+      i <- read <$> getLine
+      print [i]
+      return $ next [i]
+
+{-
+:set -XOverloadedStrings
+let x = ioHmf "pageMisses"
+let x = ioHmf "flushPage [1,2]"
+let x = ioHmf "flushPage [1,2];pageMisses;"
+case x of (Right a) -> a
+-}

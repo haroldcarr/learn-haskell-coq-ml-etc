@@ -65,5 +65,4 @@ analyzeHmf t = execState
       return  (next i)
 
 xhmf :: Sig Ty HmfCmd -> ([[Int]], Int, Int, [[Int]], [[Int]])
-xhmf (Wrap (_ :&: f)) = analyzeHmf f
-
+xhmf (Sig _ f) = analyzeHmf f
