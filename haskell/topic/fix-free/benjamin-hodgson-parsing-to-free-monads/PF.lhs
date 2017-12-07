@@ -230,10 +230,10 @@ TODO: separate parsing and typechecking: first parsing into untyped syntax tree;
 > parseList = do char '['; t <- decimal `sepBy` char ','; char ']'; return t
 >
 > parseFP :: Parser (HmfCmd ())
-> parseFP = string "flushPage " *> fmap fp parseList
+> parseFP = skipSpace *> string "flushPage" *> skipSpace *> fmap fp parseList
 >
 > parsePM :: Parser (HmfCmd [Int])
-> parsePM = string "pageMisses" $> pm
+> parsePM = skipSpace *> string "pageMisses" $> pm
 >
 > type    SigH a b = Ex   (a :*: b)
 > pattern SigH x y = Wrap (x :&: y)
@@ -242,11 +242,14 @@ TODO: separate parsing and typechecking: first parsing into untyped syntax tree;
 > parseFPorPM =  fmap (SigH UnitTy)    parseFP
 >            <|> fmap (SigH ListIntTy) parsePM
 >
+> parseSeparator :: Parser ()
+> parseSeparator = skipSpace >> char ';' >> skipSpace
+>
 > parseHmf :: Parser (SigH Ty HmfCmd)
-> parseHmf = fmap (foldr1 combine) $ parseFPorPM `sepBy1` char '\n'
+> parseHmf = fmap (foldr1 combine) $ parseFPorPM `sepBy1` parseSeparator
 >  where combine (SigH _ val) (SigH ty acc) = SigH ty (val >> acc)
->        combine          _            _  = error "parseHmf"
-
+>        combine           _             _  = error "parseHmf"
+>
 > analyzeHmf :: HmfCmd a -> ([[Int]], Int, Int, [[Int]], [[Int]])
 > analyzeHmf t = execState
 >         (a t) ( [[1,2,3],[4,5,6]] -- input to PM
@@ -273,6 +276,11 @@ TODO: separate parsing and typechecking: first parsing into untyped syntax tree;
 >   Wrap (ListIntTy :&: f) -> analyzeHmf f
 >   _                      -> error "xhmf"
 >
-> a1 = xhmf (parseFully (parse parseFPorPM "flushPage [11,22,33]"))
-> a2 = xhmf (parseFully (parse parseFPorPM "pageMisses"))
-> a3 = xhmf (parseFully (parse parseFPorPM "flushPage [11,22,33]\npageMisses\nflushPage[111,222,333]"))
+> a1 = xhmf (parseFully (parse parseHmf "flushPage [11,22,33];"))
+> a2 = xhmf (parseFully (parse parseHmf "pageMisses;"))
+> a3 = xhmf (parseFully (parse parseHmf " flushPage [11,22,33] ;   pageMisses ; flushPage [111,222,333];\n"))
+> a4 = xhmf (parseFully (parse parseHmf                       "pageMisses;\nflushPage [111,222,333]"))
+> a5 = xhmf (parseFully (parse parseHmf "pageMisses\nxxx"))
+> a6 = xhmf (parseFully (parse parseHmf "xxx"))
+
+
