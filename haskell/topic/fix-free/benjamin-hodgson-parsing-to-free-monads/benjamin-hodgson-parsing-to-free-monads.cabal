@@ -1,13 +1,28 @@
-name:                benjamin-hodgson-parsing-to-free-monads
-version:             0.1.0.0
-build-type:          Simple
-cabal-version:       >=1.10
+name:                  benjamin-hodgson-parsing-to-free-monads
+version:               0.1.0.0
+build-type:            Simple
+cabal-version:         >=1.10
 
 library
-  exposed-modules:     PF
+  exposed-modules:     HMF
+                     , Common
+                     , PF
   build-depends:       base >= 4.7 && < 5
                      , attoparsec
+                     , bytestring
                      , free
                      , mtl
   ghc-options:         -Wall
   default-language:    Haskell2010
+
+test-suite hspec
+  other-modules:       HmfParserSpec
+  type:                exitcode-stdio-1.0
+  main-is:             hspec.hs
+  hs-source-dirs:      test
+  default-language:    Haskell2010
+  build-depends:       base
+                     , benjamin-hodgson-parsing-to-free-monads
+                     , free
+                     , hspec
+                     , mtl

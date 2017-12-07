@@ -12,12 +12,12 @@
 >
 > module PF where
 >
+> import Common
+> ------------------------------------------------------------------------------
 > import Control.Applicative
 > import Control.Monad.State
 > import Control.Monad.Free
 > import Data.Attoparsec.ByteString.Char8
-> import Data.Functor
-> import Debug.Trace
 
 https://stackoverflow.com/questions/34631446/parsing-to-free-monads/34643032#34643032
 
@@ -107,7 +107,6 @@ BNF:
 > parsePL :: Parser (Example ())
 > parsePL = string "pl " *> fmap pl int
 
-
 how to give a type to composition of these two parsers?
 
 parseExpr :: Parser (Example ???)
@@ -182,16 +181,6 @@ TODO: separate parsing and typechecking: first parsing into untyped syntax tree;
 > final = pf ""
 > (Done di dr) = final
 
-> parseFully :: Result r -> r
-> parseFully r0 = case handlePartial r0 of
->   Fail _u _ctxs msg -> error  msg
->   Done _u r         -> trace ("Done unconsumed : " ++ show _u) r
->   _                 -> error "impossible"
->  where
->   handlePartial r = case r of
->     Partial f  -> f ""       -- tell the parser there is no more input
->     failOrDone -> failOrDone
-
 > interpretF :: Sig Ty Example -> IO ()
 > interpretF x = case x of
 >   Wrap (UnitTy :&: Free (GL s _next)) -> putStrLn ("UTGL " ++ s)
@@ -208,79 +197,6 @@ TODO: separate parsing and typechecking: first parsing into untyped syntax tree;
 >   Wrap (IntTy  :&: f) -> analyze f
 >   _                   -> error "xxx"
 
-> au = xxx (parseFully exunit)
-> ai = xxx (parseFully exint)
-
-------------------------------------------------------------------------------
-
-> data HmfCmdF a
->  = FlushPage   [Int]    a
->  | PageMisses ([Int] -> a)
->  deriving Functor
->
-> type HmfCmd = Free HmfCmdF
->
-> fp :: [Int] -> HmfCmd ()
-> fp is = liftF $ FlushPage is ()
->
-> pm :: HmfCmd [Int]
-> pm = liftF $ PageMisses id
->
-> parseList :: Parser [Int]
-> parseList = do char '['; t <- decimal `sepBy` char ','; char ']'; return t
->
-> parseFP :: Parser (HmfCmd ())
-> parseFP = skipSpace *> string "flushPage" *> skipSpace *> fmap fp parseList
->
-> parsePM :: Parser (HmfCmd [Int])
-> parsePM = skipSpace *> string "pageMisses" $> pm
->
-> type    SigH a b = Ex   (a :*: b)
-> pattern SigH x y = Wrap (x :&: y)
->
-> parseFPorPM :: Parser (SigH Ty HmfCmd)
-> parseFPorPM =  fmap (SigH UnitTy)    parseFP
->            <|> fmap (SigH ListIntTy) parsePM
->
-> parseSeparator :: Parser ()
-> parseSeparator = skipSpace >> char ';' >> skipSpace
->
-> parseHmf :: Parser (SigH Ty HmfCmd)
-> parseHmf = fmap (foldr1 combine) $ parseFPorPM `sepBy1` parseSeparator
->  where combine (SigH _ val) (SigH ty acc) = SigH ty (val >> acc)
->        combine           _             _  = error "parseHmf"
->
-> analyzeHmf :: HmfCmd a -> ([[Int]], Int, Int, [[Int]], [[Int]])
-> analyzeHmf t = execState
->         (a t) ( [[1,2,3],[4,5,6]] -- input to PM
->               , 0                 -- num FP
->               , 0                 -- num PM
->               , []                -- output of FP
->               , []                -- output of PM
->               )
->  where
->   a = foldFree $ \case
->     FlushPage ps next -> do
->       (    ipm, nfp,   npm,    ofp,   opm ) <- get
->       put (ipm, nfp+1, npm, ps:ofp,   opm )
->       return next
->     PageMisses next -> do
->       (  i:ipm, nfp,   npm,    ofp,   opm ) <- get
->       put (ipm, nfp,   npm+1,  ofp, i:opm )
->       return  (next i)
->
->
-> xhmf :: SigH Ty HmfCmd -> ([[Int]], Int, Int, [[Int]], [[Int]])
-> xhmf x = case x of
->   Wrap (UnitTy    :&: f) -> analyzeHmf f
->   Wrap (ListIntTy :&: f) -> analyzeHmf f
->   _                      -> error "xhmf"
->
-> a1 = xhmf (parseFully (parse parseHmf "flushPage [11,22,33];"))
-> a2 = xhmf (parseFully (parse parseHmf "pageMisses;"))
-> a3 = xhmf (parseFully (parse parseHmf " flushPage [11,22,33] ;   pageMisses ; flushPage [111,222,333];\n"))
-> a4 = xhmf (parseFully (parse parseHmf                       "pageMisses;\nflushPage [111,222,333]"))
-> a5 = xhmf (parseFully (parse parseHmf "pageMisses\nxxx"))
-> a6 = xhmf (parseFully (parse parseHmf "xxx"))
-
+> au = let Right (u, x) = parseFully exunit in (u, xxx x)
+> ai = let Right (u, x) = parseFully exint  in (u, xxx x)
 
