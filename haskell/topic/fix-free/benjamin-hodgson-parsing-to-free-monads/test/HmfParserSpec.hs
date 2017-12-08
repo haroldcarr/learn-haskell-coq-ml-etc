@@ -17,15 +17,15 @@ xxx = do
   it "a1" $
     pp "flushPage [11,22,33];"
     `shouldBe`
-    Right (";",     ([[1,2,3], [4,5,6]], 1, 0, [[11,22,33]], []))
+    Right ("",     ([[1,2,3], [4,5,6]], 1, 0, [[11,22,33]], []))
   it "a2" $
     pp "pageMisses;"
     `shouldBe`
-    Right (";",     ([[4,5,6]], 0, 1, [], [[1,2,3]]))
+    Right ("",     ([[4,5,6]], 0, 1, [], [[1,2,3]]))
   it "a3" $
     pp " flushPage [11,22,33] ;   pageMisses ; flushPage [111,222,333];\n"
     `shouldBe`
-    Right (";\n",   ([[4,5,6]], 2, 1, [[111,222,333], [11,22,33]], [[1,2,3]]))
+    Right ("",   ([[4,5,6]], 2, 1, [[111,222,333], [11,22,33]], [[1,2,3]]))
   it "a4" $
     pp "pageMisses;\nflushPage [111,222,333]"
     `shouldBe`
@@ -33,11 +33,15 @@ xxx = do
   it "a5" $
     pp "pageMisses\nxxx"
     `shouldBe`
-    Right ("\nxxx", ([[4,5,6]], 0, 1, [], [[1,2,3]]))
+    Left "xxx [] endOfInput"
   it "a6" $
     pp "xxx"
     `shouldBe`
     Left "xxx [] string"
+  it "a7" $
+    pp " flushPage [11,22,33] ;   pageXisses ; flushPage [111,222,333];\n"
+    `shouldBe`
+    Left "pageXisses ; flushPage [111,222,333];\n [] endOfInput"
 
 pp s = do
   (u, r) <- parseFully (parseHmf s)

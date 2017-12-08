@@ -54,25 +54,29 @@ parseList :: Parser [Int]
 parseList = do char '['; t <- decimal `sepBy` char ','; char ']'; return t
 
 parseFP :: Parser (HmfCmd ())
-parseFP = skipSpace *> string "flushPage" *> skipSpace *> fmap fp parseList
+parseFP = skipSpace >> string "flushPage" *> skipSpace *> fmap fp parseList
 
 parsePM :: Parser (HmfCmd [Int])
-parsePM = skipSpace *> string "pageMisses" $> pm
+parsePM = skipSpace >> string "pageMisses" $> pm
 
 parseFPPM :: Parser (Sig Ty HmfCmd)
 parseFPPM =  fmap (Sig UnitTy)    parseFP
          <|> fmap (Sig ListIntTy) parsePM
 
-parseSeparator :: Parser ()
-parseSeparator = skipSpace *> char ';' *> skipSpace
+parseSeparator :: Parser Char
+parseSeparator = skipSpace >> char ';'
 
 parseHmfParser :: Parser (Sig Ty HmfCmd)
 parseHmfParser = fmap (foldr1 combine) $ parseFPPM `sepBy1` parseSeparator
  where combine (Sig _ val) (Sig ty acc) = Sig ty (val >> acc)
        combine          _            _  = error "parseHmf"
 
+eatTheRest :: Parser ()
+eatTheRest = skipWhile stuff >> endOfInput
+ where stuff w = isSpace w || w == ';'
+
 parseHmf :: ByteString -> Result (Sig Ty HmfCmd)
-parseHmf = parse parseHmfParser
+parseHmf = parse (parseHmfParser <* eatTheRest)
 
 ------------------------------------------------------------------------------
 
