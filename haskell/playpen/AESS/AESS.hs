@@ -1,46 +1,112 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module AESS where
 
 import           Control.Arrow           ((&&&))
 import qualified Crypto.Hash             as CH
+import qualified Data.ByteArray          as BA
 import qualified Data.ByteArray.Encoding as BE
 import qualified Data.ByteString         as BS
+import qualified Data.ByteString.Char8   as BSC
 import qualified Data.Map                as M
+import qualified Data.Proxy              as PX
 import qualified Data.Serialize          as S
 import           Data.Serialize.Text     ()
 import qualified Data.Text               as T
 import qualified GHC.Generics            as G
 
+import Debug.Trace as DB
+
 -- | polymorphic
-data PX e d r
-  = PXEncrypted (EncryptMetadata e)
-  | PXDecrypted d
-  | PXNoAccess  r
+data X d
+  = XEncrypted EncryptMetadata
+  | XDecrypted d
+  | XNoAccess  T.Text
   deriving (G.Generic, Show, S.Serialize)
 
-data EncryptMetadata e = EncryptMetadata
+data EncryptMetadata = EncryptMetadata
   { emOwnerPublicKey :: T.Text
   , emObjectName     :: T.Text
-  , emData           :: e
+  , emData           :: BS.ByteString
   } deriving (G.Generic, Show, S.Serialize)
 
 type Hash = BS.ByteString
 
--- | specific
-type X d = PX BS.ByteString d T.Text
+-- Secret Key -+                  +-> hash -> HO
+--             |                  |
+-- O          -+-> encrypt -> EO -+-> XEncrypted (EncryptedMetadata PK, ON, EO) -> serialize -> SO
+--
+
+encrypt :: S.Serialize a => BS.ByteString -> a -> BS.ByteString
+encrypt _k = S.encode
+
+decrypt :: S.Serialize a => BS.ByteString -> BS.ByteString -> Either String a
+decrypt _k = S.decode
+
+serialize :: S.Serialize a => a -> BS.ByteString
+serialize = S.encode
+
+deserialize :: S.Serialize a => BS.ByteString -> Either String a
+deserialize = S.decode
 
 -- TODO public/secret
-encrypt :: S.Serialize a => T.Text -> T.Text -> a -> (Hash, X a)
-encrypt pk on a = (h, PXEncrypted (EncryptMetadata pk on x))
- where x = S.encode a
-       h = BE.convertToBase BE.Base64 (CH.hashWith CH.SHA256 x)
+encryptHashAndSerialize :: forall a. S.Serialize a => X a -> T.Text -> T.Text -> (Hash, BS.ByteString)
+encryptHashAndSerialize (XDecrypted a) pk on = (ho, so)
+ where eo = encrypt "KEY" a -- TODO encryption
+       ho = BS.pack (BA.unpack (CH.hashWith CH.SHA256 eo))
+       eso :: X a -> BS.ByteString
+       eso = serialize
+       so = eso (XEncrypted (EncryptMetadata pk on eo))
 
--- TODO pub/secret
-decrypt :: S.Serialize a => X (EncryptMetadata BS.ByteString) -> Either String (X a)
-decrypt (PXEncrypted (EncryptMetadata _pk _on e)) = fmap PXDecrypted (S.decode e)
+-- TODO public/secret
+decryptToX :: forall a. S.Serialize a => BS.ByteString -> Either String (X a)
+decryptToX so =
+  let dso :: BS.ByteString -> Either String (X a)
+      dso = deserialize
+      eo = case dso so of
+             l@Left {} -> error "error decoding" -- TODO
+             Right (XEncrypted (EncryptMetadata pk on eo)) -> DB.trace (("X: "::String) ++ T.unpack pk ++ (" "::String) ++ T.unpack on  ++ (" "::String) ++ show eo) eo
+   in DB.trace (("YES: "::String) ++ BSC.unpack eo) decrypt "KEY" eo
+
+decryptToX' :: forall a. S.Serialize a => BS.ByteString -> Either String (X a)
+decryptToX' so =
+  let dso :: BS.ByteString -> Either String (X a)
+      dso = deserialize
+   in dso so
+
+ddd :: X a -> BS.ByteString
+ddd (XEncrypted (EncryptMetadata pk on eo)) = eo
+ddd _ = error "ddd"
+
+-- :set -XOverloadedStrings
+-- encryptHashAndSerialize  (XDecrypted "FOO")                      "PK" "ON"
+-- encryptHashAndSerialize ((XDecrypted "FOO")::(X Data.Text.Text)) "PK" "ON"
+-- ed  (XDecrypted "FOO")
+-- ed ((XDecrypted "FOO")::(X Data.Text.Text))
+-- ed ((XDecrypted "FOO")::(X Data.Text.Text)) :: Either String (X Data.Text.Text)
+
+-- THIS WORKS:
+-- let (Right (XEncrypted (EncryptMetadata _pk _on eo))) = ed'  (XDecrypted "FOO")
+-- deserialize eo :: Either String Text
+-- import Data.Proxy
+-- let p = Proxy::Proxy Text
+-- ds p eo
+
+ds :: S.Serialize a => PX.Proxy a -> BS.ByteString -> Either String a
+ds _ = deserialize
+
+ed :: forall a. S.Serialize a => X a -> Either String (X a)
+ed x =
+  let (_ho, so) = encryptHashAndSerialize x "PK01" "fooname"
+   in decryptToX so
+
+ed' :: forall a. S.Serialize a => X a -> Either String (X a)
+ed' x =
+  let (_ho, so) = encryptHashAndSerialize x "PK01" "fooname"
+   in decryptToX' so
 
 data MPCReturn = MPCReturn
   { mpcObjectHash :: T.Text
@@ -58,31 +124,58 @@ data Vaccination = Vaccination
   , vDate :: T.Text
   } deriving (G.Generic, Show, S.Serialize)
 
-populate =
-  let v1   = Vaccination "MMR" "2001-01-01"
-      v2   = Vaccination "DIP" "2010-12-31"
-      v3   = Vaccination "why" "2015-07-15"
-      (hv1, ev1) = encrypt "PK_O1" "V1" v1
-      (hv2, ev2) = encrypt "PK_O1" "V2" v2
-      (hv3, ev3) = encrypt "PK_O1" "V2" v3
-      vl   = [ ev1, ev2, ev3 ]
-      (hvl, evl)  = encrypt "PK_O1" "VL" vl
-      dob  = "1994-04-13"
-      (hdob, edob) = encrypt "PK_O1" "DOB" dob
-      vr   = VRecord "John Doe" edob evl
-      (hvr, evr)  = encrypt "PK_O1" "VR" vr
-      bc   = M.fromList [("PK_01"
-                         , M.fromList [ ("V1" , hv1)
-                                      , ("V2" , hv2)
-                                      , ("V3" , hv3)
-                                      , ("VL" , hvl)
-                                      , ("DOB", hdob)
-                                      , ("VR" , hvr)
-                                      ])
-                        ]
-      ss   = M.fromList [ (hv1,  ev1)
-                        , (hv2,  ev2)
-                        , (hv3,  ev3)
-                        ]
-
+{-
+store :: ( M.Map T.Text (M.Map T.Text Hash) -- constract state
+         , M.Map Hash BS.ByteString         -- storage
+         )
+store =
+  let v1                 = Vaccination "MMR" "2001-01-01"
+      v2                 = Vaccination "DIP" "2010-12-31"
+      v3                 = Vaccination "why" "2015-07-15"
+      (hv1, ev1, xv1)    = encrypt "PK_O1" "V1" v1
+      (hv2, ev2, xv2)    = encrypt "PK_O1" "V2" v2
+      (hv3, ev3, xv3)    = encrypt "PK_O1" "V2" v3
+      vl                 = [xv1, xv2, xv3]
+      (hvl, evl, xvl)    = encrypt "PK_O1" "VL" vl
+      dob                = "1994-04-13"
+      (hdob, edob, xdob) = encrypt "PK_O1" "DOB" dob
+      vr                 = VRecord "John Doe" xdob xvl
+      (hvr, evr, _)      = encrypt "PK_O1" "VR" vr
+      bc                 = M.fromList
+        [("PK_01"
+         , M.fromList [ ("V1" , hv1)
+                      , ("V2" , hv2)
+                      , ("V3" , hv3)
+                      , ("VL" , hvl)
+                      , ("DOB", hdob)
+                      , ("VR" , hvr)
+                      ])
+        ]
+      ss                 = M.fromList
+        [ (hv1,  ev1)
+        , (hv2,  ev2)
+        , (hv3,  ev3)
+        , (hvl,  evl)
+        , (hdob, edob)
+        , (hvr,  evr)
+        ]
   in (bc, ss)
+
+retrieve :: ( M.Map T.Text (M.Map T.Text Hash) -- constract state
+            , M.Map Hash BS.ByteString         -- storage
+            )
+         -> T.Text
+         -> T.Text
+         -> Maybe VRecord
+retrieve (bc, ss) owner oid = do
+  w   <- M.lookup owner bc
+  h   <- M.lookup oid   w
+  obs <- M.lookup h     ss
+  evr <- case S.decode obs :: Either String (X VRecord) of
+             Left {}  -> error "decode failed"
+             Right r@(XEncrypted (EncryptMetadata pk on x)) -> Just r
+  vr  <- case decrypt evr :: Either String (X VRecord) of
+             Left {} -> error "decrypt failed"
+             Right (XDecrypted vr) -> Just vr
+  return undefined
+-}
