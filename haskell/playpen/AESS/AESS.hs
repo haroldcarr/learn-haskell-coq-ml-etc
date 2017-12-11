@@ -61,15 +61,10 @@ encryptHashAndSerialize (XDecrypted a) pk on = (ho, so)
        eso :: X a -> BS.ByteString
        eso = serialize
        so = eso (XEncrypted (EncryptMetadata pk on eo))
--- import Data.Text
--- :set -XOverloadedStrings
--- let (ho, eo) = encryptHashAndSerialize (XDecrypted "FOO") "PK" "ON"
--- let (Right (XEncrypted (EncryptMetadata pk on ed))) = decryptToX' eo :: Either String (X Text)
--- deserialize ed :: Either String Text
 
 -- TODO public/secret
-decryptToX :: forall a b. (S.Serialize a, S.Serialize b) => BS.ByteString -> PX.Proxy b -> Either String (X b)
-decryptToX so _ =
+deserializeX :: forall a b. (S.Serialize a, S.Serialize b) => BS.ByteString -> PX.Proxy b -> Either String (X b)
+deserializeX so _ =
   let dso :: BS.ByteString -> Either String (X a)
       dso = deserialize
       eo = case dso so of
@@ -77,15 +72,38 @@ decryptToX so _ =
              Right (XEncrypted (EncryptMetadata pk on eo)) -> DB.trace (("X: "::String) ++ T.unpack pk ++ (" "::String) ++ T.unpack on  ++ (" "::String) ++ show eo) eo
    in DB.trace (("YES: "::String) ++ BSC.unpack eo) decrypt "KEY" eo
 
-decryptToX' :: forall a. S.Serialize a => BS.ByteString -> Either String (X a)
-decryptToX' so =
+deserializeX' :: forall a. S.Serialize a => BS.ByteString -> Either String (X a)
+deserializeX' so =
   let dso :: BS.ByteString -> Either String (X a)
       dso = deserialize
    in dso so
 
-ddd :: X a -> BS.ByteString
-ddd (XEncrypted (EncryptMetadata pk on eo)) = eo
-ddd _ = error "ddd"
+-- import Data.Text
+-- :set -XOverloadedStrings
+-- let (ho, eo) = encryptHashAndSerialize (XDecrypted "FOO") "PK" "ON"
+-- let (Right (XEncrypted (EncryptMetadata pk on ed))) = deserializeX' eo :: Either String (X Text)
+-- decrypt "KEY" ed :: Either String Text
+
+example = do
+  let (ho, eo) = encryptHashAndSerialize (XDecrypted ("FOO"::T.Text)) "PK" "ON"
+  let (Right (XEncrypted (EncryptMetadata pk on ed))) = deserializeX' eo :: Either String (X T.Text)
+  decrypt "KEY" ed :: Either String T.Text
+
+-- example2 (Proxy::Proxy Text)
+example2 :: S.Serialize p => PX.Proxy p -> Either String p
+example2 p = do
+  let (ho, eo) = encryptHashAndSerialize (XDecrypted ("FOO"::T.Text)) "PK" "ON"
+  let (Right (XEncrypted (EncryptMetadata pk on ed))) = deserializeX' eo :: Either String (X T.Text)
+  ds p ed
+
+-- example3 (Proxy::Proxy Text) "FOO"
+-- example3 (Proxy::Proxy Int) (1::Int)
+-- example3 (Proxy::Proxy (Int,Float)) (1::Int,3.0::Float)
+example3 :: S.Serialize p => PX.Proxy p -> p -> Either String p
+example3 p pp = do
+  let (ho, eo) = encryptHashAndSerialize (XDecrypted pp) "PK" "ON"
+  let (Right (XEncrypted (EncryptMetadata pk on ed))) = deserializeX' eo :: Either String (X Int) -- (X T.Text) -- Any type to X is OK -- TODO
+  ds p ed
 
 -- :set -XOverloadedStrings
 -- encryptHashAndSerialize  (XDecrypted "FOO")                      "PK" "ON"
@@ -108,7 +126,7 @@ ds _ = deserialize
 ed :: forall a b. (S.Serialize a, S.Serialize b) => X a -> PX.Proxy b -> (X b)
 ed x p =
   let (_ho, so) = encryptHashAndSerialize x "PK01" "fooname"
-   in case decryptToX so p of
+   in case deserializeX so p of
     Left err -> error err
     Right b -> b
 -}
@@ -116,7 +134,7 @@ ed x p =
 ed' :: forall a. S.Serialize a => X a -> Either String (X a)
 ed' x =
   let (_ho, so) = encryptHashAndSerialize x "PK01" "fooname"
-   in decryptToX' so
+   in deserializeX' so
 
 data MPCReturn = MPCReturn
   { mpcObjectHash :: T.Text
