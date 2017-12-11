@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -60,10 +61,15 @@ encryptHashAndSerialize (XDecrypted a) pk on = (ho, so)
        eso :: X a -> BS.ByteString
        eso = serialize
        so = eso (XEncrypted (EncryptMetadata pk on eo))
+-- import Data.Text
+-- :set -XOverloadedStrings
+-- let (ho, eo) = encryptHashAndSerialize (XDecrypted "FOO") "PK" "ON"
+-- let (Right (XEncrypted (EncryptMetadata pk on ed))) = decryptToX' eo :: Either String (X Text)
+-- deserialize ed :: Either String Text
 
 -- TODO public/secret
-decryptToX :: forall a. S.Serialize a => BS.ByteString -> Either String (X a)
-decryptToX so =
+decryptToX :: forall a b. (S.Serialize a, S.Serialize b) => BS.ByteString -> PX.Proxy b -> Either String (X b)
+decryptToX so _ =
   let dso :: BS.ByteString -> Either String (X a)
       dso = deserialize
       eo = case dso so of
@@ -98,10 +104,14 @@ ddd _ = error "ddd"
 ds :: S.Serialize a => PX.Proxy a -> BS.ByteString -> Either String a
 ds _ = deserialize
 
-ed :: forall a. S.Serialize a => X a -> Either String (X a)
-ed x =
+{-
+ed :: forall a b. (S.Serialize a, S.Serialize b) => X a -> PX.Proxy b -> (X b)
+ed x p =
   let (_ho, so) = encryptHashAndSerialize x "PK01" "fooname"
-   in decryptToX so
+   in case decryptToX so p of
+    Left err -> error err
+    Right b -> b
+-}
 
 ed' :: forall a. S.Serialize a => X a -> Either String (X a)
 ed' x =
