@@ -2,7 +2,6 @@
 {-# LANGUAGE GADTs              #-}
 {-# LANGUAGE RankNTypes         #-}
 {-# LANGUAGE RebindableSyntax   #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies       #-}
 {-# LANGUAGE TypeInType         #-}
 {-# LANGUAGE TypeOperators      #-}

@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE GADTs              #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 module P102_dependent_indexed_types_vehicle where
 

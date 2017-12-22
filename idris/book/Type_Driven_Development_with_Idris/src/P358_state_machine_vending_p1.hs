@@ -67,10 +67,10 @@ data MachineCmd ::            * ->  Nat ->     Nat -> Nat ->     Nat    -> * whe
 -- | Infinite sequence of machine state transitions.
 -- The two Nats are the starting state of the machine.
 data MachineIO :: Nat -> Nat -> * where
-  Do :: MachineCmd a pb cb pa ca -> (a -> (MachineIO pa ca))
+  Do :: MachineCmd a pb cb pa ca -> (a -> MachineIO pa ca)
 
 -- | for do notation for infinite sequences of machine state transitions
-machineDoBind :: MachineCmd a pb cb pa ca -> (a -> (MachineIO pa ca))
+machineDoBind :: MachineCmd a pb cb pa ca -> (a -> MachineIO pa ca)
 machineDoBind  = Do
 
 vend :: MachineIO p c
@@ -115,4 +115,4 @@ vend9 :: (bars :+ s1c) ~ 'S s3c
 vend9 n = reify n $ \p -> Refill (reflect p) `Bind` InsertCoin `Bind` Vend
 
 vend10 :: MachineIO pa ca
-vend10  = GetInput `machineDoBind` (Just COIN)
+vend10  = GetInput `machineDoBind` Just COIN

@@ -1,6 +1,7 @@
-http://www.snoyman.com/blog/
-
 https://github.com/fpco/applied-haskell
+
+http://www.snoyman.com/blog/
+https://www.fpcomplete.com/haskell-syllabus
 
 https://github.com/juhp/stackage-query
 
