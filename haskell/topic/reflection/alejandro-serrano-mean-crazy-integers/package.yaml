@@ -1,0 +1,19 @@
+name:                alejandro-serrano-mean-crazy-integers
+version:             0.1.0.0
+synopsis:            Alejandro
+description:         reflection
+
+ghc-options:
+- -Wall
+- -fwarn-tabs
+- -O2
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs:
+  - .
+  exposed-modules:
+  - CrazyIntegers
+
