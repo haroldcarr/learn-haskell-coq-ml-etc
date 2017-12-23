@@ -1,0 +1,31 @@
+Created       : 2014 Jan 06 (Mon) 20:34:50 by Harold Carr.
+Last Modified : 2014 Jan 08 (Wed) 17:54:13 by Harold Carr.
+
+- Haskell from Scratch
+  - [[http://jekor.com/]]
+  - [[http://www.youtube.com/user/jekor?feature=watch]]
+  - [[http://www.youtube.com/watch?v=zZ_nI9E9g0I&list=PLxj9UAX4Em-Ij4TKwKvo-SLp-Zbv-hB4B]]
+  - Purely top-down software rebuilding by Alan Grosskurth (thesis at U Waterloo)
+
+- Redo
+  - D.J. Bernstein
+    - [[http://cr.yp.to/redo.html]]
+  - Python impl: [[https://github.com/apenwarr/redo]]
+
+sh redo.do
+./redo
+./redo missing
+./redo redo
+
+import System.Process
+:t shell
+:i CreateProcess
+:i createProcess
+:t createProcess . shell
+createProcess $ shell "true"
+:hog createProcess
+
+
+
+
+# End of file.

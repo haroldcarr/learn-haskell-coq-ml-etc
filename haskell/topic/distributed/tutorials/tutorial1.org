@@ -1,0 +1,241 @@
+#+TITLE:       Cloud Haskell - Getting Started
+#+AUTHOR:      Harold Carr
+#+DESCRIPTION: Cloud Haskell - Getting Started
+#+PROPERTY:    tangle tutorial1.hs
+#+OPTIONS:     num:nil toc:t
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
+#+INFOJS_OPT:  view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+
+#+BEGIN_HTML
+---
+title: Cloud Haskell - Getting Started
+tags: haskell, cloud-haskell
+---
+#+END_HTML
+
+# Created       : 2013 Aug 27 (Tue) 20:14:50 by carr.
+Last Modified : 2013 Sep 01 (Sun) 20:09:35 by carr.
+
+------------------------------------------------------------------------------
+* tutorial 1 (aka "Getting Started")
+
+Version of [[http://haskell-distributed.github.io/tutorials/tutorial1.html][tutorial1]].
+
+definition: Cloud:
+- =n= processors
+- with separate memories
+- connected by network
+- independent failure modes
+- communicate via message passing
+- *no* shared memory
+
+Cloud Haskell benefits:
+- immutability enables impl to share or copy data
+  - can depend on locations of processes
+- pure functions idempotent
+  - can restart failures without transactions to undo effects
+- types to statically guarantee properites of programs
+
+------------------------------------------------------------------------------
+* install modules
+
+#+BEGIN_EXAMPLE
+sudo cabal install distributed-process
+sudo cabal install network-transport-tcp
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* imports for both examples
+
+#+BEGIN_SRC haskell
+-- one
+import Control.Distributed.Process
+import Control.Distributed.Process.Node
+import Network.Transport.TCP (createTransport, defaultTCPParameters)
+
+-- two
+import Control.Concurrent (threadDelay)
+import Control.Distributed.Process
+import Control.Distributed.Process.Node
+import Control.Monad (forever)
+import Network.Transport.TCP (createTransport, defaultTCPParameters)
+
+-- misc
+import System.Environment
+import System.Exit
+#+END_SRC
+
+Choose the example to run.
+
+#+BEGIN_SRC haskell
+main :: IO ()
+main = getArgs >>= run
+
+run ["1"] = one
+run ["2"] = two
+run _     = one
+#+END_SRC
+
+------------------------------------------------------------------------------
+* example one : send/receive =String= to self
+
+# --------------------------------------------------
+** create transport
+
+#+BEGIN_SRC haskell
+one :: IO ()
+one = do
+    Right transport <- createTransport "127.0.0.1" "10501" defaultTCPParameters
+#+END_SRC
+
+- [[http://hackage.haskell.org/package/network-transport-0.3.0.1][Network.Transport]]
+  - [[http://hackage.haskell.org/package/network-transport-tcp][Network.Transport.TCP]]
+    - [[http://hackage.haskell.org/packages/archive/network-transport-tcp/0.3.1/doc/html/src/Network-Transport-TCP.html#createTransport][createTransport]]
+    - [[http://hackage.haskell.org/packages/archive/network-transport-tcp/0.3.1/doc/html/src/Network-Transport-TCP.html#defaultTCPParameters][defaultTCPParameters]]
+    - [[http://hackage.haskell.org/packages/archive/network-transport/0.3.0.1/doc/html/src/Network-Transport.html#EndPoint][EndPoint]]
+    - [[http://hackage.haskell.org/packages/archive/network-transport/0.3.0.1/doc/html/src/Network-Transport.html#Transport][Transport]]
+
+Create a (heavyweight) =EndPoint=.  The =EndPoint= is now in an
+/active/ state in the sense it is capable of handling connection
+requests.
+
+=EndPoint=:
+- Has (serializable) address that other =EndPoint= can connect to.
+- Can create unidirectional (lightweight) connections to other =EndPoint=.
+  - Send on connection.
+- Has single shared receive queue.
+
+# --------------------------------------------------
+** create node
+
+#+BEGIN_SRC haskell
+
+    -- start a running local node
+    node <- newLocalNode transport initRemoteTable
+#+END_SRC
+
+- [[http://hackage.haskell.org/package/distributed-process-0.4.2][Control.Distributed.Process]]
+  - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Internal-Closure-BuiltIn.html][Control.Distributed.Process.Internal.Closure.BuiltIn]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Closure-BuiltIn.html#remoteTable][remoteTable]]
+  - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Node.html][Control.Distributed.Process.Node]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Node.html#initRemoteTable][initRemoteTable]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Types.html#LocalNode][LocalNode]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Node.html#newLocalNode][newLocalNode]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-static/0.2.1.1/doc/html/src/Control-Distributed-Static.html#RemoteTable][RemoteTable]]
+  - [[http://hackage.haskell.org/package/distributed-static][Control.Distributed.Static]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-static/0.2.1.1/doc/html/src/Control-Distributed-Static.html#initRemoteTable][initRemoteTable]]
+
+# --------------------------------------------------
+** start process
+
+#+BEGIN_SRC haskell
+    -- start new process
+    _ <- forkProcess node $ do
+#+END_SRC
+
+- [[http://hackage.haskell.org/package/distributed-process-0.4.2][Control.Distributed.Process]]
+  - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Internal-Types.html][Control.Distributed.Process.Internal.Types]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Types.html#Process][Process]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Types.html#ProcessId][ProcessId]]
+  - [[http://hackage.haskell.org/package/distributed-process-0.4.2][Control.Distributed.Process.Node]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Node.html#forkProcess][forkProcess]]
+
+=Process= is basic unit of concurrency.
+- lightweight : low creation/scheduling overhead
+- can send/receive messages
+- identified by =ProcessId=
+
+# --------------------------------------------------
+** send message
+
+#+BEGIN_SRC haskell
+       self <- getSelfPid
+       send self "hello world"            -- send message to ourself
+#+END_SRC
+
+- [[http://hackage.haskell.org/package/distributed-process-0.4.2][Control.Distributed.Process]]
+  - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Internal-Primitives.html][Control.Distributed.Process.Internal.Primitives]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Primitives.html#getSelfPid][getSelfPid]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Primitives.html#send][send]]
+  - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Serializable.html][Control.Distributed.Process.Serializable]]
+    - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Serializable.html#Serializable][Serializable]]
+
+- Messages are asynchronous, reliable, buffered.
+- Messaging state wrapped in =ProcessM= monad.   TODO link
+
+Doing /untyped/ =send= (typed channels also available).
+
+# --------------------------------------------------
+** receive message
+
+#+BEGIN_SRC haskell
+       hello <- expect :: Process String  -- receive the message
+       liftIO $ putStrLn hello            -- print the message to the console
+    return ()
+#+END_SRC
+
+- [[http://hackage.haskell.org/package/distributed-process-0.4.2][Control.Distributed.Process]]
+  - [[http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Primitives.html#expect][expect]]
+- [[http://hackage.haskell.org/packages/archive/transformers/0.3.0.0/doc/html/Control-Monad-IO-Class.html][Control.Monad.IO.Class]]
+  - [[http://hackage.haskell.org/packages/archive/transformers/0.3.0.0/doc/html/src/Control-Monad-IO-Class.html#liftIO][liftIO]]
+
+Doing /untyped/ =expect= (i.e., receive).
+
+# --------------------------------------------------
+** run example one
+
+#+BEGIN_EXAMPLE
+runghc tutorial1 1
+hello world
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* example two
+
+#+BEGIN_SRC haskell
+replyBack :: (ProcessId, String) -> Process ()
+replyBack (sender, msg) = send sender msg
+
+logMessage :: String -> Process ()
+logMessage msg = say $ "handling " ++ msg
+
+two :: IO ()
+two = do
+    Right t <- createTransport "127.0.0.1" "10501" defaultTCPParameters
+    node <- newLocalNode t initRemoteTable
+    -- Spawn a new process on a local node
+    forkProcess node $ do
+        -- Spawn worker inside one more process on the local node
+        echoPid <- spawnLocal $ forever $ do
+            -- Test the matches in order against each message in the queue
+            receiveWait [match logMessage, match replyBack]
+
+        -- `say` sends a message to the process registered as logger.
+        -- By default, this process simply sends the string to stderr.
+        say "send some messages"
+        send echoPid "hello"
+        self <- getSelfPid
+        send echoPid (self, "hello world")
+        -- like `expect` (waits for a message), but with timeout
+        m <- expectTimeout 1000000
+        case m of
+            -- Die immediately - throws a ProcessExitException with the given reason.
+            Nothing  -> die "nothing came back!"
+            (Just s) -> say $ "got back " ++ s
+        return ()
+
+    -- A 1 second wait. Otherwise the main thread can terminate before
+    -- our messages reach the logging process or get flushed to stdio
+    liftIO $ threadDelay (1*1000000)
+    return ()
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+runghc tutorial1 2
+Thu Aug 29 04:28:13 UTC 2013 pid://127.0.0.1:10501:0:3: send some messages
+Thu Aug 29 04:28:13 UTC 2013 pid://127.0.0.1:10501:0:4: handling hello
+Thu Aug 29 04:28:13 UTC 2013 pid://127.0.0.1:10501:0:3: got back hello world
+#+END_EXAMPLE
+
+# End of file.
+

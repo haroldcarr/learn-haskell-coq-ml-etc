@@ -1,0 +1,10 @@
+Created       : 2015 Jan 07 (Wed) 07:43:46 by Harold Carr.
+Last Modified : 2015 Jan 07 (Wed) 07:46:57 by Harold Carr.
+
+http://andrej.com/plzoo/
+
+https://gist.github.com/tel/24ce50d05f211bc4f6d9
+
+Stephen Diehl ‏@smdiehl @sdbo I'd be very curious to see someone
+implement a CBPV -> LLVM/x86. It seems like all there is toy
+interpreters in high-level languages.

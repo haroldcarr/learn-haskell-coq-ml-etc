@@ -1,0 +1,560 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Cloud Haskell - Getting Started</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="description" content="Cloud Haskell - Getting Started"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Cloud Haskell - Getting Started</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">tutorial 1 (aka "Getting Started")</a></li>
+<li><a href="#sec-2">install modules</a></li>
+<li><a href="#sec-3">imports for both examples</a></li>
+<li><a href="#sec-4">example one : send/receive <code>String</code> to self</a>
+<ul>
+<li><a href="#sec-4-1">create transport</a></li>
+<li><a href="#sec-4-2">create node</a></li>
+<li><a href="#sec-4-3">start process</a></li>
+<li><a href="#sec-4-4">send message</a></li>
+<li><a href="#sec-4-5">receive message</a></li>
+<li><a href="#sec-4-6">run example one</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">example two</a></li>
+</ul>
+</div>
+</div>
+---
+title: Cloud Haskell - Getting Started
+tags: haskell, cloud-haskell
+---
+
+<p>
+Last Modified : 2013 Sep 01 (Sun) 20:11:52 by carr.
+</p>
+
+<hr/>
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">tutorial 1 (aka "Getting Started")</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Version of <a href="http://haskell-distributed.github.io/tutorials/tutorial1.html">tutorial1</a>.
+</p>
+
+<p>
+definition: Cloud:
+</p>
+<ul class="org-ul">
+<li><code>n</code> processors
+</li>
+<li>with separate memories
+</li>
+<li>connected by network
+</li>
+<li>independent failure modes
+</li>
+<li>communicate via message passing
+</li>
+<li><b>no</b> shared memory
+</li>
+</ul>
+
+<p>
+Cloud Haskell benefits:
+</p>
+<ul class="org-ul">
+<li>immutability enables impl to share or copy data
+<ul class="org-ul">
+<li>can depend on locations of processes
+</li>
+</ul>
+</li>
+<li>pure functions idempotent
+<ul class="org-ul">
+<li>can restart failures without transactions to undo effects
+</li>
+</ul>
+</li>
+<li>types to statically guarantee properites of programs
+</li>
+</ul>
+
+<hr/>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">install modules</h2>
+<div class="outline-text-2" id="text-2">
+<pre class="example">
+sudo cabal install distributed-process
+sudo cabal install network-transport-tcp
+</pre>
+
+<hr/>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">imports for both examples</h2>
+<div class="outline-text-2" id="text-3">
+<div class="org-src-container">
+
+<pre class="src src-haskell">-- one
+import Control.Distributed.Process
+import Control.Distributed.Process.Node
+import Network.Transport.TCP (createTransport, defaultTCPParameters)
+
+-- two
+import Control.Concurrent (threadDelay)
+import Control.Distributed.Process
+import Control.Distributed.Process.Node
+import Control.Monad (forever)
+import Network.Transport.TCP (createTransport, defaultTCPParameters)
+
+-- misc
+import System.Environment
+import System.Exit
+</pre>
+</div>
+
+<p>
+Choose the example to run.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell">main :: IO ()
+main = getArgs &gt;&gt;= run
+
+run ["1"] = one
+run ["2"] = two
+run _     = one
+</pre>
+</div>
+
+<hr/>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">example one : send/receive <code>String</code> to self</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">create transport</h3>
+<div class="outline-text-3" id="text-4-1">
+<div class="org-src-container">
+
+<pre class="src src-haskell">one :: IO ()
+one = do
+    Right transport &lt;- createTransport "127.0.0.1" "10501" defaultTCPParameters
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/package/network-transport-0.3.0.1">Network.Transport</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/package/network-transport-tcp">Network.Transport.TCP</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/network-transport-tcp/0.3.1/doc/html/src/Network-Transport-TCP.html#createTransport">createTransport</a>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/network-transport-tcp/0.3.1/doc/html/src/Network-Transport-TCP.html#defaultTCPParameters">defaultTCPParameters</a>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/network-transport/0.3.0.1/doc/html/src/Network-Transport.html#EndPoint">EndPoint</a>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/network-transport/0.3.0.1/doc/html/src/Network-Transport.html#Transport">Transport</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>
+Create a (heavyweight) <code>EndPoint</code>.  The <code>EndPoint</code> is now in an
+<i>active</i> state in the sense it is capable of handling connection
+requests.
+</p>
+
+<p>
+<code>EndPoint</code>:
+</p>
+<ul class="org-ul">
+<li>Has (serializable) address that other <code>EndPoint</code> can connect to.
+</li>
+<li>Can create unidirectional (lightweight) connections to other <code>EndPoint</code>.
+<ul class="org-ul">
+<li>Send on connection.
+</li>
+</ul>
+</li>
+<li>Has single shared receive queue.
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2">create node</h3>
+<div class="outline-text-3" id="text-4-2">
+<div class="org-src-container">
+
+<pre class="src src-haskell">    -- start a running local node
+    node &lt;- newLocalNode transport initRemoteTable
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/package/distributed-process-0.4.2">Control.Distributed.Process</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Internal-Closure-BuiltIn.html">Control.Distributed.Process.Internal.Closure.BuiltIn</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Closure-BuiltIn.html#remoteTable">remoteTable</a>
+</li>
+</ul>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Node.html">Control.Distributed.Process.Node</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Node.html#initRemoteTable">initRemoteTable</a>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Types.html#LocalNode">LocalNode</a>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Node.html#newLocalNode">newLocalNode</a>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-static/0.2.1.1/doc/html/src/Control-Distributed-Static.html#RemoteTable">RemoteTable</a>
+</li>
+</ul>
+</li>
+<li><a href="http://hackage.haskell.org/package/distributed-static">Control.Distributed.Static</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-static/0.2.1.1/doc/html/src/Control-Distributed-Static.html#initRemoteTable">initRemoteTable</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3">start process</h3>
+<div class="outline-text-3" id="text-4-3">
+<div class="org-src-container">
+
+<pre class="src src-haskell">    -- start new process
+    _ &lt;- forkProcess node $ do
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/package/distributed-process-0.4.2">Control.Distributed.Process</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Internal-Types.html">Control.Distributed.Process.Internal.Types</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Types.html#Process">Process</a>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Types.html#ProcessId">ProcessId</a>
+</li>
+</ul>
+</li>
+<li><a href="http://hackage.haskell.org/package/distributed-process-0.4.2">Control.Distributed.Process.Node</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Node.html#forkProcess">forkProcess</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>
+<code>Process</code> is basic unit of concurrency.
+</p>
+<ul class="org-ul">
+<li>lightweight : low creation/scheduling overhead
+</li>
+<li>can send/receive messages
+</li>
+<li>identified by <code>ProcessId</code>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4-4" class="outline-3">
+<h3 id="sec-4-4">send message</h3>
+<div class="outline-text-3" id="text-4-4">
+<div class="org-src-container">
+
+<pre class="src src-haskell">       self &lt;- getSelfPid
+       send self "hello world"            -- send message to ourself
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/package/distributed-process-0.4.2">Control.Distributed.Process</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Internal-Primitives.html">Control.Distributed.Process.Internal.Primitives</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Primitives.html#getSelfPid">getSelfPid</a>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Primitives.html#send">send</a>
+</li>
+</ul>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/Control-Distributed-Process-Serializable.html">Control.Distributed.Process.Serializable</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Serializable.html#Serializable">Serializable</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+
+<li>Messages are asynchronous, reliable, buffered.
+</li>
+<li>Messaging state wrapped in <code>ProcessM</code> monad.   TODO link
+</li>
+</ul>
+
+<p>
+Doing <i>untyped</i> <code>send</code> (typed channels also available).
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-5" class="outline-3">
+<h3 id="sec-4-5">receive message</h3>
+<div class="outline-text-3" id="text-4-5">
+<div class="org-src-container">
+
+<pre class="src src-haskell">       hello &lt;- expect :: Process String  -- receive the message
+       liftIO $ putStrLn hello            -- print the message to the console
+    return ()
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/package/distributed-process-0.4.2">Control.Distributed.Process</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/distributed-process/0.4.2/doc/html/src/Control-Distributed-Process-Internal-Primitives.html#expect">expect</a>
+</li>
+</ul>
+</li>
+<li><a href="http://hackage.haskell.org/packages/archive/transformers/0.3.0.0/doc/html/Control-Monad-IO-Class.html">Control.Monad.IO.Class</a>
+<ul class="org-ul">
+<li><a href="http://hackage.haskell.org/packages/archive/transformers/0.3.0.0/doc/html/src/Control-Monad-IO-Class.html#liftIO">liftIO</a>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>
+Doing <i>untyped</i> <code>expect</code> (i.e., receive).
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-6" class="outline-3">
+<h3 id="sec-4-6">run example one</h3>
+<div class="outline-text-3" id="text-4-6">
+<pre class="example">
+runghc tutorial1 1
+hello world
+</pre>
+
+<hr/>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">example two</h2>
+<div class="outline-text-2" id="text-5">
+<div class="org-src-container">
+
+<pre class="src src-haskell">replyBack :: (ProcessId, String) -&gt; Process ()
+replyBack (sender, msg) = send sender msg
+
+logMessage :: String -&gt; Process ()
+logMessage msg = say $ "handling " ++ msg
+
+two :: IO ()
+two = do
+    Right t &lt;- createTransport "127.0.0.1" "10501" defaultTCPParameters
+    node &lt;- newLocalNode t initRemoteTable
+    -- Spawn a new process on a local node
+    forkProcess node $ do
+        -- Spawn worker inside one more process on the local node
+        echoPid &lt;- spawnLocal $ forever $ do
+            -- Test the matches in order against each message in the queue
+            receiveWait [match logMessage, match replyBack]
+
+        -- `say` sends a message to the process registered as logger.
+        -- By default, this process simply sends the string to stderr.
+        say "send some messages"
+        send echoPid "hello"
+        self &lt;- getSelfPid
+        send echoPid (self, "hello world")
+        -- like `expect` (waits for a message), but with timeout
+        m &lt;- expectTimeout 1000000
+        case m of
+            -- Die immediately - throws a ProcessExitException with the given reason.
+            Nothing  -&gt; die "nothing came back!"
+            (Just s) -&gt; say $ "got back " ++ s
+        return ()
+
+    -- A 1 second wait. Otherwise the main thread can terminate before
+    -- our messages reach the logging process or get flushed to stdio
+    liftIO $ threadDelay (1*1000000)
+    return ()
+</pre>
+</div>
+
+<pre class="example">
+runghc tutorial1 2
+Thu Aug 29 04:28:13 UTC 2013 pid://127.0.0.1:10501:0:3: send some messages
+Thu Aug 29 04:28:13 UTC 2013 pid://127.0.0.1:10501:0:4: handling hello
+Thu Aug 29 04:28:13 UTC 2013 pid://127.0.0.1:10501:0:3: got back hello world
+</pre>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="xhtml-validation"><a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a></p>
+</div>
+</body>
+</html>
