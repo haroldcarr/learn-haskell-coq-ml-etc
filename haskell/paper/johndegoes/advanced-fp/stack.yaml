@@ -1,4 +1,4 @@
-resolver: lts-7.8
+resolver: lts-9.20
 packages:
 - location: .
 - location:
