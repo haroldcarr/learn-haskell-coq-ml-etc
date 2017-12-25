@@ -1,4 +1,4 @@
-name:                monad-reader-issue22
+name:                anton-dergunov-gadts
 version:             0.1.0.0
 build-type:          Simple
 cabal-version:       >=1.10

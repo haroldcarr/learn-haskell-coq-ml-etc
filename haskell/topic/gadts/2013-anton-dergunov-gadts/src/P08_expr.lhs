@@ -22,7 +22,7 @@
 >   | AddInt1 IntExpr1 IntExpr1
 
 :t AddInt1 (IntVal1 5) (IntVal1 7)
--- AddInt1 (IntVal1 5) (IntVal1 7) :: IntExpr1
+-- IntExpr1
 
 > evaluate1 :: IntExpr1 -> Int
 > evaluate1 e = case e of
@@ -43,21 +43,21 @@ Extend with booleans:
 >   deriving (Eq, Show)
 
 :t IsZero2 (BoolVal2 True)
--- IsZero2 (BoolVal2 True) :: ExtExpr2
+-- ExtExpr2
 
 PROBLEM: type checker accepts:
 
 :t AddInt2 (IntVal2 5) (BoolVal2 True)
--- AddInt2 (IntVal2 5) (BoolVal2 True) :: ExtExpr2
+-- ExtExpr2
 
-Since =ExtExpr2= is NOT parameterized by return value type, evaluation function is complicated:
+Since 'ExtExpr2' is NOT parameterized by return value type, evaluation function is complicated:
 
 > evaluate2 :: ExtExpr2 -> Maybe (Either Int Bool)
 > evaluate2 e = case e of
 >   AddInt2 e1 e2 -> case (evaluate2 e1, evaluate2 e2) of
->                       (Just (Left i1), Just (Left  i2)) -> Just $ Left $ i1 + i2
->                       (Just (Left i1), Just (Right b2)) -> error "wrong type given to AddInt2" -- dynamic type-checking
->                       _                                 -> error "not implemented"
+>     (Just (Left i1), Just (Left  i2)) -> Just $ Left $ i1 + i2
+>     (Just (Left i1), Just (Right b2)) -> error "wrong type given to AddInt2" -- dynamic type-checking
+>     _                                 -> error "not implemented"
 >   IntVal2  i    -> Just (Left  i)
 >   BoolVal2 b    -> Just (Right b)
 >   _             -> error "not implemented"
@@ -80,18 +80,18 @@ FIX: represent expressions with values of types parameterized by return type (p.
 >   | AddInt3  (PhantomExpr3 Int) (PhantomExpr3 Int)
 >   | IsZero3  (PhantomExpr3 Int)
 
-=t= above is expr return value type.  Want =IntVal3 5= to be typed =PhantomExpr3 Int=, but:
+'t' above is expr return value type.  Want 'IntVal3 5' to be typed 'PhantomExpr3 Int', but:
 
 :t IntVal3 5
--- IntVal3 5 :: PhantomExpr3 t
+-- PhantomExpr3 t
 
 :t BoolVal3 True
--- BoolVal3 True :: PhantomExpr3 t
+-- PhantomExpr3 t
 
 PROBLEM: incorrect exprs still accepted by type checker:
 
 :t IsZero3 (BoolVal3 True)
--- IsZero3 (BoolVal3 True) :: PhantomExpr3 t
+-- PhantomExpr3 t
 
 FIX (trick): wrap value constructors with functions:
 
@@ -105,11 +105,10 @@ FIX (trick): wrap value constructors with functions:
 Now bad exprs rejected by type checker (p. 10):
 
 :t isZero2 (boolVal3 True)
---    Couldn't match type `Bool' with `Int'
 --    Expected type: PhantomExpr3 Int
 --      Actual type: PhantomExpr3 Bool
 :t isZero2 (intVal3 5)
--- isZero2 (intVal3 5) :: PhantomExpr3 Bool
+-- PhantomExpr3 Bool
 
 PROBLEM: Want evaluate type signature to be (p. 10):
 
@@ -120,20 +119,15 @@ evaluate3 _           = error "not implemented"
 but get:
 
     Couldn't match expected type `t' with actual type `Int'
-      `t' is a rigid type variable bound by
-          the type signature for evaluate2 :: PhantomExpr3 t -> t
-          at r22.hs:150:15
-    In the expression: i
-    In an equation for evaluate2: evaluate2 (IntVal3 i) = i
 
-because return type of value constructor =IntVal3= is =Phantom t=
-but =t= can be refined to any type:
+because return type of value constructor 'IntVal3' is 'Phantom t'
+but 't' can be refined to any type:
 
 :t IntVal3 5 :: PhantomExpr3 Bool
--- IntVal3 5 :: PhantomExpr3 Bool :: PhantomExpr3 Bool
+-- PhantomExpr3 Bool
 
 Need to specify type signature of value constructors exactly
-so pattern matching will cause type refinement for =IntVal3= here.
+so pattern matching will cause type refinement for 'IntVal3' here.
 
 Exactly what GADTs do.
 
@@ -157,14 +151,13 @@ FIX: Final (useful) GADT version (value constructors return specific types) (p. 
 Bad exprs rejected:
 
 :t IsZero (BoolVal True)
---    Couldn't match type `Bool' with `Int'
 --    Expected type: Expr Int
 --      Actual type: Expr Bool
 
-Specific type returned by =IsZero=:
+Specific type returned by 'IsZero':
 
 :t IsZero (IntVal 5)
--- IsZero (IntVal 5) :: Expr Bool
+-- Expr Bool
 
 Well-defined evaluator / pattern matching causes type refinement:
 
@@ -177,12 +170,11 @@ Well-defined evaluator / pattern matching causes type refinement:
 > evaluate (If e1 e2 e3)  = if evaluate e1 then evaluate e2 else evaluate e3
 
 AddInt (IntVal 5) (BoolVal True)
---    Couldn't match type `Bool' with `Int'
 --    Expected type: Expr Int
 --      Actual type: Expr Bool
 
 :t evaluate $ AddInt (IntVal 5) (IntVal 7)
--- evaluate $ AddInt (IntVal 5) (IntVal 7) :: Int
+-- Int
 
 > te = U.t "te"
 >   (evaluate $ AddInt (IntVal 5) (IntVal 7))

@@ -3,7 +3,7 @@
 > module P05_gadt where
 
 Created       : 2013 Aug 18 (Sun) 11:14:50 by carr.
-Last Modified : 2017 Apr 29 (Sat) 20:17:38 by Harold Carr.
+Last Modified : 2017 Dec 25 (Mon) 11:20:14 by Harold Carr.
 
 Generalized Algebraic Data Types in Haskell by Anton Dergunov
 
@@ -33,16 +33,16 @@ use-cases
 >   | TS String a
 
 :t TI
--- TI :: Int -> TestA a
+-- Int -> TestA a
 
 :t TI 10
--- TI 10 :: TestA a
+-- TestA a
 
 :t TS
--- TS :: String -> a -> TestA a
+-- String -> a -> TestA a
 
 :t TS "test" 'c'
--- TS "test" 'c' :: TestA Char
+-- TestA Char
 
 Equivalent using GADT (p. 7):
 
@@ -57,19 +57,22 @@ GADT version that specifies return type:
 >   TSG2 :: String -> a -> TestG2 a
 
 :t TIG2
--- TIG2 :: Int -> TestG2 Int
+-- Int -> TestG2 Int
 :t TIG2 10
--- TIG2 10 :: TestG2 Int
+-- TestG2 Int
 
 -- TSG2 same as TS
 :t TSG2 "foo" 'c'
--- TSG2 "foo" 'c' :: TestG2 Char
+-- TestG2 Char
 
+Key GADT feature: pattern matching causes type refinement, so guaranteed 'Int':
 
-Key GADT feature: pattern matching causes type refinement, so guaranteed =Int=:
-
-f :: TestG2 a -> a
-f (TIG2 i) = i + 10
+> f :: TestG2 a -> a
+> f (TIG2 i)   = i + 10
+> f (TSG2 _ c) = c
 
 f (TIG2 3)
 -- 13
+
+f (TSG2 "foo" 'c')
+-- 'c'
