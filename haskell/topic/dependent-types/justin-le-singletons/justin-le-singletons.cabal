@@ -4,8 +4,8 @@ build-type:            Simple
 cabal-version:         >=1.10
 
 library
-  exposed-modules:     S1A
-                     , S1B
+  exposed-modules:     S1M
+                     , S1S
   build-depends:       base >= 4.7 && < 5
                      , HUnit
                      , singletons
