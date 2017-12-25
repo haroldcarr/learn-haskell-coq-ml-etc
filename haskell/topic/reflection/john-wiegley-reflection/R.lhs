@@ -5,7 +5,7 @@
 > -- for #3
 > {-# LANGUAGE FlexibleInstances    #-}
 
-> module Lib where
+> module R where
 
 > -- for #1
 > import Test.QuickCheck.Arbitrary

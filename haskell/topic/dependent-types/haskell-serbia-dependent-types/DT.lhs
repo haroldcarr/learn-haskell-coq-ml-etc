@@ -9,7 +9,7 @@
 > {-# LANGUAGE TypeOperators          #-}
 > {-# LANGUAGE UndecidableInstances   #-}
 >
-> module Lib where
+> module DT where
 >
 > import Data.Kind
 > import GHC.TypeLits
