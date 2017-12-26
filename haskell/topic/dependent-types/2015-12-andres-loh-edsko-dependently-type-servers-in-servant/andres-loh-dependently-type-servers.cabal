@@ -1,11 +1,10 @@
-name:                danny-gratzer-intro-to-dependent-types
+name:                andres-loh-dependently-type-servers
 version:             0.1.0.0
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
-  hs-source-dirs:      src
-  exposed-modules:     DT
+  exposed-modules:     DTS
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010
