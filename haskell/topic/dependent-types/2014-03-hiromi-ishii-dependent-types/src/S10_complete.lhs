@@ -46,12 +46,12 @@ Type-level functions
 > infixl 7 :*
 
 > type family   (n :: Nat) :+ (m :: Nat) :: Nat
-> type instance  Z    :+ m =         m
-> type instance (S n) :+ m = S (n :+ m)
+> type instance  Z   :+ m =         m
+> type instance  S n :+ m = S (n :+ m)
 
 > type family   (n :: Nat) :* (m :: Nat) :: Nat
-> type instance  Z    :* m = Z
-> type instance (S n) :* m = (n :* m) :+ m
+> type instance  Z   :* m = Z
+> type instance  S n :* m = (n :* m) :+ m
 
 note: other possible implementations
 - which argument to recur on

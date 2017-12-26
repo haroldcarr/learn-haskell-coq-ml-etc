@@ -38,7 +38,7 @@ relation between kinds and types is the same as
   Haskell-cafe : export DataKinds : http://www.haskell.org/pipermail/haskell-cafe/2014-February/112930.html
 
 Only types with kind `*` have inhabitants (i.e.,  values)
-- type introduced by `DataKinds` (e.g. types `Z` or `S (S n)`) have NO inhabitants.
+- types introduced by `DataKinds` (e.g. types `Z` or `S (S n)`) have NO inhabitants.
 
 Type-level functions
 --------------------
@@ -54,16 +54,16 @@ Type-level functions
 > infixl 6 :+
 >
 > type family   (n :: Nat) :+ (m :: Nat) :: Nat
-> type instance  Z    :+ m =         m
-> type instance (S n) :+ m = S (n :+ m)
+> type instance  Z   :+ m =         m
+> type instance  S n :+ m = S (n :+ m)
 
 To implement multiplication need `UndecidableInstances`
 
 > infixl 7 :*
 >
 > type family   (n :: Nat) :* (m :: Nat) :: Nat
-> type instance Z     :* m = Z
-> type instance (S n) :* m = (n :* m) :+ m
+> type instance  Z    :* m = Z
+> type instance  S n  :* m = (n :* m) :+ m
 
 note: other possible implementations
 - which argument to recur on
@@ -77,7 +77,8 @@ name resolution
   - 2. Promoted type of the promoted kind `()`
 - use `'` to resolve - indicates to 2
   - in type context, `'()` is promoted type from data constructor `()` and has kind `()`, and `()` is the unit type of the kind `*`.
-  - `'[]` stands for the promoted *empty list* of kind `[k]`, and `[]` for the type constructor of the kind `* -> *`. The same convension applies to the alphabetical names.
+  - `'[]` stands for the promoted *empty list* of kind `[k]`, and `[]` for the type constructor of the kind `* -> *`.
+    The same convension applies to the alphabetical names.
 
 GADTs
 -----
@@ -120,13 +121,13 @@ operations on vectors
 
 Exercise:
 - answers in `sized-vector` : http://hackage.haskell.org/package/sized-vector
-1. Implement the `toList` and `fromList`.
-2. Implement the `Vector` version of `map`, `uncons`, `init` and `last`.
-3. Implement the `zipWithSame`, with the following type signature:
-   ```haskell
+1. Implement `toList` and `fromList`.
+2. Implement `Vector` version of `map`, `uncons`, `init` and `last`.
+3. Implement `zipWithSame`, with the following type signature:
+
    zipWithSame :: (a -> b -> c) -> Vector a n -> Vector b n -> Vector c n
-   ```
+
    This is the version of the `zipWith` for vectors with the same length.
-4. Implement the `min` function for type-level natural numbers.
+4. Implement `min` for type-level natural numbers.
    Use it to implement `zipWith` which takes vectors with possibly different length.
 
