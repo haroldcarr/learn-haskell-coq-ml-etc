@@ -1,12 +1,13 @@
 name:                tddwi
 version:             0.1.0.0
 build-type:          Simple
--- extra-source-files:
 cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
   exposed-modules:     P022
+                     , P026
+                     , P070_vect_insert_sort
                      , P102_dependent_indexed_types_vehicle
                      , P139_read_vect
                      , P355_state_machine_door
@@ -14,4 +15,5 @@ library
                      , P358_state_machine_vending_p2
   build-depends:       base >= 4.7 && < 5
                      , reflection
+                     , vector-sized
   default-language:    Haskell2010

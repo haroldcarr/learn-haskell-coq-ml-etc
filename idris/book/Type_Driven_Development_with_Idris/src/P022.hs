@@ -1,10 +1,11 @@
-{-# LANGUAGE DataKinds            #-}
-{-# LANGUAGE PolyKinds            #-}
-{-# LANGUAGE TypeFamilies         #-}
-{-# LANGUAGE TypeOperators        #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds    #-}
+{-# LANGUAGE GADTs        #-}
+{-# LANGUAGE LambdaCase   #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module P022 where
+
+import Data.Reflection
 
 type family StringOrInt b where
   StringOrInt 'True  = Int
@@ -16,14 +17,27 @@ intType = 3
 stringType :: StringOrInt 'False
 stringType = "three"
 
-{-
-getStringOrInt :: (x :: Bool) -> StringOrInt x
-getStringOrInt x = case x of
-    True  -> 94
-    False -> "Ninety four"
+data SBool :: Bool -> * where
+  STrue  :: SBool 'True
+  SFalse :: SBool 'False
 
-valToString :: (x :: Bool) -> StringOrInt x -> String
-valToString x val = case x of
-    True  -> show val
-    False -> val
--}
+getStringOrInt :: SBool x -> StringOrInt x
+getStringOrInt x = reify x $ \p -> case reflect p of
+  STrue  -> 94
+  SFalse -> "Ninety four"
+
+getStringOrInt' :: SBool x -> StringOrInt x
+getStringOrInt' = \case
+  STrue  -> 94
+  SFalse -> "Ninety four"
+
+valToString :: SBool x -> StringOrInt x -> String
+valToString x val = reify x $ \p -> case reflect p of
+  STrue  -> show val
+  SFalse -> val
+
+valToString' :: SBool x -> StringOrInt x -> String
+valToString' = \case
+  STrue  -> show
+  SFalse -> id
+
