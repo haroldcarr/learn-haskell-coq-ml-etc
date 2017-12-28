@@ -10,17 +10,23 @@
 > import           Test.HUnit         (Counts, Test (TestList), runTestTT)
 > import qualified Test.HUnit.Util    as U (t)
 
-`DataKinds` : makes Nat both a type and a kind
-- used below in `Nat` definition to "index" the return type
-- note: haskell separation of types and kinds requires separate kind-level replica
+2. A Variety of Quantifiers
 
 > data Nat = Z | S Nat deriving (Eq, Ord, Show)
+
+`DataKinds` : makes Nat a kind (besides a type)
+- Nat is a TYPE with VALUE CONSTRUCTORS  Z and  S
+- Nat is a KIND with TYPE  CONSTRUCTORS 'Z and 'S
+
+used below in `Nat` definition to "index" the return type
+- note: haskell separation of types and kinds requires separate kind-level replica
 
 `KindSignatures` benefits:
 - style: does not introduce ununsed names
   - e.g., 1. `data MarkedList    a    b      where`
   -       2. `data MarkedList :: * -> * -> * where`
-  - 1 uses names a and b that are not used in body (each constructor binds its own names). 2 avoids names
+  - 1 uses names a and b that are not used in body (each constructor binds its own names).
+  - 2 avoids names
 - enables specifying an alternate kind
   - e.g., `data X a = X` says X has kind * -> * and its parameter must be nullary.
   - can specify a unary kind for its parameter via `data X (a :: * -> *) = X`
@@ -35,6 +41,8 @@
 >   V0   ::                 Vec  Z    a
 >   (:>) :: a -> Vec n a -> Vec (S n) a
 
+Choose order of arguments carefully since Haskell supports partial application at type level but not λ-abstraction.
+
 > instance Eq a => Eq (Vec n a) where
 >   (==)        V0       V0  = True
 >   (==) (l :> ls) (r :> rs) = l == r && ls == rs
@@ -43,11 +51,9 @@
 >   show V0        = "V0"
 >   show (l :> ls) = show l ++ " :> " ++ show ls
 
-Choose order of arguments carefully since Haskell supports partial application but not λ-abstraction.
-
 Example departs from dependently typed tradition
-by giving Vec its length index to the left of its payload type parameter, x,
-to develop the functorial structure of each Vec n below.
+- length index to left of payload type parameter
+  (to develop the functorial structure of each Vec n below)
 
 > t1 = U.t "t1"
 >    (3 :> 2 :> 1 :> V0)
@@ -64,7 +70,7 @@ TypeFamilies, TypeOperators : compute at type level
 
 Haskell : type equality is syntactic.
 
-Above type family is axioms for propositional equality.
+Above type family : axioms for propositional equality.
 Programs that rely on type-level computation must be elaborated in terms of explicit appeal to evidence.
 The translation from surface language to kernel attempts to generate evidence by a constraint solving heuristic.
 
@@ -98,14 +104,18 @@ The ‘Π-types’, often written (x : S) -> T, of dependent type theory abstrac
 
 Simulate in Haskell by abstracting dependently at the type level and non-dependently over singleton representative.
 
-> vchop :: Natty m -> Vec (m :+ n) a -> (Vec m a, Vec n a)
+> vchop :: Natty m
+>       -> Vec (m :+ n) a
+>       -> (Vec m a, Vec n a)
 > vchop  Zy          xs  = (V0     , xs)
 > vchop (Sy k) (x :> xs) = (x :> ys, zs)
 >   where (ys, zs) = vchop k xs
 
 > t3 = U.t "t3"
 >    (vchop (Sy (Sy Zy)) (6 :> 5 :> 4 :> 3 :> 2 :> 1 :> V0))
->    (6 :> 5 :> V0, 4 :> 3 :> 2 :> 1 :> V0)
+>    ( 6 :> 5 :> V0
+>    , 4 :> 3 :> 2 :> 1 :> V0
+>    )
 
 To write:
 
