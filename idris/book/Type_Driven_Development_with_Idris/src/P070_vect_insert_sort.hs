@@ -14,7 +14,22 @@ import qualified Data.Vector        as V0
 import           Data.Vector.Sized  as V
 import           GHC.TypeLits
 
-x = V.generate id :: Vector 7 Int
+sort
+  :: forall n elem. (KnownNat n, Ord elem)
+  => Vector n elem
+  -> Vector n elem
+sort x =
+  let l  = V.toList x
+      sl = L.sort l
+      v0 = V0.fromList sl
+  in withSized v0 $ \(v :: Vector m elem) ->
+    case sameNat (Proxy @m) (Proxy @n) of
+      Nothing   -> error "NO"
+      Just Refl -> v :: Vector m elem
+
+
+(Just x) = V.fromList [1,3,9,7,6,4,5,8] :: Maybe (Vector 8 Int)
+s = sort x
 
 insert :: forall len len1 elem. (KnownNat len, KnownNat len1, Ord elem)
        => elem
@@ -29,20 +44,6 @@ insert x y =
       Nothing   -> error "NO"
       Just Refl -> v :: Vector len1 elem
 
-i = insert (2::Int) x :: Vector 8 Int
+i = insert (2::Int) s :: Vector 9 Int
 
-{-
-insSort ::  Ord elem
-        => Vector n elem
-        -> Vector n elem
-insSort x0
-  | V.length x0 == 0 = x0
-  | otherwise =
-      let x  = V.head x0
-          xs = V.tail x0
-      in let xsSorted = insSort xs in insert x xsSorted
-
-
-insSort [1,3,2,9,7,6,4,5,8]
--}
 
