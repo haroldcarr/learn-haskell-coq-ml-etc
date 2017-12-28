@@ -249,7 +249,7 @@ If size known at compile-time:
 
     mkVec :: forall n. KnownNat n => V.Vector a -> Maybe (Vec n a)
 
-runtime (requires RankNTypes) : REIFICATION: runtime value and "reify" it to type-level
+runtime (requires RankNTypes) : REIFICATION: "reify" runtime value to type-level
 
 implement using GHC.TypeNats someNatVal
 
@@ -309,8 +309,8 @@ ensure two vectors have same length (e.g., use use withVec from two different ve
 
 use GHC.TypeNats sameNat
 
-    -- `Type` is just a synonym for * from Data.Kind
-    -- from Data.Type.Equality
+    -- Data.Kind : `Type` : synonym for *
+    -- Data.Type.Equality
     data (:~:) :: k -> k -> Type where
       Refl :: x :~: x
 
