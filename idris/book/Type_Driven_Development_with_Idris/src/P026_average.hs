@@ -1,4 +1,4 @@
-module P026 where
+module P026_average where
 
 average :: String -> Double
 average str =

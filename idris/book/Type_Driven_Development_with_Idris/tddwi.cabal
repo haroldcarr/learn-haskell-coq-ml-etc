@@ -5,16 +5,21 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     P022
-                     , P026
+  exposed-modules:     P022_string_or_int
+                     , P026_average
                      , P070_vect_insert_sort
+                     , P075_exercises_length_reverse_map
                      , P102_dependent_indexed_types_vehicle
+                     , P104_vect
                      , P139_read_vect
                      , P355_state_machine_door
                      , P358_state_machine_vending_p1
                      , P358_state_machine_vending_p2
   build-depends:       base >= 4.7 && < 5
+                     , finite-typelits
+                     , ghc-prim
                      , reflection
+                     , typelits-witnesses
                      , vector
                      , vector-sized
   default-language:    Haskell2010

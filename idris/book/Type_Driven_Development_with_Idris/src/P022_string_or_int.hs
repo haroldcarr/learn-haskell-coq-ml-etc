@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase   #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module P022 where
+module P022_string_or_int where
 
 import Data.Reflection
 

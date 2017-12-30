@@ -19,9 +19,7 @@ sort
   => Vector n elem
   -> Vector n elem
 sort x =
-  let l  = V.toList x
-      sl = L.sort l
-      v0 = V0.fromList sl
+  let v0  = (V0.fromList . L.sort . V.toList) x
   in withSized v0 $ \(v :: Vector m elem) ->
     case sameNat (Proxy @m) (Proxy @n) of
       Nothing   -> error "NO"
@@ -31,14 +29,13 @@ sort x =
 (Just x) = V.fromList [1,3,9,7,6,4,5,8] :: Maybe (Vector 8 Int)
 s = sort x
 
-insert :: forall len len1 elem. (KnownNat len, KnownNat len1, Ord elem)
+insert :: forall len len1 elem.
+          (KnownNat len, KnownNat len1, Ord elem, (len ~ (len1 - 1)))
        => elem
        -> Vector len elem
        -> Vector len1 elem
 insert x y =
-  let l  = V.toList y
-      sl = L.insert x l
-      v0 = V0.fromList sl
+  let v0 = V0.fromList (L.insert x (V.toList y))
   in withSized v0 $ \(v :: Vector n elem) ->
     case sameNat (Proxy @len1) (Proxy @n) of
       Nothing   -> error "NO"

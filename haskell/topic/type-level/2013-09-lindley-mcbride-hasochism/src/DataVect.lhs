@@ -7,8 +7,9 @@
 >
 > module DataVect where
 >
-> import           Test.HUnit         (Counts, Test (TestList), runTestTT)
-> import qualified Test.HUnit.Util    as U (t)
+> import           GHC.Types       hiding (Nat)
+> import           Test.HUnit      (Counts, Test (TestList), runTestTT)
+> import qualified Test.HUnit.Util as U (t)
 
 2. A Variety of Quantifiers
 
@@ -37,7 +38,7 @@ used below in `Nat` definition to "index" the return type
 
 > infixr 7 :>
 >
-> data Vec :: Nat -> * -> * where
+> data Vec :: Nat -> Type -> Type where
 >   V0   ::                 Vec  Z    a
 >   (:>) :: a -> Vec n a -> Vec (S n) a
 

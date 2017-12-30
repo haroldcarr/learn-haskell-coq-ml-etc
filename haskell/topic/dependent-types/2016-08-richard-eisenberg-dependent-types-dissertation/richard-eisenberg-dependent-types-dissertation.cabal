@@ -1,0 +1,15 @@
+name:                  richard-eisenberg-dependent-types-dissertation
+version:               0.1.0.0
+build-type:            Simple
+cabal-version:         >=1.10
+
+library
+  exposed-modules:     D1
+                     , D2Vect
+  build-depends:       base >= 4.7 && < 5
+                     , containers
+                     , ghc-prim
+                     , HUnit
+                     , test-hunit-util
+  default-language:    Haskell2010
+
