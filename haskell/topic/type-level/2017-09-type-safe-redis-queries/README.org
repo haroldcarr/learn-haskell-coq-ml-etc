@@ -1,0 +1,24 @@
+https://redis.io/topics/quickstart
+
+build
+
+#+begin_example
+pushd /tmp
+wget http://download.redis.io/redis-stable.tar.gz
+tar xvzf redis-stable.tar.gz
+cd redis-stable
+make
+make test
+#+end_example
+
+run
+
+Port: 6379
+
+#+begin_example
+src/redis-server &
+src/redis-cli ping
+src/redis-cli
+help
+help get
+#+end_example
