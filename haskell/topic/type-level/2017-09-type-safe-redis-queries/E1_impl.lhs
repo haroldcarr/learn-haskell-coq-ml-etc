@@ -98,7 +98,7 @@ to label a state monad with its pre and postcondition use indexed monad (aka par
 - takes two type parameters representing initial and final states
 
 > class IMonad m where
->   unit :: a -> m p p a
+>   unit ::             a -> m p p a
 >   bind :: m p q a -> (a -> m q r b) -> m p r b
 
 add the pre/postconditions at type level:
@@ -106,7 +106,7 @@ add the pre/postconditions at type level:
 > newtype Edis p q a = Edis {unEdis :: Hedis.Redis a}
 > instance IMonad Edis where
 >   unit     = Edis . return
->   bind m f = Edis (unEdis m >>= unEdis . f )
+>   bind m f = Edis (unEdis m >>= unEdis . f)
 
 properties of state that are tracked
 - set of currently allocated keys
@@ -293,16 +293,17 @@ If "A" not in dictionary, entry is added; otherwise existing type of "A" is upda
 
 Redis INCR reads string value of given key, parses it as integer, increments it, stores it back (as string).
 
-> incr :: (T.KnownSymbol k, Get xs k ~ StringOf Integer)
->      => Proxy k
->      -> Edis xs xs (Either Hedis.Reply Integer)
+> incr
+>   :: (T.KnownSymbol k, Get xs k ~ StringOf Integer)
+>   => Proxy k
+>   -> Edis xs xs (Either Hedis.Reply Integer)
 > incr key = Edis (Hedis.incr (encodeKey key))
 >
 > incrbyfloat
->      :: (T.KnownSymbol k, Get xs k ~ StringOf Double)
->      => Proxy k
->      -> Double
->      -> Edis xs xs (Either Hedis.Reply Double)
+>   :: (T.KnownSymbol k, Get xs k ~ StringOf Double)
+>   => Proxy k
+>   -> Double
+>   -> Edis xs xs (Either Hedis.Reply Double)
 > incrbyfloat key eps = Edis (Hedis.incrbyfloat (encodeKey key) eps)
 
 EQUALITY CONSTRAINTS : ∼
@@ -401,7 +402,7 @@ to keep track of types of fields in a hash
 > type family IsHash   (t :: *) :: Bool where
 >   IsHash   (HashOf   a) = 'True
 >   IsHash             _  = 'False
-> type HashOrNX    xs k   = (IsHash   (Get xs k) `Or` Not (Member xs k)) ~ 'True
+> type HashOrNX    xs k   = (IsHash (Get xs k) `Or` Not (Member xs k)) ~ 'True
 
 dictionary entry (k, HashOF ys)
 denote that value of key k is hash whose fields and their types are specified by ys, which is also a dictionary.
@@ -468,11 +469,11 @@ explicitly declare new keys, after ensuring they do not already exist
 > -- adds a fresh key with type a into dictionary
 > -- does nothing at term level
 > declare
->   :: (T.KnownSymbol k, Member xs k ~ False)
+>   :: (T.KnownSymbol k, Member xs k ~ 'False)
 >   => Proxy k
 >   -> Proxy a
 >   -> Edis xs (Set xs k a) ()
-> declare key typ = Edis (return ())
+> declare _key _typ = Edis (return ())
 >
 > -- initialize dictionary to empty list
 > start :: Edis '[] '[] ()
