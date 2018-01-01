@@ -37,3 +37,5 @@ GHC does not simplify (i.e., calculate) the following since  type classes are op
 :set -XFlexibleContexts
 :t undefined :: (PlusMPTC (S Z) (S Z) r) => r
 =>                                            :: PlusMPTC (S Z) (S Z) r => r
+
+So FUNCTIONAL DEPENDENCIES (next).

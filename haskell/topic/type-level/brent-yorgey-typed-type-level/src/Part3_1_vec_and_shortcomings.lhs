@@ -1,7 +1,7 @@
 > {-# LANGUAGE GADTs          #-}
 > {-# LANGUAGE KindSignatures #-}
 >
-> module Part3 where
+> module Part3_1_vec_and_shortcomings where
 >
 > import Part1_1_MPTC (Z, S)
 > import Part2_type_families (Plus)

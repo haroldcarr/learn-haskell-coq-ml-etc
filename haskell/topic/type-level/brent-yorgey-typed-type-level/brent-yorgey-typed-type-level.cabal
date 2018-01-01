@@ -8,6 +8,7 @@ library
   exposed-modules:     Part1_1_MPTC
                      , Part1_2_FD
                      , Part2_type_families
-                     , Part3 
+                     , Part3_1_vec_and_shortcomings
+                     , Part3_2_data_kinds_kind_signatures
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010

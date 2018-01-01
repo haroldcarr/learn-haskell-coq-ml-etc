@@ -19,7 +19,7 @@ m n -> r
 > -- | represents three-place addition *relation*
 > -- e.g., (3,5,8) are in the relation, because 3 + 5 = 8.
 > -- If there is an instance Plus m n r, then m + n = r.
-> 
+>
 > class     Plus m n r | m n -> r
 > instance  Plus Z n n
 > instance (Plus m n r) => Plus (S m) n (S r)
