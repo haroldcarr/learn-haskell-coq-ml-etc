@@ -1,0 +1,20 @@
+name:                  michael-burge-haskoin
+version:               0.1.0.0
+build-type:            Simple
+cabal-version:         >= 1.10
+
+library
+  exposed-modules:     BC
+  build-depends:       base >=4.7 && <5
+                     , binary
+                     , bytestring
+                     , containers
+                     , directory
+                     , cryptonite
+                     , free
+                     , memory
+                     , protolude
+                     , time
+                     , vector
+                     , vector-binary-instances
+  default-language:    Haskell2010
