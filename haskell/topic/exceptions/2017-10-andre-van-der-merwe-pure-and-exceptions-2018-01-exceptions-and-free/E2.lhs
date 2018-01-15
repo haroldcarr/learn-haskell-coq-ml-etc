@@ -6,6 +6,7 @@
 >
 > module E2 where
 >
+> import qualified E1_1
 > import qualified E1_2
 > import qualified E1_3
 > ------------------------------------------------------------------------------
@@ -18,7 +19,11 @@
 > import qualified Control.Monad.Trans.Except as EX (throwE)
 > import qualified Data.Text                  as T
 > import qualified Data.Text.IO               as T
+> import qualified Prelude
 > import           Protolude
+
+> {-# ANN module ("HLint: Reduce duplication" :: Prelude.String) #-}
+
 
 http://www.andrevdm.com/posts/2018-01-08-refactor-free.html
 
@@ -53,6 +58,8 @@ template haskell/DeriveFunctor : creates types that lift operations into Free mo
 last type in data constructor is "return type"
 next enables chaining
 
+TODO : no OpRun in this example
+
 > ex :: (Monad m) => T.Text -> (Ops m) T.Text
 > ex x = do
 >   opLog $ "starting: " <> x
@@ -60,6 +67,7 @@ next enables chaining
 >   opWrite $ r <> x
 >   opRead
 
+------------------------------------------------------------------------------
 Interpreting
 
 ex gives an AST.
@@ -94,13 +102,14 @@ ensure only catching asynchronous exceptions
 >   handler :: (Monad m) => (T.Text -> E1_3.OpsError) -> SomeException -> E.ExceptT E1_3.OpsError m T.Text
 >   handler ope e = EX.throwE . ope $ show e  -- catch exception and use ExceptT's throwE
 
-:set -XOverloadedStrings
-runExceptT $ doFile (ex "test run")
+> eFile :: IO (Either E1_3.OpsError Text)
+> eFile = runExceptT $ doFile (ex "test run")
 
 operations  run
 synchronous exceptions caught and handled in the ExceptT
 similar but simpler to record based approach
 
+------------------------------------------------------------------------------
 Testing
 
 > data TestState = TestState
@@ -127,6 +136,11 @@ Testing
 >       ST.modify (\(TestState s ls) -> TestState s $ ls <> [t])
 >       interpreterState n
 
+> eTest :: (T.Text, TestState)
+> eTest = (ST.runState $ interpreterState (ex "test run"))
+>         (TestState "foo" [])
+
+
 Compare to previous approach
 - testPipeline :: [I2.Job (S.State Text)] -> Text -> S.State Text (Either I3.E1_3.OpsError Text)
 - advantage : tests not forced to use ExceptT. Each interpreter can usee whatever stack is appropriate
@@ -140,47 +154,46 @@ Even if the Haskell runtime optimizes some of Free overhead through
 laziness and generational garbage collection, the asymptotic runtime
 is still quadratic.
 
+------------------------------------------------------------------------------
 Church encoding
 
-Control.Monad.Free.Church does church encoding of a free monad
-
-Using this, the tree only needs to be constructed once (instead of quadratic).
-
+Control.Monad.Free.Church
+- church encoding of a free monad
+- then only need to constructed tree once (instead of quadratic)
 
 Free monad and church encoding example : https://github.com/queertypes/free-tutorial
 
-To get Church encoding, use MonadFree constraint (rather than more specific data type) for the function that generates the DSL.
+use MonadFree constraint (rather than more specific data type) for function that generates DSL
 
 Previous
- ex :: (Monad m) => T.Text -> (Ops m) T.Text
+
+ex :: (Monad m) => T.Text -> (Ops m) T.Text
 
 Update:
 
-exC  :: (Monad m, MonadFree (OpsF m) a) => Text -> [E1_2.Job m] -> a Text
-exC x = do
-  opLog $ "starting: " <> x
-  r <- opRead
-  opWrite $ r <> x
-  opRead
+TODO : NO OpRun in this example
+
+> exC  :: (MonadFree (OpsF m1) m2) => T.Text -> m2 T.Text
+> exC x = do
+>   opLog $ "starting: " <> x
+>   r <- opRead
+>   opWrite $ r <> x
+>   opRead
 
 run withOUT Church encoding
 
-  let ioJobs = [ Job "j1" ioJob1
-               , Job "j2" ioJob2
-               , Job "j3" ioJob3
-               ]
-  a <- runExceptT $ doFile $ createAst "test1" ioJobs
-  print a
+> withoutChurch :: IO ()
+> withoutChurch = do
+>   let _ioJobs = [ E1_2.Job "j1" E1_1.job1, E1_2.Job "j2" E1_1.job2, E1_2.Job "j3" E1_1.job3 ]
+>   a <- runExceptT $ doFile (exC "test")
+>   print a
 
-run with Church encoding
-
-  let ioJobs = [ Job "j1" ioJob1
-               , Job "j2" ioJob2
-               , Job "j3" ioJob3
-               ]
-        -- Note that createAst must be run inline here to avoid an error about the monad constraints
-  ai <- runExceptT $ doFile (C.improve $ createAst "test1" ioJobs)
-  print ai
+> withChurch :: IO ()
+> withChurch = do
+>   let _ioJobs = [ E1_2.Job "j1" E1_1.job1, E1_2.Job "j2" E1_1.job2, E1_2.Job "j3" E1_1.job3 ]
+>   -- Note that exC must be run inline here to avoid an error about the monad constraints
+>   a <- runExceptT $ doFile (C.improve $ exC "test1")
+>   print a
 
 use free without O(n^2) concerns
 
