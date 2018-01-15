@@ -1,0 +1,1 @@
+Note: the relationship between the Op(eration)s and the jobs in the examples is confusing.  Needs some work.  But the general idea is useful.

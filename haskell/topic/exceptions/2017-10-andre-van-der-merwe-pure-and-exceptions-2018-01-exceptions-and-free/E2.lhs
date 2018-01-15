@@ -6,8 +6,6 @@
 >
 > module E2 where
 >
-> import qualified E1_1
-> import qualified E1_2
 > import qualified E1_3
 > ------------------------------------------------------------------------------
 > import qualified Control.Exception.Safe     as S
@@ -22,8 +20,7 @@
 > import qualified Prelude
 > import           Protolude
 
-> {-# ANN module ("HLint: Reduce duplication" :: Prelude.String) #-}
-
+> {-# ANN module ("HLint: ignore Reduce duplication" :: Prelude.String) #-}
 
 http://www.andrevdm.com/posts/2018-01-08-refactor-free.html
 
@@ -58,12 +55,13 @@ template haskell/DeriveFunctor : creates types that lift operations into Free mo
 last type in data constructor is "return type"
 next enables chaining
 
-TODO : no OpRun in this example
-
 > ex :: (Monad m) => T.Text -> (Ops m) T.Text
 > ex x = do
 >   opLog $ "starting: " <> x
 >   r <- opRead
+>   opLog $ "after opRead: " <> r
+>   j <- opRun "foo" (return . T.cons 'X') r
+>   opLog $ "after opRun: " <> j
 >   opWrite $ r <> x
 >   opRead
 
@@ -166,17 +164,16 @@ Free monad and church encoding example : https://github.com/queertypes/free-tuto
 use MonadFree constraint (rather than more specific data type) for function that generates DSL
 
 Previous
-
-ex :: (Monad m) => T.Text -> (Ops m) T.Text
-
+  ex   :: (Monad m)                          => T.Text -> (Ops m) T.Text
 Update:
 
-TODO : NO OpRun in this example
-
-> exC  :: (MonadFree (OpsF m1) m2) => T.Text -> m2 T.Text
+> exC  :: (Monad m1, MonadFree (OpsF m1) m2) => T.Text -> m2      T.Text
 > exC x = do
 >   opLog $ "starting: " <> x
 >   r <- opRead
+>   opLog $ "after opRead: " <> r
+>   j <- opRun "foo" (return . T.cons 'X') r
+>   opLog $ "after opRun: " <> j
 >   opWrite $ r <> x
 >   opRead
 
@@ -184,13 +181,11 @@ run withOUT Church encoding
 
 > withoutChurch :: IO ()
 > withoutChurch = do
->   let _ioJobs = [ E1_2.Job "j1" E1_1.job1, E1_2.Job "j2" E1_1.job2, E1_2.Job "j3" E1_1.job3 ]
 >   a <- runExceptT $ doFile (exC "test")
 >   print a
 
 > withChurch :: IO ()
 > withChurch = do
->   let _ioJobs = [ E1_2.Job "j1" E1_1.job1, E1_2.Job "j2" E1_1.job2, E1_2.Job "j3" E1_1.job3 ]
 >   -- Note that exC must be run inline here to avoid an error about the monad constraints
 >   a <- runExceptT $ doFile (C.improve $ exC "test1")
 >   print a
