@@ -22,9 +22,12 @@ https://www.fpcomplete.com/blog/2016/11/exceptions-best-practices-haskell
 EXCEPTIONS BEST PRACTICES IN HASKELL.
 Michael Snoyman - 07 November, 2016
 
-
-safe-exceptions library : recommend everyone use
-- contains a tutorial
+safe-exceptions library : https://hackage.haskell.org/package/safe-exceptions
+- recommend use
+- contains a tutorial : https://haskell-lang.org/library/safe-exceptions
+  - see file SafeExceptions
+- also : https://haskell-lang.org/tutorial/exception-safety
+  - see file ExceptionSafetyTutorial
 
 FP Complete Haskell Syllabus : https://www.fpcomplete.com/haskell-syllabus
 Haskell training             : https://www.fpcomplete.com/training
@@ -166,12 +169,28 @@ SOLUTION : use MonadThrow
 >   f a b c      = if a /= "FOO" then S.throw (E2 2)
 >                  else return (a <> b <> c)
 
+> lkup :: (S.MonadThrow m) => T.Text -> m T.Text
+> lkup "foo" = return "FOO"
+> lkup "bar" = return "BAR"
+> lkup "baz" = return "BAZ"
+> lkup k     = S.throw (E1 ("lookup failed for: " <> k))
+>
+> ff :: (S.MonadThrow m) => T.Text -> T.Text -> T.Text -> m T.Text
+> ff a b c = if a /= "FOO" then S.throw (E2 2)
+>            else return (a <> b <> c)
+>
+> lu4 :: Either SomeException T.Text
+> lu4 = do
+>   foo <- lkup "foo"
+>   bar <- lkup "bar"
+>   baz <- lkup "baz"
+>   ff foo bar baz
 
 Versus Either signature
 - some information lost : type of exception that can be thrown
 - gain
   - composability
-  - unification with Maybe (as well as other instances of MonadThrow, like IO)
+  - unification with Either (as well as other instances of MonadThrow, like IO)
 
 MonadThrow typeclass is a tradeoff
 - but well thought out
