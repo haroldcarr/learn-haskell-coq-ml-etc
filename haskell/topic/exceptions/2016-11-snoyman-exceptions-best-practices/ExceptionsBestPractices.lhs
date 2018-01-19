@@ -2,7 +2,7 @@
 > {-# LANGUAGE NoImplicitPrelude #-}
 > {-# LANGUAGE OverloadedStrings #-}
 >
-> module E where
+> module ExceptionsBestPractices where
 >
 > import qualified Control.Concurrent.MVar as MV
 > import qualified Control.Exception       as E
