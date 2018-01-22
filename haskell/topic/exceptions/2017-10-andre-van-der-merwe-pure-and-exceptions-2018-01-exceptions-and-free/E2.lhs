@@ -78,22 +78,22 @@ ensure only catching asynchronous exceptions
 > doFile o =
 >   case o of
 >     Pure a -> pure a         -- no next action
->     (Free (OpRead n)) -> do
+>     Free (OpRead n) -> do
 >       r <- liftIO $ T.readFile "/tmp/data.txt"
 >       doFile $ n r  -- run next
 >      `S.catch`
 >       handler E1_3.ErrRead
->     (Free (OpWrite t n)) -> do
+>     Free (OpWrite t n) -> do
 >       liftIO $ T.writeFile "/tmp/data.txt" t
 >       doFile n
 >      `S.catch`
 >       handler E1_3.ErrWrite
->     (Free (OpRun _name fn t n)) -> do
+>     Free (OpRun _name fn t n) -> do
 >       r <- lift $ fn t
 >       doFile $ n r
 >      `S.catch`
 >       handler E1_3.ErrRunning
->     (Free (OpLog t n)) -> do
+>     Free (OpLog t n) -> do
 >       putStrLn $ "log: " <> t
 >       doFile n
 >  where
@@ -121,16 +121,16 @@ Testing
 >     Pure a -> do
 >       modify (\s -> s { tstValue = a })
 >       tstValue <$> get
->     (Free (OpRead n)) -> do
+>     Free (OpRead n) -> do
 >       st <- ST.get
 >       interpreterState $ n (tstValue st)
->     (Free (OpWrite t n)) -> do
+>     Free (OpWrite t n) -> do
 >       ST.modify (\s -> s { tstValue = t } )
 >       interpreterState n
->     (Free (OpRun _ fn t n)) -> do
+>     Free (OpRun _ fn t n) -> do
 >       r <- fn t
 >       interpreterState $ n r
->     (Free (OpLog t n)) -> do
+>     Free (OpLog t n) -> do
 >       ST.modify (\(TestState s ls) -> TestState s $ ls <> [t])
 >       interpreterState n
 

@@ -2,10 +2,7 @@
 -- experiment trying run applicative args in parallel
 module FA where
 
-import           Control.Applicative.Free (Ap, liftAp, runAp, runAp_)
-import           Control.Concurrent
-import           Control.Concurrent.Chan
-import           Control.Monad.IO.Class
+import           Control.Applicative.Free (Ap, liftAp, runAp_)
 import           Data.List                ((\\))
 
 {-# ANN module "HLint: ignore Eta reduce" #-}

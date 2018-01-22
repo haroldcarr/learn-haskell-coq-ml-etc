@@ -1,10 +1,11 @@
+> {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 > {-# LANGUAGE StandaloneDeriving   #-}
 > {-# LANGUAGE UndecidableInstances #-}
 >
-> module FREE_ONLY where
+> module FAM_FREE_ONLY where
 >
 > import           Test.HUnit      (Counts, Test (TestList), runTestTT)
-> import qualified Test.HUnit.Util as U (t, tt)
+> import qualified Test.HUnit.Util as U (t)
 
 ------------------------------------------------------------------------------
 FREE
@@ -41,16 +42,18 @@ FREE
 
 > unpure          :: Free f a -> a
 > unpure (Pure a)  = a
+> unpure       _   = undefined
 > unfree          :: Free f a -> f (Free f a)
 > unfree (Free fa) = fa
+> unfree       _   = undefined
 
 > upn     = U.t "upn"     (unpure pn)    Nothing
 > upj     = U.t "unj"     (unpure pj)    (Just 3)
 > uffjjjp = U.t "uffjjjp" (unfree fjjjp) jjjp
 
 > mapF :: (a -> b) -> Free f a -> Free f b
-> mapF f (Pure  a) = Pure (f a)
-> mapF f (Free fa) = undefined -- no way to get "inside" `f`
+> mapF  f (Pure   a) = Pure (f a)
+> mapF _f (Free _fa) = undefined -- no way to get "inside" `f`
 
 > -- if specific `f` then can do case analysis
 > mapMB :: (a -> b) -> Free Maybe (Maybe a) -> Free Maybe (Maybe b)

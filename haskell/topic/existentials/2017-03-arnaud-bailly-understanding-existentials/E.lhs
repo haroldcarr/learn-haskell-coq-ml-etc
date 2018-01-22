@@ -3,7 +3,7 @@
 > {-# LANGUAGE OverloadedStrings         #-}
 > {-# LANGUAGE TypeFamilies              #-}
 >
-> module Lib where
+> module E where
 >
 > import Control.Monad.State
 > import Data.Text as T (Text, pack)

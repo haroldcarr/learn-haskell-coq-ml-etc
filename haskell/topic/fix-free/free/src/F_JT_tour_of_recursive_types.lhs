@@ -53,20 +53,20 @@ have similar recursion
 
 > -- FIX : for all `f` can embed into or project out of anything with type ‘Fix f’
 > -- | embeds `f` into recursive structure by adding a layer of recursion
-> fix            :: f (Fix  f)   -> Fix  f
-> fix             = Fix
+> fix             :: f (Fix  f)   -> Fix  f
+> fix              = Fix
 > -- | projects a value of type ‘f’ out of a recursive structure by removing a layer of recursion
-> unfix          :: Fix f -> f (Fix f)
-> unfix (Fix f)   = f
+> unfix           :: Fix f -> f (Fix f)
+> unfix (Fix f)    = f
 
 > -- FREE : for all `f` can embed into anything with type ‘Fix f’
 > -- | embedding
-> free           :: f (Free f a) -> Free f a
-> free            = Free
+> free            :: f (Free f a) -> Free f a
+> free             = Free
 > -- | cannot implement TOTAL unfree
-> unfree         :: Free f a -> f (Free f a)
-> unfree (Free f) = f
-> unfree (Pure a) = error "no `f` to pluck out"
+> unfree          :: Free f a -> f (Free f a)
+> unfree (Free  f) = f
+> unfree (Pure _a) = error "no `f` to pluck out"
 
 > -- COFREE : for all `f` can project out of anything with type ‘Fix f’
 > -- opposite situation to `Free`

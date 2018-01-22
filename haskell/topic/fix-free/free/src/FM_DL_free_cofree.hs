@@ -7,7 +7,7 @@ module FM_DL_free_cofree where
 
 import           Control.Monad.Free       (Free, liftF)
 import           Control.Monad.State
-import qualified Control.Monad.Trans.Free as TF hiding (Free, Pure, iterM)
+import qualified Control.Monad.Trans.Free as TF hiding (Free, Pure)
 
 ------------------------------------------------------------------------------
 -- http://dlaing.org/cofun/posts/free_and_cofree.html

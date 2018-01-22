@@ -1,6 +1,8 @@
+> {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+> {-# LANGUAGE LambdaCase           #-}
+> {-# LANGUAGE RankNTypes           #-}
 > {-# LANGUAGE StandaloneDeriving   #-}
 > {-# LANGUAGE UndecidableInstances #-}
-> {-# LANGUAGE RankNTypes #-}
 >
 > module FAM where
 >
@@ -8,6 +10,8 @@
 > import           Prelude         hiding (pi)
 > import           Test.HUnit      (Counts, Test (TestList), runTestTT)
 > import qualified Test.HUnit.Util as U (t, tt)
+>
+> {-# ANN module ("HLint: ignore Use <$>" :: String) #-}
 
 how Free actually works via type driven development
 https://medium.com/@fintan.halpenny/free-me-exploring-the-free-data-type-c863499a82f8
@@ -54,8 +58,10 @@ What can you do with the above ADT?  Projections:
 
 > unpure          :: Free f a ->           a
 > unpure (Pure  a) =  a
+> unpure        _  = undefined
 > unfree          :: Free f a -> f (Free f a)
 > unfree (Free fa) = fa
+> unfree        _  = undefined
 
 See: FREE_ONLY
 
@@ -89,7 +95,6 @@ FUNCTOR
 >   --                    functor    Free
 >   --                    level      level
 
-
 Why Free : generic recursion.
 
 Without Free, each level of recursion shows up in the type signature
@@ -99,30 +104,63 @@ Without Free, each level of recursion shows up in the type signature
 
 With Free, type signature constant regardless of depth/kind of recursion
 
-> pn,pj,fn,fjn,fjjjp :: Free Maybe (Maybe Int)
+> pn' :: Free Maybe Int
+> pn, pj, fnx, fjn, fjjjp :: Free Maybe (Maybe Int)
 
 > -- fmap gets to the value, no matter how deep
+> fmm :: Show a => Maybe a -> String
+> fmm = \case Nothing -> "N"; Just a -> "J" ++ show a
 > fm :: Free Maybe (Maybe Int) -> Free Maybe String
-> fm = fmap (\x -> case x of; Nothing -> "N"; Just a -> "J" ++ show a)
+> fm = fmap fmm
+> fm' :: Free Maybe Int -> Free Maybe String
+> fm' = fmap show
 
 > pn      =                           Pure  Nothing
 > famPnt  = U.t "famPnt" (unpure pn)        Nothing
 > famPn   = U.t "famPn"  (fm pn)     (Pure "N")
+> pn'     = Pure 3
+> famPn'  = U.t "famPn'" (fm' pn')   (Pure "3")
 
 > pj      =                           Pure (Just 3)
 > famPjt  = U.t "famPjt" (unpure pj)       (Just 3)
 > famPj   = U.t "famPj"  (fm pj)     (Pure "J3")
 
-> fn      =                          Free Nothing
-> famFnt  = U.t "famFnt" (unfree fn)      Nothing
+> fnx     =                           Free  Nothing
+> famFnt  = U.t "famFnt" (unfree fnx)       Nothing
 
-> fjn     =                        Free (Just (Free Nothing))
-> famFjn  = U.t "famFjn" (fm fjn) (Free (Just (Free Nothing))) -- TODO think more
+> fjn     =                   Free (Just (Free Nothing))
+> famFjn  = U.tt "famFjn"
+>   [              fm        fjn
+>   ,              fm        (Free (Just (Free Nothing)))
+>   ,              fmap fmm  (Free (Just (Free Nothing)) ::        Free Maybe (Maybe Int))
+>   , Free $ fmap (fmap fmm)       (Just (Free Nothing)  :: Maybe (Free Maybe (Maybe Int)))
+>   , Free $ Just (fmap fmm              (Free Nothing   ::        Free Maybe (Maybe Int)))
+>   , Free $ Just $ Free $ fmap (fmap fmm)    (Nothing   :: Maybe (Free Maybe (Maybe Int)))
+>   , Free $ Just $ Free                       Nothing
+>   ]
+>   (Free (Just (Free Nothing)))
+
+> fjnx    =                   Free (Just (Pure Nothing))
+> famFjnx = U.tt "famFjnx"
+>   [ fm fjnx
+>   ,              fm        (Free (Just (Pure Nothing)))
+>   ,              fmap fmm  (Free (Just (Pure Nothing)) ::        Free Maybe (Maybe Int))
+>   , Free $ fmap (fmap fmm)       (Just (Pure Nothing)  :: Maybe (Free Maybe (Maybe Int)))
+>   , Free $ Just (fmap fmm              (Pure Nothing   ::        Free Maybe (Maybe Int)))
+>   , Free $ Just $ Pure $ fmm                (Nothing   :: Maybe (Free Maybe (Maybe Int)))
+>   , Free $ Just $ Pure   "N"
+>   ]
+>   (Free (Just (Pure "N")))
+
 
 > fjjjp   = Free (Just (Free (Just (Free (Just (Pure (Just 3)))))))
+> fjjjp'  = Free (Just (Free (Just (Free (Just (Pure       3))))))
 > famFffp = U.t "famFffp"
 >          (fm fjjjp)
 >          (Free (Just (Free (Just (Free (Just (Pure "J3")))))))
+> famFffp'= U.t "famFffp'"
+>          (fm' fjjjp')
+>          (Free (Just (Free (Just (Free (Just (Pure      "3")))))))
 
 > pi,fjjjpi          :: Free Maybe Int
 
@@ -135,8 +173,8 @@ With Free, type signature constant regardless of depth/kind of recursion
 >                (Just (Free (Just (Free (Just (Pure 3))))))
 
 > famPlus1 = U.t "famPlus1"
->     (fmap (+1) (Free (Just (Free (Just (Free (Just (Pure (Sum 3)))))))))
->                (Free (Just (Free (Just (Free (Just (Pure (Sum 4))))))))
+>     (fmap (+1) (Free (Just (Free (Just (Free (Just (Pure (Sum (3::Int))))))))))
+>     (           Free (Just (Free (Just (Free (Just (Pure (Sum 4))))))))
 
 ------------------------------------------------------------------------------
 APPLICATIVE
@@ -200,9 +238,8 @@ APPLICATIVE
 >   -- fmap into the inner part of fn, and use <*> to get at Free a (ie fa)
 
 > famap = U.t "famap"
->   (Pure (*) <*> Free (Just (Free (Just (Pure 3)))) <*> Free (Just (Free (Just (Pure 3)))))
+>   (Pure (*) <*> Free (Just (Free (Just (Pure 3)))) <*> Free (Just (Free (Just (Pure (3::Int))))))
 >                (Free (Just (Free (Just                (Free (Just (Free (Just (Pure 9)))))))))
-
 
 :t (FAM.Pure (*) <*> FAM.Free (Just (FAM.Free (Just (FAM.Pure 3)))))
    :: Num a => FAM.Free Maybe (a -> a)
@@ -252,7 +289,7 @@ foldFree :: Monad m => (forall x. f x -> m x) -> Free f x -> m x
 - use to fold `Free f x` structure to Monad `m`
 
 > -- extract a from Pure and use Monad's pure to place a in that context instead.
-> foldFree :: Monad m => (forall x. f x -> m x) -> Free f x -> m x
+> foldFree :: Monad m =>  (forall x. f x -> m x) -> Free f a -> m a
 > foldFree _ (Pure a) = pure a
 
 > -- k  :: f x -> m x
@@ -287,7 +324,5 @@ https://stackoverflow.com/questions/17307416/difference-between-free-monads-and-
 > test :: IO Counts
 > test =
 >   runTestTT $ TestList $
->     famPnt ++ famPn ++ famPjt ++ famPj ++ famFnt ++ famFjn ++ famFffp ++
->     famPit ++ famFjjjpi ++ famPlus1 ++
->     famap
-> -}
+>     famPnt ++ famPn ++ famPn' ++ famPjt ++ famPj ++ famFnt ++ famFjn ++ famFjnx ++
+>     famFffp ++ famFffp' ++ famPit ++ famFjjjpi ++ famPlus1 ++ famap

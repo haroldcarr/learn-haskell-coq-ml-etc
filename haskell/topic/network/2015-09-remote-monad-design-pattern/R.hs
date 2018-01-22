@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures             #-}
@@ -17,10 +18,10 @@ import           System.Random
 debugOn = True
 
 shew :: Show a => a -> String
-shew a = if debugOn then trace ("shew: " ++ (show a)) (show a) else show a
+shew a = if debugOn then trace ("shew: " ++ show a) (show a) else show a
 
 reed :: Read a => String -> a
-reed a = if debugOn then trace ("reed: " ++       a)  (read a) else read a
+reed a = if debugOn then trace ("reed: " ++      a) (read a) else read a
 
 ------------------------------------------------------------------------------
 {-
@@ -75,7 +76,7 @@ device0 :: Device
 device0  = Device (execRCommand   . read)
                   (execRProcedure . read)
 
-data Command = Say String deriving Read
+newtype Command = Say String deriving Read
 
 instance Show Command where
   show (Say s) = "RSay " ++ show s
@@ -83,7 +84,7 @@ instance Show Command where
 -- | simulation of remote device requires
 -- - representation of commands on remote device
 -- - deserialization function (Read + commandToRCommand) that reads commands
-data RCommand = RSay String deriving (Read, Show)
+newtype RCommand = RSay String deriving (Read, Show)
 
 -- | GADT with phantom type index denoting expected result type
 data Procedure :: * -> * where
@@ -227,7 +228,7 @@ sendSync p = Remote $ do
 send :: Device -> Remote a -> IO a
 send d (Remote m) = do
   (r,cs) <- runStateT (runReaderT m d) []
-  when (not (null cs)) (async d (show cs)) -- this action happens if remote monad does NOT contain a procedure
+  unless (null cs) (async d (show cs)) -- this action happens if remote monad does NOT contain a procedure
   return r
 
 execRPacket :: RPacket -> IO String
@@ -323,15 +324,16 @@ sendSyncA p = RemoteA $ do
 sendA :: Device -> RemoteA a -> IO a
 sendA d (RemoteA m) = do
   rec let ((a,ps),_) = runState (runWriterT m) r -- recursively feed result back into invocation
-      r <- if all isCommand ps
-           then do async       d (shew ps)       -- send all cmds at once
-                   return []
-           else do str <- sync d (shew ps)       -- send all cmds/procs at once : OK : no intermediate results used
-                   return (read str)
+      r <- if all isCommand ps then do
+             async       d (shew ps) -- send all cmds at once
+             return []
+           else do
+             str <- sync d (shew ps) -- send all cmds/procs at once : OK : no intermediate results used
+             return (read str)
   return a
  where
-  isCommand (Command   {}) = True
-  isCommand (Procedure {}) = False
+  isCommand Command   {} = True
+  isCommand Procedure {} = False
 
 execRPrims :: [RPrim] -> IO [String]
 execRPrims [] = return []
@@ -348,8 +350,8 @@ execRPrims (RProcedure p : ps) = do
 -- app-specific
 
 deviceA :: Device
-deviceA = Device (void       . execRPrims . reed)
-                 (liftM show . execRPrims . reed)
+deviceA = Device (void      . execRPrims . reed)
+                 (fmap show . execRPrims . reed)
 
 sayA         = sendAsyncA . Say
 temperatureA = sendSyncA    Temperature
