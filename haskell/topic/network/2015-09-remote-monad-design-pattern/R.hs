@@ -5,7 +5,7 @@
 {-# LANGUAGE RecursiveDo                #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 
-module Lib where
+module R where
 
 import           Control.Applicative
 import           Control.Concurrent
@@ -239,6 +239,8 @@ execRPacket (RPacket cs p) = do
 --------------------------------------------------
 -- app-specific
 
+{-# ANN device ("HLint: ignore Use ." :: String) #-}
+{-# ANN device ("HLint: ignore Redundant map" :: String) #-}
 device :: Device              -- TODO  map id to solve : (Read (t0 RCommand))
 device  = Device (mapM_ execRCommand . map id . read) -- called if monad only contains commands
                  (execRPacket                 . read) -- called if monad contains a procedure
@@ -259,6 +261,7 @@ t0s = send device $ do
   say "Do you want some toast?" -- command
   say "and jamm"                -- command
 
+{-# ANN t1s ("HLint: ignore Redundant return" :: String) #-}
 t1s = send device $ do
   t <- temperature              -- procedure
   return t
