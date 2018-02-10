@@ -1,13 +1,13 @@
 {-
 Created       : 2014 Oct 09 (Thu) 13:17:04 by Harold Carr.
-Last Modified : 2017 Dec 23 (Sat) 11:07:42 by Harold Carr.
+Last Modified : 2018 Feb 09 (Fri) 16:36:23 by Harold Carr.
 -}
 
 -- skills matter
 
-data ListS a b = NilS | ConsS a b deriving Show
-data Fix   s a = In { out :: s a (Fix s a) }
-type List  a   = Fix ListS a
+data    ListS a b = NilS | ConsS a b deriving Show
+newtype Fix   s a = In { out :: s a (Fix s a) }
+type    List  a   = Fix ListS a
 
 x :: List Int
 x = In (ConsS 1 (In (ConsS 2 (In (ConsS 3 (In NilS))))))

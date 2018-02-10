@@ -1,24 +1,31 @@
 https://redis.io/topics/quickstart
 
-build
-
 #+begin_example
-pushd /tmp
+
+# build
+
 wget http://download.redis.io/redis-stable.tar.gz
-tar xvzf redis-stable.tar.gz
+here=`pwd`
+pushd /tmp
+tar xvzf ${here}/redis-stable.tar.gz
 cd redis-stable
 make
 make test
-#+end_example
 
-run
+# run on Port: 6379
 
-Port: 6379
-
-#+begin_example
 src/redis-server &
 src/redis-cli ping
 src/redis-cli
 help
 help get
+
+pushd
+stack repl
+e1 => Right (Just "bar")
+e2 => Right (Just [1,2,3])
+:q
+
+jobs
+kill %1
 #+end_example
