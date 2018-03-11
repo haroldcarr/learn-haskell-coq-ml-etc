@@ -1,0 +1,15 @@
+REPL
+
+#+begin_example
+S_GetUrlsContents.main2 ["S_GetUrlsContents2.txt"]
+#+end_example
+
+CLI
+
+#+begin_example
+./S_GetUrlsContentsServer.hs &
+./S_GetUrlsContents.hs S_GetUrlsContents.txt
+./S_GetUrlsContents.hs S_GetUrlsContents2.txt
+#+end_example
+
+

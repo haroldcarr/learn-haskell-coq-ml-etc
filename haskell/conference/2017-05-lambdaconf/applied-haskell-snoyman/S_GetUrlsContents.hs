@@ -15,66 +15,70 @@
 
 module S_GetUrlsContents where
 
-import           Control.Concurrent.Async
-import           Control.Concurrent.STM
-import           Control.Concurrent.STM.TBMQueue
-import           Control.Exception.Safe
-import qualified Data.ByteString                 as B
-import qualified Data.ByteString.Lazy            as BL
+import qualified Control.Concurrent.Async        as Async
+import qualified Control.Concurrent.STM          as STM
+import qualified Control.Concurrent.STM.TBMQueue as TBMQ
+import qualified Control.Exception.Safe          as CES
+import qualified Data.ByteString                 as BS
+import qualified Data.ByteString.Lazy            as BSL
 import qualified Data.Text                       as T
-import           Data.Text.Encoding              (decodeUtf8With)
-import           Data.Text.Encoding.Error        (lenientDecode)
-import           Network.HTTP.Simple
-import           Say
+import qualified Data.Text.Encoding              as TE
+import qualified Data.Text.Encoding.Error        as TEE
+import qualified Network.HTTP.Simple             as HTTP
+import qualified Say
 import           System.Environment              (getArgs)
-import           System.Process.Typed
+import qualified System.Process.Typed            as P
 
 workerCount :: Int
 workerCount = 8
 
 main :: IO ()
 main = do
-  urlQueue <- newTBMQueueIO $ workerCount * 2
-  fillQueue urlQueue `concurrently_` drainQueue urlQueue
-
-fillQueue :: TBMQueue Request -> IO ()
-fillQueue urlQueue = do
   args <- getArgs
-  forConcurrently_ args $ \filepath -> do
-    bs <- B.readFile filepath
-    let text = decodeUtf8With lenientDecode bs
+  main2 args
+
+main2 :: [String] -> IO ()
+main2 args = do
+  urlQueue <- TBMQ.newTBMQueueIO $ workerCount * 2
+  fillQueue args urlQueue `Async.concurrently_` drainQueue urlQueue
+
+fillQueue :: [String] -> TBMQ.TBMQueue HTTP.Request -> IO ()
+fillQueue args urlQueue = do
+  Async.forConcurrently_ args $ \filepath -> do
+    bs <- BS.readFile filepath
+    let text = TE.decodeUtf8With TEE.lenientDecode bs
         ls = T.lines text
         addLine :: T.Text -> IO ()
         addLine line =
-          case parseRequest $ T.unpack line of
-            Left e -> say $ T.concat
+          case HTTP.parseRequest $ T.unpack line of
+            Left e -> Say.say $ T.concat
               [ "While parsing URL: "
               , T.pack $ show line
               , ", encountered error message: "
               , T.pack $ show e
               ]
-            Right req -> atomically $ writeTBMQueue urlQueue req
+            Right req -> STM.atomically $ TBMQ.writeTBMQueue urlQueue req
     mapM_ addLine ls
-  atomically $ closeTBMQueue urlQueue
+  STM.atomically $ TBMQ.closeTBMQueue urlQueue
 
-drainQueue :: TBMQueue Request -> IO ()
-drainQueue = replicateConcurrently_ workerCount . drainQueueWorker
+drainQueue :: TBMQ.TBMQueue HTTP.Request -> IO ()
+drainQueue = Async.replicateConcurrently_ workerCount . drainQueueWorker
 
-drainQueueWorker :: TBMQueue Request -> IO ()
+drainQueueWorker :: TBMQ.TBMQueue HTTP.Request -> IO ()
 drainQueueWorker urlQueue = do
-  mreq <- atomically $ readTBMQueue urlQueue
+  mreq <- STM.atomically $ TBMQ.readTBMQueue urlQueue
   case mreq of
     Nothing -> return ()
     Just req -> do
-      eres <- tryAny $ httpLBS req
+      eres <- CES.tryAny $ HTTP.httpLBS req
       case eres of
-        Left e -> sayShow e
+        Left e -> Say.sayShow e
         Right res -> do
           handleResponse res
           drainQueueWorker urlQueue
 
-handleResponse :: Response BL.ByteString -> IO ()
+handleResponse :: HTTP.Response BSL.ByteString -> IO ()
 handleResponse res = do
-  let pc = setStdin (byteStringInput (getResponseBody res))
-         $ proc "shasum" ["-a", "256"]
-  runProcess_ pc
+  let pc = P.setStdin (P.byteStringInput (HTTP.getResponseBody res))
+         $ P.proc "shasum" ["-a", "256"]
+  P.runProcess_ pc
