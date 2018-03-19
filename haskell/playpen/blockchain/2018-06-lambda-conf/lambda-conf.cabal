@@ -11,6 +11,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Config
                      , LedgerLockedImpl
+                     , X00_Base
                      , X01_LockedLedger
   build-depends:       async
                      , base >=4.7 && <5

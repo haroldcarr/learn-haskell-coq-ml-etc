@@ -2,17 +2,15 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module X01_LockedLedger where
+module X00_Base where
 
 import qualified Control.Concurrent                   as CC
 import qualified Control.Concurrent.Async             as Async
-import qualified Control.Exception.Safe               as S
 import           Control.Monad.IO.Class               (liftIO)
 import qualified Data.ByteString.Builder              as BSB
 import qualified Data.ByteString.Char8                as BSC
 import           Data.Monoid                          ((<>))
 import qualified Data.Text                            as T
-import qualified Data.Text.IO                         as T
 import qualified Data.Thyme                           as Time
 import qualified Network                              as N
 import qualified Network.HTTP.Types                   as HTTP
@@ -29,18 +27,20 @@ import           Config
 import           LedgerLockedImpl
 
 runServerAndClients
-  :: IO ()
-runServerAndClients = do
+  :: (Ledger T.Text -> RIO Config CC.ThreadId)
+  -> IO ()
+runServerAndClients txServer = do
   lo <- logOptionsHandle stderr False
   let logOptions = setLogUseColor False (setLogUseTime False lo)
   withLogFunc logOptions $ \lf -> do
     let c = defaultConfig lf
-    runRIO c server `Async.concurrently_` runRIO c clients
+    runRIO c (server txServer) `Async.concurrently_` runRIO c clients
 
 server
   :: (HasLogFunc env, HasConfig env)
-  => RIO env ()
-server = do
+  => (Ledger T.Text -> RIO env CC.ThreadId)
+  -> RIO env ()
+server txServer = do
   env <- ask
   ledger <- liftIO initLedger
   liftIO (runRIO env (httpServer ledger)
@@ -72,45 +72,6 @@ httpServer ledger = do
         x -> do
           runRIO env $ logInfo (displayShow ("httpServer received unknown " <> x))
           send $ Wai.responseBuilder HTTP.status400 [] ""
-
-txServer
-  :: (HasLogFunc env, HasConfig env)
-  => Ledger T.Text
-  -> RIO env CC.ThreadId
-txServer ledger = do
-  env <- ask
-  liftIO $ N.withSocketsDo $ do
-    let txp = cTxPort (getConfig env)
-    runRIO env $ logInfo (displayShow ("Listening for TXs on port " <> show txp))
-    sock <- N.listenOn txp
-    loop env sock
- where
-   loop e s = liftIO $ do
-     (h, hst, prt) <- N.accept s
-     runRIO e $ logInfo (displayShow ("Accepted TX connection from " <> hst <> " " <> show prt))
-     CC.forkFinally (liftIO (runRIO e (txConnectionHandler ledger h))) (const (SIO.hClose h))
-     loop e s
-     `S.onException` do
-       runRIO e $ logInfo "Closing listen port"
-       N.sClose s
-
-txConnectionHandler
-  :: (HasLogFunc env, HasConfig env)
-  => Ledger T.Text
-  -> SIO.Handle
-  -> RIO env ()
-txConnectionHandler ledger h = do
-  env <- ask
-  liftIO $ do
-    SIO.hSetBuffering h SIO.LineBuffering
-    loop env
- where
-  loop e = do
-    line <- T.hGetLine h
-    commitToLedger e ledger line
-    runRIO e $ logInfo (displayShow ("txConnectionHandler got TX: " <> line))
-    SIO.hPrint h line
-    loop e
 
 clients
   :: (HasLogFunc env, HasConfig env)
