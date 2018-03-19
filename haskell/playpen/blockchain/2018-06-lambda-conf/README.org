@@ -1,0 +1,17 @@
+https://www2.deloitte.com/ch/en/pages/strategy-operations/articles/blockchain-explained.html
+
+Richard Bradley, Director Deloitte
+
+You (a "node") have a file of transactions on your computer (a
+"ledger"). Two government accountants (let's call them "miners") have
+the same file on theirs (so it’s "distributed"). As you make a
+transaction, your computer sends an e-mail to each accountant to
+inform them.
+
+Each accountant rushes to be the first to check whether you can afford
+it (and be paid their salary "Bitcoins"). The first to check and
+validate hits "REPLY ALL", attaching their logic for verifying the
+transaction ("Proof of Work"). If the other accountant agrees,
+everyone updates their file…
+
+

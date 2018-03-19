@@ -6,13 +6,10 @@ module X01_LockedLedger where
 
 import qualified Control.Concurrent                   as CC
 import qualified Control.Concurrent.Async             as Async
-import qualified Control.Monad                        as CM
 import           Control.Monad.IO.Class               (liftIO)
 import qualified Data.ByteString.Builder              as BSB
 import qualified Data.ByteString.Char8                as BSC
-import qualified Data.IORef                           as IOR
 import           Data.Monoid                          ((<>))
-import qualified Data.Sequence                        as Seq
 import qualified Data.Text                            as T
 import qualified Data.Text.IO                         as T
 import qualified Data.Thyme                           as Time
@@ -24,59 +21,11 @@ import qualified Network.Wai.Middleware.RequestLogger as Wai
 import           RIO
 import qualified System.Exit                          as SE
 import qualified System.IO                            as SIO
-import qualified System.IO.Unsafe                     as SIOU
 import qualified System.Posix.Process                 as SPP
 import qualified System.Random                        as Random
-
-data Config = Config
-  { cHost       :: N.HostName
-  , cTxPort     :: N.PortID
-  , cHttpPort   :: Wai.Port
-  , cNumClients :: Int
-  , cDOSEnabled :: Bool
-  , cLogFuncL   :: RIO.LogFunc
-  }
-
-class HasConfig env where
-  getConfig :: env -> Config
-instance HasConfig Config where
-  getConfig = id
-instance HasLogFunc Config where
-  logFuncL = RIO.lens cLogFuncL (\c l -> c { cLogFuncL = l })
-
-defaultConfig :: LogFunc -> Config
-defaultConfig lf = Config
-  { cHost       = "localhost"
-  , cTxPort     = N.PortNumber 44444
-  , cHttpPort   = 3000
-  , cNumClients = 8
-  , cDOSEnabled = False
-  , cLogFuncL   = lf
-  }
-
-type Ledger    a = Seq.Seq a
-type LedgerRef a = IOR.IORef (Ledger a)
-
-initLedger :: IO (LedgerRef a)
-initLedger = IOR.newIORef Seq.empty
-
-ledgerContents :: LedgerRef a -> IO (Ledger a)
-ledgerContents = IOR.readIORef
-
-commitToLedger
-  :: (HasLogFunc env, HasConfig env)
-  => env
-  -> Int
-  -> LedgerRef a
-  -> a
-  -> IO (LedgerRef a)
-commitToLedger e d l a = IOR.atomicModifyIORef' l $ \existing ->
-  SIOU.unsafePerformIO $ do
-    CM.when (cDOSEnabled (getConfig e) && d == 10) $ do
-      runRIO e $ logInfo "BEGIN commitToLedger DOS"
-      CC.threadDelay (1000000 * 60)
-      runRIO e $ logInfo "END commitToLedger DOS"
-    return (existing Seq.|> a, l)
+------------------------------------------------------------------------------
+import           Config
+import           LedgerLockedImpl
 
 runServerAndClients
   :: IO ()
@@ -103,7 +52,7 @@ server = do
 
 httpServer
   :: (HasLogFunc env, HasConfig env, Show a)
-  => LedgerRef a
+  => Ledger a env
   -> RIO env ()
 httpServer ledger = do
   env <- ask
@@ -127,7 +76,7 @@ httpServer ledger = do
 
 txServer
   :: (HasLogFunc env, HasConfig env)
-  => LedgerRef T.Text
+  => Ledger T.Text env
   -> N.Socket
   -> RIO env CC.ThreadId
 txServer ledger sock = do
@@ -140,7 +89,7 @@ txServer ledger sock = do
 
 serve
   :: (HasLogFunc env, HasConfig env)
-  => LedgerRef T.Text
+  => Ledger T.Text env
   -> SIO.Handle
   -> RIO env ()
 serve ledger h = do
