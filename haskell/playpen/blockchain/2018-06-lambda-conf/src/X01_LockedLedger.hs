@@ -106,8 +106,7 @@ serve ledger h = do
  where
   loop e = do
     line <- T.hGetLine h
-    d <- Random.randomRIO (1,10)
-    commitToLedger e d ledger line
+    commitToLedger e ledger line
     runRIO e $ logInfo (displayShow ("serve got TX: " <> line))
     SIO.hPrint h line
     loop e

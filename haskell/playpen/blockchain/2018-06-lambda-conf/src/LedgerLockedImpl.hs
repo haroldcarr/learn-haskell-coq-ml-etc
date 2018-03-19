@@ -17,6 +17,7 @@ import qualified Data.IORef                           as IOR
 import qualified Data.Sequence                        as Seq
 import           RIO
 import qualified System.IO.Unsafe                     as SIOU
+import qualified System.Random                        as Random
 ------------------------------------------------------------------------------
 import           Config
 
@@ -36,14 +37,15 @@ ledgerContents = IOR.readIORef . _ledgerRef
 commitToLedger
   :: (HasConfig env, HasLogFunc env)
   => env
-  -> Int
   -> Ledger a env
   -> a
   -> IO (Ledger a env)
-commitToLedger e d l@(Ledger i) a = IOR.atomicModifyIORef' i $ \existing ->
+commitToLedger e l@(Ledger i) a = IOR.atomicModifyIORef' i $ \existing ->
   SIOU.unsafePerformIO $ do
-    CM.when (cDOSEnabled (getConfig e) && d == 10) $ do
-      runRIO e $ logInfo "BEGIN commitToLedger DOS"
-      CC.threadDelay (1000000 * 60)
-      runRIO e $ logInfo "END commitToLedger DOS"
+    CM.when (cDOSEnabled (getConfig e)) $ do
+      d <- Random.randomRIO (1,10::Int)
+      CM.when (d == 10) $ do
+        runRIO e $ logInfo "BEGIN commitToLedger DOS"
+        CC.threadDelay (1000000 * cDOSDelay (getConfig e))
+        runRIO e $ logInfo "END commitToLedger DOS"
     return (existing Seq.|> a, l)

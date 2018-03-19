@@ -14,6 +14,7 @@ data Config = Config
   , cHttpPort   :: Wai.Port
   , cNumClients :: Int
   , cDOSEnabled :: Bool
+  , cDOSDelay   :: Int --  seconds
   , cLogFuncL   :: RIO.LogFunc
   }
 
@@ -30,6 +31,7 @@ defaultConfig lf = Config
   , cTxPort     = N.PortNumber 44444
   , cHttpPort   = 3000
   , cNumClients = 8
-  , cDOSEnabled = False -- True -- False
+  , cDOSEnabled = True -- False
+  , cDOSDelay   = 30
   , cLogFuncL   = lf
   }
