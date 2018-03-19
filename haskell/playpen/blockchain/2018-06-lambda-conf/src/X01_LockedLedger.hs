@@ -6,6 +6,7 @@ module X01_LockedLedger where
 
 import qualified Control.Concurrent                   as CC
 import qualified Control.Concurrent.Async             as Async
+import qualified Control.Exception.Safe               as S
 import           Control.Monad.IO.Class               (liftIO)
 import qualified Data.ByteString.Builder              as BSB
 import qualified Data.ByteString.Char8                as BSC
@@ -49,6 +50,9 @@ server = do
     liftIO (runRIO env (httpServer ledger)
             `Async.concurrently_`
             runRIO env (txServer ledger sock))
+      `S.onException` do
+          runRIO env $ logInfo (displayShow ("Closing listen port " <> show txp))
+          N.sClose sock
 
 httpServer
   :: (HasLogFunc env, HasConfig env, Show a)
@@ -57,7 +61,7 @@ httpServer
 httpServer ledger = do
   env <- ask
   let httpPort = cHttpPort (getConfig env)
-  logInfo (displayShow ("running httpServer on port " <> show httpPort))
+  logInfo (displayShow ("starting httpServer on port " <> show httpPort))
   liftIO $ Wai.run httpPort $ Wai.logStdoutDev $
     \req send -> do
       runRIO env $ logInfo (displayShow ("httpServer received request " <> show req))
@@ -68,8 +72,10 @@ httpServer ledger = do
           -- runRIO env $ logInfo (displayShow (show contents))
           send $ Wai.responseBuilder HTTP.status200 [] r
         "/quit" -> do
+          runRIO env $ logInfo "httpServer received QUIT"
           SPP.exitImmediately (SE.ExitFailure 1)
-          send $ Wai.responseBuilder HTTP.status200 [] "" -- never happens
+          -- never happens -- just for type checking
+          send $ Wai.responseBuilder HTTP.status500 [] ""
         x -> do
           runRIO env $ logInfo (displayShow ("httpServer received unknown " <> x))
           send $ Wai.responseBuilder HTTP.status400 [] ""
@@ -110,11 +116,11 @@ clients
   :: (HasLogFunc env, HasConfig env)
   => RIO env ()
 clients = do
-  env <- ask
-  liftIO $ Async.replicateConcurrently_  (cNumClients (getConfig env)) (client env)
+  cfg <- asks getConfig
+  liftIO $ Async.replicateConcurrently_ (cNumClients cfg) (client cfg)
  where
-  client e = do
-    h <- N.connectTo (cHost (getConfig e)) (cTxPort (getConfig e))
+  client c = do
+    h <- N.connectTo (cHost c) (cTxPort c)
     SIO.hSetBuffering h SIO.LineBuffering
     loop h
    where
@@ -122,8 +128,8 @@ clients = do
       d <- Random.randomRIO (1,10)
       CC.threadDelay (d * 1000000)
       t <- Time.getCurrentTime
-      runRIO e $ logInfo (displayShow ("client sending TX: " <> show t))
+      runRIO c $ logInfo (displayShow ("client sending TX: " <> show t))
       SIO.hPrint h t
       r <- SIO.hGetLine h
-      runRIO e $ logInfo (displayShow ("client received TX: " <> r))
+      runRIO c $ logInfo (displayShow ("client received TX: " <> r))
       loop h
