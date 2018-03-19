@@ -10,11 +10,13 @@ source-repository head
 library
   hs-source-dirs:      src
   exposed-modules:     Config
+                     , LedgerCASImpl
                      , LedgerLockedImpl
                      , X00_Base
                      , X01_LockedLedger
                      , X02_CASLedger
   build-depends:       async
+                     , atomic-primops
                      , base >=4.7 && <5
                      , bytestring
                      , containers
