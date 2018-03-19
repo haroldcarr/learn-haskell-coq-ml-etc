@@ -20,38 +20,18 @@ import qualified System.IO.Unsafe                     as SIOU
 ------------------------------------------------------------------------------
 import           Config
 
-data Ledger a env = Ledger
-  { _ledgerRef      :: IOR.IORef (Seq.Seq a)
-  , _ledgerContents :: IOR.IORef (Seq.Seq a) -> IO (Seq.Seq a)
-  , _commitToLedger :: (HasLogFunc env, HasConfig env)
-                    => env
-                    -> Int
-                    -> Ledger a env
-                    -> a
-                    -> IO (Ledger a env)
-  }
+newtype Ledger a env = Ledger { _ledgerRef :: IOR.IORef (Seq.Seq a) }
 
 initLedger
   :: IO (Ledger a env)
 initLedger = do
   r <- IOR.newIORef Seq.empty
-  return Ledger
-    { _ledgerRef      = r
-    , _ledgerContents = IOR.readIORef
-    , _commitToLedger = \e d l@(Ledger i _ _) a -> IOR.atomicModifyIORef' i $ \existing
-       ->
-         SIOU.unsafePerformIO $ do
-           CM.when (cDOSEnabled (getConfig e) && d == 10) $ do
-             runRIO e $ logInfo "BEGIN commitToLedger DOS"
-             CC.threadDelay (1000000 * 60)
-             runRIO e $ logInfo "END commitToLedger DOS"
-           return (existing Seq.|> a, l)
-    }
+  return $ Ledger r
 
 ledgerContents
   :: Ledger a env
   -> IO (Seq.Seq a)
-ledgerContents (Ledger i lc _) = lc i
+ledgerContents = IOR.readIORef . _ledgerRef
 
 commitToLedger
   :: (HasConfig env, HasLogFunc env)
@@ -60,4 +40,10 @@ commitToLedger
   -> Ledger a env
   -> a
   -> IO (Ledger a env)
-commitToLedger e d l@(Ledger _ _ cl) = cl e d l
+commitToLedger e d l@(Ledger i) a = IOR.atomicModifyIORef' i $ \existing ->
+  SIOU.unsafePerformIO $ do
+    CM.when (cDOSEnabled (getConfig e) && d == 10) $ do
+      runRIO e $ logInfo "BEGIN commitToLedger DOS"
+      CC.threadDelay (1000000 * 60)
+      runRIO e $ logInfo "END commitToLedger DOS"
+    return (existing Seq.|> a, l)
