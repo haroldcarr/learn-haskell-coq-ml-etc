@@ -27,7 +27,7 @@ import           Config
 import           LedgerLockedImpl
 
 runServerAndClients
-  :: (Ledger T.Text -> RIO Config CC.ThreadId)
+  :: (Ledger T.Text -> RIO Config ())
   -> IO ()
 runServerAndClients txServer = do
   lo <- logOptionsHandle stderr False
@@ -38,7 +38,7 @@ runServerAndClients txServer = do
 
 server
   :: (HasLogFunc env, HasConfig env)
-  => (Ledger T.Text -> RIO env CC.ThreadId)
+  => (Ledger T.Text -> RIO env ())
   -> RIO env ()
 server txServer = do
   env <- ask
@@ -81,7 +81,11 @@ clients = do
   liftIO $ Async.replicateConcurrently_ (cNumClients cfg) (client cfg)
  where
   client c = do
-    h <- N.connectTo (cHost c) (cTxPort c)
+    let host = cHost c
+        port = cTxPort c
+    runRIO c $ logInfo (displayShow ("client connecting to : " <> host <> " " <> show port))
+    h <- N.connectTo host port
+    runRIO c $ logInfo (displayShow ("client connected to : " <> host <> " " <> show port))
     SIO.hSetBuffering h SIO.LineBuffering
     loop h
    where

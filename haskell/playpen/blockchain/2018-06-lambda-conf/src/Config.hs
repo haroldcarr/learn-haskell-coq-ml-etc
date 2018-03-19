@@ -12,6 +12,7 @@ data Config = Config
   { cHost       :: N.HostName
   , cTxPort     :: N.PortID
   , cHttpPort   :: Wai.Port
+  , cNumMiners  :: Int
   , cNumClients :: Int
   , cDOSEnabled :: Bool
   , cDOSDelay   :: Int --  seconds
@@ -30,6 +31,7 @@ defaultConfig lf = Config
   { cHost       = "localhost"
   , cTxPort     = N.PortNumber 44444
   , cHttpPort   = 3000
+  , cNumMiners  = 8
   , cNumClients = 8
   , cDOSEnabled = True -- False
   , cDOSDelay   = 30
