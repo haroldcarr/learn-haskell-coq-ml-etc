@@ -21,25 +21,25 @@ import qualified System.Random                        as Random
 ------------------------------------------------------------------------------
 import           Config
 
-newtype Ledger a env = Ledger { _ledgerRef :: IOR.IORef (Seq.Seq a) }
+newtype Ledger a = Ledger { _ledgerRef :: IOR.IORef (Seq.Seq a) }
 
 initLedger
-  :: IO (Ledger a env)
+  :: IO (Ledger a)
 initLedger = do
   r <- IOR.newIORef Seq.empty
   return $ Ledger r
 
 ledgerContents
-  :: Ledger a env
+  :: Ledger a
   -> IO (Seq.Seq a)
 ledgerContents = IOR.readIORef . _ledgerRef
 
 commitToLedger
   :: (HasConfig env, HasLogFunc env)
   => env
-  -> Ledger a env
+  -> Ledger a
   -> a
-  -> IO (Ledger a env)
+  -> IO (Ledger a)
 commitToLedger e l@(Ledger i) a = IOR.atomicModifyIORef' i $ \existing ->
   SIOU.unsafePerformIO $ do
     CM.when (cDOSEnabled (getConfig e)) $ do

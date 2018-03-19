@@ -56,7 +56,7 @@ server = do
 
 httpServer
   :: (HasLogFunc env, HasConfig env, Show a)
-  => Ledger a env
+  => Ledger a
   -> RIO env ()
 httpServer ledger = do
   env <- ask
@@ -82,7 +82,7 @@ httpServer ledger = do
 
 txServer
   :: (HasLogFunc env, HasConfig env)
-  => Ledger T.Text env
+  => Ledger T.Text
   -> N.Socket
   -> RIO env CC.ThreadId
 txServer ledger sock = do
@@ -95,7 +95,7 @@ txServer ledger sock = do
 
 serve
   :: (HasLogFunc env, HasConfig env)
-  => Ledger T.Text env
+  => Ledger T.Text
   -> SIO.Handle
   -> RIO env ()
 serve ledger h = do
