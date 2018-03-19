@@ -42,17 +42,10 @@ server
   => RIO env ()
 server = do
   env <- ask
-  liftIO $ N.withSocketsDo $ do
-    let txp = cTxPort (getConfig env)
-    sock <- N.listenOn txp
-    runRIO env $ logInfo (displayShow ("Listening for TXs on port " <> show txp))
-    ledger <- initLedger
-    liftIO (runRIO env (httpServer ledger)
-            `Async.concurrently_`
-            runRIO env (txServer ledger sock))
-      `S.onException` do
-          runRIO env $ logInfo (displayShow ("Closing listen port " <> show txp))
-          N.sClose sock
+  ledger <- liftIO initLedger
+  liftIO (runRIO env (httpServer ledger)
+          `Async.concurrently_`
+          runRIO env (txServer ledger))
 
 httpServer
   :: (HasLogFunc env, HasConfig env, Show a)
@@ -83,22 +76,30 @@ httpServer ledger = do
 txServer
   :: (HasLogFunc env, HasConfig env)
   => Ledger T.Text
-  -> N.Socket
   -> RIO env CC.ThreadId
-txServer ledger sock = do
+txServer ledger = do
   env <- ask
-  liftIO $ do
-    (h, hst, prt) <- N.accept sock
-    runRIO env $ logInfo (displayShow ("Accepted TX connection from " <> hst <> " " <> show prt))
-    CC.forkFinally (liftIO (runRIO env (serve ledger h))) (const (SIO.hClose h))
-  txServer ledger sock
+  liftIO $ N.withSocketsDo $ do
+    let txp = cTxPort (getConfig env)
+    runRIO env $ logInfo (displayShow ("Listening for TXs on port " <> show txp))
+    sock <- N.listenOn txp
+    loop env sock
+ where
+   loop e s = liftIO $ do
+     (h, hst, prt) <- N.accept s
+     runRIO e $ logInfo (displayShow ("Accepted TX connection from " <> hst <> " " <> show prt))
+     CC.forkFinally (liftIO (runRIO e (txConnectionHandler ledger h))) (const (SIO.hClose h))
+     loop e s
+     `S.onException` do
+       runRIO e $ logInfo "Closing listen port"
+       N.sClose s
 
-serve
+txConnectionHandler
   :: (HasLogFunc env, HasConfig env)
   => Ledger T.Text
   -> SIO.Handle
   -> RIO env ()
-serve ledger h = do
+txConnectionHandler ledger h = do
   env <- ask
   liftIO $ do
     SIO.hSetBuffering h SIO.LineBuffering
@@ -107,7 +108,7 @@ serve ledger h = do
   loop e = do
     line <- T.hGetLine h
     commitToLedger e ledger line
-    runRIO e $ logInfo (displayShow ("serve got TX: " <> line))
+    runRIO e $ logInfo (displayShow ("txConnectionHandler got TX: " <> line))
     SIO.hPrint h line
     loop e
 
