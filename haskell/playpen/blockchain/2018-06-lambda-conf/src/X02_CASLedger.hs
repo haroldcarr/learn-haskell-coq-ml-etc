@@ -17,11 +17,11 @@ import           RIO
 import qualified System.IO                            as SIO
 ------------------------------------------------------------------------------
 import           Config
-import           LedgerLockedImpl
+import           Ledger
 import           X00_Base
 
-runCASLedger :: IO ()
-runCASLedger = do
+runPoolLedger :: IO ()
+runPoolLedger = do
   q <- Q.newQ
   runServerAndClients (poolAndMinerServer q)
 
@@ -49,7 +49,7 @@ minerServer q l = do
       Nothing -> miner e
       Just a  -> do
         commitToLedger e l a
-        runRIO e $ logInfo (displayShow ("miner committed TX: " <> a))
+        runRIO e $ logInfo (displayShow ("miner COMMITTED TX: " <> a))
         miner e
 
 poolServer

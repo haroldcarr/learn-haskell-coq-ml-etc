@@ -15,11 +15,11 @@ import           RIO
 import qualified System.IO                            as SIO
 ------------------------------------------------------------------------------
 import           Config
-import           LedgerLockedImpl
+import           Ledger
 import           X00_Base
 
-runLockedLedger :: IO ()
-runLockedLedger = runServerAndClients txServer
+runDirectLedger :: IO ()
+runDirectLedger = runServerAndClients txServer
 
 txServer
   :: (HasLogFunc env, HasConfig env)
@@ -56,6 +56,6 @@ txConnectionHandler ledger h = do
   loop e = do
     line <- T.hGetLine h
     commitToLedger e ledger line
-    runRIO e $ logInfo (displayShow ("txConnectionHandler got TX: " <> line))
+    runRIO e $ logInfo (displayShow ("txConnectionHandler COMMITED TX: " <> line))
     SIO.hPrint h line
     loop e

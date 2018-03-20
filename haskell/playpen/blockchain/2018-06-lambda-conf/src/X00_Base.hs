@@ -24,7 +24,7 @@ import qualified System.Posix.Process                 as SPP
 import qualified System.Random                        as Random
 ------------------------------------------------------------------------------
 import           Config
-import           LedgerLockedImpl
+import           Ledger
 
 runServerAndClients
   :: (Ledger T.Text -> RIO Config ())

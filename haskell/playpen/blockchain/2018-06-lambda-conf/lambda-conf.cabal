@@ -10,6 +10,7 @@ source-repository head
 library
   hs-source-dirs:      src
   exposed-modules:     Config
+                     , Ledger
                      , LedgerCASImpl
                      , LedgerLockedImpl
                      , X00_Base

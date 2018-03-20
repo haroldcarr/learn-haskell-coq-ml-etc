@@ -12,40 +12,39 @@ module LedgerLockedImpl
   where
 
 import qualified Control.Concurrent                   as CC
+import qualified Control.Concurrent.MVar              as MV
 import qualified Control.Monad                        as CM
-import qualified Data.IORef                           as IOR
 import qualified Data.Sequence                        as Seq
 import           RIO
-import qualified System.IO.Unsafe                     as SIOU
 import qualified System.Random                        as Random
 ------------------------------------------------------------------------------
 import           Config
 
-newtype Ledger a = Ledger { _ledgerRef :: IOR.IORef (Seq.Seq a) }
+newtype Ledger a = Ledger { _ledgerRef :: MV.MVar (Seq.Seq a) }
 
 initLedger
   :: IO (Ledger a)
 initLedger = do
-  r <- IOR.newIORef Seq.empty
+  r <- MV.newMVar Seq.empty
   return $ Ledger r
 
 ledgerContents
   :: Ledger a
   -> IO (Seq.Seq a)
-ledgerContents = IOR.readIORef . _ledgerRef
+ledgerContents = MV.readMVar . _ledgerRef
 
 commitToLedger
   :: (HasConfig env, HasLogFunc env)
   => env
   -> Ledger a
   -> a
-  -> IO (Ledger a)
-commitToLedger e l@(Ledger i) a = IOR.atomicModifyIORef' i $ \existing ->
-  SIOU.unsafePerformIO $ do
-    CM.when (cDOSEnabled (getConfig e)) $ do
-      d <- Random.randomRIO (1,10::Int)
-      CM.when (d == 10) $ do
-        runRIO e $ logInfo "BEGIN commitToLedger DOS"
-        CC.threadDelay (1000000 * cDOSDelay (getConfig e))
-        runRIO e $ logInfo "END commitToLedger DOS"
-    return (existing Seq.|> a, l)
+  -> IO ()
+commitToLedger e (Ledger m) a = do
+  s <- MV.takeMVar m
+  CM.when (cDOSEnabled (getConfig e)) $ do
+    d <- Random.randomRIO (1,10::Int)
+    CM.when (d == 10) $ do
+      runRIO e $ logInfo "BEGIN commitToLedger DOS"
+      CC.threadDelay (1000000 * cDOSDelay (getConfig e))
+      runRIO e $ logInfo "END commitToLedger DOS"
+  MV.putMVar m (s Seq.|> a)
