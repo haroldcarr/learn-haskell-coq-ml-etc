@@ -12,8 +12,8 @@ library
   exposed-modules:     Config
                      , Ledger
                      , X00_Base
-                     , X01_LockedLedger
-                     , X02_CASLedger
+                     , X01_LedgerDirect
+                     , X02_LedgerWithPool
   build-depends:       async
                      , atomic-primops
                      , base >=4.7 && <5

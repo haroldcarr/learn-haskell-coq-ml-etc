@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module X02_CASLedger where
+module X02_LedgerWithPool where
 
 import qualified Control.Concurrent                 as CC
 import qualified Control.Concurrent.Async           as Async
@@ -19,8 +19,8 @@ import           Config
 import           Ledger
 import           X00_Base
 
-runPoolLedger :: IO ()
-runPoolLedger = do
+runLedgerWithPool :: IO ()
+runLedgerWithPool = do
   l <- createLedgerCAS id
   q <- Q.newQ
   runServerAndClients l (poolAndMinerServer q)

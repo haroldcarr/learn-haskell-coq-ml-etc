@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module X01_LockedLedger where
+module X01_LedgerDirect where
 
 import qualified Control.Concurrent     as CC
 import qualified Control.Exception.Safe as S
@@ -17,8 +17,8 @@ import           Config
 import           Ledger
 import           X00_Base
 
-runDirectLedger :: IO ()
-runDirectLedger = do
+runLedgerDirect :: IO ()
+runLedgerDirect = do
   l <- createLedgerLocked id
   runServerAndClients l txServer
 
