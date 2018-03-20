@@ -15,12 +15,11 @@ import qualified System.IO              as SIO
 ------------------------------------------------------------------------------
 import           Config
 import           Ledger
-import           LedgerLockedImpl
 import           X00_Base
 
 runDirectLedger :: IO ()
 runDirectLedger = do
-  l <- createLedger id
+  l <- createLedgerLocked id
   runServerAndClients l txServer
 
 txServer

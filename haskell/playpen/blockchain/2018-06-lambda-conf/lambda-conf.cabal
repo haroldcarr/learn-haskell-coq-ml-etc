@@ -11,8 +11,6 @@ library
   hs-source-dirs:      src
   exposed-modules:     Config
                      , Ledger
-                     , LedgerCASImpl
-                     , LedgerLockedImpl
                      , X00_Base
                      , X01_LockedLedger
                      , X02_CASLedger

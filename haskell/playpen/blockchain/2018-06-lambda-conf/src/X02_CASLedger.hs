@@ -17,12 +17,11 @@ import qualified System.IO                          as SIO
 ------------------------------------------------------------------------------
 import           Config
 import           Ledger
-import           LedgerCASImpl
 import           X00_Base
 
 runPoolLedger :: IO ()
 runPoolLedger = do
-  l <- createLedger id
+  l <- createLedgerCAS id
   q <- Q.newQ
   runServerAndClients l (poolAndMinerServer q)
 
