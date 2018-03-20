@@ -25,25 +25,25 @@ import qualified System.Random                        as Random
 ------------------------------------------------------------------------------
 import           Config
 import           Ledger
-import           LedgerLockedImpl
 
 runServerAndClients
-  :: (Ledger T.Text Config -> RIO Config ())
+  :: Ledger T.Text Config
+  -> (Ledger T.Text Config -> RIO Config ())
   -> IO ()
-runServerAndClients txServer = do
+runServerAndClients ledger txServer = do
   lo <- logOptionsHandle stderr False
   let logOptions = setLogUseColor False (setLogUseTime False lo)
   withLogFunc logOptions $ \lf -> do
     let c = defaultConfig lf
-    runRIO c (server txServer) `Async.concurrently_` runRIO c clients
+    runRIO c (server ledger txServer) `Async.concurrently_` runRIO c clients
 
 server
   :: (HasLogFunc env, HasConfig env)
-  => (Ledger T.Text env -> RIO env ())
+  => Ledger T.Text env
+  -> (Ledger T.Text env -> RIO env ())
   -> RIO env ()
-server txServer = do
+server ledger txServer = do
   env <- ask
-  ledger <- liftIO createLedger
   liftIO (runRIO env (httpServer ledger)
           `Async.concurrently_`
           runRIO env (txServer ledger))

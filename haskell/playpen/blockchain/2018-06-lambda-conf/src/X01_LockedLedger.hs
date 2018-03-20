@@ -16,10 +16,13 @@ import qualified System.IO                            as SIO
 ------------------------------------------------------------------------------
 import           Config
 import           Ledger
+import           LedgerLockedImpl
 import           X00_Base
 
 runDirectLedger :: IO ()
-runDirectLedger = runServerAndClients txServer
+runDirectLedger = do
+  ledger <- createLedger
+  runServerAndClients ledger txServer
 
 txServer
   :: (HasLogFunc env, HasConfig env)
