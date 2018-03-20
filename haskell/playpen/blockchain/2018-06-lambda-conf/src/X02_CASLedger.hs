@@ -28,7 +28,7 @@ runPoolLedger = do
 poolAndMinerServer
   :: (HasLogFunc env, HasConfig env)
   => Q.LinkedQueue T.Text
-  -> Ledger T.Text
+  -> Ledger T.Text env
   -> RIO env ()
 poolAndMinerServer q l = do
   env <- ask
@@ -37,7 +37,7 @@ poolAndMinerServer q l = do
 minerServer
   :: (HasLogFunc env, HasConfig env)
   => Q.LinkedQueue T.Text
-  -> Ledger T.Text
+  -> Ledger T.Text env
   -> RIO env ()
 minerServer q l = do
   env <- ask
@@ -48,7 +48,7 @@ minerServer q l = do
     case ma of
       Nothing -> miner e
       Just a  -> do
-        commitToLedger e l a
+        lCommit l e a
         runRIO e $ logInfo (displayShow ("miner COMMITTED TX: " <> a))
         miner e
 

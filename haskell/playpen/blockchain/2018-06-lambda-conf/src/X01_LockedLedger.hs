@@ -23,7 +23,7 @@ runDirectLedger = runServerAndClients txServer
 
 txServer
   :: (HasLogFunc env, HasConfig env)
-  => Ledger T.Text
+  => Ledger T.Text env
   -> RIO env ()
 txServer ledger = do
   env <- ask
@@ -44,7 +44,7 @@ txServer ledger = do
 
 txConnectionHandler
   :: (HasLogFunc env, HasConfig env)
-  => Ledger T.Text
+  => Ledger T.Text env
   -> SIO.Handle
   -> RIO env ()
 txConnectionHandler ledger h = do
@@ -55,7 +55,7 @@ txConnectionHandler ledger h = do
  where
   loop e = do
     line <- T.hGetLine h
-    commitToLedger e ledger line
+    lCommit ledger e line
     runRIO e $ logInfo (displayShow ("txConnectionHandler COMMITED TX: " <> line))
     SIO.hPrint h line
     loop e

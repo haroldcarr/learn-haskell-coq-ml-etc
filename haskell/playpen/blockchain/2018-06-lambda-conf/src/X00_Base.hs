@@ -25,9 +25,10 @@ import qualified System.Random                        as Random
 ------------------------------------------------------------------------------
 import           Config
 import           Ledger
+import           LedgerLockedImpl
 
 runServerAndClients
-  :: (Ledger T.Text -> RIO Config ())
+  :: (Ledger T.Text Config -> RIO Config ())
   -> IO ()
 runServerAndClients txServer = do
   lo <- logOptionsHandle stderr False
@@ -38,18 +39,18 @@ runServerAndClients txServer = do
 
 server
   :: (HasLogFunc env, HasConfig env)
-  => (Ledger T.Text -> RIO env ())
+  => (Ledger T.Text env -> RIO env ())
   -> RIO env ()
 server txServer = do
   env <- ask
-  ledger <- liftIO initLedger
+  ledger <- liftIO createLedger
   liftIO (runRIO env (httpServer ledger)
           `Async.concurrently_`
           runRIO env (txServer ledger))
 
 httpServer
   :: (HasLogFunc env, HasConfig env, Show a)
-  => Ledger a
+  => Ledger a env
   -> RIO env ()
 httpServer ledger = do
   env <- ask
@@ -60,7 +61,7 @@ httpServer ledger = do
       runRIO env $ logInfo (displayShow ("httpServer received request " <> show req))
       case Wai.rawPathInfo req of
         "/contents" -> do
-          contents <- ledgerContents ledger
+          contents <- lContents ledger
           let r = BSB.byteString (BSC.pack (show contents))
           -- runRIO env $ logInfo (displayShow (show contents))
           send $ Wai.responseBuilder HTTP.status200 [] r

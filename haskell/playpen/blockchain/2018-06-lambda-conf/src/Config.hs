@@ -34,6 +34,6 @@ defaultConfig lf = Config
   , cNumMiners  = 8
   , cNumClients = 8
   , cDOSEnabled = True -- False
-  , cDOSDelay   = 30
+  , cDOSDelay   = 15
   , cLogFuncL   = lf
   }

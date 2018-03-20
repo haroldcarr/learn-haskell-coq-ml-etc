@@ -1,10 +1,21 @@
-{-# OPTIONS_GHC -Wno-unused-do-bind    #-}
-{-# LANGUAGE NoImplicitPrelude         #-}
-{-# LANGUAGE RankNTypes                #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RankNTypes        #-}
 
-module Ledger
-  ( module LedgerLockedImpl -- LedgerCASImpl -- 
-  )
-  where
+module Ledger where
 
-import LedgerLockedImpl -- LedgerCASImpl -- 
+import Data.Sequence as Seq
+import RIO
+------------------------------------------------------------------------------
+import           Config
+
+data Ledger a env = Ledger
+  { lContents
+      :: IO (Seq.Seq a)
+  , lCommit
+      :: (HasConfig env, HasLogFunc env)
+      => env
+      -> a
+      -> IO ()
+  }
+
+
