@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
+{-# LANGUAGE ConstraintKinds   #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -27,6 +28,8 @@ instance HasConfig Config where
   getConfig = id
 instance HasLogFunc Config where
   logFuncL = RIO.lens cLogFuncL (\c l -> c { cLogFuncL = l })
+
+type Env e = (HasConfig e, HasLogFunc e)
 
 defaultConfig :: LogFunc -> Config
 defaultConfig lf = Config

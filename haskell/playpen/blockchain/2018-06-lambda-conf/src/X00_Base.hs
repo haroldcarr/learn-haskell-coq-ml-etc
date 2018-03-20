@@ -10,7 +10,6 @@ import           Control.Monad.IO.Class               (liftIO)
 import qualified Data.ByteString.Builder              as BSB
 import qualified Data.ByteString.Char8                as BSC8
 import           Data.Monoid                          ((<>))
-import qualified Data.Text                            as T
 import qualified Data.Text.Encoding                   as TE
 import qualified Data.Thyme                           as Time
 import qualified Network                              as N
@@ -29,8 +28,9 @@ import           Config
 import           Ledger
 
 runServerAndClients
-  :: Ledger T.Text Config
-  -> (Ledger T.Text Config -> RIO Config ())
+  :: Ledgerable a
+  => Ledger a Config
+  -> (Ledger a Config -> RIO Config ())
   -> IO ()
 runServerAndClients ledger txServer = do
   lo <- logOptionsHandle stderr False
@@ -40,9 +40,9 @@ runServerAndClients ledger txServer = do
     runRIO c (server ledger txServer) `Async.concurrently_` runRIO c clients
 
 server
-  :: (HasLogFunc env, HasConfig env)
-  => Ledger T.Text env
-  -> (Ledger T.Text env -> RIO env ())
+  :: (Env env, Ledgerable a)
+  => Ledger a env
+  -> (Ledger a env -> RIO env ())
   -> RIO env ()
 server ledger txServer = do
   env <- ask
@@ -51,8 +51,8 @@ server ledger txServer = do
           runRIO env (txServer ledger))
 
 httpServer
-  :: (HasLogFunc env, HasConfig env)
-  => Ledger T.Text env
+  :: (Env env, Ledgerable a)
+  => Ledger a env
   -> RIO env ()
 httpServer ledger = do
   env <- ask
@@ -73,7 +73,7 @@ httpServer ledger = do
               let k' = Prelude.read (BSC8.unpack k) :: Int -- TODO
                   v' = TE.decodeUtf8 v
               runRIO env $ logInfo (displayShow ("httpServer modify " <> show k' <> " " <> show v'))
-              lModify ledger k' v'
+              lModify ledger k' (fromText ledger v')
               runRIO env $ logInfo "httpServer after modify"
               r <- contentsAsBS ledger
               runRIO env $ logInfo "httpServer after contentsAsBS"
@@ -95,7 +95,7 @@ httpServer ledger = do
     return $ BSB.byteString (BSC8.pack (show contents))
 
 clients
-  :: (HasLogFunc env, HasConfig env)
+  :: Env env
   => RIO env ()
 clients = do
   cfg <- asks getConfig

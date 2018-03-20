@@ -1,20 +1,20 @@
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module X02_CASLedger where
 
-import qualified Control.Concurrent.Async             as Async
-import qualified Control.Concurrent                   as CC
-import qualified Control.Exception.Safe               as S
-import           Control.Monad.IO.Class               (liftIO)
-import qualified Data.Concurrent.Queue.MichaelScott   as Q
-import           Data.Monoid                          ((<>))
-import qualified Data.Text                            as T
-import qualified Data.Text.IO                         as T
-import qualified Network                              as N
+import qualified Control.Concurrent                 as CC
+import qualified Control.Concurrent.Async           as Async
+import qualified Control.Exception.Safe             as S
+import           Control.Monad.IO.Class             (liftIO)
+import qualified Data.Concurrent.Queue.MichaelScott as Q
+import           Data.Monoid                        ((<>))
+import qualified Data.Text.IO                       as T
+import qualified Network                            as N
 import           RIO
-import qualified System.IO                            as SIO
+import qualified System.IO                          as SIO
 ------------------------------------------------------------------------------
 import           Config
 import           Ledger
@@ -23,23 +23,23 @@ import           X00_Base
 
 runPoolLedger :: IO ()
 runPoolLedger = do
-  l <- createLedger
+  l <- createLedger id
   q <- Q.newQ
   runServerAndClients l (poolAndMinerServer q)
 
 poolAndMinerServer
-  :: (HasLogFunc env, HasConfig env)
-  => Q.LinkedQueue T.Text
-  -> Ledger T.Text env
+  :: (Env env, Ledgerable a)
+  => Q.LinkedQueue a
+  -> Ledger a env
   -> RIO env ()
 poolAndMinerServer q l = do
   env <- ask
-  liftIO (runRIO env (poolServer q) `Async.concurrently_` runRIO env (minerServer q l))
+  liftIO (runRIO env (poolServer q l) `Async.concurrently_` runRIO env (minerServer q l))
 
 minerServer
-  :: (HasLogFunc env, HasConfig env)
-  => Q.LinkedQueue T.Text
-  -> Ledger T.Text env
+  :: (Env env, Ledgerable a)
+  => Q.LinkedQueue a
+  -> Ledger a env
   -> RIO env ()
 minerServer q l = do
   env <- ask
@@ -51,14 +51,15 @@ minerServer q l = do
       Nothing -> miner e
       Just a  -> do
         lCommit l e a
-        runRIO e $ logInfo (displayShow ("miner COMMITTED TX: " <> a))
+        runRIO e $ logInfo (displayShow ("miner COMMITTED TX: " <> show a))
         miner e
 
 poolServer
-  :: (HasLogFunc env, HasConfig env)
-  => Q.LinkedQueue T.Text
+  :: (Env env, Ledgerable a)
+  => Q.LinkedQueue a
+  -> Ledger a env
   -> RIO env ()
-poolServer q = do
+poolServer q l = do
   env <- ask
   liftIO $ N.withSocketsDo $ do
     let txp = cTxPort (getConfig env)
@@ -69,18 +70,19 @@ poolServer q = do
    loop e s = liftIO $ do
      (h, hst, prt) <- N.accept s
      runRIO e $ logInfo (displayShow ("Accepted TX connection from " <> hst <> " " <> show prt))
-     CC.forkFinally (liftIO (runRIO e (txConnectionHandler q h))) (const (SIO.hClose h))
+     CC.forkFinally (liftIO (runRIO e (txConnectionHandler q l h))) (const (SIO.hClose h))
      loop e s
      `S.onException` do
        runRIO e $ logInfo "Closing listen port"
        N.sClose s
 
 txConnectionHandler
-  :: (HasLogFunc env, HasConfig env)
-  => Q.LinkedQueue T.Text
+  :: (Env env, Ledgerable a)
+  => Q.LinkedQueue a
+  -> Ledger a env
   -> SIO.Handle
   -> RIO env ()
-txConnectionHandler q h = do
+txConnectionHandler q l h = do
   env <- ask
   liftIO $ do
     SIO.hSetBuffering h SIO.LineBuffering
@@ -88,7 +90,7 @@ txConnectionHandler q h = do
  where
   loop e = do
     line <- T.hGetLine h
-    Q.pushL q line
+    Q.pushL q (fromText l line)
     runRIO e $ logInfo (displayShow ("txConnectionHandler got TX: " <> line))
     SIO.hPrint h line
     loop e
