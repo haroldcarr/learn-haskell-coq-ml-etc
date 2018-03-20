@@ -10,6 +10,7 @@ import           Control.Monad.IO.Class               (liftIO)
 import qualified Data.ByteString.Builder              as BSB
 import qualified Data.ByteString.Char8                as BSC8
 import           Data.Monoid                          ((<>))
+import qualified Data.Text.IO                         as TIO
 import qualified Data.Text.Encoding                   as TE
 import qualified Data.Thyme                           as Time
 import qualified Network                              as N
@@ -93,6 +94,27 @@ httpServer ledger = do
   contentsAsBS l = do
     contents <- lContents l
     return $ BSB.byteString (BSC8.pack (show contents))
+
+txConnectionHandler
+  :: (Env env, Ledgerable a)
+  => SIO.Handle
+  -> Ledger a env
+  -> (a -> IO ())
+  -> RIO env ()
+txConnectionHandler h l f = do
+  env <- ask
+  liftIO $ do
+    SIO.hSetBuffering h SIO.LineBuffering
+    loop env
+ where
+  loop e = do
+    line <- TIO.hGetLine h
+    f (fromText l line)
+    runRIO e $ logInfo (displayShow ("txConnectionHandler got TX: " <> line))
+    SIO.hPrint h line
+    loop e
+
+------------------------------------------------------------------------------
 
 clients
   :: Env env

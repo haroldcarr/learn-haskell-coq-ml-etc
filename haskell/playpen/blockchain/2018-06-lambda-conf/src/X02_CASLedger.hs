@@ -11,7 +11,6 @@ import qualified Control.Exception.Safe             as S
 import           Control.Monad.IO.Class             (liftIO)
 import qualified Data.Concurrent.Queue.MichaelScott as Q
 import           Data.Monoid                        ((<>))
-import qualified Data.Text.IO                       as T
 import qualified Network                            as N
 import           RIO
 import qualified System.IO                          as SIO
@@ -70,27 +69,10 @@ poolServer q l = do
    loop e s = liftIO $ do
      (h, hst, prt) <- N.accept s
      runRIO e $ logInfo (displayShow ("Accepted TX connection from " <> hst <> " " <> show prt))
-     CC.forkFinally (liftIO (runRIO e (txConnectionHandler q l h))) (const (SIO.hClose h))
+     let f = Q.pushL q -- NOTE : specific
+     CC.forkFinally (liftIO (runRIO e (txConnectionHandler h l f))) (const (SIO.hClose h))
      loop e s
      `S.onException` do
        runRIO e $ logInfo "Closing listen port"
        N.sClose s
 
-txConnectionHandler
-  :: (Env env, Ledgerable a)
-  => Q.LinkedQueue a
-  -> Ledger a env
-  -> SIO.Handle
-  -> RIO env ()
-txConnectionHandler q l h = do
-  env <- ask
-  liftIO $ do
-    SIO.hSetBuffering h SIO.LineBuffering
-    loop env
- where
-  loop e = do
-    line <- T.hGetLine h
-    Q.pushL q (fromText l line)
-    runRIO e $ logInfo (displayShow ("txConnectionHandler got TX: " <> line))
-    SIO.hPrint h line
-    loop e
