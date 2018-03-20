@@ -13,10 +13,12 @@ import           RIO
 import           Ledger
 
 createLedger
-  :: IO (Ledger a env)
+  :: Show a
+  => IO (Ledger a env)
 createLedger = do
   r <- IOR.newIORef Seq.empty
   return Ledger
     { lContents = IOR.readIORef r
     , lCommit = \_ a -> A.atomicModifyIORefCAS_ r $ \existing -> existing Seq.|> a
+    , lModify = \i a -> A.atomicModifyIORefCAS_ r $ \existing -> Seq.update i a existing
     }

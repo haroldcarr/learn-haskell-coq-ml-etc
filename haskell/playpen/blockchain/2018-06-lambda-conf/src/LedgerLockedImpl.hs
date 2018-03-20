@@ -26,10 +26,13 @@ createLedger = do
     , lCommit = \e a -> do
         s <- MV.takeMVar mv
         CM.when (cDOSEnabled (getConfig e)) $ do
-          d <- Random.randomRIO (1,10::Int)
-          CM.when (d == 10) $ do
+          d <- Random.randomRIO (cDOSRandomRange (getConfig e))
+          CM.when (d == cDOSRandomHit (getConfig e)) $ do
             runRIO e $ logInfo "BEGIN commitToLedger DOS"
             CC.threadDelay (1000000 * cDOSDelay (getConfig e))
             runRIO e $ logInfo "END commitToLedger DOS"
         MV.putMVar mv (s Seq.|> a)
+    , lModify = \i a -> do
+        s <- MV.takeMVar mv
+        MV.putMVar mv (Seq.update i a s)
     }

@@ -8,15 +8,17 @@ import qualified Control.Concurrent                   as CC
 import qualified Control.Concurrent.Async             as Async
 import           Control.Monad.IO.Class               (liftIO)
 import qualified Data.ByteString.Builder              as BSB
-import qualified Data.ByteString.Char8                as BSC
+import qualified Data.ByteString.Char8                as BSC8
 import           Data.Monoid                          ((<>))
 import qualified Data.Text                            as T
+import qualified Data.Text.Encoding                   as TE
 import qualified Data.Thyme                           as Time
 import qualified Network                              as N
 import qualified Network.HTTP.Types                   as HTTP
 import qualified Network.Wai                          as Wai
 import qualified Network.Wai.Handler.Warp             as Wai
 import qualified Network.Wai.Middleware.RequestLogger as Wai
+import qualified Prelude
 import           RIO
 import qualified System.Exit                          as SE
 import qualified System.IO                            as SIO
@@ -49,8 +51,8 @@ server ledger txServer = do
           runRIO env (txServer ledger))
 
 httpServer
-  :: (HasLogFunc env, HasConfig env, Show a)
-  => Ledger a env
+  :: (HasLogFunc env, HasConfig env)
+  => Ledger T.Text env
   -> RIO env ()
 httpServer ledger = do
   env <- ask
@@ -61,10 +63,24 @@ httpServer ledger = do
       runRIO env $ logInfo (displayShow ("httpServer received request " <> show req))
       case Wai.rawPathInfo req of
         "/contents" -> do
-          contents <- lContents ledger
-          let r = BSB.byteString (BSC.pack (show contents))
+          r <- contentsAsBS ledger
           -- runRIO env $ logInfo (displayShow (show contents))
           send $ Wai.responseBuilder HTTP.status200 [] r
+        "/modify" -> do
+          let q = Wai.queryString req
+          case q of
+            [(k,Just v)] -> do
+              let k' = Prelude.read (BSC8.unpack k) :: Int -- TODO
+                  v' = TE.decodeUtf8 v
+              runRIO env $ logInfo (displayShow ("httpServer modify " <> show k' <> " " <> show v'))
+              lModify ledger k' v'
+              runRIO env $ logInfo "httpServer after modify"
+              r <- contentsAsBS ledger
+              runRIO env $ logInfo "httpServer after contentsAsBS"
+              send $ Wai.responseBuilder HTTP.status200 [] r
+            _ -> do
+              runRIO env $ logInfo (displayShow ("httpServer modify with bad query " <> show q))
+              send $ Wai.responseBuilder HTTP.status400 [] ""
         "/quit" -> do
           runRIO env $ logInfo "httpServer received QUIT"
           SPP.exitImmediately (SE.ExitFailure 1)
@@ -73,6 +89,10 @@ httpServer ledger = do
         x -> do
           runRIO env $ logInfo (displayShow ("httpServer received unknown " <> x))
           send $ Wai.responseBuilder HTTP.status400 [] ""
+ where
+  contentsAsBS l = do
+    contents <- lContents l
+    return $ BSB.byteString (BSC8.pack (show contents))
 
 clients
   :: (HasLogFunc env, HasConfig env)
