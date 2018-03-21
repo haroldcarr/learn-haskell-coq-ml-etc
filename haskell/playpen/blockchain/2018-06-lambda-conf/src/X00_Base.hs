@@ -60,13 +60,13 @@ httpServer ledger = do
   let httpPort = cHttpPort (getConfig env)
   logInfo (displayShow ("starting httpServer on port " <> show httpPort))
   liftIO $ Wai.run httpPort $ Wai.logStdoutDev $
-    \req send -> do
+    \req s -> do
       runRIO env $ logInfo (displayShow ("httpServer received request " <> show req))
       case Wai.rawPathInfo req of
         "/contents" -> do
           r <- contentsAsBS ledger
           -- runRIO env $ logInfo (displayShow (show contents))
-          send $ Wai.responseBuilder HTTP.status200 [] r
+          send s HTTP.status200 r
         "/modify" -> do
           let q = Wai.queryString req
           case q of
@@ -78,19 +78,20 @@ httpServer ledger = do
               runRIO env $ logInfo "httpServer after modify"
               r <- contentsAsBS ledger
               runRIO env $ logInfo "httpServer after contentsAsBS"
-              send $ Wai.responseBuilder HTTP.status200 [] r
+              send s HTTP.status200 r
             _ -> do
               runRIO env $ logInfo (displayShow ("httpServer modify with bad query " <> show q))
-              send $ Wai.responseBuilder HTTP.status400 [] ""
+              send s HTTP.status400 ""
         "/quit" -> do
           runRIO env $ logInfo "httpServer received QUIT"
           SPP.exitImmediately (SE.ExitFailure 1)
           -- never happens -- just for type checking
-          send $ Wai.responseBuilder HTTP.status500 [] ""
+          send s HTTP.status500 ""
         x -> do
           runRIO env $ logInfo (displayShow ("httpServer received unknown " <> x))
-          send $ Wai.responseBuilder HTTP.status400 [] ""
+          send s HTTP.status400 ""
  where
+  send s sc r = s $ Wai.responseBuilder sc [] r
   contentsAsBS l = do
     contents <- lContents l
     return $ BSB.byteString (BSC8.pack (show contents))
