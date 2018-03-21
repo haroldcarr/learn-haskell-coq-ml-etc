@@ -11,6 +11,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Config
                      , Ledger
+                     , Logging
                      , X00_Base
                      , X01_LedgerDirect
                      , X02_LedgerWithPool
@@ -19,6 +20,7 @@ library
                      , base >=4.7 && <5
                      , bytestring
                      , containers
+                     , hslogger
                      , http-types
                      , lockfree-queue
                      , monad-logger

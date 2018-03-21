@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-unused-do-bind #-}
 {-# LANGUAGE ConstraintKinds   #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -19,20 +18,17 @@ data Config = Config
   , cDOSDelay       :: Int --  seconds
   , cDOSRandomRange :: (Int, Int)
   , cDOSRandomHit   :: Int
-  , cLogFuncL       :: RIO.LogFunc
   }
 
 class HasConfig env where
   getConfig :: env -> Config
 instance HasConfig Config where
   getConfig = id
-instance HasLogFunc Config where
-  logFuncL = RIO.lens cLogFuncL (\c l -> c { cLogFuncL = l })
 
-type Env e = (HasConfig e, HasLogFunc e)
+type Env e = (HasConfig e)
 
-defaultConfig :: LogFunc -> Config
-defaultConfig lf = Config
+defaultConfig :: Config
+defaultConfig = Config
   { cHost           = "localhost"
   , cTxPort         = N.PortNumber 44444
   , cHttpPort       = 3000
@@ -40,7 +36,6 @@ defaultConfig lf = Config
   , cNumClients     = 8
   , cDOSEnabled     = True -- False
   , cDOSDelay       = 15
-  , cDOSRandomRange = (1,40)
+  , cDOSRandomRange = (1,10)
   , cDOSRandomHit   = 10
-  , cLogFuncL       = lf
   }
