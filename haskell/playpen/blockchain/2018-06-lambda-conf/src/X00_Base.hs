@@ -35,7 +35,7 @@ import           Logging
 runServerAndClients
   :: Ledgerable a
   => Config
-  -> Ledger a Config
+  -> Ledger a
   -> (a -> IO ())
   -> IO ()
 runServerAndClients env ledger txHandler = do
@@ -46,8 +46,8 @@ runServerAndClients env ledger txHandler = do
 
 server
   :: (Env env, Ledgerable a)
-  => Ledger a env
-  -> (Ledger a env -> RIO env ())
+  => Ledger a
+  -> (Ledger a -> RIO env ())
   -> RIO env ()
 server ledger txServer = do
   env <- ask
@@ -58,7 +58,7 @@ server ledger txServer = do
 txConnectionAcceptor
   :: (Env env, Ledgerable a)
   => (a -> IO ())
-  -> Ledger a env
+  -> Ledger a
   -> RIO env ()
 txConnectionAcceptor txHandler ledger = do
   env <- ask
@@ -81,7 +81,7 @@ txConnectionAcceptor txHandler ledger = do
 txConnectionHandler
   :: (Env env, Ledgerable a)
   => SIO.Handle
-  -> Ledger a env
+  -> Ledger a
   -> (a -> IO ())
   -> RIO env ()
 txConnectionHandler h l f = do
@@ -99,7 +99,7 @@ txConnectionHandler h l f = do
 
 httpServer
   :: (Env env, Ledgerable a)
-  => Ledger a env
+  => Ledger a
   -> RIO env ()
 httpServer ledger = do
   env <- ask
@@ -116,16 +116,24 @@ httpServer ledger = do
         "/modify" -> do
           let q = Wai.queryString req
           case q of
-            [(k,Just v)] -> do
-              let k' = Prelude.read (BSC8.unpack k) :: Int -- TODO
-                  v' = TE.decodeUtf8 v
-              Log.infoM lBASE ("httpServer modify " <> show k' <> " " <> show v')
-              lModify ledger k' (fromText ledger v')
-              r <- contentsAsBS ledger
-              send s HTTP.status200 r
+            [(k,Just v)] ->
+              case Prelude.reads (BSC8.unpack k) of
+                [(k',[])] -> do
+                  let v' = TE.decodeUtf8 v
+                  Log.infoM lBASE ("httpServer modify " <> show k' <> " " <> show v')
+                  lModify ledger k' (fromText ledger v')
+                  r <- contentsAsBS ledger
+                  send s HTTP.status200 r
+                _ -> do
+                  Log.infoM lBASE ("httpServer modify with bad query " <> show q)
+                  send s HTTP.status400 ""
             _ -> do
               Log.infoM lBASE ("httpServer modify with bad query " <> show q)
               send s HTTP.status400 ""
+        "/check" ->
+          case lCheck ledger of
+            Nothing  -> send s HTTP.status200   ""
+            Just err -> send s HTTP.status500 $ BSB.byteString (TE.encodeUtf8 err)
         "/quit" -> do
           Log.infoM lBASE "httpServer received QUIT"
           SPP.exitImmediately (SE.ExitFailure 1)

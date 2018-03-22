@@ -5,56 +5,61 @@
 
 module Ledger where
 
-import qualified Control.Concurrent        as CC
-import qualified Control.Concurrent.MVar   as MV
-import qualified Control.Monad             as CM
-import qualified Data.Atomics              as A
-import qualified Data.IORef                as IOR
-import qualified Data.Sequence             as Seq
-import qualified Data.Text                 as T
+import qualified Control.Concurrent      as CC
+import qualified Control.Concurrent.MVar as MV
+import qualified Control.Monad           as CM
+import qualified Data.Atomics            as A
+import qualified Data.IORef              as IOR
+import qualified Data.Sequence           as Seq
+import qualified Data.Text               as T
 import           RIO
-import           System.Log.Logger         as Log
-import qualified System.Random             as Random
+import           System.Log.Logger       as Log
+import qualified System.Random           as Random
 ------------------------------------------------------------------------------
 import           Config
 import           Logging
 
-type Ledgerable a = (Show a, Monoid a)
+type Ledgerable a = Show a
 
-data Ledger a env = Ledger
+data Ledger a = Ledger
   { lContents
       :: IO (Seq.Seq a)
   , lCommit
-      :: env
+      :: Config
       -> a
       -> IO ()
   , lModify
       :: Int
       -> a
       -> IO ()
+  , lCheck
+      :: Maybe T.Text
   , fromText
       :: T.Text
       -> a
   }
 
 createLedgerCAS
-  :: (Env env, Ledgerable a)
-  => (T.Text -> a)
-  -> IO (Ledger a env)
-createLedgerCAS ft = do
+  :: Ledgerable a
+  => Maybe T.Text
+  -> (T.Text -> a)
+  -> IO (Ledger a)
+createLedgerCAS ck ft = do
   r <- IOR.newIORef Seq.empty
   return Ledger
     { lContents = IOR.readIORef r
-    , lCommit = \_ a -> A.atomicModifyIORefCAS_ r $ \existing -> existing Seq.|> a
-    , lModify = \i a -> A.atomicModifyIORefCAS_ r $ \existing -> Seq.update i a existing
-    , fromText = ft
+    , lCommit   = \_ a -> A.atomicModifyIORefCAS_ r $ \existing -> existing Seq.|> a
+    , lModify   = \i a -> A.atomicModifyIORefCAS_ r $ \existing -> Seq.update i a existing
+    , lCheck    = ck
+    , fromText  = ft
     }
 
 createLedgerLocked
-  :: (Env env, Ledgerable a)
-  => (T.Text -> a)
-  -> IO (Ledger a env)
-createLedgerLocked ft = do
+  :: Ledgerable a
+  => Maybe T.Text
+  -> (T.Text -> a)
+  -> IO (Ledger a)
+createLedgerLocked ck ft = do
   mv <- MV.newMVar Seq.empty
   return Ledger
     { lContents = MV.readMVar mv
@@ -70,5 +75,6 @@ createLedgerLocked ft = do
     , lModify = \i a -> do
         s <- MV.takeMVar mv
         MV.putMVar mv (Seq.update i a s)
+    , lCheck = ck
     , fromText = ft
     }

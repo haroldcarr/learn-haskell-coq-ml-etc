@@ -19,29 +19,29 @@ import           X00_Base
 
 runLedgerWithPool :: IO ()
 runLedgerWithPool = do
-  l <- createLedgerCAS id
+  l <- createLedgerCAS Nothing id
   q <- Q.newQ
   let e = defaultConfig
       txHandler tx = do
         Log.infoM lMINER ("POOLING: " <> show tx)
         Q.pushL q tx
-  Async.replicateConcurrently_ (cNumMiners (getConfig e)) (miner e q l)
+      committer = lCommit l e
+  Async.replicateConcurrently_ (cNumMiners (getConfig e)) (miner q committer)
    `Async.concurrently_`
    runServerAndClients e l txHandler
 
 miner
-  :: (Env env, Ledgerable a)
-  => env
-  -> Q.LinkedQueue a
-  -> Ledger a env
+  :: Ledgerable a
+  => Q.LinkedQueue a
+  -> (a -> IO ())
   -> IO ()
-miner env q l = do
+miner q committer = do
   CC.threadDelay 10000
   ma <- Q.tryPopR q
   case ma of
     Nothing ->
-      miner env q l
+      miner q committer
     Just a  -> do
-      lCommit l env a
+      committer a
       Log.infoM lMINER ("miner COMMITTED TX: " <> show a)
-      miner env q l
+      miner q committer
