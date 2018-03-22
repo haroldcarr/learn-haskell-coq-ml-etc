@@ -25,9 +25,9 @@ runLedgerWithPool = do
       txHandler tx = do
         Log.infoM lMINER ("POOLING: " <> show tx)
         Q.pushL q tx
-  Async.async $
-    Async.replicateConcurrently_ (cNumMiners (getConfig e)) (miner e q l)
-  runServerAndClients e l txHandler
+  Async.replicateConcurrently_ (cNumMiners (getConfig e)) (miner e q l)
+   `Async.concurrently_`
+   runServerAndClients e l txHandler
 
 miner
   :: (Env env, Ledgerable a)
