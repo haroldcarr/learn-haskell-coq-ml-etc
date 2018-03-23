@@ -33,7 +33,7 @@ data Ledger a = Ledger
       -> a
       -> IO ()
   , lCheck
-      :: Maybe T.Text
+      :: IO (Maybe T.Text)
   , fromText
       :: T.Text
       -> a
@@ -41,7 +41,7 @@ data Ledger a = Ledger
 
 createLedgerCAS
   :: Ledgerable a
-  => Maybe T.Text
+  => IO (Maybe T.Text)
   -> (T.Text -> a)
   -> IO (Ledger a)
 createLedgerCAS ck ft = do
@@ -56,7 +56,7 @@ createLedgerCAS ck ft = do
 
 createLedgerLocked
   :: Ledgerable a
-  => Maybe T.Text
+  => IO (Maybe T.Text)
   -> (T.Text -> a)
   -> IO (Ledger a)
 createLedgerLocked ck ft = do

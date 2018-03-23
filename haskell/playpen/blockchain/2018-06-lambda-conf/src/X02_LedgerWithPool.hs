@@ -19,12 +19,12 @@ import           X00_Base
 
 runLedgerWithPool :: IO ()
 runLedgerWithPool = do
-  l <- createLedgerCAS Nothing id
+  l <- createLedgerCAS (return Nothing) id
   q <- Q.newQ
   let e = defaultConfig
       txHandler tx = do
-        Log.infoM lMINER ("POOLING: " <> show tx)
         Q.pushL q tx
+        Log.infoM lMINER ("POOLED: " <> show tx)
       committer = lCommit l e
   Async.replicateConcurrently_ (cNumMiners (getConfig e)) (miner q committer)
    `Async.concurrently_`

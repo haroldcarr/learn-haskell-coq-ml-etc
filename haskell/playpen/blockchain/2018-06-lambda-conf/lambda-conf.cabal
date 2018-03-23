@@ -15,11 +15,13 @@ library
                      , X00_Base
                      , X01_LedgerDirect
                      , X02_LedgerWithPool
+                     , X03_LedgerTamperEvident
   build-depends:       async
                      , atomic-primops
                      , base >=4.7 && <5
                      , bytestring
                      , containers
+                     , cryptohash
                      , hslogger
                      , http-types
                      , lockfree-queue

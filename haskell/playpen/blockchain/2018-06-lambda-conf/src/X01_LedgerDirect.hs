@@ -12,9 +12,9 @@ import           X00_Base
 
 runLedgerDirect :: IO ()
 runLedgerDirect = do
-  l <- createLedgerLocked Nothing id
+  l <- createLedgerLocked (return Nothing) id
   let e = defaultConfig
       txHandler tx = do
-        Log.infoM lDIRECT ("COMMITING: " <> show tx)
         lCommit l e tx
+        Log.infoM lDIRECT ("COMMITTED: " <> show tx)
   runServerAndClients e l txHandler

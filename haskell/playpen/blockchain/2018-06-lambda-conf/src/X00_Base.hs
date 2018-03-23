@@ -84,7 +84,7 @@ txConnectionHandler
   -> Ledger a
   -> (a -> IO ())
   -> RIO env ()
-txConnectionHandler h l f = do
+txConnectionHandler h l txHandler = do
   env <- ask
   liftIO $ do
     SIO.hSetBuffering h SIO.LineBuffering
@@ -93,7 +93,7 @@ txConnectionHandler h l f = do
   loop e = do
     line <- TIO.hGetLine h
     Log.infoM lBASE ("txConnectionHandler got TX: " <> T.unpack line)
-    f (fromText l line)
+    txHandler (fromText l line)
     SIO.hPrint h line
     loop e
 
@@ -111,7 +111,6 @@ httpServer ledger = do
       case Wai.rawPathInfo req of
         "/contents" -> do
           r <- contentsAsBS ledger
-          -- runRIO env $ logInfo (displayShow (show contents))
           send s HTTP.status200 r
         "/modify" -> do
           let q = Wai.queryString req
@@ -130,8 +129,9 @@ httpServer ledger = do
             _ -> do
               Log.infoM lBASE ("httpServer modify with bad query " <> show q)
               send s HTTP.status400 ""
-        "/check" ->
-          case lCheck ledger of
+        "/check" -> do
+          r <- lCheck ledger
+          case r of
             Nothing  -> send s HTTP.status200   ""
             Just err -> send s HTTP.status500 $ BSB.byteString (TE.encodeUtf8 err)
         "/quit" -> do
