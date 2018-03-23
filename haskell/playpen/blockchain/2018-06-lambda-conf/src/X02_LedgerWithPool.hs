@@ -9,6 +9,7 @@ import qualified Control.Concurrent                 as CC
 import qualified Control.Concurrent.Async           as Async
 import qualified Data.Concurrent.Queue.MichaelScott as Q
 import           Data.Monoid                        ((<>))
+import qualified Data.Text.Encoding                 as TE
 import           RIO
 import qualified System.Log.Logger                  as Log
 ------------------------------------------------------------------------------
@@ -19,7 +20,7 @@ import           X00_Base
 
 runLedgerWithPool :: IO ()
 runLedgerWithPool = do
-  l <- createLedgerCAS (return Nothing) id
+  l <- createLedgerCAS (return Nothing) TE.decodeUtf8
   q <- Q.newQ
   let e = defaultConfig
       txHandler tx = do

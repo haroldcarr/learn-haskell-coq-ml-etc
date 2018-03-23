@@ -8,12 +8,11 @@ import qualified Control.Concurrent                   as CC
 import qualified Control.Concurrent.Async             as Async
 import qualified Control.Exception.Safe               as S
 import           Control.Monad.IO.Class               (liftIO)
+import qualified Data.ByteString                      as BS
 import qualified Data.ByteString.Builder              as BSB
 import qualified Data.ByteString.Char8                as BSC8
 import           Data.Monoid                          ((<>))
-import qualified Data.Text                            as T
 import qualified Data.Text.Encoding                   as TE
-import qualified Data.Text.IO                         as TIO
 import qualified Data.Thyme                           as Time
 import qualified Network                              as N
 import qualified Network.HTTP.Types                   as HTTP
@@ -91,10 +90,10 @@ txConnectionHandler h l txHandler = do
     loop env
  where
   loop e = do
-    line <- TIO.hGetLine h
-    Log.infoM lBASE ("txConnectionHandler got TX: " <> T.unpack line)
-    txHandler (fromText l line)
-    SIO.hPrint h line
+    line <- BS.hGetLine h
+    Log.infoM lBASE ("txConnectionHandler got TX: " <> BSC8.unpack line)
+    txHandler (fromByteString l line)
+    BSC8.hPutStrLn h line -- echo it back
     loop e
 
 httpServer
@@ -118,9 +117,8 @@ httpServer ledger = do
             [(k,Just v)] ->
               case Prelude.reads (BSC8.unpack k) of
                 [(k',[])] -> do
-                  let v' = TE.decodeUtf8 v
-                  Log.infoM lBASE ("httpServer modify " <> show k' <> " " <> show v')
-                  lModify ledger k' (fromText ledger v')
+                  Log.infoM lBASE ("httpServer modify " <> show k' <> " " <> BSC8.unpack v)
+                  lModify ledger k' (fromByteString ledger v)
                   r <- contentsAsBS ledger
                   send s HTTP.status200 r
                 _ -> do
@@ -169,9 +167,9 @@ clients = do
     loop h = do
       d <- Random.randomRIO (1,10)
       CC.threadDelay (d * 1000000)
-      t <- Time.getCurrentTime
-      Log.infoM lBASE ("client sending TX: " <> show t)
-      SIO.hPrint h t
-      r <- SIO.hGetLine h
-      Log.infoM lBASE ("client received TX: " <> r)
+      t <- Time.getCurrentTime >>= return . show
+      Log.infoM lBASE ("client sending TX: " <> t)
+      BSC8.hPutStrLn h (BSC8.pack t)
+      r <- BSC8.hGetLine h
+      Log.infoM lBASE ("client received TX: " <> BSC8.unpack r)
       loop h

@@ -26,7 +26,7 @@ import           X00_Base
 import           X02_LedgerWithPool                 (miner)
 
 type BHash = ByteString
-type BData = ByteString
+type BData = T.Text
 
 data Block = Block
   { bPrevHash :: ! BHash -- ^ hash of previous block
@@ -34,7 +34,7 @@ data Block = Block
   } deriving (Eq, Show)
 
 calculateHash :: BHash -> BData -> BHash
-calculateHash p d = SHA.hash (BS.concat [p, d]) -- TODO: serialize
+calculateHash p d = SHA.hash (BS.concat [p, TE.encodeUtf8 d]) -- TODO: serialize
 
 genesisBlock :: Block
 genesisBlock = Block
@@ -87,7 +87,7 @@ createLedgerWithBlocks = do
             Left err -> Just err
             _        -> Nothing
 
-    , fromText  = Block "0" . TE.encodeUtf8
+    , fromByteString = Block "0" . TE.decodeUtf8
     }
 
 runLedgerTamperEvident :: IO ()
