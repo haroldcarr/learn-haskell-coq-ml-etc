@@ -1,0 +1,56 @@
+==============================================================================
+DAY 1
+
+09:30                   : Keynote: A Monoid for All Seasons : Julie Moronuki
+------------------------------------------------------------------------------
+10:45 (Room Name: CTRL) : Fast XML Parsing with Haskell     : Neil Mitchell
+------------------------------------------------------------------------------
+11:45 (Room Name: CTRL) : Machines                          : Alois Cochard
+------------------------------------------------------------------------------
+13:30 (Room Name: CTRL) : A Look Inside GHC's Optimiser     : Matthew Pickering
+------------------------------------------------------------------------------
+14:30 (Room Name: CMD)  : Algebraic Design of DSLs          : Ritesh Ragavender
+------------------------------------------------------------------------------
+15:30 (Room Name: CTRL) : Change in an Immutable World
+                          Taming IO, ST, and the Demons of Unsafety
+                                                            : David Luposchainsky
+------------------------------------------------------------------------------
+16:30                   : Keynote: Scrap your Bounds Checks with Liquid Haskell
+                                                            : Gabriel Gonzalez
+------------------------------------------------------------------------------
+17:45                   : Park Bench Panel Session with #HaskellX Experts!
+------------------------------------------------------------------------------
+18:45                   : #HASKELLX PARTY WITH PIZZA & BEER!
+
+==============================================================================
+Day 2
+
+09:30     : Keynote: Compiling without Continuations : Simon Peyton Jones
+------------------------------------------------------------------------------
+10:45 (Room Name: CTRL) : Distributed Programming with Linear Types : Arnaud Spiwack
+10:45 and 11:45 (Room Name: CMD)Workshop: Advanced Haskell Development with Nix
+                                         :Bas van Dijk and Peter Simons
+------------------------------------------------------------------------------
+11:45 (Room Name: CTRL) : Incremental Computing : Wolfgang Jeltsch
+------------------------------------------------------------------------------
+13:30 (Room Name: CTRL) : Static Pointers, Closures and Polymorphism : Edsko de Vries
+13:30 (Room Name: SHIFT): How to Architect Medium to Large-Scale Haskell Applications
+                                             Jasper Van der Jeugt
+13:30 (Room Name: CMD)  : An EDSL for KDB/Q: Rationale, Techniques and Lessons Learned
+                                         Tim Williams
+------------------------------------------------------------------------------
+14:30 (Room Name: CTRL) : Through a Glass, Abstractly: Lenses and the Power of Abstraction
+                                      Adam Gundry
+------------------------------------------------------------------------------
+15:30 (Room Name: SHIFT): Lightning Talk: Elliptic Curve Cryptography : Thomas Dietert
+------------------------------------------------------------------------------
+15:45 (Room Name: CTRL) : Lightning Talk: Writing an Assembler Back-end in Haskell is Easier Than You Think (Honest!)
+                                Peter Trommler
+------------------------------------------------------------------------------
+16:00 (Room Name: CMD)  : Lightning Talk: Engage Clutch, Shift Gear; ROFL!
+                                           Gabor Greif
+------------------------------------------------------------------------------
+16:45                   : Keynote: Category Theory in Life : Dr Eugenia Cheng
+------------------------------------------------------------------------------
+17:45                   : Wrap Up Presentation
+
