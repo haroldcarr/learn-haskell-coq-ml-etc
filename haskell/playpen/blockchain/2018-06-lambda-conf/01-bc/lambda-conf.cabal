@@ -1,0 +1,44 @@
+name:                  lambda-conf
+version:               0.1.0.0
+build-type:            Simple
+cabal-version:         >= 1.10
+
+source-repository head
+  type:                git
+  location:            https://github.com/githubuser/lambda-conf
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     BC
+  build-depends:       atomic-primops
+                     , base >=4.7 && <5
+                     , bytestring
+                     , cryptohash
+                     , hex
+                     , hslogger
+                     , http-client
+                     , http-types
+                     , network
+                     , text
+                     , wai
+                     , wai-extra
+                     , warp
+  ghc-options:         -Wall
+  default-language:    Haskell2010
+
+executable m
+  main-is:             Main.hs
+  hs-source-dirs:      app
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base >=4.7 && <5
+                     , lambda-conf
+  default-language:    Haskell2010
+
+test-suite lambda-conf-test
+  type:                exitcode-stdio-1.0
+  main-is:             Spec.hs
+  hs-source-dirs:      test
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base >=4.7 && <5
+                     , lambda-conf
+  default-language:    Haskell2010
