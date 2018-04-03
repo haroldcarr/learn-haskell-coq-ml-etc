@@ -23,22 +23,28 @@ function doall {
 section "initial"
 doall env
 
-section "0 MY-TX-0"
+section "0 tx?MY-TX-0"
 doone 0 tx?MY-TX-0
 
-section "after MY-TX-0"
+section "after 0 tx?MY-TX-0"
 doall env
 
 section "0 mine"
 doone 0 mine
 sleep 2
 
-section "after mine"
+section "after 0 mine"
 doall env
 
 section "2 resolve"
 doone 2 resolve
 
-section "after resolve"
+section "after 2 resolve"
+doall env
+
+section "1 resolve"
+doone 1 resolve
+
+section "after 1 resolve"
 doall env
 

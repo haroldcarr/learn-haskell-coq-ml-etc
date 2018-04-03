@@ -12,6 +12,7 @@
 > import qualified Data.ByteString.Builder              as BSB
 > import qualified Data.ByteString.Char8                as BSC8
 > import qualified Data.ByteString.Lazy.Char8           as BSLC8
+> import           Data.List                            ((\\))
 > import qualified Data.Hex                             as Hex
 > import qualified Data.IORef                           as IOR
 > import           Data.Monoid                          ((<>))
@@ -109,17 +110,23 @@ https://github.com/dvf/blockchain
 >         read (BSLC8.unpack body)
 >       else
 >         []
->   let chain' = foldr (\a b -> if length a > length b then a else b) (eChain e) chains
+>   let chain' = foldr (\a b -> if length a > length b then a else b) (eChain e) chains -- TODO
 >   if eChain e /= chain' then
 >     case isValidChain chain' of
 >       Right _ -> do
->         A.atomicModifyIORefCAS_ env $ \e0 -> e0 { eChain = chain' }
+>         A.atomicModifyIORefCAS_ env $ \e0 ->
+>           e0 { eChain = chain'
+>              , eCurrentTransactions = resolveTXs (eCurrentTransactions e0) chain'
+>              }
 >         return True
 >       Left err -> do
 >         Log.infoM lBC ("resolveConflicts: invalid chain " <> T.unpack err)
 >         return False
 >   else
 >     return False
+>  where
+>   resolveTXs :: [Transaction] -> Chain -> [Transaction]
+>   resolveTXs = foldl (\txs b -> txs \\ bTransactions b)
 
 > -- | Create a new Block and add it to the Chain
 > --   previousHash: Hash of previous Block
