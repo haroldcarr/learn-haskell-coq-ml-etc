@@ -8,6 +8,7 @@
 > import qualified Crypto.Hash.SHA256                   as SHA
 > import qualified Data.Atomics                         as A
 > import qualified Data.ByteString                      as BS
+> import qualified Data.ByteString.Lazy                 as BSL
 > import qualified Data.ByteString.Builder              as BSB
 > import qualified Data.ByteString.Char8                as BSC8
 > import qualified Data.ByteString.Lazy.Char8           as BSLC8
@@ -16,8 +17,8 @@
 > import           Data.Monoid                          ((<>))
 > import qualified Data.Text                            as T
 > import qualified Data.Text.Encoding                   as TE
-> import qualified Network.HTTP.Types                   as HTTP
-> import qualified Network.HTTP.Client                  as HTTP
+> import qualified Network.HTTP.Types                   as H
+> import qualified Network.HTTP.Client                  as H
 > import qualified Network.Wai                          as Wai
 > import qualified Network.Wai.Handler.Warp             as Wai
 > import qualified Network.Wai.Middleware.RequestLogger as Wai
@@ -91,7 +92,7 @@ https://github.com/dvf/blockchain
 > isValidBlock (i, validBlock, checkBlock) = do
 >   CM.when   (hashBlock validBlock /= bPreviousHash checkBlock)
 >             (Left ("invalid bPrevHash at " <> T.pack (show i)))
->   CM.unless (validProof (bProof validBlock) (bProof checkBlock) (bPreviousHash validBlock))
+>   CM.unless (validProof (bProof validBlock) (bProof checkBlock) (bPreviousHash checkBlock))
 >             (Left ("invalid bProof at "    <> T.pack (show i)))
 >   return ()
 
@@ -102,13 +103,12 @@ https://github.com/dvf/blockchain
 > resolveConflicts env = do
 >   e <- IOR.readIORef env
 >   chains <- CM.forM (eNodes e) $ \n -> do
->     manager  <- HTTP.newManager HTTP.defaultManagerSettings
->     request  <- HTTP.parseRequest ("http://" <> T.unpack n <> "/chain")
->     response <- HTTP.httpLbs request manager
->     if HTTP.statusCode (HTTP.responseStatus response) == 200 then
->       return (read (BSLC8.unpack (HTTP.responseBody response)))
->     else
->       return []
+>     (status, body) <- httpRequest ("http://" <> T.unpack n <> "/chain-only")
+>     return $
+>       if status == 200 then
+>         read (BSLC8.unpack body)
+>       else
+>         []
 >   let chain' = foldr (\a b -> if length a > length b then a else b) (eChain e) chains
 >   if eChain e /= chain' then
 >     case isValidChain chain' of
@@ -154,24 +154,26 @@ https://github.com/dvf/blockchain
 > hashBlock = hash . BSC8.pack . show
 
 > -- | Simple Proof of Work Algorithm:
-> --   - Find a number p' such that hash(pp') contains leading 4 zeroes
+> --   - Find a number p' such that hash(pp') contains leading 4 zeroes -- TODO
 > --   - Where p is the previous proof, and p' is the new proof
-> --   :param last_block: <dict> last Block
-> --   :return: <int>
 > proofOfWork :: Block -> Proof
 > proofOfWork lastBlock =
->   let lastProof = bProof lastBlock
->       lastHash  = hash (BSC8.pack (show lastBlock))
->   in foldr (\proof acc -> if validProof lastProof proof lastHash then proof else acc) 0 [0 .. ]
+>   let lastProof = bProof    lastBlock
+>       lastHash  = hashBlock lastBlock
+>       go proof next =
+>         if validProof lastProof proof lastHash
+>         then proof
+>         else next
+>   in foldr go 0 [0 .. ]
 
 > -- | Validates the Proof
-> --   :param last_proof: <int> Previous Proof
-> --   :param proof: <int> Current Proof
-> --   :param last_hash: <str> The hash of the Previous Block
-> --   :return: <bool> True if correct, False if not.
+> --   lastProof : proof of previous block
+> --   proof     : current proof
+> --   lastHash  : hash of previous block
+> --   Returns   : True if valid
 > validProof :: Proof -> Proof -> BHash -> Bool
-> validProof lastProof proof0 lastHash =
->  let guess = BSC8.pack (show lastProof) <> BSC8.pack (show proof0) <> lastHash
+> validProof lastProof proof lastHash =
+>  let guess = BSC8.pack (show lastProof) <> BSC8.pack (show proof) <> lastHash
 >      ghash = Hex.hex (hash guess)
 >   in BS.take 4 ghash == "0000"
 
@@ -214,42 +216,56 @@ https://github.com/dvf/blockchain
 >         "/mine" -> do
 >           b <- fmap show (mine env)
 >           let rsp = "mine " <> b
->           send s tn HTTP.status200 rsp
+>           send s tn H.status200 rsp
 >         "/tx" -> -- POST
 >           case getQ req of
 >             Right tx -> do
 >               i <- newTransaction env (TE.decodeUtf8 tx)
+>               sendTxToPeers env (BSL.fromStrict tx)
 >               let rsp = "/tx " <> show tx <> " " <> show i
->               send s tn HTTP.status200 rsp
+>               send s tn H.status200 rsp
 >             Left x ->
 >               badQ s tn "/tx" x
+>         "/txf" -> -- POST
+>           case getQ req of
+>             Right tx -> do
+>               i <- newTransaction env (TE.decodeUtf8 tx)
+>               let rsp = "/txf " <> show tx <> " " <> show i
+>               send s tn H.status200 rsp
+>             Left x ->
+>               badQ s tn "/txf" x
 >         "/chain" -> do
 >           e <- IOR.readIORef env
 >           let chain = eChain e
 >               len   = length chain
 >               rsp = "chain " <> show len <> " " <> show chain
->           send s tn HTTP.status200 rsp
+>           send s tn H.status200 rsp
+>         "/chain-only" -> do
+>           e <- IOR.readIORef env
+>           send' s H.status200 (show (eChain e))
 >         "/register" ->
 >           case getQ req of
 >             Right n -> do
 >               registerNode env (TE.decodeUtf8 n)
 >               let rsp = "/register " <> show n
->               send s tn HTTP.status200 rsp
+>               send s tn H.status200 rsp
 >             Left x ->
 >               badQ s tn "/register" x
 >         "/resolve" -> do
 >           b <- resolveConflicts env
 >           let rsp = "/resolve " <> show b
->           send s tn HTTP.status200 rsp
+>           send s tn H.status200 rsp
 >         "/env" -> do
 >           e <- IOR.readIORef env
->           send s tn HTTP.status200 (show e)
+>           send s tn H.status200 (show e)
 >         x -> do
 >           let rsp = "received unknown " <> BSC8.unpack x
->           send s tn HTTP.status400 rsp
+>           send s tn H.status400 rsp
 >  where
 >   send s tn sc r = do
 >     let rsp = tn <> " " <> r
+>     send' s sc rsp
+>   send' s sc rsp = do
 >     Log.infoM lBC rsp
 >     s $ Wai.responseBuilder sc [] (BSB.byteString (BSC8.pack rsp))
 >   getQ r =
@@ -257,5 +273,29 @@ https://github.com/dvf/blockchain
 >   badQ s tn msg q = do
 >     let rsp = tn <> " " <> msg <> " with bad query" <> show q
 >     Log.infoM lBC rsp
->     send s tn HTTP.status400 rsp
+>     send s tn H.status400 rsp
 
+> httpRequest :: String -> IO (Int, BSL.ByteString)
+> httpRequest url = do
+>   manager  <- H.newManager H.defaultManagerSettings
+>   request  <- H.parseRequest url
+>   response <- H.httpLbs request manager
+>   return ( H.statusCode (H.responseStatus response)
+>          , H.responseBody response )
+
+> sendTxToPeers :: IORefEnv -> BSL.ByteString -> IO ()
+> sendTxToPeers env tx = do
+>   e <- IOR.readIORef env
+>   CM.forM_ (eNodes e) $ \n ->
+>     httpRequest ("http://" <> T.unpack n <> "/txf?" <> BSLC8.unpack tx)
+
+{-
+
+:set -XOverloadedStrings
+
+let x = [Block {bPreviousHash = "1", bIndex = 0, bTimestamp = "2018-04-01", bTransactions = [], bProof = 100},Block {bPreviousHash = "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202", bIndex = 1, bTimestamp = "timestamp", bTransactions = ["MY-TX-0","sender=0;recipient=3000;amount=1"], bProof = 658}]
+
+isValidChain x
+Left "invalid bProof at 1"
+
+-}
