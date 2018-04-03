@@ -233,14 +233,14 @@ https://github.com/dvf/blockchain
 >               send s tn H.status200 rsp
 >             Left x ->
 >               badQ s tn "/tx" x
->         "/txf" -> -- POST
+>         "/tx-no-forward" -> -- POST
 >           case getQ req of
 >             Right tx -> do
 >               i <- newTransaction env (TE.decodeUtf8 tx)
->               let rsp = "/txf " <> show tx <> " " <> show i
+>               let rsp = "/tx-no-forward " <> show tx <> " " <> show i
 >               send s tn H.status200 rsp
 >             Left x ->
->               badQ s tn "/txf" x
+>               badQ s tn "/tx-no-forward" x
 >         "/chain" -> do
 >           e <- IOR.readIORef env
 >           let chain = eChain e
@@ -294,7 +294,7 @@ https://github.com/dvf/blockchain
 > sendTxToPeers env tx = do
 >   e <- IOR.readIORef env
 >   CM.forM_ (eNodes e) $ \n ->
->     httpRequest ("http://" <> T.unpack n <> "/txf?" <> BSLC8.unpack tx)
+>     httpRequest ("http://" <> T.unpack n <> "/tx-no-forward?" <> BSLC8.unpack tx)
 
 {-
 
