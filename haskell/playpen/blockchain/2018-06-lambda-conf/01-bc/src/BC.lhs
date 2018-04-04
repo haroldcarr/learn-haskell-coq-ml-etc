@@ -62,7 +62,7 @@ https://github.com/dvf/blockchain
 >   , eChain               :: Chain
 >   , eNodes               :: [Address]
 >   , eThisNode            :: Address
->   } deriving Show
+>   } deriving (Eq, Show)
 
 > type IORefEnv = IOR.IORef Env
 
@@ -100,8 +100,8 @@ https://github.com/dvf/blockchain
 > -- | CONSENSUS ALGORITHM
 > --   Resolves conflicts by replacing chain with longest one in the network.
 > --   Returns True if chain was replaced.
-> resolveConflicts :: IORefEnv -> IO Bool
-> resolveConflicts env = do
+> resolveConflictsIO :: IORefEnv -> IO Bool
+> resolveConflictsIO env = do
 >   e <- IOR.readIORef env
 >   chains <- CM.forM (eNodes e) $ \n -> do
 >     (status, body) <- httpRequest ("http://" <> T.unpack n <> "/chain-only")
@@ -110,21 +110,24 @@ https://github.com/dvf/blockchain
 >         read (BSLC8.unpack body)
 >       else
 >         []
->   let chain' = foldr (\a b -> if length a > length b then a else b) (eChain e) chains -- TODO
->   if eChain e /= chain' then
->     case isValidChain chain' of
->       Right _ -> do
->         A.atomicModifyIORefCAS_ env $ \e0 ->
->           e0 { eChain = chain'
->              , eCurrentTransactions = resolveTXs (eCurrentTransactions e0) chain'
->              }
->         return True
->       Left err -> do
->         Log.infoM lBC ("resolveConflicts: invalid chain " <> T.unpack err)
->         return False
->   else
->     return False
+>   (b, err) <- IOR.atomicModifyIORef' env $ \e0 -> resolveConflicts e0 chains
+>   if b then return b else do Log.infoM lBC err; return b
+
+> resolveConflicts :: Env -> [Chain] -> (Env, (Bool, String))
+> resolveConflicts e chains = go
 >  where
+>   -- TODO : check that foldr looks at all results
+>   go = let chain' = foldr (\a b -> if length a > length b then a else b) (eChain e) chains
+>        in if eChain e /= chain' then
+>             case isValidChain chain' of
+>               Right _  ->
+>                 ( e { eChain = chain'
+>                     , eCurrentTransactions = resolveTXs (eCurrentTransactions e) chain'
+>                     }
+>                 , (True, ""))
+>               Left err ->
+>                 ( e , (False, "resolveConflicts: invalid chain " <> T.unpack err))
+>           else  ( e , (False,  ""))
 >   resolveTXs :: [Transaction] -> Chain -> [Transaction]
 >   resolveTXs = foldl (\txs b -> txs \\ bTransactions b)
 
@@ -259,7 +262,7 @@ https://github.com/dvf/blockchain
 >             Left x ->
 >               badQ s tn "/register" x
 >         "/resolve" -> do
->           b <- resolveConflicts env
+>           b <- resolveConflictsIO env
 >           let rsp = "/resolve " <> show b
 >           send s tn H.status200 rsp
 >         "/env" -> do

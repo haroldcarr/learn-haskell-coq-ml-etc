@@ -34,11 +34,16 @@ executable m
                      , lambda-conf
   default-language:    Haskell2010
 
-test-suite lambda-conf-test
-  type:                exitcode-stdio-1.0
-  main-is:             Spec.hs
+test-suite hspec
   hs-source-dirs:      test
-  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
-  build-depends:       base >=4.7 && <5
+  main-is:             hspec.hs
+  other-modules:       BCSpec
+  build-depends:       base
                      , lambda-conf
+                     , hspec
+                     , hspec-expectations
+                     , text
+  type:                exitcode-stdio-1.0
+  ghc-options:         -Wall -fno-warn-unused-do-bind -O2 -fno-ignore-asserts
   default-language:    Haskell2010
+
