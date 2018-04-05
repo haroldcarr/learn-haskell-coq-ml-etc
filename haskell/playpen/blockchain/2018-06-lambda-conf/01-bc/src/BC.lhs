@@ -50,10 +50,9 @@ https://github.com/dvf/blockchain
 > genesisBlock = Block "1" 0 [] 100
 
 > ------------------------------------------------------------------------------
-> addTransactionIO :: IOEnv -> Transaction -> IO ()
-> addTransactionIO env tx =
->   atomicModifyIORef_ env $ \e ->
->     e { eTXPool = eTXPool e ++ [tx] } -- TODO
+> addTransaction :: Env -> Transaction -> Env
+> addTransaction e tx =
+>   e { eTXPool = eTXPool e ++ [tx] } -- TODO
 
 > data Env = Env
 >   { eTXPool          :: [Transaction]
@@ -67,25 +66,27 @@ https://github.com/dvf/blockchain
 > type ProofDifficulty = Int
 > type Address         = T.Text
 
+> initialEnv :: Env
+> initialEnv = Env [] [genesisBlock] 4 [] "to-be-replace-with-node-address"
+
 > ------------------------------------------------------------------------------
-> mineIO :: IOEnv -> IO Block
-> mineIO env = do
->   lastBlock <- getEnvIO (last . eChain) env
->   pd <- getEnvIO eProofDifficulty env
->   let proof = proofOfWork pd lastBlock
->       pHash = hashBlock lastBlock
->   addBlockIO env pHash proof
+> mine :: Env -> (Env, Block)
+> mine e =
+>   let lastBlock = last (eChain e)
+>       pd        = eProofDifficulty e
+>       proof     = proofOfWork pd lastBlock
+>       pHash     = hashBlock lastBlock
+>    in addBlock e pHash proof
 
 > -- | add new block containing all TXs in pool to Chain
-> addBlockIO :: IOEnv -> BHash -> Proof -> IO Block
-> addBlockIO env pHash proof =
->   IOR.atomicModifyIORef' env $ \e ->
->     let b = Block pHash
->                   (length (eChain e))
->                   (eTXPool e)
->                   proof
->         e' = e { eTXPool = [], eChain = eChain e ++ [b] } -- TODO
->     in (e', last (eChain e'))
+> addBlock :: Env -> BHash -> Proof -> (Env, Block)
+> addBlock e pHash proof =
+>   let b = Block pHash
+>                 (length (eChain e))
+>                 (eTXPool e)
+>                 proof
+>       e' = e { eTXPool = [], eChain = eChain e ++ [b] } -- TODO
+>    in (e', last (eChain e'))
 
 > ------------------------------------------------------------------------------
 > -- | Creates a SHA-256 hash of a Block
@@ -189,14 +190,24 @@ https://github.com/dvf/blockchain
 
 > initialize :: Address -> IO IOEnv
 > initialize thisNode =
->   IOR.newIORef (Env [] [genesisBlock] 4 [] thisNode)
+>   IOR.newIORef (initialEnv { eThisNode = thisNode })
 
-> -- | Add a new node to the list of nodes
-> --   Example argument: "http://192.168.0.5:5000"
+> -- | Add a new node address to the list of nodes.
+> --   e.g., "192.168.0.5:5000"
 > registerNodeIO :: IOEnv -> Address -> IO ()
 > registerNodeIO env address =
 >   atomicModifyIORef_ env $ \e ->
 >     e { eNodes = address:eNodes e }
+
+> addTransactionIO :: IOEnv -> Transaction -> IO ()
+> addTransactionIO env tx =
+>   atomicModifyIORef_ env $ \e ->
+>     addTransaction e tx
+
+> -- | add new block containing all TXs in pool to Chain
+> mineIO :: IOEnv -> IO Block
+> mineIO env =
+>   IOR.atomicModifyIORef' env $ \e -> mine e
 
 > resolveConflictsIO :: IOEnv -> IO Bool
 > resolveConflictsIO env = do
@@ -226,30 +237,33 @@ https://github.com/dvf/blockchain
 >     \req s -> do
 >       Log.infoM lBC (tn <> " received request " <> show req)
 >       case Wai.rawPathInfo req of
->         "/mine" -> do
->           b <- fmap show (mineIO env)
->           send s tn H.status200 ("mine " <> b)
 >         "/tx" -> -- POST
 >           case getQ req of
 >             Right tx -> do
 >               addTransactionIO env (TE.decodeUtf8 tx)
 >               sendTxToPeers env (BSL.fromStrict tx)
->               send s tn H.status200 ("/tx " <> show tx)
+>               send200 s tn ("/tx " <> show tx)
 >             Left x ->
 >               badQ s tn "/tx" x
 >         "/tx-no-forward" -> -- POST
 >           case getQ req of
 >             Right tx -> do
 >               addTransactionIO env (TE.decodeUtf8 tx)
->               send s tn H.status200 ("/tx-no-forward " <> show tx)
+>               send200 s tn ("/tx-no-forward " <> show tx)
 >             Left x ->
 >               badQ s tn "/tx-no-forward" x
+>         "/mine" -> do
+>           b <- fmap show (mineIO env)
+>           send200 s tn ("mine " <> b)
+>         "/resolve" -> do
+>           b <- resolveConflictsIO env
+>           send200 s tn ("/resolve " <> show b)
+>         "/chain-only" -> do
+>           chain <- getEnvIO eChain env
+>           send' s H.status200 (show chain)
 >         "/chain" -> do
 >           chain <- getEnvIO eChain env
->           send s tn H.status200 ("chain " <> show (length chain) <> " " <> show chain)
->         "/chain-only" -> do
->           e <- getEnvIO P.id env
->           send' s H.status200 (show (eChain e))
+>           send200 s tn ("chain " <> show (length chain) <> " " <> show chain)
 >         "/register" ->
 >           case getQ req of
 >             Right n -> do
@@ -257,15 +271,13 @@ https://github.com/dvf/blockchain
 >               send s tn H.status200 ("/register " <> show n)
 >             Left x ->
 >               badQ s tn "/register" x
->         "/resolve" -> do
->           b <- resolveConflictsIO env
->           send s tn H.status200 ("/resolve " <> show b)
 >         "/env" -> do
 >           e <- getEnvIO P.id env
->           send s tn H.status200 (show e)
+>           send200 s tn (show e)
 >         x ->
 >           send s tn H.status400 ("received unknown " <> BSC8.unpack x)
 >  where
+>   send200 s tn = send s tn H.status200
 >   send s tn sc r = send' s sc (tn <> " " <> r)
 >   send' s sc rsp = do
 >     Log.infoM lBC rsp
