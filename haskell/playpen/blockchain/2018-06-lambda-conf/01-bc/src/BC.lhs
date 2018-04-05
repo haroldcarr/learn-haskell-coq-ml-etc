@@ -32,37 +32,34 @@ https://hackernoon.com/learn-blockchains-by-building-one-117428612f46
 https://github.com/dvf/blockchain
 
 > data Block = Block
->   { bPreviousHash :: BHash
->   , bIndex        :: BIndex
->   , bTimestamp    :: BTimestamp
->   , bTransactions :: [Transaction]
->   , bProof        :: Proof
+>   { bPrevHash :: BHash
+>   , bIndex    :: BIndex
+>   , bTXs      :: [Transaction]
+>   , bProof    :: Proof
 >   } deriving (Eq, Read, Show)
 
 > type BHash       = BS.ByteString
 > type BIndex      = Int
-> type BTimestamp  = T.Text
 > type Transaction = T.Text
 > type Proof       = Integer
 
 > genesisBlock :: Block
 > genesisBlock = Block
->   { bPreviousHash = "1"
->   , bIndex        = 0
->   , bTimestamp    = "2018-04-01"
->   , bTransactions = []
->   , bProof        = 100
+>   { bPrevHash = "1"
+>   , bIndex    = 0
+>   , bTXs      = []
+>   , bProof    = 100
 >   }
 
 > type Address = T.Text
 > type Chain   = [Block]
->
+
 > data Env = Env
->   { eCurrentTransactions :: [Transaction]
->   , eChain               :: Chain
->   , eProofDifficulty     :: ProofDifficulty
->   , eNodes               :: [Address]
->   , eThisNode            :: Address
+>   { eTXPool          :: [Transaction]
+>   , eChain           :: Chain
+>   , eProofDifficulty :: ProofDifficulty
+>   , eNodes           :: [Address]
+>   , eThisNode        :: Address
 >   } deriving (Eq, Show)
 
 > type ProofDifficulty = Int
@@ -93,9 +90,9 @@ https://github.com/dvf/blockchain
 > --   Otherwise `Left reason`.
 > isValidBlock :: ProofDifficulty -> (Int, Block, Block) -> Either T.Text ()
 > isValidBlock pd (i, validBlock, checkBlock) = do
->   CM.when   (hashBlock validBlock /= bPreviousHash checkBlock)
+>   CM.when   (hashBlock validBlock /= bPrevHash checkBlock)
 >             (Left ("invalid bPrevHash at " <> T.pack (show i)))
->   CM.unless (validProof pd (bProof validBlock) (bPreviousHash checkBlock) (bProof checkBlock))
+>   CM.unless (validProof pd (bProof validBlock) (bPrevHash checkBlock) (bProof checkBlock))
 >             (Left ("invalid bProof at "    <> T.pack (show i)))
 >   return ()
 
@@ -124,17 +121,17 @@ https://github.com/dvf/blockchain
 >             case isValidChain (eProofDifficulty e) chain' of
 >               Right _  ->
 >                 ( e { eChain = chain'
->                     , eCurrentTransactions = resolveTXs e chain'
+>                     , eTXPool = resolveTXs e chain'
 >                     }
 >                 , (True, ""))
 >               Left err ->
 >                 ( e , (False, "resolveConflicts: invalid chain " <> T.unpack err))
 >           else  ( e , (False,  ""))
 >   txsInChain :: Chain -> [Transaction]
->   txsInChain = foldl (\txs b -> txs ++ bTransactions b) []
+>   txsInChain = foldl (\txs b -> txs ++ bTXs b) []
 >   resolveTXs :: Env -> Chain -> [Transaction]
 >   resolveTXs myEnv theirChain =
->     let myPool   = eCurrentTransactions myEnv
+>     let myPool   = eTXPool myEnv
 >         myTXs    = txsInChain (eChain myEnv)
 >         theirTXs = txsInChain theirChain
 >     in (myPool \\ theirTXs) ++ -- remove TXs from my pool that are in their chain
@@ -148,19 +145,17 @@ https://github.com/dvf/blockchain
 >   A.atomicModifyIORefCAS_ env $ \e -> do
 >     let b = newBlock pHash
 >                      (length (eChain e))
->                      "timestamp" -- TODO
->                      (eCurrentTransactions e)
+>                      (eTXPool e)
 >                      proof
->     e { eCurrentTransactions = [], eChain = eChain e ++ [b] } -- TODO
+>     e { eTXPool = [], eChain = eChain e ++ [b] } -- TODO
 >   getLastBlockIO env
 
-> newBlock :: BHash -> BIndex -> BTimestamp -> [Transaction] -> Proof -> Block
-> newBlock pHash index ts txs proof = Block
->   { bPreviousHash = pHash
->   , bIndex        = index
->   , bTimestamp    = ts
->   , bTransactions = txs
->   , bProof        = proof
+> newBlock :: BHash -> BIndex -> [Transaction] -> Proof -> Block
+> newBlock pHash index txs proof = Block
+>   { bPrevHash = pHash
+>   , bIndex    = index
+>   , bTXs      = txs
+>   , bProof    = proof
 >   }
 
 > -- | Creates a new transaction to go into the next mined Block
@@ -168,7 +163,7 @@ https://github.com/dvf/blockchain
 > addTransactionIO :: IORefEnv -> Transaction -> IO BIndex
 > addTransactionIO env tx = do
 >   A.atomicModifyIORefCAS_ env $ \e ->
->     e { eCurrentTransactions = eCurrentTransactions e ++ [tx] } -- TODO
+>     e { eTXPool = eTXPool e ++ [tx] } -- TODO
 >   c <- IOR.readIORef env
 >   return (length (eChain c))
 
@@ -217,11 +212,13 @@ https://github.com/dvf/blockchain
 >   lastBlock <- getLastBlockIO env
 >   pd <- fmap eProofDifficulty (IOR.readIORef env)
 >   let proof = proofOfWork pd lastBlock
+>   {- DO NOT DO: because of problems with simple resolution mechanism
 >   tn <- fmap eThisNode (IOR.readIORef env)
 >   -- miner receives a reward for finding the proof.
 >   -- sender "0" signifies minted a new coin.
 >   let tx = "sender=0;recipient=" <> tn <> ";amount=1"
 >   addTransactionIO env tx
+>   -}
 >   -- add new Block to chain
 >   let pHash = hashBlock lastBlock
 >   addBlockIO env pHash proof

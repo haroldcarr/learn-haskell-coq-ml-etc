@@ -17,21 +17,21 @@ testEvidence :: Spec
 testEvidence =
   describe "evidence" $ do
     it "from genesisBlock" $
-      evidence 100 (hashBlock genesisBlock)      658
+      evidence (bProof genesisBlock) (hashBlock genesisBlock)          (bProof (eChain e1 !! 1))
       `shouldBe`
-      "00008E338D7F687AA9D16C30DF1C97890E6E21A68E8D211DF99B82D5E2FB9D62"
+      "0000DDF9FB09F9A9C5A0EF57DC3E2916633BEDB95B38D54BDBFFF0B7D4D6E515"
     it "from genesisBlock + 1" $
-      evidence 658 (hashBlock (eChain e1 !! 1))  983
+      evidence (bProof (eChain e1 !! 1)) (hashBlock (eChain e1 !! 1))  3805
       `shouldBe`
-      "0000FB09CDF68DACB03352042B17737EE75C6D2754E082DCFFEBA0DC557FE226"
+      "0000C5DD35BB87E83CFF98E2CE3D27C3CF7704362045D7D111B2F2D6D6C9DC03"
 
 testProofOfWork :: Spec
 testProofOfWork =
   describe "proofOfWork" $ do
     it "from genesisBlock" $
-      proofOfWork 4 genesisBlock `shouldBe`      658
+      proofOfWork 4 genesisBlock `shouldBe`          bProof (eChain e1 !! 1)
     it "from genesisBlock + 1" $
-      proofOfWork 4 (eChain e1 !! 1) `shouldBe`  983
+      proofOfWork 4 (eChain e1 !! 1) `shouldBe`      3805
 
 testIsValidChain :: Spec
 testIsValidChain =
@@ -41,7 +41,7 @@ testIsValidChain =
     it "valid genesis" $
       isValidChain 4 [genesisBlock] `shouldBe` Right ()
     it "invalid genesis" $
-      let bg = genesisBlock { bTimestamp = "" }
+      let bg = genesisBlock { bIndex = 6 }
       in isValidChain 4 [bg] `shouldBe` Left "invalid genesis block"
     it "valid e1" $
       isValidChain 4 (eChain e1) `shouldBe` Right ()
@@ -78,107 +78,89 @@ testResolveConflicts =
 -- test data
 
 e0 :: Env
-e0 = Env { eCurrentTransactions = []
-         , eChain = [Block { bPreviousHash = "1"
-                           , bIndex = 0
-                           , bTimestamp = "2018-04-01"
-                           , bTransactions = []
-                           , bProof = 100
-                           }
-                    ]
+e0 = Env { eTXPool = []
+         , eChain = [genesisBlock]
          , eProofDifficulty = 4
          , eNodes = []
          , eThisNode = ""
          }
 
 e0' :: Env
-e0' = e0 { eCurrentTransactions = ["TX-0","TX-should-stay"] }
+e0' = e0 { eTXPool = ["TX-0","TX-should-stay"] }
 
 makeChain :: BHash -> Proof -> [Block]
 makeChain ph p =
-  [Block { bPreviousHash = "1"
-         , bIndex = 0
-         , bTimestamp = "2018-04-01"
-         , bTransactions = []
-         , bProof = 100
-         }
-  ,Block { bPreviousHash = ph
+  [genesisBlock
+  ,Block { bPrevHash = ph
          , bIndex = 1
-         , bTimestamp = "timestamp"
-         , bTransactions = ["TX-0","sender=0;recipient=3000;amount=1"]
+         , bTXs = ["TX-0"]
          , bProof = p
          }
   ]
 
 e1 :: Env
-e1 = Env { eCurrentTransactions = []
-         , eChain = makeChain "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202" 658
+e1 = Env { eTXPool = []
+         , eChain = makeChain (hashBlock genesisBlock) 134530
          , eProofDifficulty = 4
          , eNodes = []
          , eThisNode = ""
          }
 
 e1' :: Env
-e1' = e1 { eCurrentTransactions = ["TX-should-stay"] }
+e1' = e1 { eTXPool = ["TX-should-stay"] }
 
 e1'' :: Env
 e1'' = e1 { eChain = makeChain "X" 658 }
 
 e1''' :: Env
-e1''' = e1 { eChain = makeChain "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202" 0 }
+e1''' = e1 { eChain = makeChain (hashBlock genesisBlock) 0 }
 
 ------------------------------------------------------------------------------
 -- data to ensure TXs not lost
 
 e1NotLost :: Env
 e1NotLost = Env
-  { eCurrentTransactions = []
+  { eTXPool = []
   , eChain =
-    [ Block { bPreviousHash = "1"
-            , bIndex = 0
-            , bTimestamp = "2018-04-01"
-            , bTransactions = []
-            , bProof = 100
-            }
-    , Block { bPreviousHash = "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202"
+    [ genesisBlock
+    , Block { bPrevHash = hashBlock genesisBlock
             , bIndex = 1
-            , bTimestamp = "timestamp"
-            , bTransactions = ["TX1","TX2","sender=0;recipient=3001;amount=1"]
-            , bProof = 658
+            , bTXs = ["TX1","TX2"]
+            , bProof = bProof (eChain e1 !! 1)
             }
     ]
-  , eProofDifficulty = 4
-  , eNodes = []
-  , eThisNode = ""
+  , eProofDifficulty = 4, eNodes = [], eThisNode = ""
   }
 
 e2NotLost :: Env
 e2NotLost = Env
-  { eCurrentTransactions = []
+  { eTXPool = []
   , eChain =
-    [ Block { bPreviousHash = "1"
-            , bIndex = 0
-            , bTimestamp = "2018-04-01"
-            , bTransactions = []
-            , bProof = 100
-            }
-    , Block { bPreviousHash = "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202"
+    [ genesisBlock
+    , Block { bPrevHash = hashBlock genesisBlock
             , bIndex = 1
-            , bTimestamp = "timestamp"
-            , bTransactions = ["TX1","sender=0;recipient=3001;amount=1"]
-            , bProof = 658
+            , bTXs = ["TX1"]
+            , bProof = bProof (eChain e1 !! 1)
             }
-    , Block { bPreviousHash = "e\174\236\237\133\231A\212~\224\f|\158\SO\131`\244\ETX?\218]\144\251.7]Q\CAN\227\206l\DEL"
+    , Block { bPrevHash = "\233\237\222\222E\138\254\241k\232\151\DLE\177\175g\191\134e\248q\158\153V^\182\244r\156\187.\244\193"
             , bIndex = 2
-            , bTimestamp = "timestamp"
-            , bTransactions = ["TX3","sender=0;recipient=3001;amount=1"]
-            , bProof = 749
+            , bTXs = ["TX3"]
+            , bProof = 52668
             }
     ]
-  , eProofDifficulty = 4
-  , eNodes = []
-  , eThisNode = ""
+  , eProofDifficulty = 4, eNodes = [], eThisNode = ""
   }
 
 e1NotLastAfterResolve :: Env
-e1NotLastAfterResolve = e2NotLost { eCurrentTransactions = ["TX2"] }
+e1NotLastAfterResolve = e2NotLost { eTXPool = ["TX2"] }
+
+{-
+:set -XOverloadedStrings
+import           Data.List                            ((\\))
+txsInChain = foldl (\txs b -> txs ++ bTXs b) []
+myPool   = eTXPool e1NotLost
+myTXs    = txsInChain (eChain e1NotLost)
+theirTXs = txsInChain (eChain e2NotLost)
+myPool \\ theirTXs -- remove TXs from my pool that are in their chain
+myTXs  \\ theirTXs -- add TXs from my chain that are not in their chain
+-}
