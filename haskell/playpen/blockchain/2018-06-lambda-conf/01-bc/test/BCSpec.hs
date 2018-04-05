@@ -58,6 +58,7 @@ testResolveConflicts =
         r3 = resolveConflicts e0' [eChain e1]
         r4 = resolveConflicts e0  [eChain e1'']
         r5 = resolveConflicts e0  [eChain e1''']
+        r6 = resolveConflicts e1NotLost [eChain e2NotLost]
     in do
       it "found longer chain" $
         r0 `shouldBe` (e1 , (True , ""))
@@ -69,6 +70,9 @@ testResolveConflicts =
         r4 `shouldBe` (e0 , (False, "resolveConflicts: invalid chain invalid bPrevHash at 1"))
       it "invalid proof of work" $
         r5 `shouldBe` (e0 , (False, "resolveConflicts: invalid chain invalid bProof at 1"))
+      it "should not drop TX" $
+        r6 `shouldBe` (e1NotLastAfterResolve
+                      , (True, ""))
 
 ------------------------------------------------------------------------------
 -- test data
@@ -123,6 +127,58 @@ e1'' = e1 { eChain = makeChain "X" 658 }
 e1''' :: Env
 e1''' = e1 { eChain = makeChain "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202" 0 }
 
-{-
-mapM_ (\x -> print $ (x, evidence 658 "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202" x)) [0 ..]
--}
+------------------------------------------------------------------------------
+-- data to ensure TXs not lost
+
+e1NotLost :: Env
+e1NotLost = Env
+  { eCurrentTransactions = []
+  , eChain =
+    [ Block { bPreviousHash = "1"
+            , bIndex = 0
+            , bTimestamp = "2018-04-01"
+            , bTransactions = []
+            , bProof = 100
+            }
+    , Block { bPreviousHash = "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202"
+            , bIndex = 1
+            , bTimestamp = "timestamp"
+            , bTransactions = ["TX1","TX2","sender=0;recipient=3001;amount=1"]
+            , bProof = 658
+            }
+    ]
+  , eProofDifficulty = 4
+  , eNodes = []
+  , eThisNode = ""
+  }
+
+e2NotLost :: Env
+e2NotLost = Env
+  { eCurrentTransactions = []
+  , eChain =
+    [ Block { bPreviousHash = "1"
+            , bIndex = 0
+            , bTimestamp = "2018-04-01"
+            , bTransactions = []
+            , bProof = 100
+            }
+    , Block { bPreviousHash = "B\175\211(+q\SOHW3\ETX2?\NAK\244\241P\244\198\209\241\157\200!\212\a\226\219\227\164\175\186\202"
+            , bIndex = 1
+            , bTimestamp = "timestamp"
+            , bTransactions = ["TX1","sender=0;recipient=3001;amount=1"]
+            , bProof = 658
+            }
+    , Block { bPreviousHash = "e\174\236\237\133\231A\212~\224\f|\158\SO\131`\244\ETX?\218]\144\251.7]Q\CAN\227\206l\DEL"
+            , bIndex = 2
+            , bTimestamp = "timestamp"
+            , bTransactions = ["TX3","sender=0;recipient=3001;amount=1"]
+            , bProof = 749
+            }
+    ]
+  , eProofDifficulty = 4
+  , eNodes = []
+  , eThisNode = ""
+  }
+
+e1NotLastAfterResolve :: Env
+e1NotLastAfterResolve = e2NotLost { eCurrentTransactions = ["TX2"] }
