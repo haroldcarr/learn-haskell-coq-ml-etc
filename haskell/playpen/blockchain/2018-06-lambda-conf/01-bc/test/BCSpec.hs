@@ -49,35 +49,34 @@ testIsValidChain =
     it "valid e1" $
       isValidChain 4 (eChain e1) `shouldBe` Right ()
     it "invalid previous hash" $
-      isValidChain 4 (eChain e1'') `shouldBe` Left "invalid bPrevHash at 1"
+      isValidChain 4 (eChain e1BadPHash) `shouldBe` Left "invalid bPrevHash at 1"
     it "invalid proof" $
-      isValidChain 4 (eChain e1''') `shouldBe` Left "invalid bProof at 1"
+      isValidChain 4 (eChain e1BadProof) `shouldBe` Left "invalid bProof at 1"
 
 testResolveConflicts :: Spec
 testResolveConflicts =
-  describe "ResolveConflicts" $
-    let r0 = resolveConflicts initialEnv  [eChain e1]
-        r1 = resolveConflicts e1          [eChain initialEnv]
-        r3 = resolveConflicts e0'         [eChain e1]
-        r4 = resolveConflicts initialEnv  [eChain e1'']
-        r5 = resolveConflicts initialEnv  [eChain e1''']
-        r6 = resolveConflicts e1NotLost   [eChain e2NotLost]
-    in do
-      it "found longer chain" $
-        r0 `shouldBe` (e1 , (True , ""))
-      it "no    longer chain" $
-        r1 `shouldBe` (e1 , (False, ""))
-      it "found longer chain and pool update" $
-        r3 `shouldBe` (e1', (True , ""))
-      it "invalid previous hash" $
-        r4 `shouldBe` (initialEnv
-                      , (False, "resolveConflicts: invalid chain invalid bPrevHash at 1"))
-      it "invalid proof of work" $
-        r5 `shouldBe` (initialEnv
-                      , (False, "resolveConflicts: invalid chain invalid bProof at 1"))
-      it "should not drop TX" $
-        r6 `shouldBe` (e1NotLastAfterResolve
-                      , (True, ""))
+  describe "ResolveConflicts" $ do
+    it "found longer chain" $
+      resolveConflicts initialEnv  [eChain e1]
+      `shouldBe` (e1 , (True , ""))
+    it "no    longer chain" $
+      resolveConflicts e1          [eChain initialEnv]
+      `shouldBe` (e1 , (False, ""))
+    it "found longer chain and pool update" $
+      resolveConflicts e0'         [eChain e1]
+      `shouldBe` (e1', (True , ""))
+    it "invalid previous hash" $
+      resolveConflicts initialEnv  [eChain e1BadPHash]
+      `shouldBe` (initialEnv
+                 , (False, "resolveConflicts: invalid chain invalid bPrevHash at 1"))
+    it "invalid proof of work" $
+      resolveConflicts initialEnv  [eChain e1BadProof]
+      `shouldBe` (initialEnv
+                 , (False, "resolveConflicts: invalid chain invalid bProof at 1"))
+    it "should not drop TX" $
+      resolveConflicts e1NotLost   [eChain e2NotLost]
+      `shouldBe` (e1NotLastAfterResolve
+                 , (True, ""))
 
 ------------------------------------------------------------------------------
 -- test data
@@ -96,21 +95,16 @@ makeChain ph p =
   ]
 
 e1 :: Env
-e1 = Env { eTXPool = []
-         , eChain = makeChain (hashBlock genesisBlock) 134530
-         , eProofDifficulty = 4
-         , eNodes = []
-         , eThisNode = ""
-         }
+(e1,_) = mine (addTransaction initialEnv "TX-0")
 
 e1' :: Env
 e1' = e1 { eTXPool = ["TX-should-stay"] }
 
-e1'' :: Env
-e1'' = e1 { eChain = makeChain "X" 658 }
+e1BadPHash :: Env
+e1BadPHash = e1 { eChain = makeChain "X" 658 }
 
-e1''' :: Env
-e1''' = e1 { eChain = makeChain (hashBlock genesisBlock) 0 }
+e1BadProof :: Env
+e1BadProof = e1 { eChain = makeChain (hashBlock genesisBlock) 0 }
 
 ------------------------------------------------------------------------------
 -- data to ensure TXs not lost
