@@ -6,7 +6,6 @@
 >
 > import qualified Control.Monad                        as CM
 > import qualified Crypto.Hash.SHA256                   as SHA
-> import qualified Data.Atomics                         as A
 > import qualified Data.ByteString                      as BS
 > import qualified Data.ByteString.Lazy                 as BSL
 > import qualified Data.ByteString.Builder              as BSB
@@ -50,7 +49,7 @@ https://github.com/dvf/blockchain
 > ------------------------------------------------------------------------------
 > addTransactionIO :: IOEnv -> Transaction -> IO ()
 > addTransactionIO env tx =
->   A.atomicModifyIORefCAS_ env $ \e ->
+>   atomicModifyIORef_ env $ \e ->
 >     e { eTXPool = eTXPool e ++ [tx] } -- TODO
 
 > data Env = Env
@@ -76,14 +75,14 @@ https://github.com/dvf/blockchain
 
 > -- | add new block containing all TXs in pool to Chain
 > addBlockIO :: IOEnv -> BHash -> Proof -> IO Block
-> addBlockIO env pHash proof = do
->   A.atomicModifyIORefCAS_ env $ \e -> do
+> addBlockIO env pHash proof =
+>   IOR.atomicModifyIORef' env $ \e ->
 >     let b = Block pHash
 >                   (length (eChain e))
 >                   (eTXPool e)
 >                   proof
->     e { eTXPool = [], eChain = eChain e ++ [b] } -- TODO
->   getEnvIO (last . eChain) env
+>         e' = e { eTXPool = [], eChain = eChain e ++ [b] } -- TODO
+>     in (e', last (eChain e'))
 
 > ------------------------------------------------------------------------------
 > -- | Creates a SHA-256 hash of a Block
@@ -193,7 +192,7 @@ https://github.com/dvf/blockchain
 > --   Example argument: "http://192.168.0.5:5000"
 > registerNodeIO :: IOEnv -> Address -> IO ()
 > registerNodeIO env address =
->   A.atomicModifyIORefCAS_ env $ \e ->
+>   atomicModifyIORef_ env $ \e ->
 >     e { eNodes = address:eNodes e }
 
 > resolveConflictsIO :: IOEnv -> IO Bool
@@ -288,3 +287,7 @@ https://github.com/dvf/blockchain
 >   nodes <- getEnvIO eNodes env
 >   CM.forM_ nodes $ \n ->
 >     httpRequest ("http://" <> T.unpack n <> "/tx-no-forward?" <> BSLC8.unpack tx)
+
+> atomicModifyIORef_ :: IOR.IORef a -> (a -> a) -> IO ()
+> atomicModifyIORef_ i f =
+>   IOR.atomicModifyIORef' i (\a -> (f a, ()))
