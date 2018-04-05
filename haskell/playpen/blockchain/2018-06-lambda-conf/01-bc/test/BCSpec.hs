@@ -1,7 +1,10 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module BCSpec where
 
+import           Prelude    ((!!))
+import           Protolude
 import           Test.Hspec
 ------------------------------------------------------------------------------
 import           BC

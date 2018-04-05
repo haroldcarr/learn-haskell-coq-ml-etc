@@ -1,5 +1,6 @@
 > {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 >
+> {-# LANGUAGE NoImplicitPrelude #-}
 > {-# LANGUAGE OverloadedStrings #-}
 >
 > module BC where
@@ -11,7 +12,7 @@
 > import qualified Data.ByteString.Builder              as BSB
 > import qualified Data.ByteString.Char8                as BSC8
 > import qualified Data.ByteString.Lazy.Char8           as BSLC8
-> import           Data.List                            ((\\))
+> import           Data.List                            ((\\), last)
 > import qualified Data.Hex                             as Hex
 > import qualified Data.IORef                           as IOR
 > import           Data.Monoid                          ((<>))
@@ -22,9 +23,11 @@
 > import qualified Network.Wai                          as Wai
 > import qualified Network.Wai.Handler.Warp             as Wai
 > import qualified Network.Wai.Middleware.RequestLogger as Wai
+> import qualified Prelude                              as P
+> import           Protolude                            hiding (hash)
 > import qualified System.Log.Logger                    as Log
 
-> lBC :: String
+> lBC :: P.String
 > lBC = "BC"
 
 https://hackernoon.com/learn-blockchains-by-building-one-117428612f46
@@ -131,7 +134,7 @@ https://github.com/dvf/blockchain
 > --   Returns (updated-environment, (True, "") if chain was replaced.
 > --   Returns (given-environment, (False, "") if chain was NOT replaced.
 > --   Returns (given-environment, (False, failure-reason) if the new chain was not valid
-> resolveConflicts :: Env -> [Chain] -> (Env, (Bool, String))
+> resolveConflicts :: Env -> [Chain] -> (Env, (Bool, P.String))
 > resolveConflicts e chains = go
 >  where
 >   -- TODO : check that foldr looks at all results
@@ -159,10 +162,10 @@ https://github.com/dvf/blockchain
 > -- | Determine if a given blockchain is valid
 > isValidChain :: ProofDifficulty -> Chain -> Either T.Text ()
 > isValidChain pd bc = do
->   CM.when (null bc)                                   (Left "empty blockchain")
->   CM.when (length bc == 1 && head bc /= genesisBlock) (Left "invalid genesis block")
+>   CM.when (null bc)                                     (Left "empty blockchain")
+>   CM.when (length bc == 1 && P.head bc /= genesisBlock) (Left "invalid genesis block")
 >   -- `sequence_` causes function to return on/with first `Left` value
->   sequence_ (map (isValidBlock pd) (Prelude.zip3 [1 .. ] bc (Prelude.tail bc)))
+>   sequence_ (map (isValidBlock pd) (P.zip3 [1 .. ] bc (P.tail bc)))
 >   return ()
 
 > -- | Given a valid previous block and a block to check.
@@ -200,17 +203,17 @@ https://github.com/dvf/blockchain
 >   nodes  <- getEnvIO eNodes env
 >   chains <- CM.forM nodes $ \n -> do
 >     (status, body) <- httpRequest ("http://" <> T.unpack n <> "/chain-only")
->     return $ if status == 200 then read (BSLC8.unpack body)
+>     return $ if status == 200 then P.read (BSLC8.unpack body)
 >              else []
 >   (b, err) <- IOR.atomicModifyIORef' env $ \e -> resolveConflicts e chains
 >   if b then return b else do Log.infoM lBC err; return b
 
-> run :: [String] -> IO ()
+> run :: [P.String] -> IO ()
 > run args = do
 >   Log.updateGlobalLogger lBC (Log.setLevel Log.DEBUG)
 >   let port = case args of
->        ("-p":p:_) -> read p
->        ("-h":_)   -> error "'-p', '--port', default=5000, 'port to listen on'"
+>        ("-p":p:_) -> P.read p
+>        ("-h":_)   -> P.error "'-p', '--port', default=5000, 'port to listen on'"
 >        _          -> 3000
 >   env <- initialize (T.pack (show port))
 >   run' port env
@@ -245,7 +248,7 @@ https://github.com/dvf/blockchain
 >           chain <- getEnvIO eChain env
 >           send s tn H.status200 ("chain " <> show (length chain) <> " " <> show chain)
 >         "/chain-only" -> do
->           e <- getEnvIO id env
+>           e <- getEnvIO P.id env
 >           send' s H.status200 (show (eChain e))
 >         "/register" ->
 >           case getQ req of
@@ -258,7 +261,7 @@ https://github.com/dvf/blockchain
 >           b <- resolveConflictsIO env
 >           send s tn H.status200 ("/resolve " <> show b)
 >         "/env" -> do
->           e <- getEnvIO id env
+>           e <- getEnvIO P.id env
 >           send s tn H.status200 (show e)
 >         x ->
 >           send s tn H.status400 ("received unknown " <> BSC8.unpack x)
@@ -274,7 +277,7 @@ https://github.com/dvf/blockchain
 >     Log.infoM lBC rsp
 >     send s tn H.status400 rsp
 
-> httpRequest :: String -> IO (Int, BSL.ByteString)
+> httpRequest :: P.String -> IO (Int, BSL.ByteString)
 > httpRequest url = do
 >   manager  <- H.newManager H.defaultManagerSettings
 >   request  <- H.parseRequest url
