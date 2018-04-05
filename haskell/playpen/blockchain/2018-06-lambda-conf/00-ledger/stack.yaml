@@ -1,6 +1,6 @@
-resolver: lts-10.8
+resolver: lts-11.3
 packages:
 - .
-extra-deps: [rio-0.0.3.0]
+extra-deps: [rio-0.1.0.0, thyme-0.3.5.5]
 # flags: {}
 # extra-package-dbs: []

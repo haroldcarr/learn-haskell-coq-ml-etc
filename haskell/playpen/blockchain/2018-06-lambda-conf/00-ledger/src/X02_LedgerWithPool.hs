@@ -8,7 +8,6 @@ module X02_LedgerWithPool where
 import qualified Control.Concurrent                 as CC
 import qualified Control.Concurrent.Async           as Async
 import qualified Data.Concurrent.Queue.MichaelScott as Q
-import           Data.Monoid                        ((<>))
 import qualified Data.Text.Encoding                 as TE
 import           RIO
 import qualified System.Log.Logger                  as Log

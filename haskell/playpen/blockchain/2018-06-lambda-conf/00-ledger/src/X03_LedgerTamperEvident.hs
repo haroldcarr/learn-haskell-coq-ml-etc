@@ -11,7 +11,6 @@ import qualified Data.Atomics                       as A
 import qualified Data.ByteString                    as BS
 import qualified Data.Concurrent.Queue.MichaelScott as Q
 import qualified Data.IORef                         as IOR
-import           Data.Monoid                        ((<>))
 import qualified Data.Sequence                      as Seq
 import qualified Data.Text                          as T
 import qualified Data.Text.Encoding                 as TE

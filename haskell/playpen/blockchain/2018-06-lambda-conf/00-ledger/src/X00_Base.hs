@@ -11,7 +11,6 @@ import           Control.Monad.IO.Class               (liftIO)
 import qualified Data.ByteString                      as BS
 import qualified Data.ByteString.Builder              as BSB
 import qualified Data.ByteString.Char8                as BSC8
-import           Data.Monoid                          ((<>))
 import qualified Data.Text.Encoding                   as TE
 import qualified Data.Thyme                           as Time
 import qualified Network                              as N
