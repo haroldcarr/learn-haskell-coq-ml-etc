@@ -124,14 +124,21 @@ https://github.com/dvf/blockchain
 >             case isValidChain (eProofDifficulty e) chain' of
 >               Right _  ->
 >                 ( e { eChain = chain'
->                     , eCurrentTransactions = resolveTXs (eCurrentTransactions e) chain'
+>                     , eCurrentTransactions = resolveTXs e chain'
 >                     }
 >                 , (True, ""))
 >               Left err ->
 >                 ( e , (False, "resolveConflicts: invalid chain " <> T.unpack err))
 >           else  ( e , (False,  ""))
->   resolveTXs :: [Transaction] -> Chain -> [Transaction]
->   resolveTXs = foldl (\txs b -> txs \\ bTransactions b)
+>   txsInChain :: Chain -> [Transaction]
+>   txsInChain = foldl (\txs b -> txs ++ bTransactions b) []
+>   resolveTXs :: Env -> Chain -> [Transaction]
+>   resolveTXs myEnv theirChain =
+>     let myPool   = eCurrentTransactions myEnv
+>         myTXs    = txsInChain (eChain myEnv)
+>         theirTXs = txsInChain theirChain
+>     in (myPool \\ theirTXs) ++ -- remove TXs from my pool that are in their chain
+>        (myTXs  \\ theirTXs)    -- add TXs from my chain that are not in their chain
 
 > -- | Create a new Block and add it to the Chain
 > --   previousHash: Hash of previous Block
