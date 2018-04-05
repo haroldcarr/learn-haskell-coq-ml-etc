@@ -20,7 +20,7 @@ testEvidence :: Spec
 testEvidence =
   describe "evidence" $ do
     it "from genesisBlock" $
-      evidence (bProof genesisBlock) (hashBlock genesisBlock)          (bProof (eChain e1 !! 1))
+      evidence (bProof genesisBlock) (hashBlock genesisBlock) (proofOfWork 4 genesisBlock)
       `shouldBe`
       "0000DDF9FB09F9A9C5A0EF57DC3E2916633BEDB95B38D54BDBFFF0B7D4D6E515"
     it "from genesisBlock + 1" $
@@ -56,12 +56,12 @@ testIsValidChain =
 testResolveConflicts :: Spec
 testResolveConflicts =
   describe "ResolveConflicts" $
-    let r0 = resolveConflicts e0  [eChain e1]
-        r1 = resolveConflicts e1  [eChain e0]
-        r3 = resolveConflicts e0' [eChain e1]
-        r4 = resolveConflicts e0  [eChain e1'']
-        r5 = resolveConflicts e0  [eChain e1''']
-        r6 = resolveConflicts e1NotLost [eChain e2NotLost]
+    let r0 = resolveConflicts initialEnv  [eChain e1]
+        r1 = resolveConflicts e1          [eChain initialEnv]
+        r3 = resolveConflicts e0'         [eChain e1]
+        r4 = resolveConflicts initialEnv  [eChain e1'']
+        r5 = resolveConflicts initialEnv  [eChain e1''']
+        r6 = resolveConflicts e1NotLost   [eChain e2NotLost]
     in do
       it "found longer chain" $
         r0 `shouldBe` (e1 , (True , ""))
@@ -70,9 +70,11 @@ testResolveConflicts =
       it "found longer chain and pool update" $
         r3 `shouldBe` (e1', (True , ""))
       it "invalid previous hash" $
-        r4 `shouldBe` (e0 , (False, "resolveConflicts: invalid chain invalid bPrevHash at 1"))
+        r4 `shouldBe` (initialEnv
+                      , (False, "resolveConflicts: invalid chain invalid bPrevHash at 1"))
       it "invalid proof of work" $
-        r5 `shouldBe` (e0 , (False, "resolveConflicts: invalid chain invalid bProof at 1"))
+        r5 `shouldBe` (initialEnv
+                      , (False, "resolveConflicts: invalid chain invalid bProof at 1"))
       it "should not drop TX" $
         r6 `shouldBe` (e1NotLastAfterResolve
                       , (True, ""))
@@ -80,16 +82,8 @@ testResolveConflicts =
 ------------------------------------------------------------------------------
 -- test data
 
-e0 :: Env
-e0 = Env { eTXPool = []
-         , eChain = [genesisBlock]
-         , eProofDifficulty = 4
-         , eNodes = []
-         , eThisNode = ""
-         }
-
 e0' :: Env
-e0' = e0 { eTXPool = ["TX-0","TX-should-stay"] }
+e0' = initialEnv { eTXPool = ["TX-0","TX-should-stay"] }
 
 makeChain :: BHash -> Proof -> [Block]
 makeChain ph p =

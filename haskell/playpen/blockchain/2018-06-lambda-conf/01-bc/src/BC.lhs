@@ -67,7 +67,7 @@ https://github.com/dvf/blockchain
 > type Address         = T.Text
 
 > initialEnv :: Env
-> initialEnv = Env [] [genesisBlock] 4 [] "to-be-replace-with-node-address"
+> initialEnv = Env [] [genesisBlock] 4 [] ""
 
 > ------------------------------------------------------------------------------
 > mine :: Env -> (Env, Block)
