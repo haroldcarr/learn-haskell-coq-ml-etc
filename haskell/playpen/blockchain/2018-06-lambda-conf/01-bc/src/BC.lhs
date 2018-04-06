@@ -50,43 +50,40 @@ https://github.com/dvf/blockchain
 > genesisBlock = Block "1" 0 [] 100
 
 > ------------------------------------------------------------------------------
-> addTransaction :: Env -> Transaction -> Env
+> addTransaction :: BCState -> Transaction -> BCState
 > addTransaction e tx =
->   e { eTXPool = eTXPool e ++ [tx] } -- TODO
+>   e { bcTXPool = bcTXPool e ++ [tx] } -- TODO
 
-> data Env = Env
->   { eTXPool          :: [Transaction]
->   , eChain           :: Chain
->   , eProofDifficulty :: ProofDifficulty
->   , eNodes           :: [Address]
->   , eThisNode        :: Address
+> data BCState = BCState
+>   { bcTXPool          :: [Transaction]
+>   , bcChain           :: Chain
+>   , bcProofDifficulty :: ProofDifficulty
 >   } deriving (Eq, Show)
 
 > type Chain           = [Block]
 > type ProofDifficulty = Int
-> type Address         = T.Text
 
-> initialEnv :: Env
-> initialEnv = Env [] [genesisBlock] 4 [] ""
+> initialBCState :: BCState
+> initialBCState = BCState [] [genesisBlock] 4
 
 > ------------------------------------------------------------------------------
-> mine :: Env -> (Env, Block)
+> mine :: BCState -> (BCState, Block)
 > mine e =
->   let lastBlock = last (eChain e)
->       pd        = eProofDifficulty e
+>   let lastBlock = last (bcChain e)
+>       pd        = bcProofDifficulty e
 >       proof     = proofOfWork pd lastBlock
 >       pHash     = hashBlock lastBlock
 >    in addBlock e pHash proof
 
 > -- | add new block containing all TXs in pool to Chain
-> addBlock :: Env -> BHash -> Proof -> (Env, Block)
+> addBlock :: BCState -> BHash -> Proof -> (BCState, Block)
 > addBlock e pHash proof =
 >   let b = Block pHash
->                 (length (eChain e))
->                 (eTXPool e)
+>                 (length (bcChain e))
+>                 (bcTXPool e)
 >                 proof
->       e' = e { eTXPool = [], eChain = eChain e ++ [b] } -- TODO
->    in (e', last (eChain e'))
+>       e' = e { bcTXPool = [], bcChain = bcChain e ++ [b] } -- TODO
+>    in (e', last (bcChain e'))
 
 > ------------------------------------------------------------------------------
 > -- | Creates a SHA-256 hash of a Block
@@ -135,16 +132,16 @@ https://github.com/dvf/blockchain
 > --   Returns (updated-environment, (True, "") if chain was replaced.
 > --   Returns (given-environment, (False, "") if chain was NOT replaced.
 > --   Returns (given-environment, (False, failure-reason) if the new chain was not valid
-> resolveConflicts :: Env -> [Chain] -> (Env, (Bool, P.String))
+> resolveConflicts :: BCState -> [Chain] -> (BCState, (Bool, P.String))
 > resolveConflicts e chains = go
 >  where
 >   -- TODO : check that foldr looks at all results
->   go = let chain' = foldr (\a b -> if length a > length b then a else b) (eChain e) chains
->        in if eChain e /= chain' then
->             case isValidChain (eProofDifficulty e) chain' of
+>   go = let chain' = foldr (\a b -> if length a > length b then a else b) (bcChain e) chains
+>        in if bcChain e /= chain' then
+>             case isValidChain (bcProofDifficulty e) chain' of
 >               Right _  ->
->                 ( e { eChain = chain'
->                     , eTXPool = resolveTXs e chain'
+>                 ( e { bcChain = chain'
+>                     , bcTXPool = resolveTXs e chain'
 >                     }
 >                 , (True, ""))
 >               Left err ->
@@ -152,10 +149,10 @@ https://github.com/dvf/blockchain
 >           else  ( e , (False,  ""))
 >   txsInChain :: Chain -> [Transaction]
 >   txsInChain = foldl (\txs b -> txs ++ bTXs b) []
->   resolveTXs :: Env -> Chain -> [Transaction]
->   resolveTXs myEnv theirChain =
->     let myPool   = eTXPool myEnv
->         myTXs    = txsInChain (eChain myEnv)
+>   resolveTXs :: BCState -> Chain -> [Transaction]
+>   resolveTXs myBCState theirChain =
+>     let myPool   = bcTXPool myBCState
+>         myTXs    = txsInChain (bcChain myBCState)
 >         theirTXs = txsInChain theirChain
 >     in (myPool \\ theirTXs) ++ -- remove TXs from my pool that are in their chain
 >        (myTXs  \\ theirTXs)    -- add TXs from my chain that are not in their chain
@@ -183,14 +180,27 @@ https://github.com/dvf/blockchain
 ------------------------------------------------------------------------------
 -- IO
 
-> type IOEnv = IOR.IORef Env
+> data IOState = IOState
+>   { eBCState  :: BCState
+>   , eNodes    :: [Address]
+>   , eThisNode :: Address
+>   } deriving (Eq, Show)
 
-> getEnvIO :: (Env -> a) -> IOEnv -> IO a
-> getEnvIO f = fmap f . IOR.readIORef
+> type Address = T.Text
+> type IOEnv   = IOR.IORef IOState
 
-> initialize :: Address -> IO IOEnv
-> initialize thisNode =
->   IOR.newIORef (initialEnv { eThisNode = thisNode })
+> initializeIOEnv :: Address -> IO IOEnv
+> initializeIOEnv thisNode =
+>   IOR.newIORef (IOState initialBCState [] thisNode)
+
+> getIOStateIO :: (IOState -> a) -> IOEnv -> IO a
+> getIOStateIO f = fmap f . IOR.readIORef
+
+> getBCStateIO :: (BCState -> a) -> IOEnv -> IO a
+> getBCStateIO f = fmap (f . eBCState) . IOR.readIORef
+
+> setBCState :: IOState -> BCState -> IOState
+> setBCState ios bcs = ios { eBCState = bcs }
 
 > -- | Add a new node address to the list of nodes.
 > --   e.g., "192.168.0.5:5000"
@@ -202,21 +212,26 @@ https://github.com/dvf/blockchain
 > addTransactionIO :: IOEnv -> Transaction -> IO ()
 > addTransactionIO env tx =
 >   atomicModifyIORef_ env $ \e ->
->     addTransaction e tx
+>     setBCState e (addTransaction (eBCState e) tx)
 
 > -- | add new block containing all TXs in pool to Chain
 > mineIO :: IOEnv -> IO Block
 > mineIO env =
->   IOR.atomicModifyIORef' env $ \e -> mine e
+>   IOR.atomicModifyIORef' env $ \e ->
+>     let (s,b) = mine (eBCState e)
+>      in (setBCState e s, b)
 
 > resolveConflictsIO :: IOEnv -> IO Bool
 > resolveConflictsIO env = do
->   nodes  <- getEnvIO eNodes env
+>   nodes  <- getIOStateIO eNodes env
 >   chains <- CM.forM nodes $ \n -> do
 >     (status, body) <- httpRequest ("http://" <> T.unpack n <> "/chain-only")
->     return $ if status == 200 then P.read (BSLC8.unpack body)
+>     return $ if status == 200
+>              then P.read (BSLC8.unpack body)
 >              else []
->   (b, err) <- IOR.atomicModifyIORef' env $ \e -> resolveConflicts e chains
+>   (b, err) <- IOR.atomicModifyIORef' env $ \e ->
+>     let (s, be) = resolveConflicts (eBCState e) chains
+>      in (setBCState e s, be)
 >   if b then return b else do Log.infoM lBC err; return b
 
 > run :: [P.String] -> IO ()
@@ -226,7 +241,7 @@ https://github.com/dvf/blockchain
 >        ("-p":p:_) -> P.read p
 >        ("-h":_)   -> P.error "'-p', '--port', default=5000, 'port to listen on'"
 >        _          -> 3000
->   env <- initialize (T.pack (show port))
+>   env <- initializeIOEnv (T.pack (show port))
 >   run' port env
 
 > run' :: Int -> IOEnv -> IO ()
@@ -259,10 +274,10 @@ https://github.com/dvf/blockchain
 >           b <- resolveConflictsIO env
 >           send200 s tn ("/resolve " <> show b)
 >         "/chain-only" -> do
->           chain <- getEnvIO eChain env
+>           chain <- getBCStateIO bcChain env
 >           send' s H.status200 (show chain)
 >         "/chain" -> do
->           chain <- getEnvIO eChain env
+>           chain <- getBCStateIO bcChain env
 >           send200 s tn ("chain " <> show (length chain) <> " " <> show chain)
 >         "/register" ->
 >           case getQ req of
@@ -272,7 +287,7 @@ https://github.com/dvf/blockchain
 >             Left x ->
 >               badQ s tn "/register" x
 >         "/env" -> do
->           e <- getEnvIO P.id env
+>           e <- getBCStateIO P.id env
 >           send200 s tn (show e)
 >         x ->
 >           send s tn H.status400 ("received unknown " <> BSC8.unpack x)
@@ -299,7 +314,7 @@ https://github.com/dvf/blockchain
 
 > sendTxToPeers :: IOEnv -> BSL.ByteString -> IO ()
 > sendTxToPeers env tx = do
->   nodes <- getEnvIO eNodes env
+>   nodes <- getIOStateIO eNodes env
 >   CM.forM_ nodes $ \n ->
 >     httpRequest ("http://" <> T.unpack n <> "/tx-no-forward?" <> BSLC8.unpack tx)
 
