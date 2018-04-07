@@ -17,7 +17,6 @@
 > import qualified Data.IORef                           as IOR
 > import           Data.Monoid                          ((<>))
 > import qualified Data.Text                            as T
-> import qualified Data.Text.Encoding                   as TE
 > import qualified Network.HTTP.Types                   as H
 > import qualified Network.HTTP.Client                  as H
 > import qualified Network.Wai                          as Wai
@@ -45,7 +44,7 @@ https://github.com/dvf/blockchain
 
 > type BHash       = BS.ByteString
 > type BIndex      = Int
-> type Transaction = T.Text
+> type Transaction = BS.ByteString
 > type Proof       = Integer
 
 > genesisBlock :: Block
@@ -323,28 +322,21 @@ https://github.com/dvf/blockchain
 >   , eThisNode :: Address
 >   } deriving (Eq, Show)
 
-> type Address = T.Text
+> type Address = P.String
 > type IOEnv   = IOR.IORef IOState
 
 > initializeIOEnv :: Address -> IO IOEnv
 > initializeIOEnv thisNode =
 >   IOR.newIORef (IOState initialBCState [] thisNode)
 
-> getIOStateIO :: (IOState -> a) -> IOEnv -> IO a
-> getIOStateIO f = fmap f . IOR.readIORef
+> getIOState :: (IOState -> a) -> IOEnv -> IO a
+> getIOState f = fmap f . IOR.readIORef
 
-> getBCStateIO :: (BCState -> a) -> IOEnv -> IO a
-> getBCStateIO f = fmap (f . eBCState) . IOR.readIORef
+> getBCState :: (BCState -> a) -> IOEnv -> IO a
+> getBCState f = fmap (f . eBCState) . IOR.readIORef
 
 > setBCState :: IOState -> BCState -> IOState
-> setBCState ios bcs = ios { eBCState = bcs }
-
-> -- | Add a new node address to the list of nodes.
-> --   e.g., "192.168.0.5:5000"
-> registerNodeIO :: IOEnv -> Address -> IO ()
-> registerNodeIO env address =
->   atomicModifyIORef_ env $ \e ->
->     e { eNodes = address:eNodes e }
+> setBCState i b = i { eBCState = b }
 
 > addTransactionIO :: IOEnv -> Transaction -> IO ()
 > addTransactionIO env tx =
@@ -360,9 +352,9 @@ https://github.com/dvf/blockchain
 
 > resolveConflictsIO :: IOEnv -> IO Bool
 > resolveConflictsIO env = do
->   nodes  <- getIOStateIO eNodes env
+>   nodes  <- getIOState eNodes env
 >   chains <- CM.forM nodes $ \n -> do
->     (status, body) <- httpRequest ("http://" <> T.unpack n <> "/chain-only")
+>     (status, body) <- httpRequest ("http://" <> n <> "/chain-only")
 >     return $ if status == 200
 >              then P.read (BSLC8.unpack body)
 >              else []
@@ -371,6 +363,13 @@ https://github.com/dvf/blockchain
 >      in (setBCState e s, be)
 >   if b then return b else do Log.infoM lBC err; return b
 
+> -- | Add a new node address to the list of nodes.
+> --   e.g., "192.168.0.5:5000"
+> registerNodeIO :: IOEnv -> Address -> IO ()
+> registerNodeIO env address =
+>   atomicModifyIORef_ env $ \e ->
+>     e { eNodes = address:eNodes e }
+
 > run :: [P.String] -> IO ()
 > run args = do
 >   Log.updateGlobalLogger lBC (Log.setLevel Log.DEBUG)
@@ -378,13 +377,13 @@ https://github.com/dvf/blockchain
 >        ("-p":p:_) -> P.read p
 >        ("-h":_)   -> P.error "'-p', '--port', default=5000, 'port to listen on'"
 >        _          -> 3000
->   env <- initializeIOEnv (T.pack (show port))
+>   env <- initializeIOEnv (show port)
 >   run' port env
 
 > run' :: Int -> IOEnv -> IO ()
 > run' httpPort env = do
 >   Log.infoM lBC ("starting httpServer on port " <> show httpPort)
->   tn <- fmap (T.unpack . eThisNode) (IOR.readIORef env)
+>   tn <- fmap eThisNode (IOR.readIORef env)
 >   Wai.run httpPort $ Wai.logStdoutDev $
 >     \req s -> do
 >       Log.infoM lBC (tn <> " received request " <> show req)
@@ -392,15 +391,15 @@ https://github.com/dvf/blockchain
 >         "/tx" -> -- POST
 >           case getQ req of
 >             Right tx -> do
->               addTransactionIO env (TE.decodeUtf8 tx)
->               sendTxToPeers env (BSL.fromStrict tx)
+>               addTransactionIO env tx
+>               sendTxToPeers env tx
 >               send200 s tn ("/tx " <> show tx)
 >             Left x ->
 >               badQ s tn "/tx" x
 >         "/tx-no-forward" -> -- POST
 >           case getQ req of
 >             Right tx -> do
->               addTransactionIO env (TE.decodeUtf8 tx)
+>               addTransactionIO env tx
 >               send200 s tn ("/tx-no-forward " <> show tx)
 >             Left x ->
 >               badQ s tn "/tx-no-forward" x
@@ -411,20 +410,20 @@ https://github.com/dvf/blockchain
 >           b <- resolveConflictsIO env
 >           send200 s tn ("/resolve " <> show b)
 >         "/chain-only" -> do
->           chain <- getBCStateIO bcChain env
+>           chain <- getBCState bcChain env
 >           send' s H.status200 (show chain)
 >         "/chain" -> do
->           chain <- getBCStateIO bcChain env
+>           chain <- getBCState bcChain env
 >           send200 s tn ("chain " <> show (length chain) <> " " <> show chain)
 >         "/register" ->
 >           case getQ req of
 >             Right n -> do
->               registerNodeIO env (TE.decodeUtf8 n)
+>               registerNodeIO env (BSC8.unpack n)
 >               send s tn H.status200 ("/register " <> show n)
 >             Left x ->
 >               badQ s tn "/register" x
 >         "/env" -> do
->           e <- getBCStateIO P.id env
+>           e <- getBCState P.id env
 >           send200 s tn (show e)
 >         x ->
 >           send s tn H.status400 ("received unknown " <> BSC8.unpack x)
@@ -449,11 +448,11 @@ https://github.com/dvf/blockchain
 >   return ( H.statusCode (H.responseStatus response)
 >          , H.responseBody response )
 
-> sendTxToPeers :: IOEnv -> BSL.ByteString -> IO ()
+> sendTxToPeers :: IOEnv -> BS.ByteString -> IO ()
 > sendTxToPeers env tx = do
->   nodes <- getIOStateIO eNodes env
+>   nodes <- getIOState eNodes env
 >   CM.forM_ nodes $ \n ->
->     httpRequest ("http://" <> T.unpack n <> "/tx-no-forward?" <> BSLC8.unpack tx)
+>     httpRequest ("http://" <> n <> "/tx-no-forward?" <> BSC8.unpack tx)
 
 > atomicModifyIORef_ :: IOR.IORef a -> (a -> a) -> IO ()
 > atomicModifyIORef_ i f =
