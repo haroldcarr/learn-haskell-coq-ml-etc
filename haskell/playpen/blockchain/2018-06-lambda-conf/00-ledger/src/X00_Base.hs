@@ -4,9 +4,6 @@
 
 module X00_Base where
 
-import qualified Control.Concurrent                   as CC
-import qualified Control.Concurrent.Async             as Async
-import qualified Control.Exception.Safe               as S
 import           Control.Monad.IO.Class               (liftIO)
 import qualified Data.ByteString                      as BS
 import qualified Data.ByteString.Builder              as BSB
@@ -25,6 +22,9 @@ import qualified System.IO                            as SIO
 import qualified System.Log.Logger                    as Log
 import qualified System.Posix.Process                 as SPP
 import qualified System.Random                        as Random
+import qualified UnliftIO.Async                       as Async
+import qualified UnliftIO.Concurrent                  as CC
+import qualified UnliftIO.Exception                   as S
 ------------------------------------------------------------------------------
 import           Config
 import           Ledger

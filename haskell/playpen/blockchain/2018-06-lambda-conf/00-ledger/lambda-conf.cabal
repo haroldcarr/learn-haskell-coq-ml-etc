@@ -29,10 +29,10 @@ library
                      , network
                      , random
                      , rio
-                     , safe-exceptions
                      , text
                      , thyme
                      , unix
+                     , unliftio
                      , wai
                      , wai-extra
                      , warp

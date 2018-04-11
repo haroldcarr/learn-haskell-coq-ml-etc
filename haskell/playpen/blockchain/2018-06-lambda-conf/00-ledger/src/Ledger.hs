@@ -5,17 +5,17 @@
 
 module Ledger where
 
-import qualified Control.Concurrent      as CC
-import qualified Control.Concurrent.MVar as MV
-import qualified Control.Monad           as CM
-import qualified Data.Atomics            as A
-import qualified Data.ByteString         as BS
-import qualified Data.IORef              as IOR
-import qualified Data.Sequence           as Seq
-import qualified Data.Text               as T
+import qualified Control.Monad       as CM
+import qualified Data.Atomics        as A
+import qualified Data.ByteString     as BS
+import qualified Data.Sequence       as Seq
+import qualified Data.Text           as T
 import           RIO
-import           System.Log.Logger       as Log
-import qualified System.Random           as Random
+import           System.Log.Logger   as Log
+import qualified System.Random       as Random
+import qualified UnliftIO.Concurrent as CC
+import qualified UnliftIO.IORef      as IOR
+import qualified UnliftIO.MVar       as MV
 ------------------------------------------------------------------------------
 import           Config
 import           Logging
