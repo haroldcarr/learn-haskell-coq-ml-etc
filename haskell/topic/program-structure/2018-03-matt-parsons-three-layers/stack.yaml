@@ -1,0 +1,7 @@
+resolver: lts-11.5
+packages:
+- .
+extra-deps:
+- thyme-0.3.5.5
+# flags: {}
+# extra-package-dbs: []

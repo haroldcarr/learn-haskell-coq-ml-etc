@@ -1,0 +1,15 @@
+name:                  matt-parsons-invert-your-mocks
+version:               0.1.0.0
+build-type:            Simple
+cabal-version:         >= 1.10
+
+library
+  build-depends:       base >=4.7 && <5
+                     , conduit
+                     , mtl
+                     , persistent
+                     , QuickCheck
+                     , universum
+  exposed-modules:     Lib
+  ghc-options:         -Wall
+  default-language:    Haskell2010
