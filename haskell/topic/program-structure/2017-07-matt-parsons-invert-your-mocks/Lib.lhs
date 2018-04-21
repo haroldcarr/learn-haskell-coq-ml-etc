@@ -11,6 +11,7 @@
 > import           Control.Monad.Except
 > import           Control.Monad.Reader
 > import           Control.Monad.Writer   hiding ((<>))
+> import qualified Data.Map.Strict        as M
 > import           Universum
 
 > {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
@@ -168,23 +169,30 @@ production IO version
 >     getSomethingApp
 >     (\key result -> runRedis (writeKey key result))
 
-> doAll :: IO [Either AppError ()]
-> doAll = mapM runApp [doWork1, doWork2, doWork3, doWork4, doWork5]
+> runAll :: IO [Either AppError ()]
+> runAll = mapM runApp [doWork1, doWork2, doWork3, doWork4, doWork5]
 
 test version
 
-> doWorkTest :: (MonadReader AppCtx m, MonadWriter [Text] m) => m ()
-> doWorkTest =
+> data TestCtx = TestCtx [Text] (Map Query [User])
+>
+> doWorkTest :: (MonadState TestCtx m, MonadReader AppCtx m, MonadWriter [Text] m) => m ()
+> doWorkTest = do
+>   doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0
 >   doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0
 >  where
 >   runHTTP0 = do
 >     c <- asks httpConn
 >     tell ["runHTTP " <> c]
->     pure AnyUserQuery
->   runDB0 x = do
+>     TestCtx (q:qs) x <- get
+>     put (TestCtx qs x)
+>     pure (Query q)
+>   runDB0 q = do
 >     c <- asks dbConn
->     tell ["runDB " <> c <> " : " <> show x]
->     pure [User "X", User "Y"]
+>     tell ["runDB " <> c <> " : " <> show q]
+>     TestCtx _ m <- get
+>     let us = fromMaybe [] (M.lookup q m)
+>     pure us
 >   getSomething0 u = do
 >     tell ["getSomething " <> show u]
 >     pure (getSomething u)
@@ -192,8 +200,14 @@ test version
 >     c <- asks redisConn
 >     tell ["runRedis: " <> c <> " : " <> show k <> "/" <> show v]
 >
-> doW :: [Text]
-> doW = execWriterT doWorkTest appCtx
+> testCtx :: TestCtx
+> testCtx = TestCtx ["Q1", "Q2"]
+>                   (M.fromList [ (Query "Q1", [User "Q1X", User "Q1Y"])
+>                               , (Query "Q2", [User "Q2X", User "Q2Y"])
+>                               ])
+>
+> runTest :: [Text]
+> runTest = execWriterT (execStateT doWorkTest testCtx) appCtx
 
 Note: above does NOT use: mtl, Eff, type classes, ...
 
@@ -211,7 +225,7 @@ Note: above does NOT use: mtl, Eff, type classes, ...
 > data Query
 >   = Query  Text
 >   | AnyUserQuery
->   deriving (Eq, Show)
+>   deriving (Eq, Ord, Show)
 >
 > runHTTP :: Text -> App Query
 > runHTTP x = do
