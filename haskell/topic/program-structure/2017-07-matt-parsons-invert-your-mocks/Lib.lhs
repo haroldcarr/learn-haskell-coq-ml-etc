@@ -1,4 +1,3 @@
-
 > {-# LANGUAGE DeriveFunctor              #-}
 > {-# LANGUAGE FlexibleContexts           #-}
 > {-# LANGUAGE FlexibleInstances          #-}
@@ -104,10 +103,13 @@ instead
 >             MonadError AppError
 >             )
 >
+> appCtx :: AppCtx
+> appCtx = AppCtx "my-http-conn" "my-db-conn" "my-redis-conn"
+>
 > runApp :: App a -> IO (Either AppError a)
-> runApp a = runExceptT $ runReaderT (unApp a) (AppCtx "my-http-conn" "my-db-conn" "my-redis-conn")
+> runApp a = runExceptT $ runReaderT (unApp a) appCtx
 
-cost: must manually lift to use an App function inside of a Conduit, MaybeT, ... block
+cost: must manually lift to use an App function inside of a Conduit, MaybeT, ...
 
 when testing
 
@@ -220,24 +222,27 @@ production IO version
 
 test version
 
-> doWorkTest :: Writer [Text] ()
+> doWorkTest :: (MonadReader AppCtx m, MonadWriter [Text] m) => m ()
 > doWorkTest =
 >   doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0
 >  where
 >   runHTTP0 = do
->     tell ["runHTTP"]
+>     c <- asks httpConn
+>     tell ["runHTTP " <> c]
 >     pure AnyUserQuery
 >   runDB0 x = do
->     tell ["runDB " <> show x]
+>     c <- asks dbConn
+>     tell ["runDB " <> c <> " : " <> show x]
 >     pure [User "X", User "Y"]
 >   getSomething0 u = do
 >     tell ["getSomething " <> show u]
 >     pure (getSomething u)
->   runRedis0 k v =
->     tell ["runRedis: " <> show k <> "/" <> show v]
+>   runRedis0 k v = do
+>     c <- asks redisConn
+>     tell ["runRedis: " <> c <> " : " <> show k <> "/" <> show v]
 >
 > doW :: [Text]
-> doW = execWriter doWorkTest
+> doW = execWriterT doWorkTest appCtx
 
 Note: above does NOT use: mtl, Eff, type classes, ...
 
