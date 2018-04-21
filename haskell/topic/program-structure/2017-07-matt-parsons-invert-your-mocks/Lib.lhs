@@ -9,10 +9,11 @@
 
 > module Lib where
 >
-> import           Control.Monad.Writer (Writer, tell)
+> import           Control.Monad.Writer hiding ((<>))
 > import           Data.Conduit
 > import qualified Data.Conduit.List as CL
 > import           Database.Persist.Sql (SqlPersistT)
+> import qualified Data.Text         as T
 > -- import           Test.QuickCheck (Gen, arbitrary)
 > import           Universum
 
@@ -26,34 +27,39 @@ advantages of mtl, Eff freer monads : swap implementations; but heavy-weight/com
 
 instead
 
-> data AppCtx = AppCtx
-> newtype User = User Text deriving Show
-> data Thing = Thing deriving Show
-> data RedisKey = RedisKey deriving Show
-> data Result = Result deriving Show
-> data Query = Query Text | AnyUserQuery
+> data AppCtx    = AppCtx
+> newtype User   = User Text deriving Show
+> newtype Thing  = Thing Text deriving Show
+> data RedisKey  = RedisKey deriving Show
+> newtype Result = Result Text deriving Show
+> data Query     = Query Text | AnyUserQuery deriving Show
 > getUserQuery :: Text
 > getUserQuery = "user query"
 > runHTTP :: Text -> App Query
-> runHTTP x = return (Query x)
+> runHTTP x = do putStrLn ("runHTTP " <> x)
+>                return (Query x)
 > usersSatisfying :: Query -> Query
 > usersSatisfying = id
 > runDB :: Query -> App [User]
-> runDB (Query x)    = return [User x]
-> runDB AnyUserQuery = return [User "any"]
+> runDB q = do let r = case q of
+>                        (Query x)    -> [User x]
+>                        AnyUserQuery -> [User "any"]
+>              putStrLn ("runDB " <> T.pack (show q))
+>              return r
 > getSomething :: User -> App Thing
-> getSomething _ = return Thing
+> getSomething (User x) = return (Thing x)
 > compute :: Thing -> Result
-> compute _ = Result
+> compute (Thing x) = Result x
 > userRedisKey :: User -> RedisKey
 > userRedisKey _ = RedisKey
 > writeKey :: RedisKey -> Result -> Result
 > writeKey _ r = r
 > runRedis :: Result -> App ()
-> runRedis _ = return ()
+> runRedis r = do putStrLn ("runRedis " <> T.pack (show r))
+>                 return ()
 
 > fakeSomethingFor :: User -> Thing
-> fakeSomethingFor _ = Thing
+> fakeSomethingFor (User x) = Thing x
 
 > selectList :: a
 > selectList = undefined
@@ -64,7 +70,11 @@ instead
 > setUserEmail :: a
 > setUserEmail = undefined
 
-> newtype App a = App { unApp :: ReaderT AppCtx IO a } deriving (Functor, Applicative, Monad)
+> newtype App a = App { unApp :: ReaderT AppCtx IO a }
+>   deriving (Functor, Applicative, Monad, MonadIO) -- HC: added MonadIO
+
+> runApp :: App () -> IO ()
+> runApp a = runReaderT (unApp a) AppCtx
 
 cost: must manually lift to use an App function inside of a Conduit, MaybeT, ... block
 
@@ -131,7 +141,7 @@ do the pure stuff
 
 > businessLogic4 :: (Thing, User) -> (RedisKey, Result)
 > businessLogic4  (thing, user) = (userRedisKey user, computeIt thing user)
->  where computeIt _ _ = Result
+>  where computeIt _ _ = Result "x"
 
 and give to the output effect
 
@@ -188,6 +198,9 @@ above factors pure code from effect code
 >   redis0 k v = do
 >     tell ["wrote k: " <> show k]
 >     tell ["wrote v: " <> show v]
+>
+> runW :: [String]
+> runW = execWriter doWorkScribe
 
 Note: above does NOT use: mtl, Eff, type classes, ...
 

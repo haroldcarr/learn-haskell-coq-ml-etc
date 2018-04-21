@@ -9,6 +9,7 @@ library
                      , mtl
                      , persistent
                      , QuickCheck
+                     , text
                      , universum
   exposed-modules:     Lib
   ghc-options:         -Wall
