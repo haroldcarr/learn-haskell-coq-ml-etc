@@ -43,28 +43,27 @@ cost: must manually lift to use an App function inside of a Conduit, MaybeT, ...
 
 > runAbstract
 >   :: Monad m
->   =>                        m Query   -- ^ runHTTP
->   -> (Query              -> m [User]) -- ^ runDB
->   -> (User               -> m Thing)  -- ^ getSomething
->   -> (RedisKey -> Result -> m ())     -- ^ runRedis
->   ->                        m ()
+>   => (Text        -> m Query)  -- ^ runHTTP
+>   -> (Query       -> m [User]) -- ^ runDB
+>   -> (User        -> m Thing)  -- ^ getSomething
+>   -> (WriteResult -> m ())     -- ^ runRedis
+>   ->                 m ()
 > runAbstract runhttp rundb getsomething runredis = do
->   query <- runhttp
->   users <- rundb query
+>   query <- runhttp getUserQuery
+>   users <- rundb (usersSatisfying query)
 >   for_ users $ \user -> do
 >     thing <- getsomething user
 >     let result = compute thing
->     runredis (userRedisKey user) result
+>         key    = userRedisKey user
+>         wkr    = writeKey key result
+>     runredis wkr
 
 production IO version
 
 > runIO :: App ()
-> runIO =
->   runAbstract
->     (runHTTP getUserQuery)
->     (runDB . usersSatisfying)
->     getSomethingApp
->     (\key result -> runRedis (writeKey key result))
+> runIO = do it; it
+>  where
+>   it = runAbstract runHTTP runDB getSomethingApp runRedis
 
 > runIt :: IO (Either AppError ())
 > runIt = runApp runIO
@@ -74,11 +73,10 @@ test version
 > data TestCtx = TestCtx [Text] (Map Query [User])
 >
 > test :: (MonadState TestCtx m, MonadReader AppCtx m, MonadWriter [Text] m) => m ()
-> test = do
->   runAbstract runhttp rundb getsomething runredis
->   runAbstract runhttp rundb getsomething runredis
+> test = do it; it
 >  where
->   runhttp = do
+>   it = runAbstract runhttp rundb getsomething runredis
+>   runhttp _ = do   -- ignore input
 >     c <- asks httpConn
 >     tell ["runHTTP " <> c]
 >     TestCtx (q:qs) x <- get
@@ -93,9 +91,9 @@ test version
 >   getsomething u = do
 >     tell ["getSomething " <> show u]
 >     pure (getSomething u)
->   runredis k v = do
+>   runredis r = do
 >     c <- asks redisConn
->     tell ["runRedis: " <> c <> " : " <> show k <> "/" <> show v]
+>     tell ["runRedis: " <> c <> " : " <> show r]
 >
 > testCtx :: TestCtx
 > testCtx = TestCtx ["Q1", "Q2"]
@@ -165,11 +163,13 @@ Note: above does NOT use: mtl, Eff, type classes, ...
 > userRedisKey :: User -> RedisKey
 > userRedisKey _ = RedisKey
 >
-> writeKey :: RedisKey -> Result -> Result
-> writeKey _ r = r
+> data WriteResult = WriteResult RedisKey Result deriving Show
 >
-> runRedis :: Result -> App ()
-> runRedis r@(Result x) = do
+> writeKey :: RedisKey -> Result -> WriteResult
+> writeKey = WriteResult
+>
+> runRedis :: WriteResult -> App ()
+> runRedis r@(WriteResult _ (Result x)) = do
 >   when (x == "runRedisBAD") $ throwError (AppError "runRedis FAILED")
 >   c <- asks redisConn
 >   putStrLn ("runRedis " <> c <> " : " <> show r)
