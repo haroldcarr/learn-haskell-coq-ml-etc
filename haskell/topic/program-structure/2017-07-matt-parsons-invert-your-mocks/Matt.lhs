@@ -6,7 +6,7 @@
 > {-# LANGUAGE OverloadedStrings          #-}
 > {-# LANGUAGE TypeSynonymInstances       #-}
 
-> module Lib where
+> module Matt where
 >
 > import           Control.Monad.Except
 > import           Control.Monad.Reader

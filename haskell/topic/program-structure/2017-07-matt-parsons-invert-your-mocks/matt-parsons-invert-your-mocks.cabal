@@ -8,6 +8,7 @@ library
                      , containers
                      , mtl
                      , universum
-  exposed-modules:     Lib
+  exposed-modules:     HC
+                     , Matt
   ghc-options:         -Wall
   default-language:    Haskell2010
