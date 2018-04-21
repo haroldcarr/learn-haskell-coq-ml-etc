@@ -1,10 +1,10 @@
-> {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 > {-# OPTIONS_GHC -Wno-warnings-deprecations   #-}
 > {-# LANGUAGE DeriveFunctor              #-}
 > {-# LANGUAGE FlexibleContexts           #-}
 > {-# LANGUAGE FlexibleInstances          #-}
 > {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 > {-# LANGUAGE NoImplicitPrelude          #-}
+> {-# LANGUAGE OverloadedStrings          #-}
 > {-# LANGUAGE TypeSynonymInstances       #-}
 
 > module Lib where
@@ -27,24 +27,41 @@ advantages of mtl, Eff freer monads : swap implementations; but heavy-weight/com
 instead
 
 > data AppCtx = AppCtx
-> data User = User deriving Show
+> newtype User = User Text deriving Show
 > data Thing = Thing deriving Show
 > data RedisKey = RedisKey deriving Show
 > data Result = Result deriving Show
-> runHTTP = undefined
-> runDB :: a -> App [User]
-> runDB = undefined
-> getUserQuery = undefined
-> usersSatisfying = undefined
+> data Query = Query Text | AnyUserQuery
+> getUserQuery :: Text
+> getUserQuery = "user query"
+> runHTTP :: Text -> App Query
+> runHTTP x = return (Query x)
+> usersSatisfying :: Query -> Query
+> usersSatisfying = id
+> runDB :: Query -> App [User]
+> runDB (Query x)    = return [User x]
+> runDB AnyUserQuery = return [User "any"]
 > getSomething :: User -> App Thing
 > getSomething _ = return Thing
+> compute :: Thing -> Result
 > compute _ = Result
-> runRedis = undefined
-> writeKey = undefined
+> userRedisKey :: User -> RedisKey
 > userRedisKey _ = RedisKey
+> writeKey :: RedisKey -> Result -> Result
+> writeKey _ r = r
+> runRedis :: Result -> App ()
+> runRedis _ = return ()
+
+> fakeSomethingFor :: User -> Thing
+> fakeSomethingFor _ = Thing
+
+> selectList :: a
 > selectList = undefined
+> convertToQuery :: a
 > convertToQuery = undefined
+> setUserId :: a
 > setUserId = undefined
+> setUserEmail :: a
 > setUserEmail = undefined
 
 > newtype App a = App { unApp :: ReaderT AppCtx IO a } deriving (Functor, Applicative, Monad)
@@ -129,9 +146,6 @@ above factors pure code from effect code
 
 ------------------------------------------------------------------------------
 
-> data Query = Query | AnyUserQuery
-> fakeSomethingFor = undefined
-
 > doWorkAbstract5
 >   :: Monad m
 >   =>                        m Query   -- ^ runHTTP getUserQuery
@@ -160,18 +174,18 @@ above factors pure code from effect code
 
 > doWorkScribe :: Writer [String] ()
 > doWorkScribe =
->   doWorkAbstract5 getQ getUsers getSomething0 redis
+>   doWorkAbstract5 getQ getUsers0 getSomething0 redis0
 >  where
 >   getQ = do
 >     tell ["getting users query"]
 >     pure AnyUserQuery
->   getUsers _ = do
+>   getUsers0 _ = do
 >     tell ["getting users"]
->     pure [User, User]
+>     pure [User "X", User "Y"]
 >   getSomething0 u = do
 >     tell ["getting something for " <> show u]
 >     pure (fakeSomethingFor u)
->   redis k v = do
+>   redis0 k v = do
 >     tell ["wrote k: " <> show k]
 >     tell ["wrote v: " <> show v]
 
@@ -219,7 +233,9 @@ Decomposition: Conduit-style
 > convertSomeThing = undefined
 > someFilterCondition :: RealThing -> Bool
 > someFilterCondition = undefined
+> makeHttpPost :: a
 > makeHttpPost = undefined
+> saveToDatabase :: a
 > saveToDatabase = undefined
 
 Pipes, Conduit : can decompose functions and provide "inverted mocking"
