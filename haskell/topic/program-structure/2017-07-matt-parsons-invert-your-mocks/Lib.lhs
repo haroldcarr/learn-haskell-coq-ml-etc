@@ -9,6 +9,8 @@
 
 > module Lib where
 >
+> import           Control.Monad.Except
+> import           Control.Monad.Reader
 > import           Control.Monad.Writer hiding ((<>))
 > import           Data.Conduit
 > import qualified Data.Conduit.List as CL
@@ -27,36 +29,65 @@ advantages of mtl, Eff freer monads : swap implementations; but heavy-weight/com
 
 instead
 
-> data AppCtx    = AppCtx
-> newtype User   = User Text deriving Show
-> newtype Thing  = Thing Text deriving Show
-> data RedisKey  = RedisKey deriving Show
-> newtype Result = Result Text deriving Show
-> data Query     = Query Text | AnyUserQuery deriving Show
+> data AppCtx = AppCtx
+>
 > getUserQuery :: Text
-> getUserQuery = "user query"
+> getUserQuery =
+>   "USER-HC"
+>   --"runHTTPBAD"
+>   --"runDBBAD"
+>   --"getSomethingBAD"
+>   --"runRedisBAD"
+>
+> data Query
+>   = Query  Text
+>   | AnyUserQuery
+>   deriving (Eq, Show)
+>
 > runHTTP :: Text -> App Query
-> runHTTP x = do putStrLn ("runHTTP " <> x)
->                return (Query x)
+> runHTTP x = do
+>   when (x == "runHTTPBAD") $ throwError (AppError "runHTTP FAILED")
+>   putStrLn ("runHTTP " <> x)
+>   return (Query x)
+>
 > usersSatisfying :: Query -> Query
 > usersSatisfying = id
+>
+> newtype User = User Text deriving Show
+>
 > runDB :: Query -> App [User]
-> runDB q = do let r = case q of
->                        (Query x)    -> [User x]
->                        AnyUserQuery -> [User "any"]
->              putStrLn ("runDB " <> T.pack (show q))
->              return r
+> runDB (Query "runDBBAD") = throwError (AppError "runDB FAILED")
+> runDB q = do
+>   let r = case q of
+>             (Query x)    -> [User x]
+>             AnyUserQuery -> [User "any"]
+>   putStrLn ("runDB " <> T.pack (show q))
+>   return  r
+>
+> newtype Thing = Thing Text deriving Show
+>
 > getSomething :: User -> App Thing
+> getSomething (User "getSomethingBAD") = throwError (AppError "getSomething FAILED")
 > getSomething (User x) = return (Thing x)
+>
+> newtype Result = Result Text  deriving Show
+>
 > compute :: Thing -> Result
 > compute (Thing x) = Result x
+>
+> data RedisKey = RedisKey deriving Show
+>
 > userRedisKey :: User -> RedisKey
 > userRedisKey _ = RedisKey
+>
 > writeKey :: RedisKey -> Result -> Result
 > writeKey _ r = r
+>
 > runRedis :: Result -> App ()
-> runRedis r = do putStrLn ("runRedis " <> T.pack (show r))
->                 return ()
+> runRedis r@(Result x) = do
+>   when (x == "runRedisBAD") $ throwError (AppError "runRedis FAILED")
+>   putStrLn ("runRedis " <> T.pack (show r))
+>   return ()
 
 > fakeSomethingFor :: User -> Thing
 > fakeSomethingFor (User x) = Thing x
@@ -70,11 +101,19 @@ instead
 > setUserEmail :: a
 > setUserEmail = undefined
 
-> newtype App a = App { unApp :: ReaderT AppCtx IO a }
->   deriving (Functor, Applicative, Monad, MonadIO) -- HC: added MonadIO
+> -- HC
+> newtype AppError = AppError Text deriving Show
 
-> runApp :: App () -> IO ()
-> runApp a = runReaderT (unApp a) AppCtx
+> newtype App a = App { unApp :: ReaderT AppCtx (ExceptT AppError IO) a }
+>   deriving (Functor, Applicative, Monad,
+>             -- HC: added
+>             MonadIO,
+>             MonadReader AppCtx,
+>             MonadError AppError
+>             )
+
+> runApp :: App a -> IO (Either AppError a)
+> runApp a = runExceptT $ runReaderT (unApp a) AppCtx
 
 cost: must manually lift to use an App function inside of a Conduit, MaybeT, ... block
 
