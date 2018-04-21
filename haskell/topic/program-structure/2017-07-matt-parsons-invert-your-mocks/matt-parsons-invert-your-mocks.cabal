@@ -5,11 +5,7 @@ cabal-version:         >= 1.10
 
 library
   build-depends:       base >=4.7 && <5
-                     , conduit
                      , mtl
-                     , persistent
-                     , QuickCheck
-                     , text
                      , universum
   exposed-modules:     Lib
   ghc-options:         -Wall

@@ -1,4 +1,4 @@
-> {-# OPTIONS_GHC -Wno-warnings-deprecations   #-}
+
 > {-# LANGUAGE DeriveFunctor              #-}
 > {-# LANGUAGE FlexibleContexts           #-}
 > {-# LANGUAGE FlexibleInstances          #-}
@@ -11,12 +11,7 @@
 >
 > import           Control.Monad.Except
 > import           Control.Monad.Reader
-> import           Control.Monad.Writer hiding ((<>))
-> import           Data.Conduit
-> import qualified Data.Conduit.List as CL
-> import           Database.Persist.Sql (SqlPersistT)
-> import qualified Data.Text         as T
-> -- import           Test.QuickCheck (Gen, arbitrary)
+> import           Control.Monad.Writer   hiding ((<>))
 > import           Universum
 
 > {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
@@ -30,6 +25,10 @@ advantages of mtl, Eff freer monads : swap implementations; but heavy-weight/com
 instead
 
 > data AppCtx = AppCtx
+>   { httpConn  :: Text
+>   , dbConn    :: Text
+>   , redisConn :: Text
+>   }
 >
 > getUserQuery :: Text
 > getUserQuery =
@@ -47,7 +46,8 @@ instead
 > runHTTP :: Text -> App Query
 > runHTTP x = do
 >   when (x == "runHTTPBAD") $ throwError (AppError "runHTTP FAILED")
->   putStrLn ("runHTTP " <> x)
+>   c <- asks httpConn
+>   putStrLn ("runHTTP " <> c <> " : " <> x)
 >   return (Query x)
 >
 > usersSatisfying :: Query -> Query
@@ -61,14 +61,18 @@ instead
 >   let r = case q of
 >             (Query x)    -> [User x]
 >             AnyUserQuery -> [User "any"]
->   putStrLn ("runDB " <> T.pack (show q))
+>   c <- asks dbConn
+>   putStrLn ("runDB " <> c <> " : " <> show q)
 >   return  r
 >
 > newtype Thing = Thing Text deriving Show
 >
-> getSomething :: User -> App Thing
-> getSomething (User "getSomethingBAD") = throwError (AppError "getSomething FAILED")
-> getSomething (User x) = return (Thing x)
+> getSomething :: User -> Thing
+> getSomething (User x) = Thing x
+>
+> getSomethingApp :: User -> App Thing
+> getSomethingApp (User "getSomethingBAD") = throwError (AppError "getSomething FAILED")
+> getSomethingApp x = return (getSomething x)
 >
 > newtype Result = Result Text  deriving Show
 >
@@ -86,24 +90,12 @@ instead
 > runRedis :: Result -> App ()
 > runRedis r@(Result x) = do
 >   when (x == "runRedisBAD") $ throwError (AppError "runRedis FAILED")
->   putStrLn ("runRedis " <> T.pack (show r))
+>   c <- asks redisConn
+>   putStrLn ("runRedis " <> c <> " : " <> show r)
 >   return ()
 
-> fakeSomethingFor :: User -> Thing
-> fakeSomethingFor (User x) = Thing x
-
-> selectList :: a
-> selectList = undefined
-> convertToQuery :: a
-> convertToQuery = undefined
-> setUserId :: a
-> setUserId = undefined
-> setUserEmail :: a
-> setUserEmail = undefined
-
-> -- HC
 > newtype AppError = AppError Text deriving Show
-
+>
 > newtype App a = App { unApp :: ReaderT AppCtx (ExceptT AppError IO) a }
 >   deriving (Functor, Applicative, Monad,
 >             -- HC: added
@@ -111,24 +103,24 @@ instead
 >             MonadReader AppCtx,
 >             MonadError AppError
 >             )
-
+>
 > runApp :: App a -> IO (Either AppError a)
-> runApp a = runExceptT $ runReaderT (unApp a) AppCtx
+> runApp a = runExceptT $ runReaderT (unApp a) (AppCtx "my-http-conn" "my-db-conn" "my-redis-conn")
 
 cost: must manually lift to use an App function inside of a Conduit, MaybeT, ... block
 
-testing
+when testing
 
 > doWork1 :: App ()
 > doWork1 = do
 >   query <- runHTTP getUserQuery
 >   users <- runDB (usersSatisfying query)
 >   for_ users $ \user -> do
->     thing <- getSomething user
+>     thing <- getSomethingApp user
 >     let result = compute thing
 >     runRedis (writeKey (userRedisKey user) result)
 
-If using mtl, Eff, etc: need to mock HTTP, database, Redis effects.
+if using mtl, Eff, etc: need to mock HTTP, database, Redis effects.
 
 Instead.
 
@@ -155,7 +147,7 @@ to reduce mocking only getSomething and runRedis in the following
 > doWorkHelper2 :: [User] -> App ()
 > doWorkHelper2 users =
 >   for_ users $ \user -> do
->     thing <- getSomething user
+>     thing <- getSomethingApp user
 >     let result = compute thing
 >     runRedis (writeKey (userRedisKey user) result)
 
@@ -164,7 +156,7 @@ Can get rid of the getSomething by factoring another helper out.
 > doWorkHelper3 :: [User] -> App ()
 > doWorkHelper3 users = do
 >   things'users <- forM users $ \user -> do
->     thing <- getSomething user
+>     thing <- getSomethingApp user
 >     pure (thing, user)
 >   lookMaNoInputs3 things'users
 >
@@ -195,34 +187,41 @@ above factors pure code from effect code
 
 ------------------------------------------------------------------------------
 
+- parameterized over any monad : Identity, State, IO, ..., you choose
+- pure specification of effect logic (i.e., dependency injection)
+
 > doWorkAbstract5
 >   :: Monad m
->   =>                        m Query   -- ^ runHTTP getUserQuery
->   -> (Query              -> m [User]) -- ^ database action
+>   =>                        m Query   -- ^ runHTTP
+>   -> (Query              -> m [User]) -- ^ runDB
 >   -> (User               -> m Thing)  -- ^ getSomething
->   -> (RedisKey -> Result -> m ())     -- ^ redis action
+>   -> (RedisKey -> Result -> m ())     -- ^ runRedis
 >   ->                        m ()
-> doWorkAbstract5 getUserQuery0 getUsers0 getSomething0 redisAction0 = do
->   query <- getUserQuery0
->   users <- getUsers0 query
+> doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0 = do
+>   query <- runHTTP0
+>   users <- runDB0 query
 >   for_ users $ \user -> do
 >     thing <- getSomething0 user
 >     let result = compute thing
->     redisAction0 (userRedisKey user) result
+>     runRedis0 (userRedisKey user) result
 
-- parameterized over any monad : Identity, State, IO, ..., you choose
-- pure specification of effect logic (i.e., dependency injection)
+production IO version
 
 > doWork5 :: App ()
 > doWork5 =
 >   doWorkAbstract5
 >     (runHTTP getUserQuery)
 >     (runDB . usersSatisfying)
->     getSomething
+>     getSomethingApp
 >     (\key result -> runRedis (writeKey key result))
 
-> doWorkScribe :: Writer [String] ()
-> doWorkScribe =
+> doAll :: IO [Either AppError ()]
+> doAll = mapM runApp [doWork1, doWork2, doWork5]
+
+test version
+
+> doWorkTest :: Writer [Text] ()
+> doWorkTest =
 >   doWorkAbstract5 getQ getUsers0 getSomething0 redis0
 >  where
 >   getQ = do
@@ -233,13 +232,13 @@ above factors pure code from effect code
 >     pure [User "X", User "Y"]
 >   getSomething0 u = do
 >     tell ["getting something for " <> show u]
->     pure (fakeSomethingFor u)
+>     pure (getSomething u)
 >   redis0 k v = do
 >     tell ["wrote k: " <> show k]
 >     tell ["wrote v: " <> show v]
 >
-> runW :: [String]
-> runW = execWriter doWorkScribe
+> doW :: [Text]
+> doW = execWriter doWorkTest
 
 Note: above does NOT use: mtl, Eff, type classes, ...
 
@@ -261,10 +260,10 @@ instead:
 >
 > class Monad m => GetUsers m where
 >   runUserQuery :: UserQuery -> m [User]
->
+> {-
 > instance MonadIO m => GetUsers (SqlPersistT m) where
 >   runUserQuery = selectList . convertToQuery
-> {-
+>
 > instance GetUsers Gen where
 >   runUserQuery query =
 >     case query of
@@ -278,17 +277,18 @@ Or, manually pass functions instead of type class
 ------------------------------------------------------------------------------
 Decomposition: Conduit-style
 
+> {-
 > data RealThing = RealThing deriving Show
 > parseFromByteString :: ByteString -> RealThing
-> parseFromByteString = undefined
+> parseFromByteString _ = RealThing
 > convertSomeThing :: RealThing -> RealThing
-> convertSomeThing = undefined
+> convertSomeThing = id
 > someFilterCondition :: RealThing -> Bool
-> someFilterCondition = undefined
-> makeHttpPost :: a
-> makeHttpPost = undefined
-> saveToDatabase :: a
-> saveToDatabase = undefined
+> someFilterCondition _ = True
+> makeHttpPost :: RealThing -> IO ()
+> makeHttpPost _ = return ()
+> saveToDatabase :: RealThing -> IO ()
+> saveToDatabase _ = return ()
 
 Pipes, Conduit : can decompose functions and provide "inverted mocking"
 
@@ -322,7 +322,7 @@ each part of this conduit can itself have many conduits inside of it:
 >   passThrough print
 >   .| passThrough makeHttpPost
 >   .| CL.mapM_ saveToDatabase
-
+> -}
 
 not usually working directly with Conduits
 functions usually provided to CL.mapM_, CL.filter, CL.map
