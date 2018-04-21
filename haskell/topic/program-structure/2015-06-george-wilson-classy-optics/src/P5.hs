@@ -7,7 +7,7 @@ module P5 where
 
 import           Data.Monoid          ((<>))
 import           Control.Lens
-import           Control.Monad.IO.Class
+-- import           Control.Monad.IO.Class
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import qualified Data.Text            as T
@@ -20,7 +20,7 @@ type MyData = T.Text
 
 loadFromDb :: (MonadError e m, MonadReader r m,
                AsDbError  e,   HasDbConfig r,
-               MonadIO m)
+               Monad m)
             => m MyData
 loadFromDb = do
   dbc <- ask
@@ -33,8 +33,9 @@ loadFromDb = do
 
 sendOverNet :: (MonadError     e m, MonadReader      r m,
                 AsNetworkError e,   HasNetworkConfig r,
-                MonadIO m)
-             => MyData -> m ()
+                Monad m)
+            => MyData
+            -> m T.Text
 sendOverNet x = do
   nc <- ask
   let p = view port nc
@@ -42,30 +43,32 @@ sendOverNet x = do
   if p == (-1) then
     throwError $ review _Timeout s
   else
-    liftIO $ T.putStrLn ("sendOverNet: " <> x <> " " <> T.pack (show p) <> " " <> s)
+    return $ "sendOverNet: " <> x <> " " <> T.pack (show p) <> " " <> s
 
 -- this would not compile at the end of P1
 loadAndSend :: (MonadError     e m, MonadReader      r m,
-                AsNetworkError e,   HasNetworkConfig r,
                 AsDbError      e,   HasDbConfig      r,
-                MonadIO m)
-             => m ()
+                AsNetworkError e,   HasNetworkConfig r,
+                Monad m)
+             => m T.Text
 loadAndSend = loadFromDb >>= sendOverNet
 
 -- 39:00
 
-newtype App a =
-    App { unApp :: ReaderT AppConfig (ExceptT AppError IO) a }
-    deriving (Applicative, Functor, Monad, MonadIO,
+newtype App m a =
+    App { unApp :: ReaderT AppConfig (ExceptT AppError m) a }
+    deriving (Applicative, Functor, Monad,
               MonadReader AppConfig,
               MonadError  AppError)
 
 -- HC
 
-app :: App ()
+-- app :: App IO T.Text
+app :: App IO T.Text
 app = do
-  loadAndSend
-  loadAndSend
+  r1 <- loadAndSend
+  r2 <- loadAndSend
+  return $ r1 <> " |||| " <> r2
 
 runApp :: DbConfig -> NetworkConfig -> IO ()
 runApp dbc nc = do
