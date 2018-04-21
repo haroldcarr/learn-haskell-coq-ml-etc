@@ -90,8 +90,6 @@ liftIO :: IO a -> App a
 
 -- No type-safety in following:
 
-type MyData = Text
-
 loadFromDb :: App MyData
 loadFromDb = undefined
 
