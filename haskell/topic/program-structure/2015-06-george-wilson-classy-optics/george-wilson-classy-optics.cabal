@@ -5,7 +5,7 @@ cabal-version:         >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     P0, P1, P2, P3, P4
+  exposed-modules:     P0, P1, P2, P3, P4, P5
   build-depends:       base >= 4.7 && < 5
                      , lens
                      , mtl

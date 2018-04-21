@@ -1,19 +1,12 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures  #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE NoMonomorphismRestriction  #-}
-{-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RankNTypes                 #-}
 
 module P3 where
 
 import           Control.Lens         hiding (Lens, Prism, prism)
-import           Control.Monad.Except
-import           Control.Monad.Reader
 import qualified Data.Text            as T
-import qualified Data.Text.IO         as T
 import           P0
 
 type Lens  a b = Lens'  a b
@@ -142,63 +135,3 @@ instance AsNetworkError AppError where
 -- makeClassyPrisms ''NetworkError  -- prism
 -- makeClassy       ''DbConig       -- lens
 
--- 35:38
-
-type MyData = T.Text
-
-loadFromDb :: (MonadError e m, MonadReader r m,
-               AsDbError  e,   HasDbConfig r,
-               MonadIO m)
-            => m MyData
-loadFromDb = undefined
-
-sendOverNet :: (MonadError     e m, MonadReader      r m,
-                AsNetworkError e,   HasNetworkConfig r,
-                MonadIO m)
-             => MyData -> m ()
-sendOverNet = undefined
-
--- this would not compile at the end of P1
-loadAndSend :: (MonadError     e m, MonadReader      r m,
-                AsNetworkError e,   HasNetworkConfig r,
-                AsDbError      e,   HasDbConfig      r,
-                MonadIO m)
-             => m ()
-loadAndSend = loadFromDb >>= sendOverNet
-
--- 39:00
-
-newtype App a =
-    App { unApp :: ReaderT AppConfig (ExceptT AppError IO) a }
-    deriving (Applicative, Functor, Monad, MonadIO,
-              MonadReader AppConfig,
-              MonadError  AppError)
-
-mainApp :: App ()
-mainApp = loadAndSend
-
--- HC
-
-main :: IO ()
-main = do
-  r <- runExceptT $
-         runReaderT (P3.unApp mainApp)
-                    (AppConfig (DbConfig "conn" "sche") (NetConfig 1 "ssl"))
-  T.putStrLn (T.pack $ show r)
-
--- 39:45
-
--- Abstractions > Concretions
--- Typeclass constraints stack up better than monolithic transformers
--- Lens gives compositional vocabulary for talking about data
-
--- talked about
--- - http://hackage.haskell.org/package/mtl
--- - http://lens.github.io
-
--- encourage looking at
--- - http://github.com/benkolera/talk-stacking-your-monads/
--- - http://hackage.haskell.org/package/hoist-error
-
--- makeClassy / makeClassyPrisms
--- - https://hackage.haskell.org/package/lens-4.13.2/docs/Control-Lens-TH.html
