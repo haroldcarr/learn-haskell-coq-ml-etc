@@ -1,0 +1,64 @@
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 4dc67cb27939d47c6d7212fa850fca46107b23cb06f40fc92573c4d11edffbbd
+
+name:           harold-carr-program-structure
+version:        0.1.0.0
+description:    se the README
+homepage:       https://github.com/githubuser/harold-carr-program-structure#readme
+bug-reports:    https://github.com/githubuser/harold-carr-program-structure/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2018 Author name here
+license:        BSD3
+build-type:     Simple
+cabal-version:  >= 1.10
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/harold-carr-program-structure
+
+library
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , universum
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_harold_carr_program_structure
+  default-language: Haskell2010
+
+executable harold-carr-program-structure-exe
+  main-is: Main.hs
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , harold-carr-program-structure
+    , universum
+  other-modules:
+      Paths_harold_carr_program_structure
+  default-language: Haskell2010
+
+test-suite harold-carr-program-structure-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , harold-carr-program-structure
+    , universum
+  other-modules:
+      Paths_harold_carr_program_structure
+  default-language: Haskell2010

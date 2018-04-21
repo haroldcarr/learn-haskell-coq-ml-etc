@@ -12,6 +12,11 @@
 >
 > {-# ANN module "HLint: ignore Reduce duplication" #-}
 
+MonadIO Considered Harmful
+Chris Penner
+Sep 11, 2017
+http://chrispenner.ca/posts/monadio-considered-harmful
+
 IO and MonadIO are too general.
 
 Alternative : Free or Freeer monads
@@ -41,9 +46,9 @@ They do the same thing.  Recommend class-based approach.
 - Enables reusing the function in other monad stacks.
 - Extensible, e.g.,:
 
-need access options
+need access to options, then add:
 
-add <code>ReaderT Options</code> to stack: ReaderT Options (StateT Int IO)
+    ReaderT Options (StateT Int IO)
 
 If using concrete StateT, need to rewrite all signatures.
 No need in class-based signature.
@@ -74,7 +79,7 @@ What does 'MonadIO m' class constraint say?
 
 Says need access to IO.  But what?  Reading/writing/launching?  TOO GENERAL
 
-Compare to 'MonadREad' 'ask' or 'MonadState' 'modify'
+Compare to 'MonadRead' 'ask' or 'MonadState' 'modify'
 - clear scope
 
 > class MonadFiles m where
@@ -85,7 +90,7 @@ Compare to 'MonadREad' 'ask' or 'MonadState' 'modify'
 >   readAFile  = readFile
 >   writeAFile = writeFile
 
-Use above to clarly specify only file system read/write/
+Use above to clarly specify only file system read/write
 
 > getDiary :: MonadFiles m => m String
 > getDiary = readAFile "my-diary.txt"
@@ -105,7 +110,7 @@ Also : different instance for testing:
 More granularity.
 
 > class MonadFileReader m where
->   readAFileX :: FilePath -> m String -- X to avoid dup
+>   readAFileX :: FilePath -> m String -- X to avoid dup in this file
 >
 > class MonadFileWriter m where
 >   writeAFileX :: FilePath -> String -> m ()

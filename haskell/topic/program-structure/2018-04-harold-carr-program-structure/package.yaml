@@ -1,0 +1,48 @@
+name:                harold-carr-program-structure
+version:             0.1.0.0
+github:              "githubuser/harold-carr-program-structure"
+license:             BSD3
+author:              "Author name here"
+maintainer:          "example@example.com"
+copyright:           "2018 Author name here"
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+description:         se the README
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+- universum
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -Wall
+
+executables:
+  harold-carr-program-structure-exe:
+    source-dirs:         app
+    main:                Main.hs
+    dependencies:
+    - harold-carr-program-structure
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+
+tests:
+  harold-carr-program-structure-test:
+    source-dirs:         test
+    main:                Spec.hs
+    dependencies:
+    - harold-carr-program-structure
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+

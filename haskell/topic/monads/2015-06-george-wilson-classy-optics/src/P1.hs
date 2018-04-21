@@ -1,43 +1,41 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings          #-}
+-- {-# LANGUAGE OverloadedStrings          #-}
 
 module P1 where
 
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.Text            as T
+import           Data.Text.IO         as T
 import           P0
 
-data DbConfig =
-     DbConfig {
-         dbConn :: DbConnection
-       , schema :: Schema
-     }
+data DbConfig = DbConfig
+  { dbConn :: DbConnection
+  , schema :: Schema
+  }
 
-data NetworkConfig =
-     NetConfig {
-         port :: Port
-       , ssl  :: SSL
-     }
+data NetworkConfig = NetConfig
+  { port :: Port
+  , ssl  :: SSL
+  }
 
-data AppConfig =
-     AppConfig {
-         appDbConfig  :: DbConfig
-       , appNetConfig :: NetworkConfig
-     }
+data AppConfig = AppConfig
+  { appDbConfig  :: DbConfig
+  , appNetConfig :: NetworkConfig
+  }
 
-data DbError =
-     QueryError T.Text
-   | InvalidConnection
+data DbError
+  = QueryError T.Text
+  | InvalidConnection
 
-data NetworkError =
-     Timeout Int
-   | ServerOnFire
+data NetworkError
+  = Timeout Int
+  | ServerOnFire
 
-data AppError =
-     AbbDbError  DbError
-   | AppNetError NetworkError
+data AppError
+  = AbbDbError  DbError
+  | AppNetError NetworkError
 
 -- 3:44
 
@@ -49,27 +47,27 @@ newtype App a =
 -- 6:09
 
 getPort :: MonadReader NetworkConfig m => m Port
-getPort = reader port
+getPort = reader port -- 'reader' is synonym for 'asks'
 
 getPort' :: MonadReader NetworkConfig m => m Port
 getPort' = do
     cfg <- ask
     return (port cfg)
 
-printM :: MonadIO m => String -> m ()
-printM = liftIO . putStrLn
+printM :: MonadIO m => Text -> m ()
+printM = liftIO . T.putStrLn
 
 -- 9:53
 
-type Err = String
+type Err = Text
 
 mightFail :: MonadError Err m => m Int
 mightFail = undefined
 
-couldFail :: MonadError Err m => m String
+couldFail :: MonadError Err m => m Text
 couldFail = undefined
 
-maybeFail :: MonadError Err m => m (Maybe (Int, String))
+maybeFail :: MonadError Err m => m (Maybe (Int, Text))
 maybeFail = ( do a <- mightFail
                  b <- couldFail
                  pure (Just (a, b))
@@ -91,9 +89,9 @@ liftIO :: IO a -> App a
 
 -- 11:00
 
--- No type-safety in example:
+-- No type-safety in following:
 
-type MyData = String
+type MyData = Text
 
 loadFromDb :: App MyData
 loadFromDb = undefined
@@ -106,7 +104,7 @@ loadAndSend = loadFromDb >>= sendOverNet
 
 -- 12:50
 
--- this version can't touch NetworkConfig or throw Network Errors
+-- this version provide more type-safety : can't touch NetworkConfig or throw Network Errors
 loadFromDb' :: (MonadReader DbConfig m,
                 MonadError  DbError  m,
                 MonadIO              m)

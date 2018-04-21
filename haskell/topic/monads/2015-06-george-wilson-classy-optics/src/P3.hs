@@ -13,6 +13,7 @@ import           Control.Lens         hiding (Lens, Prism, prism)
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import qualified Data.Text            as T
+import qualified Data.Text.IO         as T
 import           P0
 
 type Lens  a b = Lens'  a b
@@ -22,17 +23,20 @@ prism = prism'
 
 -- 25:00
 
-data DbConfig =
-     DbConfig {
-         _dbConn   :: DbConnection
-       , _dbSchema :: Schema
-     }
+-- for each type
+
+data DbConfig = DbConfig
+    { _dbConn   :: DbConnection
+    , _dbSchema :: Schema
+    }
+
+-- associate a typeclass of optics for that type
 
 class HasDbConfig t where
     dbConfig :: Lens t DbConfig
     dbConn   :: Lens t DbConnection
     dbSchema :: Lens t Schema
-    dbConn   =  dbConfig . dbConn
+    dbConn   =  dbConfig . dbConn -- note: lens compose "in reverse"
     dbSchema =  dbConfig . dbSchema
 
 instance HasDbConfig DbConfig where
@@ -40,11 +44,10 @@ instance HasDbConfig DbConfig where
     dbConn   = lens _dbConn   (\d c -> d { _dbConn   = c})
     dbSchema = lens _dbSchema (\d s -> d { _dbSchema = s})
 
-data NetworkConfig =
-     NetConfig {
-         _port :: Port
-       , _ssl  :: SSL
-     }
+data NetworkConfig = NetConfig
+    { _port :: Port
+    , _ssl  :: SSL
+    }
 
 class HasNetworkConfig t where
     netConfig :: Lens t NetworkConfig
@@ -58,11 +61,10 @@ instance HasNetworkConfig NetworkConfig where
     netPort   = lens _port (\n p -> n { _port = p})
     netSSL    = lens _ssl  (\n s -> n { _ssl  = s})
 
-data AppConfig =
-     AppConfig {
-         appDbConfig  :: DbConfig
-       , appNetConfig :: NetworkConfig
-     }
+data AppConfig = AppConfig
+    { appDbConfig  :: DbConfig
+    , appNetConfig :: NetworkConfig
+    }
 
 instance HasDbConfig AppConfig where
     dbConfig = lens appDbConfig (\app db -> app { appDbConfig = db})
@@ -72,9 +74,10 @@ instance HasNetworkConfig AppConfig where
 
 -- 32:04
 
-data DbError =
-     QueryError T.Text
-   | InvalidConnection
+data DbError
+    = QueryError T.Text
+    | InvalidConnection
+    deriving Show
 
 class AsDbError t where
     _DbError     :: Prism t DbError
@@ -94,9 +97,10 @@ instance AsDbError DbError where
 
 -- 32:04
 
-data NetworkError =
-     Timeout Int
-   | ServerOnFire
+data NetworkError
+    = Timeout Int
+    | ServerOnFire
+    deriving Show
 
 class AsNetworkError t where
     _NetworkError :: Prism t NetworkError
@@ -116,9 +120,10 @@ instance AsNetworkError NetworkError where
 
 -- 34:00
 
-data AppError =
-     AppDbError { dbError :: DbError }
-   | AppNetError { netError :: NetworkError }
+data AppError
+    = AppDbError  { dbError  :: DbError }
+    | AppNetError { netError :: NetworkError }
+    deriving Show
 
 instance AsDbError AppError where
     _DbError     = prism AppDbError
@@ -132,12 +137,14 @@ instance AsNetworkError AppError where
 
 -- 34:50
 
+-- above boilerplate can be generated automatically:
+
 -- makeClassyPrisms ''NetworkError  -- prism
 -- makeClassy       ''DbConig       -- lens
 
 -- 35:38
 
-type MyData = String
+type MyData = T.Text
 
 loadFromDb :: (MonadError e m, MonadReader r m,
                AsDbError  e,   HasDbConfig r,
@@ -151,6 +158,7 @@ sendOverNet :: (MonadError     e m, MonadReader      r m,
              => MyData -> m ()
 sendOverNet = undefined
 
+-- this would not compile at the end of P1
 loadAndSend :: (MonadError     e m, MonadReader      r m,
                 AsNetworkError e,   HasNetworkConfig r,
                 AsDbError      e,   HasDbConfig      r,
@@ -164,10 +172,19 @@ newtype App a =
     App { unApp :: ReaderT AppConfig (ExceptT AppError IO) a }
     deriving (Applicative, Functor, Monad, MonadIO,
               MonadReader AppConfig,
-              MonadError AppError)
+              MonadError  AppError)
 
 mainApp :: App ()
 mainApp = loadAndSend
+
+-- HC
+
+main :: IO ()
+main = do
+  r <- runExceptT $
+         runReaderT (P3.unApp mainApp)
+                    (AppConfig (DbConfig "conn" "sche") (NetConfig 1 "ssl"))
+  T.putStrLn (T.pack $ show r)
 
 -- 39:45
 
@@ -180,7 +197,7 @@ mainApp = loadAndSend
 -- - http://lens.github.io
 
 -- encourage looking at
- -- - http://github.com/benkolera/talk-stacking-your-monads/
+-- - http://github.com/benkolera/talk-stacking-your-monads/
 -- - http://hackage.haskell.org/package/hoist-error
 
 -- makeClassy / makeClassyPrisms
