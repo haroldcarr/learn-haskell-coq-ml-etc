@@ -73,7 +73,10 @@ test version
 
 > data TestCtx = TestCtx [Text] (Map Query [User])
 >
-> test :: (MonadState TestCtx m, MonadReader AppCtx m, MonadWriter [Text] m) => m ()
+> test :: ( MonadState  TestCtx m
+>         , MonadReader AppCtx  m
+>         , MonadWriter [Text]  m)
+>      =>                       m ()
 > test = do it; it; it; it; it
 >  where
 >   it = runAbstract runhttp rundb getsomething runredis
