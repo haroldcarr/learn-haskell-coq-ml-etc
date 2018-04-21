@@ -32,7 +32,7 @@ loadFromDb = do
   if c == "BAD" then
     throwError $ review _QueryError s
   else
-    return ("MyData returned from 'loadFromDb' " <> c <> " " <> s)
+    return ("loadFromDb " <> c <> " " <> s <> " : 'HCData'")
 
 sendOverNet :: (MonadError     e m, MonadReader      r m,
                 AsNetworkError e,   HasNetworkConfig r,
@@ -46,7 +46,7 @@ sendOverNet x = do
   if p == (-1) then
     throwError $ review _Timeout s
   else
-    return $ "sendOverNet: " <> x <> " " <> T.pack (show p) <> " " <> s
+    return ("sendOverNet " <> T.pack (show p) <> " " <> s <> " : '" <> x <> "'")
 
 -- this would not compile at the end of P1
 loadAndSend :: (MonadError     e m, MonadReader      r m,
@@ -79,10 +79,10 @@ runApp dbc nc = do
                     (AppConfig dbc nc)
   T.putStrLn (T.pack $ show r)
 
-dbcGood = DbConfig "DbConfig conn" "DbConfig sche"
-dbcBad  = DbConfig "BAD"           "DbConfig Schema for BAD connection"
-ncGood  = NetConfig 45             "NetConfig ssl"
-ncBad   = NetConfig (-1)           "NetConfig ssl for -1"
+dbcGood = DbConfig "conn" "sche"
+dbcBad  = DbConfig "BAD"  "sche for BAD"
+ncGood  = NetConfig 45    "xssl"
+ncBad   = NetConfig (-1)  "xssl for -1"
 
 m1,m2,m3 :: IO ()
 m1 = runApp dbcGood ncGood
@@ -104,6 +104,11 @@ runAppW dbc nc =
       runExceptT $
         runReaderT (unApp appW)
                    (AppConfig dbc nc)
+
+m1w,m2w,m3w :: IO ()
+m1w = runApp dbcGood ncGood
+m2w = runApp dbcBad  ncGood
+m3w = runApp dbcGood ncBad
 
 
 -- 39:45
