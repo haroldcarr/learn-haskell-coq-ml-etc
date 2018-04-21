@@ -222,20 +222,19 @@ test version
 
 > doWorkTest :: Writer [Text] ()
 > doWorkTest =
->   doWorkAbstract5 getQ getUsers0 getSomething0 redis0
+>   doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0
 >  where
->   getQ = do
->     tell ["getting users query"]
+>   runHTTP0 = do
+>     tell ["runHTTP"]
 >     pure AnyUserQuery
->   getUsers0 _ = do
->     tell ["getting users"]
+>   runDB0 x = do
+>     tell ["runDB " <> show x]
 >     pure [User "X", User "Y"]
 >   getSomething0 u = do
->     tell ["getting something for " <> show u]
+>     tell ["getSomething " <> show u]
 >     pure (getSomething u)
->   redis0 k v = do
->     tell ["wrote k: " <> show k]
->     tell ["wrote v: " <> show v]
+>   runRedis0 k v =
+>     tell ["runRedis: " <> show k <> "/" <> show v]
 >
 > doW :: [Text]
 > doW = execWriter doWorkTest
