@@ -29,6 +29,177 @@ instead
 >   , redisConn :: Text
 >   }
 >
+> newtype AppError = AppError Text deriving Show
+>
+> newtype App a = App { unApp :: ReaderT AppCtx (ExceptT AppError IO) a }
+>   deriving (Functor, Applicative, Monad,
+>             -- HC: added
+>             MonadIO,
+>             MonadReader AppCtx,
+>             MonadError AppError
+>             )
+>
+> appCtx :: AppCtx
+> appCtx = AppCtx "my-http-conn" "my-db-conn" "my-redis-conn"
+>
+> runApp :: App a -> IO (Either AppError a)
+> runApp a = runExceptT $ runReaderT (unApp a) appCtx
+
+cost: must manually lift to use an App function inside of a Conduit, MaybeT, ...
+
+then, when testing
+
+> doWork1 :: App ()
+> doWork1 = do
+>   query <- runHTTP getUserQuery
+>   users <- runDB (usersSatisfying query)
+>   for_ users $ \user -> do
+>     thing <- getSomethingApp user
+>     let result = compute thing
+>     runRedis (writeKey (userRedisKey user) result)
+
+if using mtl, Eff, etc: need to mock HTTP, database, Redis effects.
+
+Instead.
+
+Decomposing Effects
+
+keep effects and values separate
+
+functions that look like:
+
+    doWork :: App ()
+
+are not functional
+
+one approach : get all the inputs from effects
+
+> doWorkBase :: ([User] -> App ()) -> App ()
+> doWorkBase f = do
+>   query <- runHTTP getUserQuery
+>   users <- runDB (usersSatisfying query)
+>   f users
+
+to reduce mocking only getSomething and runRedis in the following
+
+> doWorkHelper2 :: [User] -> App ()
+> doWorkHelper2 users =
+>   for_ users $ \user -> do
+>     thing <- getSomethingApp user
+>     let result = compute thing
+>     runRedis (writeKey (userRedisKey user) result)
+>
+> doWork2 :: App ()
+> doWork2 = doWorkBase doWorkHelper2
+
+Can get rid of the getSomething by factoring another helper out.
+
+> doWorkHelper3 :: [User] -> App ()
+> doWorkHelper3 users = do
+>   things'users <- forM users $ \user -> do
+>     thing <- getSomethingApp user
+>     pure (thing, user)
+>   lookMaNoInputs3 things'users
+>
+> lookMaNoInputs3 :: [(Thing, User)] -> App ()
+> lookMaNoInputs3 things'users =
+>   for_ things'users $ \(thing, user) -> do
+>     let result = compute thing
+>     runRedis (writeKey (userRedisKey user) result)
+>
+> doWork3 :: App ()
+> doWork3 = doWorkBase doWorkHelper3
+
+above factors out all INPUT EFFECTS
+
+do the pure stuff
+
+> businessLogic4 :: (Thing, User) -> (RedisKey, Result)
+> businessLogic4 (thing, user) = (userRedisKey user, compute thing)
+
+and give to the output effect
+
+    runRedis (writeKey (userRedisKey user) result)
+
+> lookMaNoInputs4 :: [(Thing, User)] -> App ()
+> lookMaNoInputs4 users =
+>   for_ (map businessLogic4 users) $ \(key, result) ->
+>     runRedis (writeKey key result)
+>
+> doWorkHelper4 :: [User] -> App ()
+> doWorkHelper4 users = do
+>   things'users <- forM users $ \user -> do
+>     thing <- getSomethingApp user
+>     pure (thing, user)
+>   lookMaNoInputs4 things'users
+>
+> doWork4 :: App ()
+> doWork4 = doWorkBase doWorkHelper4
+
+above factors pure code from effect code
+
+------------------------------------------------------------------------------
+
+- parameterized over any monad : Identity, State, IO, ..., you choose
+- pure specification of effect logic (i.e., dependency injection)
+
+> doWorkAbstract5
+>   :: Monad m
+>   =>                        m Query   -- ^ runHTTP
+>   -> (Query              -> m [User]) -- ^ runDB
+>   -> (User               -> m Thing)  -- ^ getSomething
+>   -> (RedisKey -> Result -> m ())     -- ^ runRedis
+>   ->                        m ()
+> doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0 = do
+>   query <- runHTTP0
+>   users <- runDB0 query
+>   for_ users $ \user -> do
+>     thing <- getSomething0 user
+>     let result = compute thing
+>     runRedis0 (userRedisKey user) result
+
+production IO version
+
+> doWork5 :: App ()
+> doWork5 =
+>   doWorkAbstract5
+>     (runHTTP getUserQuery)
+>     (runDB . usersSatisfying)
+>     getSomethingApp
+>     (\key result -> runRedis (writeKey key result))
+
+> doAll :: IO [Either AppError ()]
+> doAll = mapM runApp [doWork1, doWork2, doWork3, doWork4, doWork5]
+
+test version
+
+> doWorkTest :: (MonadReader AppCtx m, MonadWriter [Text] m) => m ()
+> doWorkTest =
+>   doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0
+>  where
+>   runHTTP0 = do
+>     c <- asks httpConn
+>     tell ["runHTTP " <> c]
+>     pure AnyUserQuery
+>   runDB0 x = do
+>     c <- asks dbConn
+>     tell ["runDB " <> c <> " : " <> show x]
+>     pure [User "X", User "Y"]
+>   getSomething0 u = do
+>     tell ["getSomething " <> show u]
+>     pure (getSomething u)
+>   runRedis0 k v = do
+>     c <- asks redisConn
+>     tell ["runRedis: " <> c <> " : " <> show k <> "/" <> show v]
+>
+> doW :: [Text]
+> doW = execWriterT doWorkTest appCtx
+
+Note: above does NOT use: mtl, Eff, type classes, ...
+
+------------------------------------------------------------------------------
+-- support for above
+
 > getUserQuery :: Text
 > getUserQuery =
 >   "USER-HC"
@@ -92,159 +263,6 @@ instead
 >   c <- asks redisConn
 >   putStrLn ("runRedis " <> c <> " : " <> show r)
 >   return ()
-
-> newtype AppError = AppError Text deriving Show
->
-> newtype App a = App { unApp :: ReaderT AppCtx (ExceptT AppError IO) a }
->   deriving (Functor, Applicative, Monad,
->             -- HC: added
->             MonadIO,
->             MonadReader AppCtx,
->             MonadError AppError
->             )
->
-> appCtx :: AppCtx
-> appCtx = AppCtx "my-http-conn" "my-db-conn" "my-redis-conn"
->
-> runApp :: App a -> IO (Either AppError a)
-> runApp a = runExceptT $ runReaderT (unApp a) appCtx
-
-cost: must manually lift to use an App function inside of a Conduit, MaybeT, ...
-
-when testing
-
-> doWork1 :: App ()
-> doWork1 = do
->   query <- runHTTP getUserQuery
->   users <- runDB (usersSatisfying query)
->   for_ users $ \user -> do
->     thing <- getSomethingApp user
->     let result = compute thing
->     runRedis (writeKey (userRedisKey user) result)
-
-if using mtl, Eff, etc: need to mock HTTP, database, Redis effects.
-
-Instead.
-
-Decomposing Effects
-
-effects and values are separate: keep them as separate as possible
-
-functions at look like:
-
-    doWork :: App ()
-
-are not functional
-
-one approach : get all the inputs from effects
-
-> doWork2 :: App ()
-> doWork2 = do
->   query <- runHTTP getUserQuery
->   users <- runDB (usersSatisfying query)
->   doWorkHelper2 users
-
-to reduce mocking only getSomething and runRedis in the following
-
-> doWorkHelper2 :: [User] -> App ()
-> doWorkHelper2 users =
->   for_ users $ \user -> do
->     thing <- getSomethingApp user
->     let result = compute thing
->     runRedis (writeKey (userRedisKey user) result)
-
-Can get rid of the getSomething by factoring another helper out.
-
-> doWorkHelper3 :: [User] -> App ()
-> doWorkHelper3 users = do
->   things'users <- forM users $ \user -> do
->     thing <- getSomethingApp user
->     pure (thing, user)
->   lookMaNoInputs3 things'users
->
-> lookMaNoInputs3 :: [(Thing, User)] -> App ()
-> lookMaNoInputs3 things'users =
->   for_ things'users $ \(thing, user) -> do
->     let result = compute thing
->     runRedis (writeKey (userRedisKey user) result)
-
-above factors out all INPUT EFFECTS
-
-do the pure stuff
-
-> businessLogic4 :: (Thing, User) -> (RedisKey, Result)
-> businessLogic4  (thing, user) = (userRedisKey user, computeIt thing user)
->  where computeIt _ _ = Result "x"
-
-and give to the output effect
-
-    runRedis (writeKey (userRedisKey user) result)
-
-> lookMaNoInputs4 :: [(Thing, User)] -> App ()
-> lookMaNoInputs4 users =
->   for_ (map businessLogic4 users) $ \(key, result) ->
->     runRedis (writeKey key result)
-
-above factors pure code from effect code
-
-------------------------------------------------------------------------------
-
-- parameterized over any monad : Identity, State, IO, ..., you choose
-- pure specification of effect logic (i.e., dependency injection)
-
-> doWorkAbstract5
->   :: Monad m
->   =>                        m Query   -- ^ runHTTP
->   -> (Query              -> m [User]) -- ^ runDB
->   -> (User               -> m Thing)  -- ^ getSomething
->   -> (RedisKey -> Result -> m ())     -- ^ runRedis
->   ->                        m ()
-> doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0 = do
->   query <- runHTTP0
->   users <- runDB0 query
->   for_ users $ \user -> do
->     thing <- getSomething0 user
->     let result = compute thing
->     runRedis0 (userRedisKey user) result
-
-production IO version
-
-> doWork5 :: App ()
-> doWork5 =
->   doWorkAbstract5
->     (runHTTP getUserQuery)
->     (runDB . usersSatisfying)
->     getSomethingApp
->     (\key result -> runRedis (writeKey key result))
-
-> doAll :: IO [Either AppError ()]
-> doAll = mapM runApp [doWork1, doWork2, doWork5]
-
-test version
-
-> doWorkTest :: (MonadReader AppCtx m, MonadWriter [Text] m) => m ()
-> doWorkTest =
->   doWorkAbstract5 runHTTP0 runDB0 getSomething0 runRedis0
->  where
->   runHTTP0 = do
->     c <- asks httpConn
->     tell ["runHTTP " <> c]
->     pure AnyUserQuery
->   runDB0 x = do
->     c <- asks dbConn
->     tell ["runDB " <> c <> " : " <> show x]
->     pure [User "X", User "Y"]
->   getSomething0 u = do
->     tell ["getSomething " <> show u]
->     pure (getSomething u)
->   runRedis0 k v = do
->     c <- asks redisConn
->     tell ["runRedis: " <> c <> " : " <> show k <> "/" <> show v]
->
-> doW :: [Text]
-> doW = execWriterT doWorkTest appCtx
-
-Note: above does NOT use: mtl, Eff, type classes, ...
 
 ------------------------------------------------------------------------------
 
