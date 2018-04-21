@@ -46,11 +46,13 @@ makeClassyPrisms ''NetworkError
 makeClassyPrisms ''AppError
 
 instance HasDbConfig AppConfig where
-  dbConfig = appDbConfig
+  -- dbConfig = appDbConfig
+  dbConfig      = lens _appDbConfig  (\app db  -> app { _appDbConfig  = db})
 instance HasNetworkConfig AppConfig where
-  networkConfig = appNetConfig
+  -- networkConfig = appNetConfig
+  networkConfig = lens _appNetConfig (\app net -> app { _appNetConfig = net})
 instance AsDbError AppError where
-  _DbError = _AppError . _AppDbError
+  _DbError      = _AppError . _AppDbError
 instance AsNetworkError AppError where
   _NetworkError = _AppError . _AppNetError
 

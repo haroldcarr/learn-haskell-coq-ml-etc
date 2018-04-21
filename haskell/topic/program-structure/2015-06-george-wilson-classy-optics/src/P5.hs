@@ -68,17 +68,16 @@ mainApp dbc nc = do
                     (AppConfig dbc nc)
   T.putStrLn (T.pack $ show r)
 
-m1 :: IO ()
-m1 = mainApp (DbConfig "DbConfig conn" "DbConfig sche")
-             (NetConfig 45 "NetConfig ssl")
+dbcGood = DbConfig "DbConfig conn" "DbConfig sche"
+dbcBad  = DbConfig "BAD" "DbConfig Schema for BAD connection"
+ncGood  = NetConfig 45 "NetConfig ssl"
+ncBad   = NetConfig (-1) "NetConfig ssl for -1"
 
-m2 :: IO ()
-m2 = mainApp (DbConfig "BAD" "DbConfig Schema for BAD connection")
-             (NetConfig 45 "NetConfig ssl")
+m1,m2,m3 :: IO ()
+m1 = mainApp dbcGood ncGood
+m2 = mainApp dbcBad  ncGood
+m3 = mainApp dbcGood ncBad
 
-m3 :: IO ()
-m3 = mainApp (DbConfig "DbConfig conn" "DbConfig sche")
-             (NetConfig (-1) "NetConfig ssl for -1")
 
 -- 39:45
 
