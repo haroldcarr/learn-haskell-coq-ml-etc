@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures  #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
@@ -61,23 +62,27 @@ newtype App a =
 
 -- HC
 
-mainApp :: DbConfig -> NetworkConfig -> IO ()
-mainApp dbc nc = do
+app :: App ()
+app = do
+  loadAndSend
+  loadAndSend
+
+runApp :: DbConfig -> NetworkConfig -> IO ()
+runApp dbc nc = do
   r <- runExceptT $
-         runReaderT (unApp loadAndSend)
+         runReaderT (unApp app)
                     (AppConfig dbc nc)
   T.putStrLn (T.pack $ show r)
 
 dbcGood = DbConfig "DbConfig conn" "DbConfig sche"
-dbcBad  = DbConfig "BAD" "DbConfig Schema for BAD connection"
-ncGood  = NetConfig 45 "NetConfig ssl"
-ncBad   = NetConfig (-1) "NetConfig ssl for -1"
+dbcBad  = DbConfig "BAD"           "DbConfig Schema for BAD connection"
+ncGood  = NetConfig 45             "NetConfig ssl"
+ncBad   = NetConfig (-1)           "NetConfig ssl for -1"
 
 m1,m2,m3 :: IO ()
-m1 = mainApp dbcGood ncGood
-m2 = mainApp dbcBad  ncGood
-m3 = mainApp dbcGood ncBad
-
+m1 = runApp dbcGood ncGood
+m2 = runApp dbcBad  ncGood
+m3 = runApp dbcGood ncBad
 
 -- 39:45
 
