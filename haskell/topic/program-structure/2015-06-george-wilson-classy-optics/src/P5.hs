@@ -10,9 +10,12 @@ import           Control.Lens
 -- import           Control.Monad.IO.Class
 import           Control.Monad.Except
 import           Control.Monad.Reader
+import           Control.Monad.Writer
 import qualified Data.Text            as T
 import qualified Data.Text.IO         as T
 import           P4
+
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 -- 35:38
 
@@ -63,7 +66,6 @@ newtype App m a =
 
 -- HC
 
--- app :: App IO T.Text
 app :: App IO T.Text
 app = do
   r1 <- loadAndSend
@@ -86,6 +88,23 @@ m1,m2,m3 :: IO ()
 m1 = runApp dbcGood ncGood
 m2 = runApp dbcBad  ncGood
 m3 = runApp dbcGood ncBad
+
+------------------------------------------------------------------------------
+
+appW :: App (Writer [T.Text]) T.Text
+appW = do
+  r1 <- loadAndSend
+  r2 <- loadAndSend
+  return $ r1 <> " |||| " <> r2
+
+-- runApp :: DbConfig -> NetworkConfig -> IO ()
+runAppW dbc nc =
+  runIdentity $
+    runWriterT $
+      runExceptT $
+        runReaderT (unApp appW)
+                   (AppConfig dbc nc)
+
 
 -- 39:45
 
