@@ -107,8 +107,8 @@ newtype AppIO a =
 -- 39:00
 
 newtype App m a =
-    App { unApp :: ReaderT AppConfig (ExceptT AppError m) a }
-    deriving (Applicative, Functor, Monad,
+    App   { unApp   :: ReaderT AppConfig (ExceptT AppError m)  a }
+    deriving (Applicative, Functor, Monad, MonadIO, -- remove MonadIO?
               MonadReader AppConfig,
               MonadError  AppError)
 
@@ -120,11 +120,10 @@ appIO = do
   loadAndSendIO
   loadAndSendIO
 
-app :: App IO T.Text
+app :: App IO ()
 app = do
-  r1 <- loadAndSend
-  r2 <- loadAndSend
-  return $ r1 <> " |||| " <> r2
+  loadAndSendIO
+  loadAndSendIO
 
 appW :: App (Writer [T.Text]) T.Text
 appW = do
@@ -139,14 +138,14 @@ runAppIO dbc nc = do
                     (AppConfig dbc nc)
   T.putStrLn (T.pack $ show r)
 
-runApp :: DbConfig -> NetworkConfig -> IO ()
+runApp   :: DbConfig -> NetworkConfig -> IO ()
 runApp dbc nc = do
   r <- runExceptT $
-         runReaderT (unApp app)
+         runReaderT (unApp   app)  -- only difference
                     (AppConfig dbc nc)
   T.putStrLn (T.pack $ show r)
 
--- runApp :: DbConfig -> NetworkConfig -> IO ()
+runAppW  :: DbConfig -> NetworkConfig -> (Either AppError T.Text, [T.Text])
 runAppW dbc nc =
   runIdentity $
     runWriterT $
@@ -164,10 +163,10 @@ m1 = runApp dbcGood ncGood
 m2 = runApp dbcBad  ncGood
 m3 = runApp dbcGood ncBad
 
-m1w,m2w,m3w :: IO ()
-m1w = runApp dbcGood ncGood
-m2w = runApp dbcBad  ncGood
-m3w = runApp dbcGood ncBad
+-- m1w,m2w,m3w :: IO ()
+m1w = runAppW dbcGood ncGood
+m2w = runAppW dbcBad  ncGood
+m3w = runAppW dbcGood ncBad
 
 dbcGood = DbConfig "conn" "sche"
 dbcBad  = DbConfig "BAD"  "sche for BAD"
