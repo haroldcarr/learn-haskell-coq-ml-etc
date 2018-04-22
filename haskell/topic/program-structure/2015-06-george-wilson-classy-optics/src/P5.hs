@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures  #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
@@ -7,7 +6,6 @@ module P5 where
 
 import           Data.Monoid          ((<>))
 import           Control.Lens
--- import           Control.Monad.IO.Class
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.Writer
