@@ -4,12 +4,27 @@ build-type:            Simple
 cabal-version:         >= 1.10
 
 library
+  hs-source-dirs:      src
+  exposed-modules:     HC
+                     , Matt
   build-depends:       base >=4.7 && <5
                      , containers
+                     , hspec
+                     , hspec-expectations
                      , mtl
                      , random
                      , universum
-  exposed-modules:     HC
-                     , Matt
   ghc-options:         -Wall
+  default-language:    Haskell2010
+
+test-suite hspec
+  hs-source-dirs:      test
+  main-is:             hspec.hs
+  other-modules:       HCSpec
+  build-depends:       base
+                     , matt-parsons-invert-your-mocks
+                     , hspec
+                     , hspec-expectations
+  type:                exitcode-stdio-1.0
+  ghc-options:         -Wall -fno-warn-unused-do-bind -O2 -fno-ignore-asserts
   default-language:    Haskell2010

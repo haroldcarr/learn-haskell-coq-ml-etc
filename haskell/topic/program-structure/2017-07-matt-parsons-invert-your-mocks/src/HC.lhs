@@ -13,6 +13,7 @@
 > import           Control.Monad.Reader
 > import           Control.Monad.Writer   hiding ((<>))
 > import qualified Prelude                as P
+> import           Test.Hspec             hiding (runIO)
 > import           Universum              as U
 
 > {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
@@ -23,7 +24,7 @@
 >   , redisConn :: Text
 >   }
 >
-> newtype AppError = AppError Text deriving Show
+> newtype AppError = AppError Text deriving (Eq, Show)
 >
 > newtype App a = App { unApp :: ReaderT AppCtx (ExceptT AppError IO) a }
 >   deriving (Functor, Applicative, Monad,
@@ -44,13 +45,15 @@ cost: must manually lift to use an App function inside of a Conduit, MaybeT, ...
 
 > runAbstract
 >   :: Monad m
->   => (Text        -> m Query)  -- ^ runHTTP
+>   =>                 m Text    -- ^ getUserInput
+>   -> (Text        -> m Query)  -- ^ runHTTP
 >   -> (Query       -> m [User]) -- ^ runDB
 >   -> (User        -> m Thing)  -- ^ getSomething
 >   -> (WriteResult -> m ())     -- ^ runRedis
 >   ->                 m ()
-> runAbstract runhttp rundb getsomething runredis = do
->   query <- runhttp getUserInput
+> runAbstract getuserinput runhttp rundb getsomething runredis = do
+>   input <- getuserinput
+>   query <- runhttp input
 >   users <- rundb (usersSatisfying query)
 >   for_ users $ \user -> do
 >     thing <- getsomething user
@@ -61,13 +64,11 @@ cost: must manually lift to use an App function inside of a Conduit, MaybeT, ...
 
 production IO version
 
-> runIO :: App ()
-> runIO = do it; it
->  where
->   it = runAbstract runHTTP runDB getSomething runRedis
-
-> runIt :: IO (Either AppError ())
-> runIt = runApp runIO
+> runIO :: Int -> App ()
+> runIO i = runAbstract (getUserInput i) runHTTP runDB getSomething runRedis
+>
+> rio :: IO [Either AppError ()]
+> rio = mapM (runApp . runIO) [0 .. 4]
 
 test version
 
@@ -76,52 +77,97 @@ test version
 >   catchError (Left err) h = h err
 >   catchError r          _ = r
 >
-> test :: ( MonadState  Int      m
->         , MonadReader AppCtx   m
->         , MonadWriter [Text]   m
->         , MonadError  AppError m)
->      =>                        m ()
-> test = {-do-} it -- ; it; it; it; it
+> test :: ( MonadState  (Int,Int) m
+>         , MonadReader AppCtx    m
+>         , MonadWriter [Text]    m
+>         , MonadError  AppError  m)
+>      =>                         m ()
+> test = runAbstract getuserinput runhttp rundb getsomething runredis
 >  where
->   it = runAbstract runhttp rundb getsomething runredis
+>   getuserinput = do
+>     (i, _) <- get
+>     modify (bimap id (+1))
+>     let ui = getUserInputPure i
+>     tell ["getUserInput " <> ui]
+>     pure ui
 >   runhttp "runHTTPBAD" = throwError (AppError "runHTTP FAILED")
 >   runhttp x = do   -- ignore input
->     modify' (+1)
+>     modify (bimap id (+1))
 >     c <- asks httpConn
 >     tell ["runHTTP " <> c <> " : " <> x]
 >     pure (Query x)
 >   rundb (Query "runDBBAD") = throwError (AppError "runDB FAILED")
 >   rundb q@(Query x) = do
->     modify' (+1)
+>     modify (bimap id (+1))
 >     c <- asks dbConn
 >     tell ["runDB " <> c <> " : " <> show q]
 >     pure [User x, User "y"]
 >   getsomething (User "getSomethingBAD") = throwError (AppError "getSomething FAILED")
 >   getsomething u = do
->     modify' (+1)
+>     modify (bimap id (+1))
 >     tell ["getSomething " <> show u]
 >     pure (getSomethingPure u)
 >   runredis (WriteResult _ (Result "runRedisBAD")) = throwError (AppError "runRedis FAILED")
 >   runredis r = do
->     modify' (+1)
+>     modify (bimap id (+1))
 >     c <- asks redisConn
 >     tell ["runRedis: " <> c <> " : " <> show r]
 >
-> rt,runTest :: IO ()
-> rt = runTest
-> runTest = do
->   let (e,w) = runWriterT (runExceptT (execStateT test 0)) appCtx
->   print e
->   U.mapM_ go w
->  where go x = do
->          putStrLn ("-----------------------"::Text)
->          putStrLn x
+> runTest :: Int -> (Either AppError (Int, Int), [Text])
+> runTest i = runWriterT (runExceptT (execStateT test (i,0))) appCtx
+>
+> rat :: [(Either AppError (Int, Int), [Text])]
+> rat = map runTest [0 .. 4]
+>
+> st :: IO ()
+> st =  U.mapM_ go rat
+>  where
+>   go (e,w) = do
+>     putStrLn ("======================="::Text)
+>     print e
+>     U.mapM_ go' w
+>   go' x = do
+>     putStrLn ("-----------------------"::Text)
+>     putStrLn x
 
 Note: above does NOT use: mtl, Eff, type classes, ...
+
+> testIt :: Spec
+> testIt =
+>   describe "testIt" $
+>     it "works" $
+>       rat `shouldBe`
+>       [ (Right (0,7)
+>         ,["getUserInput USER-HC"
+>          ,"runHTTP my-http-conn : USER-HC"
+>          ,"runDB my-db-conn : Query \"USER-HC\""
+>          ,"getSomething User \"USER-HC\""
+>          ,"runRedis: my-redis-conn : WriteResult RedisKey (Result \"USER-HC\")"
+>          ,"getSomething User \"y\""
+>          ,"runRedis: my-redis-conn : WriteResult RedisKey (Result \"y\")"
+>          ])
+>       , (Left (AppError "runHTTP FAILED")
+>         ,[ "getUserInput runHTTPBAD" ])
+>       , (Left (AppError "runDB FAILED")
+>         ,["getUserInput runDBBAD"
+>          ,"runHTTP my-http-conn : runDBBAD"])
+>       ,(Left (AppError "getSomething FAILED")
+>        ,["getUserInput getSomethingBAD"
+>         ,"runHTTP my-http-conn : getSomethingBAD"
+>         ,"runDB my-db-conn : Query \"getSomethingBAD\""])
+>       ,(Left (AppError "runRedis FAILED")
+>        ,["getUserInput runRedisBAD"
+>         ,"runHTTP my-http-conn : runRedisBAD"
+>         ,"runDB my-db-conn : Query \"runRedisBAD\""
+>         ,"getSomething User \"runRedisBAD\""])]
+
 
 ------------------------------------------------------------------------------
 -- effects
 
+> getUserInput :: Int -> App Text
+> getUserInput i = return (userInputs P.!! i)
+>
 > runHTTP :: Text -> App Query
 > runHTTP x = do
 >   when (x == "runHTTPBAD") $ throwError (AppError "runHTTP FAILED")
@@ -160,9 +206,8 @@ Note: above does NOT use: mtl, Eff, type classes, ...
 > userInputs :: [Text]
 > userInputs = ["USER-HC", "runHTTPBAD", "runDBBAD", "getSomethingBAD", "runRedisBAD"]
 >
-> {-# ANN getUserInput ("HLint: ignore Use head" :: String) #-}
-> getUserInput :: Text
-> getUserInput = userInputs P.!! 0
+> getUserInputPure :: Int -> Text
+> getUserInputPure i = userInputs P.!! i
 >
 > getSomethingPure :: User -> Thing
 > getSomethingPure (User x) = Thing x
