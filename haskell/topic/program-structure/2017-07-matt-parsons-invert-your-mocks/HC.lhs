@@ -2,6 +2,7 @@
 > {-# LANGUAGE FlexibleContexts           #-}
 > {-# LANGUAGE FlexibleInstances          #-}
 > {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+> {-# LANGUAGE MultiParamTypeClasses      #-}
 > {-# LANGUAGE NoImplicitPrelude          #-}
 > {-# LANGUAGE OverloadedStrings          #-}
 > {-# LANGUAGE TypeSynonymInstances       #-}
@@ -11,7 +12,6 @@
 > import           Control.Monad.Except
 > import           Control.Monad.Reader
 > import           Control.Monad.Writer   hiding ((<>))
-> import qualified Data.Map.Strict        as M
 > import qualified Prelude                as P
 > import           Universum              as U
 
@@ -50,7 +50,7 @@ cost: must manually lift to use an App function inside of a Conduit, MaybeT, ...
 >   -> (WriteResult -> m ())     -- ^ runRedis
 >   ->                 m ()
 > runAbstract runhttp rundb getsomething runredis = do
->   query <- runhttp getUserQuery
+>   query <- runhttp getUserInput
 >   users <- rundb (usersSatisfying query)
 >   for_ users $ \user -> do
 >     thing <- getsomething user
@@ -71,47 +71,51 @@ production IO version
 
 test version
 
-> data TestCtx = TestCtx [Text] (Map Query [User])
+> instance MonadError AppError (Either AppError) where
+>   throwError              = Left
+>   catchError (Left err) h = h err
+>   catchError r          _ = r
 >
-> test :: ( MonadState  TestCtx m
->         , MonadReader AppCtx  m
->         , MonadWriter [Text]  m)
->      =>                       m ()
-> test = do it; it; it; it; it
+> test :: ( MonadState  Int      m
+>         , MonadReader AppCtx   m
+>         , MonadWriter [Text]   m
+>         , MonadError  AppError m)
+>      =>                        m ()
+> test = {-do-} it -- ; it; it; it; it
 >  where
 >   it = runAbstract runhttp rundb getsomething runredis
->   runhttp xx = do   -- ignore input
+>   runhttp "runHTTPBAD" = throwError (AppError "runHTTP FAILED")
+>   runhttp x = do   -- ignore input
+>     modify' (+1)
 >     c <- asks httpConn
->     tell ["runHTTP " <> c <> " : " <> xx]
->     TestCtx (q:qs) x <- get
->     put (TestCtx qs x)
->     pure (Query q)
->   rundb q = do
+>     tell ["runHTTP " <> c <> " : " <> x]
+>     pure (Query x)
+>   rundb (Query "runDBBAD") = throwError (AppError "runDB FAILED")
+>   rundb q@(Query x) = do
+>     modify' (+1)
 >     c <- asks dbConn
 >     tell ["runDB " <> c <> " : " <> show q]
->     TestCtx _ m <- get
->     let us = fromMaybe [] (M.lookup q m)
->     pure us
+>     pure [User x, User "y"]
+>   getsomething (User "getSomethingBAD") = throwError (AppError "getSomething FAILED")
 >   getsomething u = do
+>     modify' (+1)
 >     tell ["getSomething " <> show u]
 >     pure (getSomethingPure u)
+>   runredis (WriteResult _ (Result "runRedisBAD")) = throwError (AppError "runRedis FAILED")
 >   runredis r = do
+>     modify' (+1)
 >     c <- asks redisConn
 >     tell ["runRedis: " <> c <> " : " <> show r]
 >
-> testCtx :: TestCtx
-> testCtx = TestCtx userQueries
->                   (M.fromList [ (Query "USER-HC"         , [User "QHC1"  , User "QHC2"])
->                               , (Query "runHTTPBAD"      , [User "QHTTP1", User "QHTTP2"])
->                               , (Query "runDBBAD"        , [User "QDB1"  , User "QDB2"])
->                               , (Query "getSomethingBAD" , [User "QGS1"  , User "QGS2"])
->                               , (Query "runRedisBAD"     , [User "QRED1" , User "QRED2"])
->                               ])
->
-> runTest :: IO ()
+> rt,runTest :: IO ()
+> rt = runTest
 > runTest = do
->   let r = execWriterT (execStateT test testCtx) appCtx
->   U.mapM_ putStrLn r
+>   let (e,w) = runWriterT (runExceptT (execStateT test 0)) appCtx
+>   print e
+>   U.mapM_ go w
+>  where go x = do
+>          putStrLn ("-----------------------"::Text)
+>          putStrLn x
 
 Note: above does NOT use: mtl, Eff, type classes, ...
 
@@ -153,12 +157,12 @@ Note: above does NOT use: mtl, Eff, type classes, ...
 > data    RedisKey    = RedisKey     deriving Show
 > data    WriteResult = WriteResult RedisKey Result deriving Show
 >
-> userQueries :: [Text]
-> userQueries = ["USER-HC", "runHTTPBAD", "runDBBAD", "getSomethingBAD", "runRedisBAD"]
+> userInputs :: [Text]
+> userInputs = ["USER-HC", "runHTTPBAD", "runDBBAD", "getSomethingBAD", "runRedisBAD"]
 >
-> {-# ANN getUserQuery ("HLint: ignore Use head" :: String) #-}
-> getUserQuery :: Text
-> getUserQuery = userQueries P.!! 0
+> {-# ANN getUserInput ("HLint: ignore Use head" :: String) #-}
+> getUserInput :: Text
+> getUserInput = userInputs P.!! 0
 >
 > getSomethingPure :: User -> Thing
 > getSomethingPure (User x) = Thing x
@@ -174,3 +178,8 @@ Note: above does NOT use: mtl, Eff, type classes, ...
 >
 > writeKey :: RedisKey -> Result -> WriteResult
 > writeKey = WriteResult
+
+> -- | https://stackoverflow.com/a/16379034/814846
+> rotate :: Int -> [a] -> [a]
+> rotate _ [] = []
+> rotate n xs = zipWith const (drop n (cycle xs)) xs
