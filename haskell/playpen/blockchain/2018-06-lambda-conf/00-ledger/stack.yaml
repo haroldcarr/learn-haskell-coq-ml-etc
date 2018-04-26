@@ -1,4 +1,4 @@
-resolver: lts-11.3
+resolver: lts-11.6
 packages:
 - .
 extra-deps: [rio-0.1.0.0, thyme-0.3.5.5]

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-. ./base.sh
+HERE="${BASH_SOURCE%/*}"
+. ${HERE}/base.sh
 
 section "this shows how a TX might get dropped"
 
