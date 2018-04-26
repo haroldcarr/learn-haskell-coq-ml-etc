@@ -44,8 +44,8 @@ places in structure where recursion is possible identified by type variable r
 use generic catamorphism to recurse over AST
 - passing function that defines how each "data layer" *separately* reduces
 
-> cata :: Functor f => (f a -> a) -> Fix f -> a
-> cata f (Fix x) = f (fmap (cata f) x)
+see 'cata' definition below
+
 
 > evaluate :: NExpr -> Int
 > evaluate = cata $ \case
@@ -123,16 +123,19 @@ recursion schemes
 With Conal Elliott found a way to unify the two ideas
 - apply ADI approach to catamorphism-based evaluators operating on fixed-point data structures
 
-> adi :: Functor f
->     =>       (f a -> a)
->     -> ((Fix f    -> a) -> Fix f -> a)
->     ->                     Fix f -> a
-> adi f g = g (f . fmap (adi f g) . unFix)
->
+> cata :: Functor f
+>      =>       (f a ->   a)                  -- f
+>      ->                       Fix f -> a
+> adi  :: Functor f
+>      =>       (f a ->   a)                  -- f
+>      -> ((Fix f    ->   a) -> Fix f -> a)   -- g
+>      ->                       Fix f -> a
 > adiM :: (Traversable t, Monad m)
->      => (t a -> m a)
->      -> ((Fix t -> m a) -> Fix t -> m a)
->      -> Fix t -> m a
+>      =>       (t a -> m a)                  -- f
+>      -> ((Fix t    -> m a) -> Fix t -> m a) -- g
+>      ->                       Fix t -> m a
+> cata f   =     f .   fmap     (cata f)    . unFix
+> adi  f g = g ( f .   fmap     (adi  f g)  . unFix)
 > adiM f g = g ((f <=< traverse (adiM f g)) . unFix)
 
 replacements for cata and cataM
@@ -144,13 +147,14 @@ extend original evaluator to append "stack frames" within a MonadReader
 context around each evaluation step
 
 > framedEvalExpr
->   :: Framed [NExprLoc] m
+>   :: MonadReader [NExprLoc] m
 >   => (NExprF (m v) -> m v)
->   -> NExprLoc -> m v
+>   -> NExprLoc
+>   -> m v
 > framedEvalExpr eval = adi (eval . snd . getCompose) psi
 >  where psi k v = withExprContext v (k v)
 >
-> withExprContext :: Framed [NExprLoc] m => NExprLoc -> m r -> m r
+> withExprContext :: MonadReader [NExprLoc] m => NExprLoc -> m r -> m r
 > withExprContext expr = local (expr :)
 
 - takes monadic f-algebras for the original expression functor
@@ -160,9 +164,13 @@ context around each evaluation step
   that reports all the locations leading up to an error whenever an exception is thrown
 
 > -- type Framed e m = (MonadReader e m, MonadThrow m)
-> type Framed e m = MonadReader e m
 
-> x = (runReaderT framedEvalExpr) ia
+> em :: MonadReader [NExprLoc] m => m NExpr -> m Int
+> em xxx = do
+>   xxx' <- xxx
+>   return $ evaluate xxx'
+>
+> rttt = runReaderT (em ia) []
 
 rest of logic happens in throwError, which queries MonadReader instance
 for the current list of frames, and reports all the positions to the user

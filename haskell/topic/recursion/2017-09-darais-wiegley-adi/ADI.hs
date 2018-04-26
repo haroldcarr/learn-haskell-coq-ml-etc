@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleContexts  #-}
 
-module Darais where
+module ADI where
 
 -- import Control.Monad
 import           Control.Monad.Writer
@@ -286,7 +286,8 @@ mcons x y = do
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
-runTests = runTestTT $ TestList $ e1 ++ e2 ++ emt2 ++
+runTests = runTestTT $ TestList $
+  e1  ++ e2  ++ emt2 ++
   xf1 ++ xf2 ++ xf3 ++
   xt1 ++ xt2 ++ xt3 ++
   xm1 ++ xm2
