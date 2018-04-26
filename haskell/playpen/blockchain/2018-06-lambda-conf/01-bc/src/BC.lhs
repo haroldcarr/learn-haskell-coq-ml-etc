@@ -28,6 +28,9 @@
 > import qualified System.Log.Logger                    as Log
 > import           Test.Hspec
 
+> debug :: Bool
+> debug = False
+
 > lBC :: P.String
 > lBC = "BC"
 
@@ -375,8 +378,8 @@ https://github.com/dvf/blockchain
 >   Log.updateGlobalLogger lBC (Log.setLevel Log.DEBUG)
 >   let port = case args of
 >        ("-p":p:_) -> P.read p
->        ("-h":_)   -> P.error "'-p', '--port', default=5000, 'port to listen on'"
->        _          -> 3000
+>        ("-h":_)   -> P.error "'-p', '--port', default=3001, 'port to listen on'"
+>        _          -> 3001
 >   env <- initializeIOEnv (show port)
 >   run' port env
 
@@ -386,7 +389,7 @@ https://github.com/dvf/blockchain
 >   tn <- fmap ioThisNode (IOR.readIORef env)
 >   Wai.run httpPort $ Wai.logStdoutDev $
 >     \req s -> do
->       Log.infoM lBC (tn <> " received request " <> show req)
+>       CM.when debug $ Log.infoM lBC (tn <> " received request " <> show req)
 >       case Wai.rawPathInfo req of
 >         "/tx" -> -- POST
 >           case getQ req of
@@ -422,22 +425,22 @@ https://github.com/dvf/blockchain
 >               send s tn H.status200 ("/register " <> show n)
 >             Left x ->
 >               badQ s tn "/register" x
->         "/env" -> do
->           e <- getBCState P.id env
->           send200 s tn (show e)
+>         "/state" -> do
+>           st <- getBCState P.id env
+>           send200 s tn (show st)
 >         x ->
 >           send s tn H.status400 ("received unknown " <> BSC8.unpack x)
 >  where
 >   send200 s tn = send s tn H.status200
 >   send s tn sc r = send' s sc (tn <> " " <> r)
 >   send' s sc rsp = do
->     Log.infoM lBC rsp
+>     CM.when debug $ Log.infoM lBC rsp
 >     s $ Wai.responseBuilder sc [] (BSB.byteString (BSC8.pack rsp))
 >   getQ r =
 >     case Wai.queryString r of ((q,_):_) -> Right q; x -> Left x
 >   badQ s tn msg q = do
 >     let rsp = tn <> " " <> msg <> " with bad query" <> show q
->     Log.infoM lBC rsp
+>     CM.when debug $ Log.infoM lBC rsp
 >     send s tn H.status400 rsp
 
 > httpRequest :: P.String -> IO (Int, BSL.ByteString)

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+HERE="${BASH_SOURCE%/*}"
+. ${HERE}/base.sh
+
+msg "==== 1 INITIAL ===="
+
+msg "--------------------------------------------------"
+msg "1 : TXPool=[]; Chain=[GB]"
+msg "2 : TXPool=[]; Chain=[GB]"
+msg "3 : TXPool=[]; Chain=[GB]"
+
+doall state

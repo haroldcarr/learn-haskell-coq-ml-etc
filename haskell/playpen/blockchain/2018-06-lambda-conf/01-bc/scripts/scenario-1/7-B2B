@@ -1,0 +1,15 @@
+#!/bin/bash
+
+HERE="${BASH_SOURCE%/*}"
+. ${HERE}/base.sh
+
+msg "==== 7 B2B  ===="
+
+doone 2 mine
+doall resolve
+
+msg "--------------------------------------------------"
+msg "1 : TXPool=[TX31]; Chain=[GB, {TX31,TX11,TX21,TX22}]"
+msg "2 : TXPool=[TX31]; Chain=[GB, {TX31,TX11,TX21,TX22}]"
+msg "3 : TXPool=[TX31]; Chain=[GB, {TX31,TX11,TX21,TX22}]"
+doall state

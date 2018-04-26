@@ -1,0 +1,31 @@
+#!/bin/bash
+
+HERE="${BASH_SOURCE%/*}"
+. ${HERE}/base.sh
+
+msg "--------------------------------------------------"
+msg "this shows how a TX might get dropped"
+
+
+doone 1 tx?TX2
+doone 1 tx-no-forward?TX3
+doall mine
+sleep 2
+msg "--------------------------------------------------"
+msg "after doall mine"
+doall state
+
+doone 2 tx-no-forward?TX4
+doone 2 mine
+sleep 2
+msg "--------------------------------------------------"
+msg "1: TXPool==[]; Chain==[GB , {TX2,TX3}]"
+msg "2: TXPool==[]; Chain==[GB , {TX2}    , {TX4}]"
+doall state
+
+doone 1 resolve
+msg "--------------------------------------------------"
+msg "1: TXPool==[TX3]; Chain==[GB , {TX2} , {TX4}]"
+msg "2: TXPool==[]   ; Chain==[GB , {TX2} , {TX4}]"
+doall state
+

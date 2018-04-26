@@ -1,0 +1,35 @@
+#!/bin/bash
+
+HERE="${BASH_SOURCE%/*}"
+. ${HERE}/base.sh
+
+msg "--------------------------------------------------"
+msg start
+stack exec bcnode -- -p 3001 &
+x3001=$!
+stack exec bcnode -- -p 3002 &
+x3002=$!
+stack exec bcnode -- -p 3003 &
+x3003=$!
+
+msg "--------------------------------------------------"
+msg sleep
+sleep 2
+
+msg "--------------------------------------------------"
+msg register
+
+curl localhost:3001/register?localhost:3002
+curl localhost:3001/register?localhost:3003
+
+curl localhost:3002/register?localhost:3001
+curl localhost:3002/register?localhost:3003
+
+curl localhost:3003/register?localhost:3001
+curl localhost:3003/register?localhost:3002
+
+msg "--------------------------------------------------"
+msg kill
+echo kill ${x3001} ${x3002} ${x3003}
+
+
