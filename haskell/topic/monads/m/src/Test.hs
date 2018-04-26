@@ -4,6 +4,7 @@ import           Reader
 import           State
 import           Writer
 
+ta = testAll
 testAll = do
   testReader
   testState

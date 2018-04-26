@@ -14,36 +14,39 @@ import           Test.HUnit.Util      as U
 w :: Reader [String] [String]
 w = do
   a <- ask
-  b <- asks (["XXX"]++)
+  b <- asks (["W"]++)
   return (a++b)
-
-dow = runReader w ["initial"]
-
-tdow = U.t "tdow"
-    dow
-    ["initial","XXX","initial"]
-
-------------------------------------------------------------------------------
 
 wt :: ReaderT [String] Identity [String]
 wt = do
   a <- ask
-  b <- asks (["XXX"]++)
+  b <- asks (["WT"]++)
   return (a++b)
 
-dowt  = runReaderT w ["initial"]
+wmr :: MonadReader [String] m => m [String]
+wmr = do
+  a <- ask
+  b <- asks (["WMR"]++)
+  return (a++b)
 
+dow   = runReader  w   ["initial"]
+dowt  = runReaderT wt  ["initial"]
+dowmr = runReaderT wmr ["initial"] :: Identity [String]
+
+tdow = U.t "tdow"
+    dow
+    ["initial","W","initial"]
 tdowt = U.t "tdowt"
     dowt
-    (Identity ["initial","XXX","initial"])
-
-dowt' = runIdentity dowt
-
+    (Identity ["initial","WT","initial"])
 tdowt' = U.t "tdowt'"
-    dowt'
-    ["initial","XXX","initial"]
+    (runIdentity dowt)
+    ["initial","WT","initial"]
+tdowmr = U.t "tdowmr"
+    dowmr
+    (Identity ["initial","WMR","initial"])
 
 ------------------------------------------------------------------------------
 
-testReader =
-  runTestTT $ TestList $ tdow ++ tdowt ++ tdowt'
+testReader = runTestTT $ TestList $ tdow ++ tdowt ++ tdowt' ++ tdowmr
+tr = testReader
