@@ -1,0 +1,15 @@
+#!/bin/bash
+
+HERE="${BASH_SOURCE%/*}"
+. ${HERE}/base.sh
+
+msgN "--------------------------------------------------"
+doone 2 mine
+sleep 1
+doall resolve
+
+lbl "7-2B1"
+msg "1: TXPool=[]; Chain=[GB , {TX31,TX11,TX21,TX22} , {TX31}]"
+msg "2: TXPool=[]; Chain=[GB , {TX31,TX11,TX21,TX22} , {TX31}]"
+msg "3: TXPool=[]; Chain=[GB , {TX31,TX11,TX21,TX22} , {TX31}]"
+doall state

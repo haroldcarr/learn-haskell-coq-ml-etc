@@ -3,12 +3,11 @@
 HERE="${BASH_SOURCE%/*}"
 . ${HERE}/base.sh
 
-msg "==== 6-tx31-arrives  ===="
+msgN "--------------------------------------------------"
+doone 2 tx-no-forward?TX31
 
-doone 2 tx-no-forward?tx31
-
-msg "--------------------------------------------------"
-msg "1 : TXPool=[]    ; Chain=[GB, {TX31,TX11,TX21,TX22}]"
-msg "2 : TXPool=[TX31]; Chain=[GB, {TX31,TX11,TX21,TX22}]"
-msg "3 : TXPool=[]    ; Chain=[GB, {TX31,TX11,TX21,TX22}]"
+lbl "6-tx31-arrives"
+msg "1: TXPool=[]    ; Chain=[GB , {TX31,TX11,TX21,TX22}]"
+msg "2: TXPool=[TX31]; Chain=[GB , {TX31,TX11,TX21,TX22}]"
+msg "3: TXPool=[]    ; Chain=[GB , {TX31,TX11,TX21,TX22}]"
 doall state

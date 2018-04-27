@@ -1,15 +1,19 @@
-msg () {
-    echo ${1}
+msgN () {
     echo
+    printf '%s\n' "${1}"
 }
 
+lbl () {
+    printf '>: %s\n' "${1}"
+}
 
+msg () {
+    printf '%s\n' "${1}"
+}
 
 doone () {
     echo
     curl --silent --write-out "\n" localhost:300${1}/${2}
-    echo
-    echo
 }
 
 doall () {

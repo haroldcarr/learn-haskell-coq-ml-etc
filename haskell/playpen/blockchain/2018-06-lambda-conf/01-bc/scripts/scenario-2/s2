@@ -1,0 +1,89 @@
+#!/bin/bash
+
+HERE="${BASH_SOURCE%/*}"
+. ${HERE}/base.sh
+
+msgN "--------------------------------------------------"
+msg "this shows how a TX might get dropped"
+
+msgN "--------------------------------------------------"
+doone 1 tx?TX11
+doone 1 tx-no-forward?TX12
+sleep 1
+echo
+lbl "2-txs"
+msg "1: TXPool==[TX11,TX12]; Chain==[GB]"
+msg "2: TXPool==[TX11];      Chain==[GB]"
+msg "3: TXPool==[TX11];      Chain==[GB]"
+doall state
+
+msgN "--------------------------------------------------"
+doall mine
+sleep 2
+echo
+lbl "3-all-mine"
+msg "1: TXPool==[]; Chain==[GB , {TX11,TX12}]"
+msg "2: TXPool==[]; Chain==[GB , {TX11}]"
+msg "3: TXPool==[]; Chain==[GB , {TX11}]"
+doall state
+
+msgN "--------------------------------------------------"
+doone 2 tx-no-forward?TX21
+doone 2 mine
+sleep 2
+echo
+lbl "4-two-gets-tx-and-mines"
+msg "1: TXPool==[]; Chain==[GB , {TX11,TX12}]"
+msg "2: TXPool==[]; Chain==[GB , {TX11}     , {TX21}]"
+msg "3: TXPool==[]; Chain==[GB , {TX11}]"
+doall state
+
+msgN "--------------------------------------------------"
+doone 1 resolve
+doone 3 resolve
+echo
+lbl "5-longest-chain"
+msg "1: TXPool==[TX12]; Chain==[GB , {TX11} , {TX21}]"
+msg "2: TXPool==[]    ; Chain==[GB , {TX11} , {TX21}]"
+msg "3: TXPool==[]    ; Chain==[GB , {TX11} , {TX21}]"
+doall state
+
+msgN "--------------------------------------------------"
+doone 2 tx-no-forward?TX12
+echo
+lbl "6-tx12-arrives-at-two"
+msg "1: TXPool==[TX12]; Chain==[GB , {TX11} , {TX21}]"
+msg "2: TXPool==[TX12]; Chain==[GB , {TX11} , {TX21}]"
+msg "3: TXPool==[]    ; Chain==[GB , {TX11} , {TX21}]"
+doall state
+
+msgN "--------------------------------------------------"
+doone 1 mine
+doall   resolve
+echo
+lbl "7-one-mines"
+msg "1: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12}]"
+msg "2: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12}]"
+msg "3: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12}]"
+doall state
+
+msgN "--------------------------------------------------"
+doone 3 tx-no-forward?TX12
+echo
+lbl "8-tx12-arrives-at-three"
+msg "1: TXPool==[]    ; Chain==[GB , {TX11} , {TX21} , {TX12}]"
+msg "2: TXPool==[]    ; Chain==[GB , {TX11} , {TX21} , {TX12}]"
+msg "3: TXPool==[TX12]; Chain==[GB , {TX11} , {TX21} , {TX12}]"
+doall state
+
+msgN "--------------------------------------------------"
+doone 3 mine
+sleep 1
+doall   resolve
+echo
+lbl "9-double-spend"
+msg "1: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12} , {TX12}]"
+msg "2: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12} , {TX12}]"
+msg "3: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12} , {TX12}]"
+doall state
+

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+HERE="${BASH_SOURCE%/*}"
+. ${HERE}/base.sh
+
+msgN "--------------------------------------------------"
+doone 3 mine
+
+lbl "4-three-mines-block-3B1"
+msg "1: TXPool=[TX11,TX31,TX21,TX22]; Chain=[GB]"
+msg "2: TXPool=[TX21,TX22,TX11]     ; Chain=[GB]"
+msg "3: TXPool=[]                   ; Chain=[GB , {TX31,TX11,TX21,TX22}]"
+doall state

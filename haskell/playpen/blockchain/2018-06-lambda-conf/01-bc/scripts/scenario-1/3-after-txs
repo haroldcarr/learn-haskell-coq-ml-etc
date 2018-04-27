@@ -3,10 +3,7 @@
 HERE="${BASH_SOURCE%/*}"
 . ${HERE}/base.sh
 
-msg "==== 3 after txs  ===="
-
-msg "--------------------------------------------------"
-msg "all txs received"
+msgN "--------------------------------------------------"
 doone 1 tx-no-forward?TX31
 doone 1 tx-no-forward?TX21
 doone 1 tx-no-forward?TX22
@@ -15,7 +12,9 @@ doone 3 tx-no-forward?TX11
 doone 3 tx-no-forward?TX21
 doone 3 tx-no-forward?TX22
 
-msg "1 : TXPool=[TX11,TX31,TX21,TX22]; Chain=[GB]"
-msg "2 : TXPool=[TX21,TX22,TX11]     ; Chain=[GB]"
-msg "3 : TXPool=[TX31,TX11,TX21,TX22]; Chain=[GB]"
+lbl "3-after-txs"
+lbl "all txs received"
+msg "1: TXPool=[TX11,TX31,TX21,TX22]; Chain=[GB]"
+msg "2: TXPool=[TX21,TX22,TX11]     ; Chain=[GB]"
+msg "3: TXPool=[TX31,TX11,TX21,TX22]; Chain=[GB]"
 doall state
