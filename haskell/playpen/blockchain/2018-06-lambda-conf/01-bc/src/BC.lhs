@@ -41,13 +41,14 @@ https://github.com/dvf/blockchain
 > data Block = Block
 >   { bPrevHash :: BHash
 >   , bIndex    :: BIndex
->   , bTXs      :: [Transaction]
+>   , bTXs      :: TXs
 >   , bProof    :: Proof
 >   } deriving (Eq, Read, Show)
 
 > type BHash       = BS.ByteString
 > type BIndex      = Int
 > type Transaction = BS.ByteString
+> type TXs         = [Transaction] -- TODO
 > type Proof       = Integer
 
 > genesisBlock :: Block
@@ -59,12 +60,12 @@ https://github.com/dvf/blockchain
 >   s { bcTXPool = bcTXPool s ++ [tx] } -- TODO
 
 > data BCState = BCState
->   { bcTXPool          :: [Transaction]
+>   { bcTXPool          :: TXs
 >   , bcChain           :: Chain
 >   , bcProofDifficulty :: ProofDifficulty
 >   } deriving (Eq, Show)
 
-> type Chain           = [Block]
+> type Chain           = [Block] -- TODO
 > type ProofDifficulty = Int
 
 > initialBCState :: BCState
@@ -199,9 +200,9 @@ https://github.com/dvf/blockchain
 >               Left err ->
 >                 ( s , (False, "resolveConflicts: invalid chain " <> T.unpack err))
 >           else  ( s , (False,  ""))
->   txsInChain :: Chain -> [Transaction]
+>   txsInChain :: Chain -> TXs
 >   txsInChain = foldl (\txs b -> txs ++ bTXs b) []
->   resolveTXs :: BCState -> Chain -> [Transaction]
+>   resolveTXs :: BCState -> Chain -> TXs
 >   resolveTXs myBCState theirChain =
 >     let myPool   = bcTXPool myBCState
 >         myTXs    = txsInChain (bcChain myBCState)
@@ -460,3 +461,42 @@ https://github.com/dvf/blockchain
 > atomicModifyIORef_ :: IOR.IORef a -> (a -> a) -> IO ()
 > atomicModifyIORef_ i f =
 >   IOR.atomicModifyIORef' i (\a -> (f a, ()))
+
+> fcbc
+>   :: (Transaction -> Bool)
+>   -> Transaction
+>   -> Chain
+>   -> (Bool, Transaction)
+> fcbc t2b b0 = foldr go1 (False, b0)
+>  where
+>   go1 block bool'b = foldr go2 bool'b (bTXs block)
+>    where
+>     go2 tx b = if t2b tx then (True, tx) else b
+
+> ex = fcbc (=="TX1") "JUNK" (bcChain s2NotLost)
+
+> fcbc'
+>   :: (Transaction -> Bool)
+>   -> Transaction
+>   -> Chain
+>   -> (Bool, Transaction)
+> fcbc' t2b b0 = foldr go1 (False, b0)
+>  where
+>   go1 block blocks = let r@(b,_) = foldr go2 (False, b0) (bTXs block)
+>                       in if b then r else blocks
+>    where
+>     go2 tx txs = if t2b tx then (True, tx) else txs
+
+> ex' = fcbc' (=="TX9") "JUNK" (bcChain s2NotLost)
+
+> xx :: (t -> Bool)
+>    -> [[t]]
+>    -> t
+>    -> (Bool, t)
+> xx _    []  z = (False, z)
+> xx f (x:xs) z =
+>   let r@(b,_) = xxx f x z
+>    in if b then r else xx f xs z
+>
+> xxx _    []  z = (False, z)
+> xxx f (x:xs) z = if f x then (True, x) else xxx f xs z
