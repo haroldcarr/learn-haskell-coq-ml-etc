@@ -7,7 +7,7 @@ msgN "--------------------------------------------------"
 doone 2 tx-no-forward?TX31
 
 lbl "6-tx31-arrives"
-msg "1: TXPool=[]    ; Chain=[GB , {TX31,TX11,TX21,TX22}]"
-msg "2: TXPool=[TX31]; Chain=[GB , {TX31,TX11,TX21,TX22}]"
-msg "3: TXPool=[]    ; Chain=[GB , {TX31,TX11,TX21,TX22}]"
+msg "1: TXPool=[]; Chain=[GB , {TX31,TX11,TX21,TX22}]"
+msg "2: TXPool=[]; Chain=[GB , {TX31,TX11,TX21,TX22}]"
+msg "3: TXPool=[]; Chain=[GB , {TX31,TX11,TX21,TX22}]"
 doall state

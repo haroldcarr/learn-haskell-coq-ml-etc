@@ -71,19 +71,8 @@ msgN "--------------------------------------------------"
 doone 3 tx-no-forward?TX12
 echo
 lbl "8-tx12-arrives-at-three"
-msg "1: TXPool==[]    ; Chain==[GB , {TX11} , {TX21} , {TX12}]"
-msg "2: TXPool==[]    ; Chain==[GB , {TX11} , {TX21} , {TX12}]"
-msg "3: TXPool==[TX12]; Chain==[GB , {TX11} , {TX21} , {TX12}]"
-doall state
-
-msgN "--------------------------------------------------"
-doone 3 mine
-sleep 1
-doall   resolve
-echo
-lbl "9-double-spend"
-msg "1: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12} , {TX12}]"
-msg "2: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12} , {TX12}]"
-msg "3: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12} , {TX12}]"
+msg "1: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12}]"
+msg "2: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12}]"
+msg "3: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12}]"
 doall state
 

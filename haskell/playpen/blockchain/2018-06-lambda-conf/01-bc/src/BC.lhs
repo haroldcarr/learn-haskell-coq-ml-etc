@@ -55,9 +55,10 @@ https://github.com/dvf/blockchain
 > genesisBlock = Block "1" 0 [] 100
 
 > ------------------------------------------------------------------------------
-> addTransaction :: BCState -> Transaction -> BCState
-> addTransaction s tx =
->   s { bcTXPool = bcTXPool s ++ [tx] } -- TODO
+> addTxToPool :: BCState -> Transaction -> BCState
+> addTxToPool s tx =
+>   if txInChain tx (bcChain s) then s
+>   else s { bcTXPool = bcTXPool s ++ [tx] } -- TODO
 
 > data BCState = BCState
 >   { bcTXPool          :: TXs
@@ -80,7 +81,7 @@ https://github.com/dvf/blockchain
 >               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
 >               , bcProofDifficulty = 4}
 >     it "adds to bcTXPool" $
->       addTransaction initialBCState "TX1"
+>       addTxToPool initialBCState "TX1"
 >       `shouldBe`
 >       BCState { bcTXPool = ["TX1"]
 >               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
@@ -108,7 +109,7 @@ https://github.com/dvf/blockchain
 > testMine =
 >   describe "testMine" $do
 >     it "addBlock" $
->       let (s, _) = mine (addTransaction (addTransaction initialBCState "TX1") "TX2")
+>       let (s, _) = mine (addTxToPool (addTxToPool initialBCState "TX1") "TX2")
 >        in s `shouldBe`
 >           BCState { bcTXPool = []
 >                   , bcChain = [Block { bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}
@@ -145,7 +146,7 @@ https://github.com/dvf/blockchain
 >         else next
 >   in foldr go 0 [0 .. ]
 
-> (bcTX1,_) = mine (addTransaction initialBCState "TX1")
+> (bcTX1,_) = mine (addTxToPool initialBCState "TX1")
 >
 > testProofOfWork =
 >   describe "proofOfWork" $ do
@@ -212,7 +213,7 @@ https://github.com/dvf/blockchain
 
 
 > sTX0 :: BCState
-> (sTX0,_) = mine (addTransaction initialBCState "TX-0")
+> (sTX0,_) = mine (addTxToPool initialBCState "TX-0")
 >
 > eLongerChainAndPoolUpdateIn :: BCState
 > eLongerChainAndPoolUpdateIn = initialBCState { bcTXPool = ["TX-0","TX-should-stay"] }
@@ -234,12 +235,12 @@ https://github.com/dvf/blockchain
 >          , bProof = p}]
 >
 > s1NotLost :: BCState
-> (s1NotLost,_) = mine (addTransaction (addTransaction initialBCState "TX1") "TX2")
+> (s1NotLost,_) = mine (addTxToPool (addTxToPool initialBCState "TX1") "TX2")
 >
 > s2NotLost :: BCState
 > s2NotLost =
->   let (etx1,_) = mine (addTransaction initialBCState "TX1")
->       (etx2,_) = mine (addTransaction etx1       "TX3")
+>   let (etx1,_) = mine (addTxToPool initialBCState "TX1")
+>       (etx2,_) = mine (addTxToPool etx1       "TX3")
 >    in  etx2
 >
 > s1NotLastAfterResolve :: BCState
@@ -317,6 +318,21 @@ https://github.com/dvf/blockchain
 >       isValidBlock 4 (1, genesisBlock, bcChain e1BadProof !! 1)
 >       `shouldBe` Left "invalid bProof at 1"
 
+> searchChain
+>   :: (Transaction -> Bool)
+>   -> Transaction
+>   -> Chain
+>   -> (Bool, Transaction)
+> searchChain f z = foldr go1 (False, z)
+>  where
+>   go1 block blocks = let r@(b,_) = foldr go2 (False, z) (bTXs block)
+>                       in if b then r else blocks
+>    where
+>     go2 tx txs = if f tx then (True, tx) else txs
+>
+> txInChain :: Transaction -> Chain -> Bool
+> txInChain tx c = fst $ searchChain (==tx) "JUNK" c
+
 ------------------------------------------------------------------------------
 -- IO
 
@@ -342,10 +358,10 @@ https://github.com/dvf/blockchain
 > setBCState :: IOState -> BCState -> IOState
 > setBCState i b = i { ioBCState = b }
 
-> addTransactionIO :: IOEnv -> Transaction -> IO ()
-> addTransactionIO env tx =
+> addTxToPoolIO :: IOEnv -> Transaction -> IO ()
+> addTxToPoolIO env tx =
 >   atomicModifyIORef_ env $ \s ->
->     setBCState s (addTransaction (ioBCState s) tx)
+>     setBCState s (addTxToPool (ioBCState s) tx)
 
 > -- | add new block containing all TXs in pool to Chain
 > mineIO :: IOEnv -> IO Block
@@ -395,7 +411,7 @@ https://github.com/dvf/blockchain
 >         "/tx" -> -- POST
 >           case getQ req of
 >             Right tx -> do
->               addTransactionIO env tx
+>               addTxToPoolIO env tx
 >               sendTxToPeers env tx
 >               send200 s tn ("/tx " <> show tx)
 >             Left x ->
@@ -403,7 +419,7 @@ https://github.com/dvf/blockchain
 >         "/tx-no-forward" -> -- POST
 >           case getQ req of
 >             Right tx -> do
->               addTransactionIO env tx
+>               addTxToPoolIO env tx
 >               send200 s tn ("/tx-no-forward " <> show tx)
 >             Left x ->
 >               badQ s tn "/tx-no-forward" x
@@ -461,42 +477,3 @@ https://github.com/dvf/blockchain
 > atomicModifyIORef_ :: IOR.IORef a -> (a -> a) -> IO ()
 > atomicModifyIORef_ i f =
 >   IOR.atomicModifyIORef' i (\a -> (f a, ()))
-
-> fcbc
->   :: (Transaction -> Bool)
->   -> Transaction
->   -> Chain
->   -> (Bool, Transaction)
-> fcbc t2b b0 = foldr go1 (False, b0)
->  where
->   go1 block bool'b = foldr go2 bool'b (bTXs block)
->    where
->     go2 tx b = if t2b tx then (True, tx) else b
-
-> ex = fcbc (=="TX1") "JUNK" (bcChain s2NotLost)
-
-> fcbc'
->   :: (Transaction -> Bool)
->   -> Transaction
->   -> Chain
->   -> (Bool, Transaction)
-> fcbc' t2b b0 = foldr go1 (False, b0)
->  where
->   go1 block blocks = let r@(b,_) = foldr go2 (False, b0) (bTXs block)
->                       in if b then r else blocks
->    where
->     go2 tx txs = if t2b tx then (True, tx) else txs
-
-> ex' = fcbc' (=="TX9") "JUNK" (bcChain s2NotLost)
-
-> xx :: (t -> Bool)
->    -> [[t]]
->    -> t
->    -> (Bool, t)
-> xx _    []  z = (False, z)
-> xx f (x:xs) z =
->   let r@(b,_) = xxx f x z
->    in if b then r else xx f xs z
->
-> xxx _    []  z = (False, z)
-> xxx f (x:xs) z = if f x then (True, x) else xxx f xs z

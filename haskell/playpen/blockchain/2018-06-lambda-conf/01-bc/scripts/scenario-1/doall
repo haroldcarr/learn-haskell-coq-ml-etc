@@ -9,5 +9,3 @@ sleep 1
 ./5-after-3B1
 sleep 1
 ./6-tx31-arrives
-sleep 1
-./7-2B1
