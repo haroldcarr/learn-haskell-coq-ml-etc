@@ -9,16 +9,36 @@ import Crypto.PubKey.RSA.PKCS15 as PK
 import Crypto.Random.Types as RT
 import Universum
 
-top :: RT.MonadRandom m => m Bool
-top = doit H.SHA512
+generatePKSK
+  :: RT.MonadRandom m
+  => m (RSA.PublicKey, RSA.PrivateKey)
+generatePKSK = RSA.generate 200 0x10001
 
-doit :: (HashAlgorithmASN1 hashAlg, RT.MonadRandom m)
-     => hashAlg
+signMsg
+  :: RT.MonadRandom m
+  => RSA.PrivateKey
+  -> ByteString
+  -> m (Either Error ByteString)
+signMsg = PK.signSafer (Just H.SHA512)
+
+verifyMsg
+  :: PublicKey
+  -> ByteString -- ^ message
+  -> ByteString -- ^ signature
+  -> Bool
+verifyMsg = PK.verify (Just H.SHA512)
+
+doit :: RT.MonadRandom m
+     => ByteString
      -> m Bool
-doit ha = do
-  (pk,sk) <- RSA.generate 200 0x10001
-  (Right sig) <- PK.signSafer (Just ha) sk "foo"
-  return $ PK.verify (Just ha) pk "foo" sig
+doit msg = do
+  (pk,sk) <- generatePKSK
+  (Right sig) <- signMsg sk msg
+  return $ verifyMsg pk msg sig
+
+top :: RT.MonadRandom m => m Bool
+top = doit "this is a message"
+
 
 
 
