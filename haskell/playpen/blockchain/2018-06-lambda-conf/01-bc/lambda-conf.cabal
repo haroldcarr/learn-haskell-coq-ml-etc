@@ -10,7 +10,8 @@ source-repository head
 library
   hs-source-dirs:      src
   exposed-modules:     BC
-                     , S
+                     , Crypto
+                     , GCoin
   build-depends:       base >=4.7 && <5
                      , bytestring
                      , cereal
@@ -49,7 +50,7 @@ test-suite hspec
   hs-source-dirs:      test
   main-is:             hspec.hs
   other-modules:       BCSpec
-                     , SSpec
+                     , GCoinSpec
   build-depends:       base
                      , lambda-conf
                      , hspec

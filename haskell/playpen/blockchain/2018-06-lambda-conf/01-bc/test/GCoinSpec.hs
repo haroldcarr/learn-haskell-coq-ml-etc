@@ -1,8 +1,8 @@
-module SSpec where
+module GCoinSpec where
 
 import           Test.Hspec
 ------------------------------------------------------------------------------
-import           S
+import           GCoin
 
 spec :: Spec
 spec =

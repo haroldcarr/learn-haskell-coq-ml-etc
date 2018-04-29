@@ -8,12 +8,10 @@
 {-# LANGUAGE PackageImports     #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module S where
+module GCoin where
 
 import qualified "cryptonite" Crypto.Hash as H
 import qualified Crypto.PubKey.RSA        as RSA
-import qualified Crypto.PubKey.RSA.PKCS15 as PK
-import qualified Crypto.Random.Types      as RT
 import qualified Data.ByteArray           as BA
 import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Lazy     as BSL
@@ -25,65 +23,11 @@ import qualified Data.UUID.V4             as U
 import qualified Prelude
 import           Test.Hspec               as HS
 import           Universum
+------------------------------------------------------------------------------
+import           Crypto
 
+-- Hlint complain about DeriveAnyClass, but it is needed to S.Serialize RSA.PublicKey
 {-# ANN module ("HLint: ignore Unused LANGUAGE pragma"::Prelude.String) #-}
-
-------------------------------------------------------------------------------
-newtype Msg       = Msg       { getMsg :: ByteString } deriving Show
-newtype Signature = Signature { getSig :: ByteString } deriving (Generic, Show)
-instance S.Serialize Signature
-
-generatePKSKIO
-  :: RT.MonadRandom m
-  => m (RSA.PublicKey, RSA.PrivateKey)
-generatePKSKIO = RSA.generate 200 0x10001
-
--- TODO : tests do not work when using this one
-generatePKSK
-  :: Either RSA.Error (RSA.PublicKey, RSA.PrivateKey)
-generatePKSK = E.maybeToRight RSA.InvalidParameters
-               (RSA.generateWith (4,5) 200 0x10001) -- TODO Error
-
-signMsgIO
-  :: RT.MonadRandom m
-  => RSA.PrivateKey
-  -> Msg
-  -> m (Either RSA.Error Signature)
-signMsgIO p m =
-  fmap (E.mapRight Signature)
-       (PK.signSafer (Just H.SHA512) p (getMsg m))
-
-signMsg
-  :: RSA.PrivateKey
-  -> Msg
-  -> Either RSA.Error Signature
-signMsg p m = E.mapRight Signature (PK.sign Nothing (Just H.SHA512) p (getMsg m))
-
-verifyMsgSig
-  :: RSA.PublicKey
-  -> Msg
-  -> Signature
-  -> Bool
-verifyMsgSig p m s = PK.verify (Just H.SHA512) p (getMsg m) (getSig s)
-
-doitIO :: RT.MonadRandom m
-     => Msg
-     -> m Bool
-doitIO msg = do
-  (pk,sk) <- generatePKSKIO
-  (Right sig) <- signMsgIO sk msg
-  return $ verifyMsgSig pk msg sig
-
-doit :: Msg -> Either RSA.Error Bool
-doit msg = do
-  (pk,sk) <- generatePKSK
-  sig <- signMsg sk msg
-  return $ verifyMsgSig pk msg sig
-
-top :: RT.MonadRandom m => m Bool
-top = doitIO (Msg "this is a message")
-
-------------------------------------------------------------------------------
 
 newtype UUID    = UUID    { getUuid    :: ByteString } deriving (Generic, Show)
 newtype STXHash = STXHash { getSTXHash :: ByteString } deriving (Eq, Generic, Ord, Show)
@@ -152,8 +96,8 @@ testIt = do
   let Right aToJ  = transferCoin cToA  aliceSK   jimPK
   let Right bToA  = transferCoin aToB1 bobSK     alicePK
   let Right aToB2 = transferCoin bToA  aliceSK   bobPK
-  let chain    = addToChain M.empty [cc, cToA, aToB1, bToA]
-  let chainBad = addToChain M.empty     [cToA, aToB1, bToA]
+  let chain       = addToChain M.empty [cc, cToA, aToB1, bToA]
+  let chainBad    = addToChain M.empty     [cToA, aToB1, bToA]
   describe "GoofyCoin" $ do
     it "isValidCoin createCoin" $
       isValidCoin creatorPK M.empty cc `shouldBe` Right True
@@ -170,7 +114,7 @@ testIt = do
       Left ("No TX for : " <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
  where
   addToChain :: M.Map STXHash SignedTX -> [SignedTX] -> M.Map STXHash SignedTX
-  addToChain = foldr (\x cc -> M.insert (STXHash (getHash (hash (S.encode x)))) x cc)
+  addToChain = foldr (\x cc -> M.insert (hashSignedTX x) x cc)
   isValidCoin
     :: RSA.PublicKey          -- ^ creator public key
     -> M.Map STXHash SignedTX  -- ^ the "chain"
