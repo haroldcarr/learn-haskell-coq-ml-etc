@@ -15,6 +15,8 @@ spec = do
   testResolveConflicts
   testIsValidChain
   testIsValidBlock
+  ----------------
+  testIsValidTX
 
 ------------------------------------------------------------------------------
 {-

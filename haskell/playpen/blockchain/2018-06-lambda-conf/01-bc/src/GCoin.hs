@@ -29,7 +29,7 @@ import           Crypto
 -- Hlint complain about DeriveAnyClass, but it is needed to S.Serialize RSA.PublicKey
 {-# ANN module ("HLint: ignore Unused LANGUAGE pragma"::Prelude.String) #-}
 
-newtype UUID    = UUID    { getUuid    :: ByteString } deriving (Generic, Show)
+newtype UUID    = UUID    { getUuid    :: ByteString } deriving (Eq, Generic, Show)
 newtype STXHash = STXHash { getSTXHash :: ByteString } deriving (Eq, Generic, Ord, Show)
 newtype Hash    = Hash    { getHash    :: ByteString } deriving (Generic, Show)
 instance S.Serialize UUID
@@ -79,10 +79,18 @@ transferCoin fromCoin ownerSK toPK = do
   signTX ownerSK toCoin
 
 hashSignedTX :: SignedTX -> STXHash
-hashSignedTX = STXHash . getHash . hash . S.encode
+hashSignedTX = STXHash . getHash . hash . encodeSTX
 
 hash :: BS.ByteString -> Hash
 hash = Hash . BA.convert . H.hashWith H.SHA256
+
+encodeSTX :: SignedTX -> ByteString
+encodeSTX = S.encode
+
+decodeSTX :: ByteString -> SignedTX
+decodeSTX bs = case S.decode bs of
+  Right s -> s
+  _       -> error "decodeSignedTX" -- TODO
 
 testIt = do
   u                      <- runIO createUUID

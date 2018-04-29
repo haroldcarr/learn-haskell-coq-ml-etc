@@ -27,6 +27,9 @@
 > import           Protolude                            hiding (hash)
 > import qualified System.Log.Logger                    as Log
 > import           Test.Hspec
+> ------------------------------------------------------------------------------
+> import           Crypto -- for test
+> import           GCoin
 
 > debug = False
 > lBC   = "BC" :: P.String
@@ -122,7 +125,7 @@ https://github.com/dvf/blockchain
 > hash = SHA.hash
 >
 > hashBlock :: Block -> BHash
-> hashBlock = hash . BSC8.pack . show
+> hashBlock = BC.hash . BSC8.pack . show
 
 > ------------------------------------------------------------------------------
 > -- | Proof of Work Algorithm:
@@ -164,7 +167,7 @@ https://github.com/dvf/blockchain
 > evidence :: Proof -> BHash -> Proof -> BHash
 > evidence lastProof lastHash proof =
 >  let guess = BSC8.pack (show lastProof) <> BSC8.pack (show proof) <> lastHash
->  in Hex.hex (hash guess)
+>  in Hex.hex (BC.hash guess)
 
 > testEvidence =
 >   describe "evidence" $ do
@@ -280,12 +283,12 @@ https://github.com/dvf/blockchain
 >   describe "isValidChain" $ do
 >     it "invalid empty" $
 >       isValidChain 4 [] `shouldBe` Left "empty blockchain"
->     it "valid genesis" $
+>     it "  valid genesis" $
 >       isValidChain 4 [genesisBlock] `shouldBe` Right ()
 >     it "invalid genesis" $
 >       let bg = genesisBlock { bIndex = 6 }
 >       in isValidChain 4 [bg] `shouldBe` Left "invalid genesis block"
->     it "valid sTX0" $
+>     it "  valid sTX0" $
 >       isValidChain 4 (bcChain sTX0) `shouldBe` Right ()
 >     it "invalid previous hash" $
 >       isValidChain 4 (bcChain e1BadPHash) `shouldBe` Left "invalid bPrevHash at 1"
@@ -305,7 +308,7 @@ https://github.com/dvf/blockchain
 
 > testIsValidBlock =
 >   describe "isValidBlock" $ do
->     it "valid sTX0" $
+>     it "  valid sTX0" $
 >       isValidBlock 4 (1, genesisBlock, bcChain sTX0 !! 1)
 >       `shouldBe` Right ()
 >     it "invalid previous hash" $
@@ -317,7 +320,7 @@ https://github.com/dvf/blockchain
 
 > searchChain
 >   :: (Transaction -> Bool)
->   -> Transaction
+>   -> Transaction -- fake "zero" TX
 >   -> Chain
 >   -> (Bool, Transaction)
 > searchChain f z = foldr go1 (False, z)
@@ -474,3 +477,59 @@ https://github.com/dvf/blockchain
 > atomicModifyIORef_ :: IOR.IORef a -> (a -> a) -> IO ()
 > atomicModifyIORef_ i f =
 >   IOR.atomicModifyIORef' i (\a -> (f a, ()))
+
+------------------------------------------------------------------------------
+
+> isValidTX :: BCState -> SignedTX -> Either Text ()
+> isValidTX s (SignedTX (CreateCoin u) _) = do
+>   CM.when (ccInPool  (bcTXPool s))  $ Left "CC already in pool"
+>   CM.when (ccInChain (bcChain  s))  $ Left "CC already in chain"
+>  where
+>   ccInPool  = foldr (\x acc -> not (ccTest x) && acc) False
+>   ccInChain = fst . searchChain ccTest "JUNK"
+>   ccTest x  = case decodeSTX x of
+>     (SignedTX (CreateCoin u') _) -> u == u' -- SAME UUID
+>     _                            -> False
+> isValidTX s (SignedTX (TransferCoin stxHash _) _) = do
+>   -- does pool have TransferCoin containing same STXHash as given stx?
+>   -- does chain have TX that matches STXHash?
+>   CM.when (tcInPool  (bcTXPool s)) $ Left "TC already spent in pool"
+>   CM.when (tcInChain (bcChain  s)) $ Left "TC already spent in chain"
+>  where
+>   tcInPool  = foldr (\x acc -> not (tcTest x) && acc) False
+>   tcInChain = fst . searchChain tcTest "JUNK"
+>   tcTest x  = case decodeSTX x of
+>     (SignedTX (TransferCoin stxHash' _) _) -> stxHash == stxHash'
+>     _                                      -> False
+
+> testIsValidTX = do
+>   u                      <- runIO createUUID
+>   (_creatorPK, creatorSK)<- runIO generatePKSKIO
+>   (alicePK  , _aliceSK)  <- runIO generatePKSKIO
+>   (bobPK    , _bobSK)    <- runIO generatePKSKIO
+>   let Right cc        = createCoin   u     creatorSK
+>   let Right cToA      = transferCoin cc    creatorSK alicePK
+>   let Right _cToB     = transferCoin cc    creatorSK bobPK
+>   let sCCInPool       = addTxToPool initialBCState (encodeSTX cc)
+>   _ <- runIO (print sCCInPool >> putStrLn (""::Text))
+>   let (sCCInChain, _) = mine sCCInPool
+>   _ <- runIO (print sCCInChain >> putStrLn (""::Text))
+>   let sTCInPool       = addTxToPool sCCInChain (encodeSTX cToA)
+>   _ <- runIO (print sTCInPool >> putStrLn (""::Text))
+>   let (sTCInChain, _) = mine sTCInPool
+>   _ <- runIO (print sTCInChain >> putStrLn (""::Text))
+>   describe "isValidTX" $do
+>     it "  valid : CC not in pool nor chain" $
+>       isValidTX initialBCState cc `shouldBe` Right ()
+>     it "invalid : CC already pool" $
+>       isValidTX sCCInPool      cc `shouldBe` Left "CC already in pool"
+>     it "invalid : CC already chain" $
+>       isValidTX sCCInChain     cc `shouldBe` Left "CC already in chain"
+>     --------------------------------------------------
+>     it "  valid : TC not in pool nor chain" $
+>       isValidTX initialBCState cToA `shouldBe` Right ()
+>     it "invalid : TC already pool" $
+>       isValidTX sTCInPool      cToA `shouldBe` Left "TC already in pool"
+>     it "invalid : TC already chain" $
+>       isValidTX sCCInChain     cToA `shouldBe` Left "TC already in chain"
+
