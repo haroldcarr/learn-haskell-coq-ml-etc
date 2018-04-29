@@ -5,18 +5,19 @@
 {-# LANGUAGE FlexibleContexts   #-}
 {-# LANGUAGE NoImplicitPrelude  #-}
 {-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE PackageImports     #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module S where
 
-import qualified Crypto.Hash              as H
+import qualified "cryptonite" Crypto.Hash as H
 import qualified Crypto.PubKey.RSA        as RSA
 import qualified Crypto.PubKey.RSA.PKCS15 as PK
 import qualified Crypto.Random.Types      as RT
-import qualified Data.Either.Combinators  as E
 import qualified Data.ByteArray           as BA
 import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Lazy     as BSL
+import qualified Data.Either.Combinators  as E
 import qualified Data.Map.Strict          as M
 import qualified Data.Serialize           as S
 import qualified Data.UUID                as U

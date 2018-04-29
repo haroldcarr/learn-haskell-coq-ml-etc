@@ -10,18 +10,27 @@ source-repository head
 library
   hs-source-dirs:      src
   exposed-modules:     BC
+                     , S
   build-depends:       base >=4.7 && <5
                      , bytestring
+                     , cereal
+                     , containers
                      , cryptohash
+                     , cryptonite
+                     , either
                      , hex
                      , hslogger
                      , hspec
                      , hspec-expectations
                      , http-client
                      , http-types
+                     , memory
+                     , MonadRandom
                      , network
                      , protolude
                      , text
+                     , universum
+                     , uuid
                      , wai
                      , wai-extra
                      , warp
@@ -40,6 +49,7 @@ test-suite hspec
   hs-source-dirs:      test
   main-is:             hspec.hs
   other-modules:       BCSpec
+                     , SSpec
   build-depends:       base
                      , lambda-conf
                      , hspec
