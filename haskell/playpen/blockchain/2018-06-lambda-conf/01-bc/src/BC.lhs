@@ -28,11 +28,8 @@
 > import qualified System.Log.Logger                    as Log
 > import           Test.Hspec
 
-> debug :: Bool
 > debug = False
-
-> lBC :: P.String
-> lBC = "BC"
+> lBC   = "BC" :: P.String
 
 https://hackernoon.com/learn-blockchains-by-building-one-117428612f46
 https://github.com/dvf/blockchain
