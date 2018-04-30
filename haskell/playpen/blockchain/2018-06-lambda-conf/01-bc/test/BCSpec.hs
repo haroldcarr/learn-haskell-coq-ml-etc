@@ -12,7 +12,7 @@ spec = do
   testMine
   testProofOfWork
   testEvidence
-  testResolveConflicts
+  testLongestChain
   testIsValidChain
   testIsValidBlock
   ----------------

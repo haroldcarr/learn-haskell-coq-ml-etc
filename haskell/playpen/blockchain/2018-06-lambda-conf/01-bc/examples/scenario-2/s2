@@ -39,8 +39,8 @@ msg "3: TXPool==[]; Chain==[GB , {TX11}]"
 doall state
 
 msgN "--------------------------------------------------"
-doone 1 resolve
-doone 3 resolve
+doone 1 longest-chain
+doone 3 longest-chain
 echo
 lbl "5-longest-chain"
 msg "1: TXPool==[TX12]; Chain==[GB , {TX11} , {TX21}]"
@@ -59,7 +59,7 @@ doall state
 
 msgN "--------------------------------------------------"
 doone 1 mine
-doall   resolve
+doall   longest-chain
 echo
 lbl "7-one-mines"
 msg "1: TXPool==[]; Chain==[GB , {TX11} , {TX21} , {TX12}]"

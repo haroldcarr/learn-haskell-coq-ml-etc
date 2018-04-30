@@ -4,8 +4,8 @@ HERE="${BASH_SOURCE%/*}"
 . ${HERE}/base.sh
 
 msgN "--------------------------------------------------"
-doone 1 resolve
-doone 2 resolve
+doone 1 longest-chain
+doone 2 longest-chain
 
 lbl "5-after-3B1"
 msg "1: TXPool=[]; Chain=[GB , {TX31,TX11,TX21,TX22}]"

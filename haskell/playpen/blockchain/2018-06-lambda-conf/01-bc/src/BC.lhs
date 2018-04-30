@@ -55,11 +55,6 @@ https://github.com/dvf/blockchain
 > genesisBlock = Block "1" 0 [] 100
 
 > ------------------------------------------------------------------------------
-> addTxToPool :: BCState -> Transaction -> BCState
-> addTxToPool s tx =
->   if txInPoolOrChain tx s then s
->   else s { bcTXPool = bcTXPool s ++ [tx] } -- TODO
-
 > data BCState = BCState
 >   { bcTXPool          :: TXs
 >   , bcChain           :: Chain
@@ -72,24 +67,55 @@ https://github.com/dvf/blockchain
 > initialBCState :: BCState
 > initialBCState = BCState [] [genesisBlock] 4
 
+> ------------------------------------------------------------------------------
+> addTxToPool :: BCState -> Transaction -> BCState
+> addTxToPool s tx =
+>   if txInPoolOrChain tx s then s
+>   else s { bcTXPool = bcTXPool s ++ [tx] } -- TODO
+
+> searchPool
+>   :: (Transaction -> Bool)
+>   -> Transaction -- fake "zero" TX
+>   -> TXs
+>   -> (Bool, Transaction)
+> searchPool f z = foldr (\tx txs -> if f tx then (True, tx) else txs)
+>                        (False, z)
+>
+> searchChain
+>   :: (Transaction -> Bool)
+>   -> Transaction -- fake "zero" TX
+>   -> Chain
+>   -> (Bool, Transaction)
+> searchChain f z = foldr go (False, z)
+>  where
+>   go block blocks = let r@(b,_) = searchPool f z (bTXs block)
+>                      in if b then r else blocks
+>
+> searchPoolAndChain
+>   :: (Transaction -> Bool)
+>   -> Transaction -- fake "zero" TX
+>   -> BCState
+>   -> (Bool, Transaction)
+> searchPoolAndChain f tx s =
+>   let r@(b, _) = searchPool  f tx (bcTXPool s)
+>   in if b then r
+>      else        searchChain f tx (bcChain  s)
+>
+> txInPoolOrChain :: Transaction -> BCState -> Bool
+> txInPoolOrChain tx = fst . searchPoolAndChain (==tx) "JUNK"
+
 > testAddTxToPool =
 >   describe "testAddTxToPool" $do
->     it "empty pool in initialState" $
+>     it "initialState has an empty pool" $
 >       initialBCState
 >       `shouldBe`
 >       BCState { bcTXPool = []
 >               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
 >               , bcProofDifficulty = 4}
 >     it "adds new to pool" $
->       addTxToPool initialBCState "TX1"
+>       addTxToPool (addTxToPool initialBCState "TX1") "TX2"
 >       `shouldBe`
->       BCState { bcTXPool = ["TX1"]
->               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
->               , bcProofDifficulty = 4}
->     it "adds another new to pool" $
->       addTxToPool (addTxToPool initialBCState "TX1") "TX1"
->       `shouldBe`
->       BCState { bcTXPool = ["TX1"]
+>       BCState { bcTXPool = ["TX1","TX2"]
 >               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
 >               , bcProofDifficulty = 4}
 >     it "does not add duplicates to pool" $ do
@@ -146,7 +172,7 @@ https://github.com/dvf/blockchain
 >                  , bcProofDifficulty = 4}
 
 > ------------------------------------------------------------------------------
-> -- | Creates a SHA-256 hash of a Block
+> -- | SHA-256 hash of a Block
 > hash :: BS.ByteString -> BHash
 > hash = SHA.hash
 >
@@ -208,14 +234,13 @@ https://github.com/dvf/blockchain
 
 > ------------------------------------------------------------------------------
 > -- | CONSENSUS ALGORITHM
-> --   Resolves conflicts by replacing chain with longest one in the network.
-> --   Returns (updated-environment, (True, "") if chain was replaced.
-> --   Returns (given-environment, (False, "") if chain was NOT replaced.
-> --   Returns (given-environment, (False, failure-reason) if the new chain was not valid
-> resolveConflicts :: BCState -> [Chain] -> (BCState, (Bool, P.String))
-> resolveConflicts s chains = go
+> --   Chooses longest chain in the network.
+> --   Returns (updated-environment, (True , "") if chain was replaced.
+> --   Returns (given-environment  , (False, "") if chain was NOT replaced.
+> --   Returns (given-environment  , (False, failure-reason) if the new chain was not valid
+> longestChain :: BCState -> [Chain] -> (BCState, (Bool, P.String))
+> longestChain s chains = go
 >  where
->   -- TODO : check that foldr looks at all results
 >   go = let chain' = foldr (\a b -> if length a > length b then a else b) (bcChain s) chains
 >        in if bcChain s /= chain' then
 >             case isValidChain (bcProofDifficulty s) chain' of
@@ -225,7 +250,7 @@ https://github.com/dvf/blockchain
 >                     }
 >                 , (True, ""))
 >               Left err ->
->                 ( s , (False, "resolveConflicts: invalid chain " <> T.unpack err))
+>                 ( s , (False, "longestChain: invalid chain " <> T.unpack err))
 >           else  ( s , (False,  ""))
 >   txsInChain :: Chain -> TXs
 >   txsInChain = foldl (\txs b -> txs ++ bTXs b) []
@@ -269,31 +294,31 @@ https://github.com/dvf/blockchain
 >       (etx2,_) = mine (addTxToPool etx1       "TX3")
 >    in  etx2
 >
-> s1NotLastAfterResolve :: BCState
-> s1NotLastAfterResolve = s2NotLost { bcTXPool = ["TX2"] }
+> s1NotLastAfterLongestChain :: BCState
+> s1NotLastAfterLongestChain = s2NotLost { bcTXPool = ["TX2"] }
 >
-> testResolveConflicts =
->   describe "ResolveConflicts" $ do
+> testLongestChain =
+>   describe "LongestChain" $ do
 >     it "found longer chain" $
->       resolveConflicts initialBCState  [bcChain sTX0]
+>       longestChain initialBCState  [bcChain sTX0]
 >       `shouldBe` (sTX0 , (True , ""))
 >     it "no    longer chain" $
->       resolveConflicts sTX0          [bcChain initialBCState]
+>       longestChain sTX0          [bcChain initialBCState]
 >       `shouldBe` (sTX0 , (False, ""))
 >     it "found longer chain and pool update" $
->       resolveConflicts eLongerChainAndPoolUpdateIn  [bcChain sTX0]
+>       longestChain eLongerChainAndPoolUpdateIn  [bcChain sTX0]
 >       `shouldBe` (e1LongerChainAndPoolUpdateOut, (True , ""))
 >     it "invalid previous hash" $
->       resolveConflicts initialBCState  [bcChain e1BadPHash]
+>       longestChain initialBCState  [bcChain e1BadPHash]
 >       `shouldBe` (initialBCState
->                  , (False, "resolveConflicts: invalid chain invalid bPrevHash at 1"))
+>                  , (False, "longestChain: invalid chain invalid bPrevHash at 1"))
 >     it "invalid proof of work" $
->       resolveConflicts initialBCState  [bcChain e1BadProof]
+>       longestChain initialBCState  [bcChain e1BadProof]
 >       `shouldBe` (initialBCState
->                  , (False, "resolveConflicts: invalid chain invalid bProof at 1"))
+>                  , (False, "longestChain: invalid chain invalid bProof at 1"))
 >     it "should not drop TX" $
->       resolveConflicts s1NotLost   [bcChain s2NotLost]
->       `shouldBe` (s1NotLastAfterResolve
+>       longestChain s1NotLost   [bcChain s2NotLost]
+>       `shouldBe` (s1NotLastAfterLongestChain
 >                  , (True, ""))
 
 > -- | Determine if a given blockchain is valid
@@ -344,37 +369,6 @@ https://github.com/dvf/blockchain
 >       isValidBlock 4 (1, genesisBlock, bcChain e1BadProof !! 1)
 >       `shouldBe` Left "invalid bProof at 1"
 
-> searchPool
->   :: (Transaction -> Bool)
->   -> Transaction -- fake "zero" TX
->   -> TXs
->   -> (Bool, Transaction)
-> searchPool f z = foldr (\tx txs -> if f tx then (True, tx) else txs)
->                        (False, z)
->
-> searchChain
->   :: (Transaction -> Bool)
->   -> Transaction -- fake "zero" TX
->   -> Chain
->   -> (Bool, Transaction)
-> searchChain f z = foldr go (False, z)
->  where
->   go block blocks = let r@(b,_) = searchPool f z (bTXs block)
->                      in if b then r else blocks
->
-> searchPoolAndChain
->   :: (Transaction -> Bool)
->   -> Transaction -- fake "zero" TX
->   -> BCState
->   -> (Bool, Transaction)
-> searchPoolAndChain f tx s =
->   let r@(b, _) = searchPool  f tx (bcTXPool s)
->   in if b then r
->      else        searchChain f tx (bcChain  s)
->
-> txInPoolOrChain :: Transaction -> BCState -> Bool
-> txInPoolOrChain tx = fst . searchPoolAndChain (==tx) "JUNK"
-
 ------------------------------------------------------------------------------
 -- IO
 
@@ -412,8 +406,8 @@ https://github.com/dvf/blockchain
 >     let (s',b) = mine (ioBCState s)
 >      in (setBCState s s', b)
 
-> resolveConflictsIO :: IOEnv -> IO Bool
-> resolveConflictsIO env = do
+> longestChainIO :: IOEnv -> IO Bool
+> longestChainIO env = do
 >   nodes  <- getIOState ioNodes env
 >   chains <- CM.forM nodes $ \n -> do
 >     (status, body) <- httpRequest ("http://" <> n <> "/chain-only")
@@ -421,7 +415,7 @@ https://github.com/dvf/blockchain
 >              then P.read (BSLC8.unpack body)
 >              else []
 >   (b, err) <- IOR.atomicModifyIORef' env $ \s ->
->     let (s', be) = resolveConflicts (ioBCState s) chains
+>     let (s', be) = longestChain (ioBCState s) chains
 >      in (setBCState s s', be)
 >   if b then return b else do Log.infoM lBC err; return b
 
@@ -468,9 +462,9 @@ https://github.com/dvf/blockchain
 >         "/mine" -> do
 >           b <- fmap show (mineIO env)
 >           send200 s tn ("mine " <> b)
->         "/resolve" -> do
->           b <- resolveConflictsIO env
->           send200 s tn ("/resolve " <> show b)
+>         "/longest-chain" -> do
+>           b <- longestChainIO env
+>           send200 s tn ("/longest-chain " <> show b)
 >         "/chain-only" -> do
 >           chain <- getBCState bcChain env
 >           send' s H.status200 (show chain)
