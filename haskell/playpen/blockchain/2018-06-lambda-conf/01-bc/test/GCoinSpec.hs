@@ -6,4 +6,4 @@ import           GCoin
 
 spec :: Spec
 spec =
-  testIt
+  testIsValidCoin isValidCoinTest addToChainTest emptyChainTest

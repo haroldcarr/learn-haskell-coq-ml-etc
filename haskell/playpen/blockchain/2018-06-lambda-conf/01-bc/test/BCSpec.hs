@@ -5,6 +5,7 @@ module BCSpec where
 import           Test.Hspec
 ------------------------------------------------------------------------------
 import           BC
+import           GCoin (testIsValidCoin)
 
 spec :: Spec
 spec = do
@@ -17,16 +18,5 @@ spec = do
   testIsValidBlock
   ----------------
   testIsValidTX
-  testIsValidCoin'
+  testIsValidCoin isValidCoin addToChainBCSpec emptyChainBCSpec
 
-------------------------------------------------------------------------------
-{-
-:set -XOverloadedStrings
-import           Data.List                            ((\\))
-txsInChain = foldl (\txs b -> txs ++ bTXs b) []
-myPool   = bcTXPool e1NotLost
-myTXs    = txsInChain (bcChain e1NotLost)
-theirTXs = txsInChain (bcChain e2NotLost)
-myPool \\ theirTXs -- remove TXs from my pool that are in their chain
-myTXs  \\ theirTXs -- add TXs from my chain that are not in their chain
--}

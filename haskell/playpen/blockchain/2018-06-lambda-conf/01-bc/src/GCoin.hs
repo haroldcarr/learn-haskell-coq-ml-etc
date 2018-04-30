@@ -95,21 +95,21 @@ decodeSTX bs = case S.decode bs of
   Right s -> s
   _       -> error "decodeSignedTX" -- TODO
 
-isValidCoin
+isValidCoinBase
   :: (STXHash -> Either Text SignedTX) -- ^ lookup a TX "in the chain"
   -> PK                                -- ^ creator public key
   -> SignedTX                          -- ^ TX to verify
   -> Either Text ()
-isValidCoin lookup cpk stx = case stx of
+isValidCoinBase lookup cpk stx = case stx of
   (SignedTX (CreateCoin _)       _) ->
     verifyTXSig' cpk stx
   (SignedTX (TransferCoin txh _) _) ->
     case lookup txh of
       Right   cc@(SignedTX (CreateCoin _)       _) ->
-        isValidCoin lookup cpk cc
+        isValidCoinBase lookup cpk cc
       Right next@(SignedTX (TransferCoin _ opk) _) ->
         case verifyTXSig' opk stx of
-          Right _ -> isValidCoin lookup cpk next
+          Right _ -> isValidCoinBase lookup cpk next
           l       -> l
       Left l -> Left l
  where
@@ -117,7 +117,18 @@ isValidCoin lookup cpk stx = case stx of
     if verifyTXSig pk stx0 then Right ()
     else Left ("verifyTXSig False: pk: " <> show pk <> "; stx: " <> show stx0)
 
-testIt = do
+isValidCoinErrMsg = "no SignedTX found with STXHash == "
+
+isValidCoinTest c = isValidCoinBase lookup
+  where lookup x = E.maybeToRight (isValidCoinErrMsg <> show x) (M.lookup x c)
+
+addToChainTest :: M.Map STXHash SignedTX -> [SignedTX] -> M.Map STXHash SignedTX
+addToChainTest = foldr (\x cc -> M.insert (hashSignedTX x) x cc)
+
+emptyChainTest = M.empty
+
+-- This test is used in GCoinSpec and in BCSpec.
+testIsValidCoin isValidCoinX addToChainX emptyChain = do
   u                      <- runIO createUUID
   (creatorPK, creatorSK) <- runIO generatePKSKIO
   (alicePK  , aliceSK)   <- runIO generatePKSKIO
@@ -129,25 +140,21 @@ testIt = do
   let Right aToJ  = transferCoin cToA  aliceSK   jimPK
   let Right bToA  = transferCoin aToB1 bobSK     alicePK
   let Right aToB2 = transferCoin bToA  aliceSK   bobPK
-  let chain       = addToChain M.empty [cc, cToA, aToB1, bToA]
-  let chainBad    = addToChain M.empty     [cToA, aToB1, bToA]
-  let lkup m x    = E.maybeToRight ("Not in map : " <> show x) (M.lookup x m)
+  let chain       = addToChainX emptyChain [cc, cToA, aToB1, bToA]
+  let chainBad    = addToChainX emptyChain     [cToA, aToB1, bToA]
   describe "GoofyCoin" $ do
     it "isValidCoin createCoin" $
-      isValidCoin (lkup M.empty)    creatorPK   cc  `shouldBe` Right ()
+      isValidCoinX emptyChain    creatorPK   cc  `shouldBe` Right ()
     it "isValidCoin chain1 aToJ" $
-      isValidCoin (lkup chain)      creatorPK aToJ  `shouldBe` Right ()
+      isValidCoinX chain         creatorPK aToJ  `shouldBe` Right ()
     it "isValidCoin chain1 aToJ (double spend)" $
-      isValidCoin (lkup chain)      creatorPK aToB1 `shouldBe` Right ()
+      isValidCoinX chain         creatorPK aToB1 `shouldBe` Right ()
     it "isValidCoin bad sig" $
       let ccBad = cc { sSig = Signature "BAD" }
-      in isValidCoin (lkup M.empty) creatorPK ccBad `shouldBe`
+      in isValidCoinX emptyChain creatorPK ccBad `shouldBe`
       Left ("verifyTXSig False: pk: " <> show creatorPK <> "; stx: " <> show ccBad)
     it "isValidCoin aToB2" $
-      isValidCoin (lkup chain)      creatorPK aToB2 `shouldBe` Right ()
+      isValidCoinX chain         creatorPK aToB2 `shouldBe` Right ()
     it "isValidCoin chainBad aToB2" $
-      isValidCoin (lkup chainBad)   creatorPK aToB2 `shouldBe`
-      Left ("Not in map : " <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
- where
-  addToChain :: M.Map STXHash SignedTX -> [SignedTX] -> M.Map STXHash SignedTX
-  addToChain = foldr (\x cc -> M.insert (hashSignedTX x) x cc)
+      isValidCoinX chainBad      creatorPK aToB2 `shouldBe`
+      Left (isValidCoinErrMsg <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
