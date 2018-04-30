@@ -20,6 +20,7 @@ import qualified Data.Map.Strict          as M
 import qualified Data.Serialize           as S
 import qualified Data.UUID                as U
 import qualified Data.UUID.V4             as U
+import           Formatting               ((%), sformat, stext)
 import qualified Prelude
 import           Test.Hspec               as HS
 import           Universum
@@ -61,11 +62,17 @@ createUUID = do
 signTX :: SK -> TX -> Either RSA.Error SignedTX
 signTX sk tx = E.mapRight (SignedTX tx) (signMsg sk (Msg (S.encode tx)))
 
-verifyTXSig :: PK -> SignedTX -> Bool
+verifyTXSigErr :: PK -> TX -> Text
+verifyTXSigErr pk tx =
+  sformat ("verifyTXSig False: pk: " % stext % "; stx: " % stext)
+          (show pk) (show tx)
+
+verifyTXSig :: PK -> SignedTX -> Either Text ()
 verifyTXSig pk stx = case stx of
   (SignedTX tx@(CreateCoin _)     sig) -> v tx sig
   (SignedTX tx@(TransferCoin _ _) sig) -> v tx sig
- where v tx = verifyMsgSig pk (Msg (S.encode tx))
+ where v tx s = let b = verifyMsgSig pk (Msg (S.encode tx)) s
+                in if b then Right () else Left (verifyTXSigErr pk tx)
 
 createCoinIO :: SK -> IO (Either RSA.Error SignedTX)
 createCoinIO sk = do
@@ -102,20 +109,16 @@ isValidCoinBase
   -> Either Text ()
 isValidCoinBase lookup cpk stx = case stx of
   (SignedTX (CreateCoin _)       _) ->
-    verifyTXSig' cpk stx
+    verifyTXSig cpk stx
   (SignedTX (TransferCoin txh _) _) ->
     case lookup txh of
       Right   cc@(SignedTX (CreateCoin _)       _) ->
         isValidCoinBase lookup cpk cc
       Right next@(SignedTX (TransferCoin _ opk) _) ->
-        case verifyTXSig' opk stx of
+        case verifyTXSig opk stx of
           Right _ -> isValidCoinBase lookup cpk next
           l       -> l
       Left l -> Left l
- where
-  verifyTXSig' pk stx0 =
-    if verifyTXSig pk stx0 then Right ()
-    else Left ("verifyTXSig False: pk: " <> show pk <> "; stx: " <> show stx0)
 
 isValidCoinErrMsg = "no SignedTX found with STXHash == "
 
@@ -150,9 +153,9 @@ testIsValidCoin isValidCoinX addToChainX emptyChain = do
     it "isValidCoin chain1 aToJ (double spend)" $
       isValidCoinX chain         creatorPK aToB1 `shouldBe` Right ()
     it "isValidCoin bad sig" $
-      let ccBad = cc { sSig = Signature "BAD" }
-      in isValidCoinX emptyChain creatorPK ccBad `shouldBe`
-      Left ("verifyTXSig False: pk: " <> show creatorPK <> "; stx: " <> show ccBad)
+      let ccBadSTX@(SignedTX ccBadTX _) = cc { sSig = Signature "BAD" }
+      in isValidCoinX emptyChain creatorPK ccBadSTX `shouldBe`
+      Left (verifyTXSigErr creatorPK ccBadTX)
     it "isValidCoin aToB2" $
       isValidCoinX chain         creatorPK aToB2 `shouldBe` Right ()
     it "isValidCoin chainBad aToB2" $
