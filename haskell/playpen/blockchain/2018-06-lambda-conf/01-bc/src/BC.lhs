@@ -318,17 +318,23 @@ https://github.com/dvf/blockchain
 >       isValidBlock 4 (1, genesisBlock, bcChain e1BadProof !! 1)
 >       `shouldBe` Left "invalid bProof at 1"
 
+> searchPool
+>   :: (Transaction -> Bool)
+>   -> Transaction -- fake "zero" TX
+>   -> TXs
+>   -> (Bool, Transaction)
+> searchPool f z = foldr (\tx txs -> if f tx then (True, tx) else txs)
+>                        (False, z)
+>
 > searchChain
 >   :: (Transaction -> Bool)
 >   -> Transaction -- fake "zero" TX
 >   -> Chain
 >   -> (Bool, Transaction)
-> searchChain f z = foldr go1 (False, z)
+> searchChain f z = foldr go (False, z)
 >  where
->   go1 block blocks = let r@(b,_) = foldr go2 (False, z) (bTXs block)
+>   go block blocks = let r@(b,_) = searchPool f z (bTXs block)
 >                       in if b then r else blocks
->    where
->     go2 tx txs = if f tx then (True, tx) else txs
 >
 > txInChain :: Transaction -> Chain -> Bool
 > txInChain tx c = fst $ searchChain (==tx) "JUNK" c
@@ -491,17 +497,17 @@ https://github.com/dvf/blockchain
 >     CM.when (tcInChain stxHash (bcChain  s)) $ Left "TC already spent in chain"
 >     return ()
 >  where
->   ccInPool  u = foldr (\x acc -> ccTest u x || acc) False
+>   ccInPool  u = fst . searchPool  (ccTest u) "JUNK"
 >   ccInChain u = fst . searchChain (ccTest u) "JUNK"
 >   ccTest u x  = case decodeSTX x of
 >     (SignedTX (CreateCoin u') _) -> u == u' -- SAME UUID
 >     _                            -> False
 >   -- does pool have TransferCoin containing same STXHash as given stx?
->   tcInPool stxHash = foldr (\x acc -> tcTest stxHash x || acc) False
+>   tcInPool stxHash  = fst . searchPool  (tcTest stxHash) "JUNK"
 >   -- does chain have STX whose STXHash field matches given STXHash?
 >   tcInChain stxHash = fst . searchChain (tcTest stxHash) "JUNK"
 >   tcTest stxHash x = case decodeSTX x of
->     (SignedTX (TransferCoin stxHash' _) _) -> stxHash == stxHash'
+>     (SignedTX (TransferCoin stxHash' _) _) -> stxHash == stxHash' -- already spent
 >     _                                      -> False
 
 
@@ -512,7 +518,7 @@ https://github.com/dvf/blockchain
 >   (bobPK    , _bobSK)    <- runIO generatePKSKIO
 >   let Right cc        = createCoin   u     creatorSK
 >   let Right cToA      = transferCoin cc    creatorSK alicePK
->   let Right cToB     = transferCoin cc    creatorSK bobPK
+>   let Right cToB      = transferCoin cc    creatorSK bobPK
 >   let sCCInPool       = addTxToPool initialBCState (encodeSTX cc)
 >   let (sCCInChain, _) = mine sCCInPool
 >   let sTCInPool       = addTxToPool sCCInChain (encodeSTX cToA)
