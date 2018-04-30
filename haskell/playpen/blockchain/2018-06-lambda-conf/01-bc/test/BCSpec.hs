@@ -8,7 +8,7 @@ import           BC
 
 spec :: Spec
 spec = do
-  testAddTransaction
+  testAddTxToPool
   testMine
   testProofOfWork
   testEvidence

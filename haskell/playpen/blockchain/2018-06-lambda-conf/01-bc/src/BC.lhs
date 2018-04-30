@@ -57,7 +57,7 @@ https://github.com/dvf/blockchain
 > ------------------------------------------------------------------------------
 > addTxToPool :: BCState -> Transaction -> BCState
 > addTxToPool s tx =
->   if txInChain tx (bcChain s) then s
+>   if txInPoolOrChain tx s then s
 >   else s { bcTXPool = bcTXPool s ++ [tx] } -- TODO
 
 > data BCState = BCState
@@ -72,18 +72,33 @@ https://github.com/dvf/blockchain
 > initialBCState :: BCState
 > initialBCState = BCState [] [genesisBlock] 4
 
-> testAddTransaction =
->   describe "testAddTransaction" $do
->     it "empty bcTXPool in initialState" $
+> testAddTxToPool =
+>   describe "testAddTxToPool" $do
+>     it "empty pool in initialState" $
 >       initialBCState
 >       `shouldBe`
 >       BCState { bcTXPool = []
 >               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
 >               , bcProofDifficulty = 4}
->     it "adds to bcTXPool" $
+>     it "adds new to pool" $
 >       addTxToPool initialBCState "TX1"
 >       `shouldBe`
 >       BCState { bcTXPool = ["TX1"]
+>               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
+>               , bcProofDifficulty = 4}
+>     it "adds another new to pool" $
+>       addTxToPool (addTxToPool initialBCState "TX1") "TX1"
+>       `shouldBe`
+>       BCState { bcTXPool = ["TX1"]
+>               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
+>               , bcProofDifficulty = 4}
+>     it "does not add duplicates to pool" $ do
+>       let s  = addTxToPool (addTxToPool initialBCState "TX1") "TX2"
+>       let s' = addTxToPool (addTxToPool s              "TX1") "TX2"
+>        in s'
+>           `shouldBe`
+>           BCState
+>               { bcTXPool = ["TX1","TX2"]
 >               , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
 >               , bcProofDifficulty = 4}
 
@@ -111,13 +126,24 @@ https://github.com/dvf/blockchain
 >     it "addBlock" $
 >       let (s, _) = mine (addTxToPool (addTxToPool initialBCState "TX1") "TX2")
 >        in s `shouldBe`
->           BCState { bcTXPool = []
->                   , bcChain = [Block { bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}
->                               ,Block { bPrevHash = "\202\169KU\139\ETX\212\&3W\145`\229\224S\159\177\253\nF\167\158\227\250\255\244\v\207\228z\233\171\237"
->                                      , bIndex = 1
->                                      , bTXs = ["TX1","TX2"]
->                                      , bProof = 134530}]
->                   , bcProofDifficulty = 4}
+>          BCState { bcTXPool = []
+>                  , bcChain = [Block { bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}
+>                              ,Block { bPrevHash = "\202\169KU\139\ETX\212\&3W\145`\229\224S\159\177\253\nF\167\158\227\250\255\244\v\207\228z\233\171\237"
+>                                     , bIndex = 1
+>                                     , bTXs = ["TX1","TX2"]
+>                                     , bProof = 134530}]
+>                  , bcProofDifficulty = 4}
+>     it "TXs in chain are not added to pool" $ do
+>       let (s, _) = mine (addTxToPool (addTxToPool initialBCState "TX1") "TX2")
+>       let  s'    =       addTxToPool (addTxToPool s              "TX1") "TX2"
+>        in s' `shouldBe`
+>          BCState { bcTXPool = []
+>                  , bcChain = [Block { bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}
+>                              ,Block { bPrevHash = "\202\169KU\139\ETX\212\&3W\145`\229\224S\159\177\253\nF\167\158\227\250\255\244\v\207\228z\233\171\237"
+>                                     , bIndex = 1
+>                                     , bTXs = ["TX1","TX2"]
+>                                     , bProof = 134530}]
+>                  , bcProofDifficulty = 4}
 
 > ------------------------------------------------------------------------------
 > -- | Creates a SHA-256 hash of a Block
@@ -334,10 +360,20 @@ https://github.com/dvf/blockchain
 > searchChain f z = foldr go (False, z)
 >  where
 >   go block blocks = let r@(b,_) = searchPool f z (bTXs block)
->                       in if b then r else blocks
+>                      in if b then r else blocks
 >
-> txInChain :: Transaction -> Chain -> Bool
-> txInChain tx c = fst $ searchChain (==tx) "JUNK" c
+> searchPoolAndChain
+>   :: (Transaction -> Bool)
+>   -> Transaction -- fake "zero" TX
+>   -> BCState
+>   -> (Bool, Transaction)
+> searchPoolAndChain f tx s =
+>   let r@(b, _) = searchPool  f tx (bcTXPool s)
+>   in if b then r
+>      else        searchChain f tx (bcChain  s)
+>
+> txInPoolOrChain :: Transaction -> BCState -> Bool
+> txInPoolOrChain tx = fst . searchPoolAndChain (==tx) "JUNK"
 
 ------------------------------------------------------------------------------
 -- IO
