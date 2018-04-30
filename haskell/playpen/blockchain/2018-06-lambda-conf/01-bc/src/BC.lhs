@@ -481,26 +481,29 @@ https://github.com/dvf/blockchain
 ------------------------------------------------------------------------------
 
 > isValidTX :: BCState -> SignedTX -> Either Text ()
-> isValidTX s (SignedTX (CreateCoin u) _) = do
->   CM.when (ccInPool  (bcTXPool s))  $ Left "CC already in pool"
->   CM.when (ccInChain (bcChain  s))  $ Left "CC already in chain"
+> isValidTX s tx = case tx of
+>   (SignedTX (CreateCoin u) _) -> do
+>     CM.when (ccInPool  u       (bcTXPool s)) $ Left "CC already in pool"
+>     CM.when (ccInChain u       (bcChain  s)) $ Left "CC already in chain"
+>     return ()
+>   (SignedTX (TransferCoin stxHash _) _) -> do
+>     CM.when (tcInPool  stxHash (bcTXPool s)) $ Left "TC already spent in pool"
+>     CM.when (tcInChain stxHash (bcChain  s)) $ Left "TC already spent in chain"
+>     return ()
 >  where
->   ccInPool  = foldr (\x acc -> not (ccTest x) && acc) False
->   ccInChain = fst . searchChain ccTest "JUNK"
->   ccTest x  = case decodeSTX x of
+>   ccInPool  u = foldr (\x acc -> ccTest u x || acc) False
+>   ccInChain u = fst . searchChain (ccTest u) "JUNK"
+>   ccTest u x  = case decodeSTX x of
 >     (SignedTX (CreateCoin u') _) -> u == u' -- SAME UUID
 >     _                            -> False
-> isValidTX s (SignedTX (TransferCoin stxHash _) _) = do
 >   -- does pool have TransferCoin containing same STXHash as given stx?
->   -- does chain have TX that matches STXHash?
->   CM.when (tcInPool  (bcTXPool s)) $ Left "TC already spent in pool"
->   CM.when (tcInChain (bcChain  s)) $ Left "TC already spent in chain"
->  where
->   tcInPool  = foldr (\x acc -> not (tcTest x) && acc) False
->   tcInChain = fst . searchChain tcTest "JUNK"
->   tcTest x  = case decodeSTX x of
+>   tcInPool stxHash = foldr (\x acc -> tcTest stxHash x || acc) False
+>   -- does chain have STX whose STXHash field matches given STXHash?
+>   tcInChain stxHash = fst . searchChain (tcTest stxHash) "JUNK"
+>   tcTest stxHash x = case decodeSTX x of
 >     (SignedTX (TransferCoin stxHash' _) _) -> stxHash == stxHash'
 >     _                                      -> False
+
 
 > testIsValidTX = do
 >   u                      <- runIO createUUID
@@ -509,15 +512,11 @@ https://github.com/dvf/blockchain
 >   (bobPK    , _bobSK)    <- runIO generatePKSKIO
 >   let Right cc        = createCoin   u     creatorSK
 >   let Right cToA      = transferCoin cc    creatorSK alicePK
->   let Right _cToB     = transferCoin cc    creatorSK bobPK
+>   let Right cToB     = transferCoin cc    creatorSK bobPK
 >   let sCCInPool       = addTxToPool initialBCState (encodeSTX cc)
->   _ <- runIO (print sCCInPool >> putStrLn (""::Text))
 >   let (sCCInChain, _) = mine sCCInPool
->   _ <- runIO (print sCCInChain >> putStrLn (""::Text))
 >   let sTCInPool       = addTxToPool sCCInChain (encodeSTX cToA)
->   _ <- runIO (print sTCInPool >> putStrLn (""::Text))
 >   let (sTCInChain, _) = mine sTCInPool
->   _ <- runIO (print sTCInChain >> putStrLn (""::Text))
 >   describe "isValidTX" $do
 >     it "  valid : CC not in pool nor chain" $
 >       isValidTX initialBCState cc `shouldBe` Right ()
@@ -529,7 +528,7 @@ https://github.com/dvf/blockchain
 >     it "  valid : TC not in pool nor chain" $
 >       isValidTX initialBCState cToA `shouldBe` Right ()
 >     it "invalid : TC already pool" $
->       isValidTX sTCInPool      cToA `shouldBe` Left "TC already in pool"
+>       isValidTX sTCInPool      cToA `shouldBe` Left "TC already spent in pool"
 >     it "invalid : TC already chain" $
->       isValidTX sCCInChain     cToA `shouldBe` Left "TC already in chain"
+>       isValidTX sTCInChain     cToB `shouldBe` Left "TC already spent in chain"
 
