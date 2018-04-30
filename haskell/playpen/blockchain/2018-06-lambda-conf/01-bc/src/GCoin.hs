@@ -92,6 +92,24 @@ decodeSTX bs = case S.decode bs of
   Right s -> s
   _       -> error "decodeSignedTX" -- TODO
 
+isValidCoin
+  :: (STXHash -> Either Text SignedTX) -- ^ lookup a TX "in the chain"
+  -> RSA.PublicKey                     -- ^ creator public key
+  -> SignedTX                          -- ^ TX to verify
+  -> Either Text Bool
+isValidCoin lookup cpk stx = case stx of
+  (SignedTX (CreateCoin _) _) ->
+    return $ verifyTXSig cpk stx
+  (SignedTX (TransferCoin txh _) _) ->
+    case lookup txh of
+      Right   cc@(SignedTX (CreateCoin _) _) ->
+        isValidCoin lookup cpk cc
+      Right next@(SignedTX (TransferCoin _ opk) _) ->
+        if verifyTXSig opk stx
+        then isValidCoin lookup cpk next
+        else return False
+      Left l -> Left l
+
 testIt = do
   u                      <- runIO createUUID
   (creatorPK, creatorSK) <- runIO generatePKSKIO
@@ -106,39 +124,22 @@ testIt = do
   let Right aToB2 = transferCoin bToA  aliceSK   bobPK
   let chain       = addToChain M.empty [cc, cToA, aToB1, bToA]
   let chainBad    = addToChain M.empty     [cToA, aToB1, bToA]
+  let lkup m x    = E.maybeToRight ("Not in map : " <> show x) (M.lookup x m)
   describe "GoofyCoin" $ do
     it "isValidCoin createCoin" $
-      isValidCoin creatorPK M.empty cc `shouldBe` Right True
+      isValidCoin (lkup M.empty)  creatorPK   cc  `shouldBe` Right True
     it "isValidCoin chain1 aToJ" $
-      isValidCoin creatorPK chain aToJ `shouldBe` Right True
+      isValidCoin (lkup chain)    creatorPK aToJ  `shouldBe` Right True
     it "isValidCoin chain1 aToJ (double spend)" $
-      isValidCoin creatorPK chain aToB1 `shouldBe` Right True
+      isValidCoin (lkup chain)    creatorPK aToB1 `shouldBe` Right True
     it "isValidCoin bad sig" $
-      isValidCoin creatorPK M.empty (cc { sSig = Signature "BAD" }) `shouldBe` Right False
+      isValidCoin (lkup M.empty)  creatorPK (cc { sSig = Signature "BAD" })
+                                                  `shouldBe` Right False
     it "isValidCoin aToB2" $
-      isValidCoin creatorPK chain aToB2 `shouldBe` Right True
+      isValidCoin (lkup chain)    creatorPK aToB2 `shouldBe` Right True
     it "isValidCoin chainBad aToB2" $
-      isValidCoin creatorPK chainBad aToB2 `shouldBe`
-      Left ("No TX for : " <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
+      isValidCoin (lkup chainBad) creatorPK aToB2 `shouldBe`
+      Left ("Not in map : " <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
  where
   addToChain :: M.Map STXHash SignedTX -> [SignedTX] -> M.Map STXHash SignedTX
   addToChain = foldr (\x cc -> M.insert (hashSignedTX x) x cc)
-  isValidCoin
-    :: RSA.PublicKey          -- ^ creator public key
-    -> M.Map STXHash SignedTX  -- ^ the "chain"
-    -> SignedTX               -- ^ TX to verify
-    -> Either Text Bool
-  isValidCoin cpk m stx = case stx of
-    (SignedTX (CreateCoin _) _) ->
-      return $ verifyTXSig cpk stx
-    (SignedTX (TransferCoin txh _) _) ->
-      case M.lookup txh m of
-        Nothing ->
-          Left ("No TX for : " <> show txh)
-        Just   cc@(SignedTX (CreateCoin _) _) ->
-          isValidCoin cpk m cc
-        Just next@(SignedTX (TransferCoin _ opk) _) ->
-           if verifyTXSig opk stx
-           then isValidCoin cpk m next
-           else return False
-
