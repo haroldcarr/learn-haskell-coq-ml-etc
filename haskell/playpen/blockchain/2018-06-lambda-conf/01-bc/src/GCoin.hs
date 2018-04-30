@@ -26,6 +26,9 @@ import           Universum
 ------------------------------------------------------------------------------
 import           Crypto
 
+type PK = RSA.PublicKey
+type SK = RSA.PrivateKey
+
 -- Hlint complain about DeriveAnyClass, but it is needed to S.Serialize RSA.PublicKey
 {-# ANN module ("HLint: ignore Unused LANGUAGE pragma"::Prelude.String) #-}
 
@@ -40,7 +43,7 @@ deriving instance S.Serialize RSA.PublicKey
 
 data TX
   = CreateCoin UUID
-  | TransferCoin STXHash RSA.PublicKey
+  | TransferCoin STXHash PK
   deriving (Generic, Show)
 instance S.Serialize TX
 
@@ -55,24 +58,24 @@ createUUID = do
   u <- U.nextRandom
   return (UUID (BSL.toStrict (U.toByteString u)))
 
-signTX :: RSA.PrivateKey -> TX -> Either RSA.Error SignedTX
+signTX :: SK -> TX -> Either RSA.Error SignedTX
 signTX sk tx = E.mapRight (SignedTX tx) (signMsg sk (Msg (S.encode tx)))
 
-verifyTXSig :: RSA.PublicKey -> SignedTX -> Bool
+verifyTXSig :: PK -> SignedTX -> Bool
 verifyTXSig pk stx = case stx of
   (SignedTX tx@(CreateCoin _)     sig) -> v tx sig
   (SignedTX tx@(TransferCoin _ _) sig) -> v tx sig
  where v tx = verifyMsgSig pk (Msg (S.encode tx))
 
-createCoinIO :: RSA.PrivateKey -> IO (Either RSA.Error SignedTX)
+createCoinIO :: SK -> IO (Either RSA.Error SignedTX)
 createCoinIO sk = do
   u <- createUUID
   return (createCoin u sk)
 
-createCoin :: UUID -> RSA.PrivateKey -> Either RSA.Error SignedTX
+createCoin :: UUID -> SK -> Either RSA.Error SignedTX
 createCoin u sk = signTX sk (CreateCoin u)
 
-transferCoin :: SignedTX -> RSA.PrivateKey -> RSA.PublicKey -> Either RSA.Error SignedTX
+transferCoin :: SignedTX -> SK -> PK -> Either RSA.Error SignedTX
 transferCoin fromCoin ownerSK toPK = do
   let fromHash = hashSignedTX fromCoin
       toCoin   = TransferCoin fromHash toPK
@@ -94,21 +97,25 @@ decodeSTX bs = case S.decode bs of
 
 isValidCoin
   :: (STXHash -> Either Text SignedTX) -- ^ lookup a TX "in the chain"
-  -> RSA.PublicKey                     -- ^ creator public key
+  -> PK                                -- ^ creator public key
   -> SignedTX                          -- ^ TX to verify
-  -> Either Text Bool
+  -> Either Text ()
 isValidCoin lookup cpk stx = case stx of
-  (SignedTX (CreateCoin _) _) ->
-    return $ verifyTXSig cpk stx
+  (SignedTX (CreateCoin _)       _) ->
+    verifyTXSig' cpk stx
   (SignedTX (TransferCoin txh _) _) ->
     case lookup txh of
-      Right   cc@(SignedTX (CreateCoin _) _) ->
+      Right   cc@(SignedTX (CreateCoin _)       _) ->
         isValidCoin lookup cpk cc
       Right next@(SignedTX (TransferCoin _ opk) _) ->
-        if verifyTXSig opk stx
-        then isValidCoin lookup cpk next
-        else return False
+        case verifyTXSig' opk stx of
+          Right _ -> isValidCoin lookup cpk next
+          l       -> l
       Left l -> Left l
+ where
+  verifyTXSig' pk stx0 =
+    if verifyTXSig pk stx0 then Right ()
+    else Left ("verifyTXSig False: pk: " <> show pk <> "; stx: " <> show stx0)
 
 testIt = do
   u                      <- runIO createUUID
@@ -127,18 +134,19 @@ testIt = do
   let lkup m x    = E.maybeToRight ("Not in map : " <> show x) (M.lookup x m)
   describe "GoofyCoin" $ do
     it "isValidCoin createCoin" $
-      isValidCoin (lkup M.empty)  creatorPK   cc  `shouldBe` Right True
+      isValidCoin (lkup M.empty)    creatorPK   cc  `shouldBe` Right ()
     it "isValidCoin chain1 aToJ" $
-      isValidCoin (lkup chain)    creatorPK aToJ  `shouldBe` Right True
+      isValidCoin (lkup chain)      creatorPK aToJ  `shouldBe` Right ()
     it "isValidCoin chain1 aToJ (double spend)" $
-      isValidCoin (lkup chain)    creatorPK aToB1 `shouldBe` Right True
+      isValidCoin (lkup chain)      creatorPK aToB1 `shouldBe` Right ()
     it "isValidCoin bad sig" $
-      isValidCoin (lkup M.empty)  creatorPK (cc { sSig = Signature "BAD" })
-                                                  `shouldBe` Right False
+      let ccBad = cc { sSig = Signature "BAD" }
+      in isValidCoin (lkup M.empty) creatorPK ccBad `shouldBe`
+      Left ("verifyTXSig False: pk: " <> show creatorPK <> "; stx: " <> show ccBad)
     it "isValidCoin aToB2" $
-      isValidCoin (lkup chain)    creatorPK aToB2 `shouldBe` Right True
+      isValidCoin (lkup chain)      creatorPK aToB2 `shouldBe` Right ()
     it "isValidCoin chainBad aToB2" $
-      isValidCoin (lkup chainBad) creatorPK aToB2 `shouldBe`
+      isValidCoin (lkup chainBad)   creatorPK aToB2 `shouldBe`
       Left ("Not in map : " <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
  where
   addToChain :: M.Map STXHash SignedTX -> [SignedTX] -> M.Map STXHash SignedTX

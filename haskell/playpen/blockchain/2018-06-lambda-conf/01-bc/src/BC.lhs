@@ -1,3 +1,4 @@
+> {-# LANGUAGE FlexibleContexts #-}
 > {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 > {-# OPTIONS_GHC -fno-warn-unused-do-bind     #-}
 > {-# LANGUAGE NoImplicitPrelude #-}
@@ -568,3 +569,48 @@ https://github.com/dvf/blockchain
 >     it "invalid : TC already chain" $
 >       isValidTX sTCInChain     cToB `shouldBe` Left "TC already spent in chain"
 
+> isValidCoin'
+>   :: BCState -- Chain TODO
+>   -> PK        -- ^ creator public key
+>   -> SignedTX  -- ^ TX to verify
+>   -> Either Text ()
+> isValidCoin' c = isValidCoin lookup
+>  where
+>   lookup stxHash =
+>     let (b, stx) = searchChain (\x -> stxHash == hashSignedTX (decodeSTX x)) "JUNK" (bcChain c)
+>      in if b then return (decodeSTX stx)
+>         else Left ("no SignedTX found with STXHash == " <> show stxHash)
+
+> testIsValidCoin' = do
+>   u                      <- runIO createUUID
+>   (creatorPK, creatorSK) <- runIO generatePKSKIO
+>   (alicePK  , aliceSK)   <- runIO generatePKSKIO
+>   (bobPK    , bobSK)     <- runIO generatePKSKIO
+>   (jimPK    , _jimSK)    <- runIO generatePKSKIO
+>   let Right cc    = createCoin   u     creatorSK
+>   let Right cToA  = transferCoin cc    creatorSK alicePK
+>   let Right aToB1 = transferCoin cToA  aliceSK   bobPK
+>   let Right aToJ  = transferCoin cToA  aliceSK   jimPK
+>   let Right bToA  = transferCoin aToB1 bobSK     alicePK
+>   let Right aToB2 = transferCoin bToA  aliceSK   bobPK
+>   let chain       = addToChain initialBCState [cc, cToA, aToB1, bToA]
+>   let chainBad    = addToChain initialBCState     [cToA, aToB1, bToA]
+>   describe "GoofyCoin" $ do
+>     it "isValidCoin' createCoin" $
+>       isValidCoin'    initialBCState creatorPK   cc  `shouldBe` Right ()
+>     it "isValidCoin' chain1 aToJ" $
+>       isValidCoin'    chain          creatorPK aToJ  `shouldBe` Right ()
+>     it "isValidCoin' chain1 aToJ (double spend)" $
+>       isValidCoin'    chain          creatorPK aToB1 `shouldBe` Right ()
+>     it "isValidCoin' bad sig" $
+>       let ccBad = cc { sSig = Signature "BAD" }
+>       in isValidCoin' initialBCState creatorPK ccBad `shouldBe`
+>       Left ("verifyTXSig False: pk: " <> show creatorPK <> "; stx: " <> show ccBad)
+>     it "isValidCoin' aToB2" $
+>       isValidCoin'    chain          creatorPK aToB2 `shouldBe` Right ()
+>     it "isValidCoin' chainBad aToB2" $
+>       isValidCoin'    chainBad       creatorPK aToB2 `shouldBe`
+>       Left ("Not in map : " <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
+>  where
+>   addToChain :: BCState -> [SignedTX] -> BCState
+>   addToChain = foldr (\stx bcs -> addTxToPool bcs (encodeSTX stx))

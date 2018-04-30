@@ -17,6 +17,7 @@ spec = do
   testIsValidBlock
   ----------------
   testIsValidTX
+  testIsValidCoin'
 
 ------------------------------------------------------------------------------
 {-
