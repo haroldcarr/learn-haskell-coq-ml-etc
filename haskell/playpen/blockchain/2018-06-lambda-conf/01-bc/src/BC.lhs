@@ -569,6 +569,7 @@ https://github.com/dvf/blockchain
 >     it "invalid : TC already chain" $
 >       isValidTX sTCInChain     cToB `shouldBe` Left "TC already spent in chain"
 
+> {-
 > isValidCoin'
 >   :: BCState -- Chain TODO
 >   -> PK        -- ^ creator public key
@@ -580,6 +581,21 @@ https://github.com/dvf/blockchain
 >     let (b, stx) = searchChain (\x -> stxHash == hashSignedTX (decodeSTX x)) "JUNK" (bcChain c)
 >      in if b then return (decodeSTX stx)
 >         else Left ("no SignedTX found with STXHash == " <> show stxHash)
+> -}
+
+> isValidCoin'
+>   :: BCState -- Chain TODO
+>   -> PK        -- ^ creator public key
+>   -> SignedTX  -- ^ TX to verify
+>   -> Either Text ()
+> isValidCoin' c = isValidCoin lookup
+>  where
+>   lookup :: STXHash -> Either Text SignedTX
+>   lookup stxHash =
+>     let (b, stx) = searchChain (\x -> stxHash == hashSignedTX (decodeSTX x)) "JUNK" (bcChain c)
+>      in if b then return (decodeSTX stx)
+>         else Left ("no SignedTX found with STXHash == " <> show stxHash)
+
 
 > testIsValidCoin' = do
 >   u                      <- runIO createUUID
@@ -610,7 +626,7 @@ https://github.com/dvf/blockchain
 >       isValidCoin'    chain          creatorPK aToB2 `shouldBe` Right ()
 >     it "isValidCoin' chainBad aToB2" $
 >       isValidCoin'    chainBad       creatorPK aToB2 `shouldBe`
->       Left ("Not in map : " <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
+>       Left ("no SignedTX found with STXHash == " <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
 >  where
 >   addToChain :: BCState -> [SignedTX] -> BCState
->   addToChain = foldr (\stx bcs -> addTxToPool bcs (encodeSTX stx))
+>   addToChain = foldr (\stx bcs -> let (s,_) = mine (addTxToPool bcs (encodeSTX stx)) in s)
