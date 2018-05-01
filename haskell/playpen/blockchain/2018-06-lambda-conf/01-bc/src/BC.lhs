@@ -520,27 +520,27 @@ https://github.com/dvf/blockchain
 
 > isValidTX :: BCState -> SignedTX -> Either Text ()
 > isValidTX s tx = case tx of
->   (SignedTX (CreateCoin u) _) -> do
->     CM.when (ccInPool  u       (bcTXPool s)) $ Left "CC already in pool"
->     CM.when (ccInChain u       (bcChain  s)) $ Left "CC already in chain"
+>   (SignedTX (CreateCoin l u) _) -> do
+>     CM.when (ccInPool  u       (bcTXPool s)) $ Left ("CC already in pool: " <> l)
+>     CM.when (ccInChain u       (bcChain  s)) $ Left ("CC already in chain: "<> l)
 >     return ()
->   (SignedTX (TransferCoin stxHash _) _) -> do
->     CM.when (tcInPool  stxHash (bcTXPool s)) $ Left "TC already spent in pool"
->     CM.when (tcInChain stxHash (bcChain  s)) $ Left "TC already spent in chain"
+>   (SignedTX (TransferCoin l stxHash _) _) -> do
+>     CM.when (tcInPool  stxHash (bcTXPool s)) $ Left ("TC already spent in pool: " <> l)
+>     CM.when (tcInChain stxHash (bcChain  s)) $ Left ("TC already spent in chain: "<> l)
 >     return ()
 >  where
 >   ccInPool  u = fst . searchPool  (ccTest u) "JUNK"
 >   ccInChain u = fst . searchChain (ccTest u) "JUNK"
 >   ccTest u x  = case decodeSTX x of
->     (SignedTX (CreateCoin u') _) -> u == u' -- SAME UUID
->     _                            -> False
+>     (SignedTX (CreateCoin _ u') _) -> u == u' -- SAME UUID
+>     _                              -> False
 >   -- does pool have TransferCoin containing same STXHash as given stx?
 >   tcInPool stxHash  = fst . searchPool  (tcTest stxHash) "JUNK"
 >   -- does chain have STX whose STXHash field matches given STXHash?
 >   tcInChain stxHash = fst . searchChain (tcTest stxHash) "JUNK"
 >   tcTest stxHash x = case decodeSTX x of
->     (SignedTX (TransferCoin stxHash' _) _) -> stxHash == stxHash' -- already spent
->     _                                      -> False
+>     (SignedTX (TransferCoin _ stxHash' _) _) -> stxHash == stxHash' -- already spent
+>     _                                        -> False
 
 
 > testIsValidTX = do
@@ -548,9 +548,9 @@ https://github.com/dvf/blockchain
 >   (_creatorPK, creatorSK)<- runIO generatePKSKIO
 >   (alicePK  , _aliceSK)  <- runIO generatePKSKIO
 >   (bobPK    , _bobSK)    <- runIO generatePKSKIO
->   let Right cc        = createCoin   u     creatorSK
->   let Right cToA      = transferCoin cc    creatorSK alicePK
->   let Right cToB      = transferCoin cc    creatorSK bobPK
+>   let Right cc        = createCoin   "cc"   u creatorSK
+>   let Right cToA      = transferCoin "cToA" cc  creatorSK alicePK
+>   let Right cToB      = transferCoin "cToB" cc  creatorSK bobPK
 >   let sCCInPool       = addTxToPool initialBCState (encodeSTX cc)
 >   let (sCCInChain, _) = mine sCCInPool
 >   let sTCInPool       = addTxToPool sCCInChain (encodeSTX cToA)
@@ -559,16 +559,16 @@ https://github.com/dvf/blockchain
 >     it "  valid : CC not in pool nor chain" $
 >       isValidTX initialBCState cc `shouldBe` Right ()
 >     it "invalid : CC already pool" $
->       isValidTX sCCInPool      cc `shouldBe` Left "CC already in pool"
+>       isValidTX sCCInPool      cc `shouldBe` Left "CC already in pool: cc"
 >     it "invalid : CC already chain" $
->       isValidTX sCCInChain     cc `shouldBe` Left "CC already in chain"
+>       isValidTX sCCInChain     cc `shouldBe` Left "CC already in chain: cc"
 >     --------------------------------------------------
 >     it "  valid : TC not in pool nor chain" $
 >       isValidTX initialBCState cToA `shouldBe` Right ()
 >     it "invalid : TC already pool" $
->       isValidTX sTCInPool      cToA `shouldBe` Left "TC already spent in pool"
+>       isValidTX sTCInPool      cToA `shouldBe` Left "TC already spent in pool: cToA"
 >     it "invalid : TC already chain" $
->       isValidTX sTCInChain     cToB `shouldBe` Left "TC already spent in chain"
+>       isValidTX sTCInChain     cToB `shouldBe` Left "TC already spent in chain: cToB"
 
 > isValidCoin
 >   :: BCState   -- TODO: this is BCState (instead of Chain) because of addToChain in tests
@@ -602,27 +602,29 @@ https://github.com/dvf/blockchain
 >   m = foldr (\stx a -> M.insert (hashSignedTX stx) stx a) M.empty l
 >   go    []  m0 = m0
 >   go (x:xs) m0 = case x of
->     (SignedTX (CreateCoin _) _) -> go xs m0
->     (SignedTX (TransferCoin stxHash _) _) -> go xs (M.delete stxHash m0)
+>     (SignedTX CreateCoin{} _) -> go xs m0
+>     (SignedTX (TransferCoin _ stxHash _) _) -> go xs (M.delete stxHash m0)
 
 > testMkUTXO addToChainX emptyChain = do
 >   u                      <- runIO createUUID
->   (creatorPK, creatorSK) <- runIO generatePKSKIO
+>   (_creatorPK, creatorSK) <- runIO generatePKSKIO
 >   (alicePK  , aliceSK)   <- runIO generatePKSKIO
 >   (bobPK    , bobSK)     <- runIO generatePKSKIO
 >   (jimPK    , _jimSK)    <- runIO generatePKSKIO
->   let Right cc    = createCoin   u     creatorSK
->   let Right cToA  = transferCoin cc    creatorSK alicePK
->   let Right aToB1 = transferCoin cToA  aliceSK   bobPK
->   let Right aToJ  = transferCoin cToA  aliceSK   jimPK
->   let Right bToA  = transferCoin aToB1 bobSK     alicePK
->   let Right aToB2 = transferCoin bToA  aliceSK   bobPK
->   let chain       = addToChainX emptyChain [cc, cToA, aToB1, bToA]
->   let chainBad    = addToChainX emptyChain     [cToA, aToB1, bToA]
+>   let Right cc    = createCoin   "cc"    u     creatorSK
+>   let Right cToA  = transferCoin "cToA"  cc    creatorSK alicePK
+>   let Right aToB1 = transferCoin "aToB1" cToA  aliceSK   bobPK
+>   let Right _aToJ  = transferCoin "aToJ"  cToA  aliceSK   jimPK
+>   let Right bToA  = transferCoin "bToA"  aToB1 bobSK     alicePK
+>   let Right aToB2 = transferCoin "aToB2" bToA  aliceSK   bobPK
+>   let chain       = addToChainX emptyChain [cc, cToA, aToB1, bToA, aToB2]
+>   let chainBad    = addToChainX emptyChain     [cToA, aToB1, bToA, aToB2]
 >   describe "mkUTXO" $ do
 >     it "empty" $
 >       mkUTXO (bcChain emptyChain) `shouldBe` M.empty
 >     it "chain" $
->       mkUTXO (bcChain chain)      `shouldBe` M.empty
+>       map getLabel (M.elems (mkUTXO (bcChain chain)))    `shouldBe` ["aToB2"]
+>     -- this shows that it doesn't check validity (i.e., coins "rooted" in CreateCoin)
+>     -- it just checks what has not been spent
 >     it "chainBad" $
->       mkUTXO (bcChain chainBad)   `shouldBe` M.empty
+>       map getLabel (M.elems (mkUTXO (bcChain chainBad))) `shouldBe` ["aToB2"]

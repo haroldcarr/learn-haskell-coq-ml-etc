@@ -18,6 +18,7 @@ import qualified Data.ByteString.Lazy     as BSL
 import qualified Data.Either.Combinators  as E
 import qualified Data.Map.Strict          as M
 import qualified Data.Serialize           as S
+import           Data.Serialize.Text      ()
 import qualified Data.UUID                as U
 import qualified Data.UUID.V4             as U
 import           Formatting               ((%), sformat, stext)
@@ -29,6 +30,7 @@ import           Crypto
 
 type PK = RSA.PublicKey
 type SK = RSA.PrivateKey
+type Label = Text -- for debugging
 
 -- Hlint complain about DeriveAnyClass, but it is needed to S.Serialize RSA.PublicKey
 {-# ANN module ("HLint: ignore Unused LANGUAGE pragma"::Prelude.String) #-}
@@ -42,9 +44,10 @@ instance S.Serialize Hash
 deriving instance Generic     RSA.PublicKey
 deriving instance S.Serialize RSA.PublicKey
 
+
 data TX
-  = CreateCoin UUID
-  | TransferCoin STXHash PK
+  = CreateCoin   Label UUID
+  | TransferCoin Label STXHash PK
   deriving (Eq, Generic, Show)
 instance S.Serialize TX
 
@@ -53,6 +56,10 @@ data SignedTX = SignedTX
   , sSig :: Signature
   } deriving (Eq, Generic, Show)
 instance S.Serialize SignedTX
+
+getLabel :: SignedTX -> Label
+getLabel (SignedTX (CreateCoin l _)     _) = l
+getLabel (SignedTX (TransferCoin l _ _) _) = l
 
 createUUID :: IO UUID
 createUUID = do
@@ -68,24 +75,22 @@ verifyTXSigErr pk tx =
           (show pk) (show tx)
 
 verifyTXSig :: PK -> SignedTX -> Either Text ()
-verifyTXSig pk stx = case stx of
-  (SignedTX tx@(CreateCoin _)     sig) -> v tx sig
-  (SignedTX tx@(TransferCoin _ _) sig) -> v tx sig
+verifyTXSig pk (SignedTX tx0 sig) = v tx0 sig
  where v tx s = let b = verifyMsgSig pk (Msg (S.encode tx)) s
                 in if b then Right () else Left (verifyTXSigErr pk tx)
 
-createCoinIO :: SK -> IO (Either RSA.Error SignedTX)
-createCoinIO sk = do
+createCoinIO :: Label -> SK -> IO (Either RSA.Error SignedTX)
+createCoinIO l sk = do
   u <- createUUID
-  return (createCoin u sk)
+  return (createCoin l u sk)
 
-createCoin :: UUID -> SK -> Either RSA.Error SignedTX
-createCoin u sk = signTX sk (CreateCoin u)
+createCoin :: Label -> UUID -> SK -> Either RSA.Error SignedTX
+createCoin l u sk = signTX sk (CreateCoin l u)
 
-transferCoin :: SignedTX -> SK -> PK -> Either RSA.Error SignedTX
-transferCoin fromCoin ownerSK toPK = do
+transferCoin :: Label -> SignedTX -> SK -> PK -> Either RSA.Error SignedTX
+transferCoin l fromCoin ownerSK toPK = do
   let fromHash = hashSignedTX fromCoin
-      toCoin   = TransferCoin fromHash toPK
+      toCoin   = TransferCoin l fromHash toPK
   signTX ownerSK toCoin
 
 hashSignedTX :: SignedTX -> STXHash
@@ -108,13 +113,13 @@ isValidCoinBase
   -> SignedTX                          -- ^ TX to verify
   -> Either Text ()
 isValidCoinBase lookup cpk stx = case stx of
-  (SignedTX (CreateCoin _)       _) ->
+  (SignedTX (CreateCoin _ _)       _) ->
     verifyTXSig cpk stx
-  (SignedTX (TransferCoin txh _) _) ->
+  (SignedTX (TransferCoin _ txh _) _) ->
     case lookup txh of
-      Right   cc@(SignedTX (CreateCoin _)       _) ->
+      Right   cc@(SignedTX (CreateCoin _ _)       _) ->
         isValidCoinBase lookup cpk cc
-      Right next@(SignedTX (TransferCoin _ opk) _) ->
+      Right next@(SignedTX (TransferCoin _ _ opk) _) ->
         case verifyTXSig opk stx of
           Right _ -> isValidCoinBase lookup cpk next
           l       -> l
@@ -137,12 +142,12 @@ testIsValidCoin isValidCoinX addToChainX emptyChain = do
   (alicePK  , aliceSK)   <- runIO generatePKSKIO
   (bobPK    , bobSK)     <- runIO generatePKSKIO
   (jimPK    , _jimSK)    <- runIO generatePKSKIO
-  let Right cc    = createCoin   u     creatorSK
-  let Right cToA  = transferCoin cc    creatorSK alicePK
-  let Right aToB1 = transferCoin cToA  aliceSK   bobPK
-  let Right aToJ  = transferCoin cToA  aliceSK   jimPK
-  let Right bToA  = transferCoin aToB1 bobSK     alicePK
-  let Right aToB2 = transferCoin bToA  aliceSK   bobPK
+  let Right cc    = createCoin   "cc"    u     creatorSK
+  let Right cToA  = transferCoin "cToA"  cc    creatorSK alicePK
+  let Right aToB1 = transferCoin "aToB1" cToA  aliceSK   bobPK
+  let Right aToJ  = transferCoin "aToJ"  cToA  aliceSK   jimPK
+  let Right bToA  = transferCoin "bToA"  aToB1 bobSK     alicePK
+  let Right aToB2 = transferCoin "aToB2" bToA  aliceSK   bobPK
   let chain       = addToChainX emptyChain [cc, cToA, aToB1, bToA]
   let chainBad    = addToChainX emptyChain     [cToA, aToB1, bToA]
   describe "isValidCoin" $ do
@@ -160,4 +165,4 @@ testIsValidCoin isValidCoinX addToChainX emptyChain = do
       isValidCoinX chain         creatorPK aToB2 `shouldBe` Right ()
     it "chainBad aToB2" $
       isValidCoinX chainBad      creatorPK aToB2 `shouldBe`
-      Left (isValidCoinErrMsg <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
+      Left (isValidCoinErrMsg <> show ((\(TransferCoin _ h _) -> h) (sTX cToA)))
