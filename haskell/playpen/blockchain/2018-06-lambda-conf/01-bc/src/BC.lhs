@@ -16,6 +16,7 @@
 > import           Data.List                            ((\\), last)
 > import qualified Data.Hex                             as Hex
 > import qualified Data.IORef                           as IOR
+> import qualified Data.Map                             as M
 > import           Data.Monoid                          ((<>))
 > import qualified Data.Text                            as T
 > import qualified Network.HTTP.Types                   as H
@@ -106,7 +107,7 @@ https://github.com/dvf/blockchain
 > txInPoolOrChain tx = fst . searchPoolAndChain (==tx) "JUNK"
 
 > testAddTxToPool =
->   describe "testAddTxToPool" $do
+>   describe "testAddTxToPool" $ do
 >     it "initialState has an empty pool" $
 >       initialBCState
 >       `shouldBe`
@@ -585,9 +586,43 @@ https://github.com/dvf/blockchain
 >         else Left (isValidCoinErrMsg <> show stxHash)
 
 > -- for test
+> addToChain :: BCState -> [Transaction] -> BCState
+> addToChain = foldr (\tx bcs -> let (s,_) = mine (addTxToPool bcs tx) in s)
+>
 > addToChainBCSpec :: BCState -> [SignedTX] -> BCState
-> addToChainBCSpec = foldr (\stx bcs -> let (s,_) = mine (addTxToPool bcs (encodeSTX stx)) in s)
+> addToChainBCSpec s = addToChain s . map encodeSTX
 
 > -- for test
 > emptyChainBCSpec = initialBCState
 
+> mkUTXO :: Chain -> M.Map STXHash SignedTX
+> mkUTXO c = go l m
+>  where
+>   l = map decodeSTX (concatMap bTXs c)
+>   m = foldr (\stx a -> M.insert (hashSignedTX stx) stx a) M.empty l
+>   go    []  m0 = m0
+>   go (x:xs) m0 = case x of
+>     (SignedTX (CreateCoin _) _) -> go xs m0
+>     (SignedTX (TransferCoin stxHash _) _) -> go xs (M.delete stxHash m0)
+
+> testMkUTXO addToChainX emptyChain = do
+>   u                      <- runIO createUUID
+>   (creatorPK, creatorSK) <- runIO generatePKSKIO
+>   (alicePK  , aliceSK)   <- runIO generatePKSKIO
+>   (bobPK    , bobSK)     <- runIO generatePKSKIO
+>   (jimPK    , _jimSK)    <- runIO generatePKSKIO
+>   let Right cc    = createCoin   u     creatorSK
+>   let Right cToA  = transferCoin cc    creatorSK alicePK
+>   let Right aToB1 = transferCoin cToA  aliceSK   bobPK
+>   let Right aToJ  = transferCoin cToA  aliceSK   jimPK
+>   let Right bToA  = transferCoin aToB1 bobSK     alicePK
+>   let Right aToB2 = transferCoin bToA  aliceSK   bobPK
+>   let chain       = addToChainX emptyChain [cc, cToA, aToB1, bToA]
+>   let chainBad    = addToChainX emptyChain     [cToA, aToB1, bToA]
+>   describe "mkUTXO" $ do
+>     it "empty" $
+>       mkUTXO (bcChain emptyChain) `shouldBe` M.empty
+>     it "chain" $
+>       mkUTXO (bcChain chain)      `shouldBe` M.empty
+>     it "chainBad" $
+>       mkUTXO (bcChain chainBad)   `shouldBe` M.empty

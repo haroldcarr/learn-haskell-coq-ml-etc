@@ -17,7 +17,7 @@ import           Universum
 
 ------------------------------------------------------------------------------
 newtype Msg       = Msg       { getMsg :: ByteString } deriving Show
-newtype Signature = Signature { getSig :: ByteString } deriving (Generic, Show)
+newtype Signature = Signature { getSig :: ByteString } deriving (Eq, Generic, Show)
 instance S.Serialize Signature
 
 generatePKSKIO

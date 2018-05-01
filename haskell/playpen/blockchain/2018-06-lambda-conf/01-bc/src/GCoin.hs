@@ -45,13 +45,13 @@ deriving instance S.Serialize RSA.PublicKey
 data TX
   = CreateCoin UUID
   | TransferCoin STXHash PK
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 instance S.Serialize TX
 
 data SignedTX = SignedTX
   { sTX  :: TX
   , sSig :: Signature
-  } deriving (Generic, Show)
+  } deriving (Eq, Generic, Show)
 instance S.Serialize SignedTX
 
 createUUID :: IO UUID
@@ -145,19 +145,19 @@ testIsValidCoin isValidCoinX addToChainX emptyChain = do
   let Right aToB2 = transferCoin bToA  aliceSK   bobPK
   let chain       = addToChainX emptyChain [cc, cToA, aToB1, bToA]
   let chainBad    = addToChainX emptyChain     [cToA, aToB1, bToA]
-  describe "GoofyCoin" $ do
-    it "isValidCoin createCoin" $
+  describe "isValidCoin" $ do
+    it "createCoin" $
       isValidCoinX emptyChain    creatorPK   cc  `shouldBe` Right ()
-    it "isValidCoin chain1 aToJ" $
+    it "chain aToJ" $
       isValidCoinX chain         creatorPK aToJ  `shouldBe` Right ()
-    it "isValidCoin chain1 aToJ (double spend)" $
+    it "chain aToJ (double spend)" $
       isValidCoinX chain         creatorPK aToB1 `shouldBe` Right ()
-    it "isValidCoin bad sig" $
+    it "bad sig" $
       let ccBadSTX@(SignedTX ccBadTX _) = cc { sSig = Signature "BAD" }
       in isValidCoinX emptyChain creatorPK ccBadSTX `shouldBe`
       Left (verifyTXSigErr creatorPK ccBadTX)
-    it "isValidCoin aToB2" $
+    it "aToB2" $
       isValidCoinX chain         creatorPK aToB2 `shouldBe` Right ()
-    it "isValidCoin chainBad aToB2" $
+    it "chainBad aToB2" $
       isValidCoinX chainBad      creatorPK aToB2 `shouldBe`
       Left (isValidCoinErrMsg <> show ((\(TransferCoin h _) -> h) (sTX cToA)))
