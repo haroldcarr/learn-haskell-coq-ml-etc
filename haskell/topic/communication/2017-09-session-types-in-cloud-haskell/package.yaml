@@ -1,0 +1,12 @@
+name:                session-types-in-cloud-haskell
+version:             0.1.0.0
+dependencies:
+- base >= 4.7 && < 5
+- binary
+- distributed-process
+- ghc-prim
+
+library:
+  source-dirs: .
+  ghc-options: -Wall
+
