@@ -1,50 +1,55 @@
--- http://staff.mmcs.sfedu.ru/~ulysses/Edu/SSGEP/loh/loh-repo/Lecture1.pdf
-
 > {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-> {-# OPTIONS_GHC -fno-warn-type-defaults      #-}
+> -- {-# OPTIONS_GHC -fno-warn-type-defaults      #-}
 
 > {-# LANGUAGE ConstraintKinds           #-}
 > {-# LANGUAGE DataKinds                 #-}
-> {-# LANGUAGE ExistentialQuantification #-}
+> -- {-# LANGUAGE ExistentialQuantification #-}
 > {-# LANGUAGE FlexibleInstances         #-}
 > {-# LANGUAGE GADTs                     #-}
 > {-# LANGUAGE KindSignatures            #-}
 > {-# LANGUAGE MultiParamTypeClasses     #-}
 > {-# LANGUAGE PolyKinds                 #-}
-> {-# LANGUAGE Rank2Types                #-}
+> {-# LANGUAGE RankNTypes                #-}
 > {-# LANGUAGE ScopedTypeVariables       #-}
 > {-# LANGUAGE StandaloneDeriving        #-}
 > {-# LANGUAGE TypeFamilies              #-}
 > {-# LANGUAGE TypeOperators             #-}
 > {-# LANGUAGE UndecidableInstances      #-}
 > {-# LANGUAGE UndecidableSuperClasses   #-}
-
+>
 > module HC where
+>
 > import           Data.Char             (digitToInt)
 > import           GHC.Exts              (Constraint)
 > import           Test.HUnit            (Counts, Test (TestList), runTestTT)
 > import qualified Test.HUnit.Util       as U (t, e)
 
--- p 7
+CUFP 2015
+http://staff.mmcs.sfedu.ru/~ulysses/Edu/SSGEP/loh/loh-repo/Lecture1.pdf
 
+Feb 2018
+https://github.com/kosmikus/SSGEP/
+https://github.com/kosmikus/SSGEP/raw/master/LectureNotes.pdf
+
+------------------------------------------------------------------------------
 Type-level programming in Haskell.
 
-step-by-step exposition
+outline
 - normal list
 - length-indexed vectors
 - heterogeneous lists
 - n-ary products (aka "Environments")
 
--- 1.2 Kinds and data kinds
+-- p7  1.2 Kinds and data kinds
 
 layered type system
 - kinds : type of types
 - types : type of terms
 
--- p 8
+-- p8
 
 kinds
-- '*' : types that terms (can be uninhabited)
+- '*' : types that classify terms (can be uninhabited)
     - fully applied `data` constructor is of kind `*`
     - `Int`, `Double`, ...
     - `Maybe Int`, `[Double]`, ...
@@ -54,7 +59,7 @@ kinds
     - `Either Int`      : `* -> *`
     - `Either Int char` : `*`
 
--- 1.2.2 p 8 Promoted data kinds
+-- p8 1.2.2 Promoted data kinds
 
 Data type promotion
 
@@ -62,21 +67,20 @@ Define new data type:
 
 > data XBool = XFalse | XTrue
 
-`XBool` is a new *type* with *term* constructors `XFalse`, `XTrue`
+- `XBool`
+    - new *type* with *term* constructors  `XFalse`,  `XTrue`
+    - new *kind* with *type* constructors `'XFalse`, `'XTrue` (promotion via DataKinds)
 
-Promotion enables using this one level up.
+All kinds from promoted datatypes are uninhabited (e.g., there are *no* terms/values of type `'XFalse`).
 
-`XBool` is a new *kind* with *type* constructors `'XFalse`, `'XTrue`
-
-There are *no* terms/values of type `'XFalse`.
-
-All kinds from promoted datatypes are uninhabited.
-
-But they may appear as
+kinds from promoted datatypes, although uninhabited, may appear as
 - args/results of type-level functions
 - parameters of datatypes and classes (most used in this paper)
 
--- 1.3.1 p 9 Vectors
+------------------------------------------------------------------------------
+-- p9 1.3 GADTs
+
+-- p9 1.3.1 Vectors
 
 length-indexed lists (aka vectors)
 
@@ -93,8 +97,8 @@ GADT enables restricting
 - `VNil`  to `Zero
 - `VCons` to non-zero
 
-> --       KindSignatures      GADT
-> --             v             v
+> --    KindSignatures  DataKinds  GADT
+> --          v        v   v       v
 > data Vec (a :: *) (n :: Nat) where
 >                 -- DataKinds
 >                 -- v
@@ -118,7 +122,7 @@ Used to specify more info about vectors.
 > vabc :: Vec Char Three
 > vabc  = 'a' `VCons` vbc
 
--- p 10
+-- p10
 
 Power of GADT apparent in pattern matching.  Type-safe/total:
 
@@ -142,7 +146,7 @@ In an equation for ‘vtail’: vtail VNil = VNil
 ~~~
 
 In `vmap`, matching
-- `VNil` means `n ~ 'Zero`
+- `VNil`  means `n ~ 'Zero`
 - 'VCons' means `n ~ 'Suc n'` for some `n'`
 
 > vmap :: (a -> b) -> Vec a n -> Vec b n
@@ -159,12 +163,14 @@ Given
 
 Use the type system to avoid:
 
+> -- no explicit [] case, so will get runtime error
 > xsum :: [Int] -> Int
 > xsum xs = head xs + xsum (tail xs)
 > txsum = U.e "txsum" (xsum [1,2,3]) "Prelude.head: empty list"
 
 via:
 
+> -- does not need Nil case because of `('Suc n)`
 > vhead :: Vec a ('Suc n) -> a
 > vhead (VCons x _) = x
 
@@ -185,7 +191,7 @@ In the first argument of ‘vtail’, namely ‘xs’
 
 -- X END
 
--- 1.3.2 p 10 Functions on vectors
+-- p10 1.3.2 Functions on vectors
 
 Motivation: move more info to type level.
 
@@ -199,9 +205,20 @@ replicate n x
 
 vector size known at type-level.
 Assume number of copies to `replicate` is also known at type-level.
-QUESTION: How is it passed?
+How is that number passed?
 
--- p 11
+Cannot write
+
+~~~{.haskell}
+vreplicate :: a -> Vec a n
+~~~
+
+because that type says the function is parametric in n
+- i.e., that no need to look at n at all
+
+But a compile-time distinction based on the type of n if necessary.
+
+-- p11
 
 Option: use a type class (they work with data kinds):
 
@@ -215,7 +232,7 @@ Option: use a type class (they work with data kinds):
 >     vreplicateC x = x `VCons` vreplicateC x
 
 > v3 :: Vec Char Three
-> v3 = vreplicateC 'x'
+> v3  = vreplicateC 'x'
 > tv3 = U.t "tv3" v3 (VCons 'x' (VCons 'x' (VCons 'x' VNil)))
 
 PROS:
@@ -228,7 +245,8 @@ CONS:
 - means: changing signature percolates throughout code
 - might produce lots of code
 
--- 1.4 p 11 Singleton types
+------------------------------------------------------------------------------
+-- p11 1.4 Singleton types
 
 Another option: create value to let GHC know value of `n`
 - create a GADT `SNat n` such that it has exactly one value for each `n`
@@ -237,20 +255,20 @@ Another option: create value to let GHC know value of `n`
 One way:
 
 > data SNatX (n :: Nat) where
->     SZeroX :: SNatX 'Zero
+>     SZeroX ::            SNatX  'Zero
 >     SSucX  :: SNatX n -> SNatX ('Suc n)
 >
 > deriving instance Show (SNatX n)
 
 > sThreeX :: SNatX Three
-> sThreeX = SSucX (SSucX (SSucX SZeroX))
+> sThreeX  = SSucX (SSucX (SSucX SZeroX))
 
--- p 12
+-- p12
 
 Another way: mutually-recursive (used in remainder of paper):
 
 > data SNat (n :: Nat) where
->     SZero :: SNat 'Zero
+>     SZero ::            SNat  'Zero
 >     SSuc  :: SNatI n => SNat ('Suc n)
 >
 > class SNatI (n :: Nat) where
@@ -262,7 +280,7 @@ Another way: mutually-recursive (used in remainder of paper):
 > instance SNatI n => SNatI ('Suc n) where
 >     sNat = SSuc
 
-> --                      ExistentialQuantification
+> --                      RankNTypes (or ExistentialQuantification, ...)
 > --                       v
 > vreplicate :: forall a n . SNatI n => a -> Vec a n
 > --                  ScopedTypeVariables
@@ -272,10 +290,10 @@ Another way: mutually-recursive (used in remainder of paper):
 >     SSuc  -> x `VCons` vreplicate x
 
 > vr3 :: Vec Char Three
-> vr3 = vreplicate 'x'
+> vr3  = vreplicate 'x'
 > tvr3 = U.t "tvr3" vr3 (VCons 'x' (VCons 'x' (VCons 'x' VNil)))
 
--- 1.4.2 p 12
+-- p12 1.4.2
 
 PROS of Singletons (compared to one class per function)
 
@@ -286,12 +304,24 @@ PROS of Singletons (compared to one class per function)
 CONS
 - type class resolution happens at compile time
 - value of `SNat` is runtime value used in pattern matching at runtime
-- so, unnecessary case distinctions at runtime  since value know at compiletime
+- so, unnecessary case distinctions at runtime since value know at compiletime
 - usually produce less code
 
--- 1.4.2 p 12 Applicative vectors
+-- p12 1.4.2 Applicative vectors
 
--- p 13
+vreplicate can support something like the interface of an applicative functor
+
+~~~{.haskell}
+class Functor f => Applicative f where
+    pure  :: a -> fa
+    (<*>) :: f (a -> b) -> f a -> f b
+~~~
+
+-- p13
+
+one possible applicative instance for lists is
+- pure  : produces infinite list of copies
+- (<*>) : zips list, applying list of functions pointwise to list of args.
 
  https://en.wikibooks.org/wiki/Haskell/Applicative_functors
 
@@ -307,24 +337,25 @@ import Control.Applicative
 ZipList [(2*),(5*),(9*)] <*> ZipList [1,4,7]
 -- ZipList {getZipList = [2,20,63]}
 
-(,,) <$> ZipList [1,4,9] <*> ZipList [2,8,1] <*> ZipList [0,0,9]
+       (,,) <$> ZipList [1,4,9] <*> ZipList [2,8,1] <*> ZipList [0,0,9]
 -- ZipList {getZipList = [(1,2,0),(4,8,0),(9,1,9)]}
 
-liftA3 (,,) (ZipList [1,4,9]) (ZipList [2,8,1]) (ZipList [0,0,9])
+liftA3 (,,)    (ZipList [1,4,9])   (ZipList [2,8,1])   (ZipList [0,0,9])
 -- ZipList {getZipList = [(1,2,0),(4,8,0),(9,1,9)]}
 ~~~
 
-`vreplicate` is `pure`
-
-`vapply` is `<*>`
+implement same idea for vectors
+- length of lists known at compiletime
+- `vreplicate` is `pure`
+- `vapply` is `<*>`
 
 > vapply :: Vec (a -> b) n -> Vec a n -> Vec b n
 > vapply           VNil           VNil = VNil
 > vapply (f `VCons` fs) (x `VCons` xs) = f x `VCons` vapply fs xs
 
 > va :: Vec Integer ('Suc ('Suc ('Suc 'Zero)))
-> va = ((2*) `VCons` (5*) `VCons` (9*) `VCons` VNil) `vapply`
->      ( 1   `VCons`  4   `VCons`  7   `VCons` VNil)
+> va  = ((2*) `VCons` (5*) `VCons` (9*) `VCons` VNil) `vapply`
+>       ( 1   `VCons`  4   `VCons`  7   `VCons` VNil)
 
 > tva = U.t "tva" va (VCons 2 (VCons 20 (VCons 63 VNil)))
 
@@ -337,6 +368,10 @@ Note: `Vec` cannot be made `Applicative` instance because its parameters are in 
 
 > vfff :: Vec (Char -> Int) Three
 > vfff  = digitToInt `VCons` vff
+
+> tvfffvabc = U.t "tvfffvabc"
+>     (vapply vfff vabc)
+>     (VCons 10 (VCons 11 (VCons 12 VNil)))
 
 ~~~{.haskell}
 vapply vff vabc
@@ -354,27 +389,25 @@ vapply vfff vbc
     In the second argument of ‘vapply’, namely ‘vbc’
 ~~~
 
-> tvfffvabc = U.t "tvfffvabc"
->     (vapply vfff vabc)
->     (VCons 10 (VCons 11 (VCons 12 VNil)))
-
 -- X END
 
--- 1.5 p 13 Heterogeneous lists
+------------------------------------------------------------------------------
+-- p13 1.5 Heterogeneous lists
 
-Like `Vec` but also know type of each element.
+Like `Vec` but also each element can have a different (known) type.
 
--- 15.1.1 p 13 Promoted lists and kind polymorphism
+-- p13 15.1.1 Promoted lists and kind polymorphism
 
 Can use
 -  `[]`         as kind constructor
 - `'[]`, `(':)` as types
-    - *kind-polymorphic*
+    - *kind-polymorphic* : `a` can be any kind
     - `(':) :: a -> [a] -> [a]`
 
 Type-level list of promoted `Bool`, `Nat`, `[*]`
 
 ~~~{.haskell}
+:set -XDataKinds
 :kind [True, False]
 --              ... :: [Bool]
 
@@ -387,9 +420,9 @@ Type-level list of promoted `Bool`, `Nat`, `[*]`
 
 Need kind `[*]` for heterogeneous lists.
 
--- p 14
+-- p14
 
-> -- TODO : when/where are values, length and types handled
+> -- TODO : when/where are values, length and types handled?
 > data HList (xs :: [*]) where
 >     HNil  :: HList '[]
 > --                                     TypeOperators
@@ -412,7 +445,7 @@ as an `HList`:
 
 > -- sig can be inferred
 > group :: HList '[Char, Bool, Int]
-> group = 'x' `HCons` False `HCons` 3 `HCons` HNil
+> group  = 'x' `HCons` False `HCons` 3 `HCons` HNil
 
 ~~~{.haskell}
 bh :: Int
@@ -424,13 +457,17 @@ Couldn't match type ‘Char’ with ‘Int’
     In the first argument of ‘hhead’, namely ‘group’
 ~~~
 
--- 1.5.2 p 14 n-ary products (aka "Environments")
+-- p14 1.5.2 n-ary products (aka "Environments")
 
-`HList` variant where each element is determined by applying a type constructor
-to one of the types in the index list.
+`HList` variant where each element is determined by applying a type constructor to types in the index list.
 - e.g., `Maybe`, `IO`
 
 `NP` means *n-ary product
+
+variant of HList
+- also abstracted over type constructor f
+- has elements of ttype f x
+    - where x is a member of the index list
 
 > --            PolyKinds
 > --            v
@@ -440,7 +477,9 @@ to one of the types in the index list.
 >
 > infixr 5 :*
 
-`NP` means *n-ary product ("environment")
+(see end of file for Eq, Show definitions)
+
+`NP` means *n-ary product (aka "environment")
 - list `xs` is signature
 - kind polymorphic
     - not required to be `[*]`
@@ -449,81 +488,111 @@ to one of the types in the index list.
     - possible because elements of signature do not appear in environment
         - they appear as arg to `f` instead
 
-Case where `k` is `*`:
+Case where `k` is `*`: shows that NP is generalization of `HList`
 
 > -- identity function on types
-> newtype I a = I {unI :: a}
+> newtype I a = I {unI :: a} deriving (Eq, Read, Show)
 
 `NP I` isomorphic to `HList`:
 
--- p 15
+-- p15
 
-> fromHList :: HList xs -> NP I xs
-> fromHList           HNil = Nil
-> fromHList (x `HCons` xs) = I x :* fromHList xs
+> fromHList :: HList xs -> NP I   xs
+> fromHList           HNil =  Nil
+> fromHList (x `HCons` xs) = I x :*      fromHList xs
 
-> toHList :: NP I xs -> HList xs
-> toHList         Nil = HNil
-> toHList (I x :* xs) = x `HCons` toHList xs
+> toHList   :: NP I  xs  -> HList xs
+> toHList              Nil = HNil
+> toHList (I x :*      xs) =   x `HCons` toHList xs
 
 No constraints on `xs` so no need for type class.
 
-> npgroup :: NP I '[Char, Bool, Int]
-> npgroup = fromHList group
+> groupNPI :: NP I '[Char, Bool, Int]
+> groupNPI  = fromHList group
+> gnpi = U.t "gnpi" groupNPI (I {unI = 'x'} :* I {unI = False} :* I {unI = 3} :* Nil)
 >
-> group' :: HList '[Char, Bool, Int]
-> group' = toHList npgroup
+> groupHL :: HList '[Char, Bool, Int]
+> groupHL  = toHList groupNPI
 
 > groupNPM :: NP Maybe '[Char, Bool, Int]
-> groupNPM = Just 'x' :* Just False :* Just (3::Int) :* Nil
+> groupNPM  = Just 'x' :* Just False :* Just (3::Int) :* Nil
 
 > j3 :: Num x => NP Maybe '[x]
-> j3 = Just 3 :* Nil
+> j3  = Just 3 :* Nil
 
 `NP` also a generalization of homogeneous vectors:
 
 > -- constant function on types
 > -- for any types a b, K a b isomorphic to a
-> newtype K a b = K {unK :: a}
+> newtype K a b = K {unK :: a} deriving (Eq, Read, Show)
+
+~~~{.haskell}
+NP (K Double) ’[Char, Bool, Int]
+~~~
+is a list of three elements of type Double
+- length of type-level list determines number of elements
+- the types in the index list are irrelevant
+    - they are ignored by K
 
 > -- useful: NP of K into normal list
 > hcollapse :: NP (K a) xs -> [a]
 > hcollapse         Nil = []
 > hcollapse (K x :* xs) = x : hcollapse xs
 
+> groupNPK :: NP (K Char) '[Char, Bool, Int]
+> groupNPK  = K 'x' :* K 'y' :* K 'z' :* Nil
+>
+> gchar = U.t "gchar" (hcollapse groupNPK) "xyz"
+
 > k2 :: K Integer b
-> k2 = K 2
+> k2  = K 2
+> groupK2 = k2 :* k2 :* k2 :* Nil
+> g2 = U.t "g2" (hcollapse groupK2) [2,2,2]
 
 > xx :: NP ((->) a) '[K a b]
-> xx = K :* Nil
+> xx  = K :* Nil
 
-> xxx :: NP ((->) a) '[K a b, K a b1]
-> xxx = K :* K :* Nil
+> xxx :: NP ((->) a) '[K a b1, K a b2]
+> xxx  = K :* K :* Nil
 
--- 1.6 p 15 Higher-rank types
+------------------------------------------------------------------------------
+-- p15 1.6 Higher-rank types
 
 Define functions on `NP`
 
--- 1.6.1 p 15 map
+For vectors above
+- implemented vmap, vreplicate and vapply
+- gave Applicative-like capabilities for vectors
 
-`vmap`
-- preserves length
-- changes type
+Goal here is to provide a similar interface for NP.
+
+-- p15 1.6.1 map
 
 ~~~{.haskell}
 vmap :: (a -> b) -> Vec a n -> Vec b n
 ~~~
+- preserves length
+- changes type
 
+NP
 - no single type of elements
-- *predictably* change types
+- goal: *predictably* change types
 - type constructor `f` says how to interpret each element
 
--- p 16
+-- p16
 
 Generalize `vmap` to `hmap`
 
+In HList to NP conversion, have a type constructor `f` that says how to interpret each element in signature.
+So,
+
+`hmap`
 - preserve index
 - change type constructor
+
+use the flexibility of `f`
+- can plug any type constructors into an NP (including GADTs)
+- can express "rather strange maps"---just need to explain them to the type system
 
 ~~~{.haskell}
 -- type preserving map
@@ -536,16 +605,18 @@ MP I xs -> NP (K a) xs
 NP (K a) xs -> NP I xs
 ~~~
 
-Polymorphic Haskell function:
+polymorphic Haskell function:
 
 - caller free to choose
 - callee make no assumptions
 
-If arg function is polymorphic:
+if arg function is polymorphic:
 - caller *must* pass in polymorphic function
-- called may flexibly use it on any type
+- callee may flexibly use it on any type
 
-> -- The arg to `hmap` must be polymorphic
+need `f x -> g x` :  for all `x` types in `xs`
+
+> -- The f arg to `hmap` must be polymorphic
 > --                  Rank2Types
 > --                  v
 > hmap :: (forall x . f x -> g x) -> NP f xs -> NP g xs
@@ -557,25 +628,36 @@ Example
 > groupI :: NP I '[Char, Bool, Integer]
 > groupI = I 'x' :* I False :* I 3 :* Nil
 
--- p 17
+-- p17
 
 > example :: NP Maybe '[Char, Bool, Integer]
 > example = hmap (Just . unI) groupI
+> exj = U.t "exj" example (Just 'x' :* Just False :* Just 3 :* Nil)
 
--- 1.6.2 p 17 Applicative n-ary products
+-- p17 1.6.2 Applicative n-ary products
+
+define functions corresponding to pure and <*>
+
+~~~{.haskell}
+vreplicate :: forall a n . SNatI n => a -> Vec a n
+vreplicate x = case sNat :: SNat n of
+    SZero -> VNil
+    SSuc  -> x `VCons` vreplicate x
+~~~
 
 applicative for `NP` compared to `vreplicate`:
 - role of `n` is now the signature `xs`
 - role of 'a' is now the type constructor `f`
     - `f` must accept any type in the signature `xs`
 
-Need a singleton for lists (following same pattern of `SNat`):
+need a singleton for lists (following same pattern of `SNat`):
 
 > data SList (xs :: [k]) where
 >     SNil  :: SList '[]
 >     SCons :: SListI xs => SList (x ': xs)
 >
 > class SListI (xs :: [k]) where
+>     -- | Get the explicit singleton --- the one can then pattern match on
 >     sList :: SList xs
 >
 > instance SListI '[] where
@@ -584,72 +666,75 @@ Need a singleton for lists (following same pattern of `SNat`):
 > instance SListI xs => SListI (x ': xs) where
 >     sList = SCons
 
-Above not ideal:
-
+above slist def not ideal:
 - says nothing about elements of the list
 - would like `SCons` to include singleton for head and singleton for tail
+- but fine for this library
+
+need polymorphic value of type `f x` so it can be used for any x in the signature of xs
 
 > hpure :: forall f xs . SListI xs => (forall a . f a) -> NP f xs
 > hpure x = case sList :: SList xs of
 >     SNil  -> Nil
 >     SCons -> x :* hpure x
 
--- p 18
+-- p18
 
 ~~~{.haskell}
 :t hpure Nothing
 -- hpure Nothing :: SListI xs => NP Maybe xs
 
-:t hpure Nothing :: NP Maybe '[Char, Bool, Int]
---            .. :: NP Maybe '[Char, Bool, Int]
-
 :t hpure (K 0)
 -- hpure (K 0) :: (Num a, SListI xs) => NP (K a) xs
-
-:t hpure (K 0) :: NP (K Int) '[Char, Bool, Int]
--- ..          :: NP (K Int) '[Char, Bool, Int]
 ~~~
 
--- 1.6.3 p 18 Lifted functions
+> hpn = U.t "hpn" (hpure Nothing :: NP Maybe '[Char, Bool, Int])
+>                 (Nothing :* Nothing :* Nothing :* Nil)
+>
+> hpk = U.t "hpk" (hpure (K 0) :: NP (K Int) '[Char, Bool, Int])
+>                 (K {unK = 0} :* K {unK = 0} :* K {unK = 0} :* Nil)
 
-Need `vap` (analogous to `vapply` : a kind of (`<*>`) )
+-- p18 1.6.3 Lifted functions
 
-To define, need a type-level `\x -> (f x -> g x)`
-but Haskell has no type-level lambda, so:
+`hap` : analogous to `vapply` : similar to `(<*>)`
+
+need ype-level lambda `\x -> (f x -> g x)`
+- but Haskell has no type-level lambda, so:
 
 > newtype (f -.-> g) a = Fn {apFn :: f a -> g a}
 > infix 1 -.->
 
-Then use to represent type-level function in:
+then use to represent type-level function in:
 
 > hap :: NP (f -.-> g) xs -> NP f xs -> NP g xs
 > hap      Nil       Nil  = Nil
 > hap (f :* fs) (x :* xs) = apFn f x :* hap fs xs
 
-Examples
+examples
 
 > lists :: NP [] '[String, Int]
-> lists = ["foo", "bar", "baz"] :* [1 .. 10] :* Nil
-
+> lists = ["foo", "bar", "baz"] :* [1 .. ] :* Nil
+>
 > numbers :: NP (K Int) '[String, Int]
 > numbers = K 2 :* K 5 :* Nil
-
+>
 > {-# ANN fn_2 "HLint: ignore Avoid lambda" #-}
 > fn_2 :: (f a -> f' a -> f''  a)
 >      -> (f -.-> (f' -.-> f'')) a
 > fn_2 f = Fn (\x -> Fn (\y -> f x y))
-
+>
 > take' :: (K Int -.-> ([] -.-> [])) a
 > take' = fn_2 (\(K n) xs -> take n xs)
+>
+> -- the Ints from numbers are used a the `(K n)` in take'
+> -- the first  number, 2, takes 2 from the          list of String
+> -- the second number, 5, takes 5 from the infinite list on Int
+> hpt = U.t "hpt" (hpure take' `hap` numbers `hap` lists)
+>                 (["foo","bar"] :* [1,2,3,4,5] :* Nil)
 
-~~~{.haskell}
-:t hpure take' `hap` numbers `hap` lists
--- ... :: NP [] '[String, Int]
-~~~{.haskell}
+-- p19 1.6.4 Another look at `hmap`
 
--- 1.6.4 p 19 Another look at `hmap`
-
-Identity, for normal lists (assuming `ZipList` applicative):
+for normal lists (assuming `ZipList` applicative) the following "identity" property is true:
 
 ~~~{.haskell}
 map f = pure f <*> xs
@@ -660,7 +745,13 @@ also holds for n-ary products:
 > hmap' :: SListI xs => (forall a . f a -> g a) -> NP f xs -> NP g xs
 > hmap' f xs = hpure (Fn f) `hap` xs
 
--- 1.7 p 19 Abstracting from class and type functions
+> hmi = U.t "hmi'" (hmap  (Just . unI) groupI)
+>                  (hmap' (Just . unI) groupI)
+
+------------------------------------------------------------------------------
+-- p 19 1.7 Abstracting from class and type functions
+
+> {-
 
 Cannot do:
 
@@ -687,7 +778,7 @@ the class constraint on `Show`.
 But useful to enable functions with class constraints to be used with `hmap`
 (assuming elements meet constraint).
 
--- 1.7.1 p 19 The kind `Constraint`
+-- p19 1.7.1 The kind `Constraint`
 
 Classes can be seen as types with a different kind.
 
@@ -700,7 +791,7 @@ Examples
 - `Functor`, `Monad`  have kind `(* -> *) -> Constraint`
 - multiparameter `MonadReader` has kind `* -> (* -> *) -> Constraint`
 
--- p 20
+-- p20
 
 Use tuple syntax to create empty constraints
 
@@ -714,7 +805,7 @@ or to combine constraints
 > type SomeConstraints a   = (Eq a, Show a)
 > type MoreConstraints f a = (Monad f, SomeConstraints a)
 
--- 1.7.2 p 20 Type functions
+-- p20 1.7.2 Type functions
 
 To write `hmap` variant compatible with constrained functions,
 need to express that a constraint holds for all elements of a type-level list.
@@ -752,7 +843,7 @@ Pattern matching on `HCons` says
 - `xs ~ y ': ys`
 - so: `All Show xs ~ All Show (y ': ys) ~ (Show y, All Show ys)`
 
--- 1.7.3 p 21 Composing constraints
+-- p21 1.7.3 Composing constraints
 
 To do same for `NP` (e.g., `NP f '[Int, Bool]`) need
 
@@ -811,7 +902,7 @@ show groupNPM
 -- "Just 'x' :* (Just False :* (Just 3 :* Nil))"
 ~~~
 
--- 1.7.4 p 22 Proxies
+-- p22 1.7.4 Proxies
 
 Use abstraction over constraints to define `hpure` variant
 
@@ -842,7 +933,7 @@ Proxy
 > hcpure :: forall c f xs . (SListI xs, All c xs)
 >        => Proxy c -> (forall a . c a => f a) -> NP f xs
 
--- p 23
+-- p23
 
 > hcpure p x = case sList :: SList xs of
 >     SNil  -> Nil
@@ -859,9 +950,43 @@ Composing `hcpure` with `hap` also provides mapping of constrained functions ove
 > hcmap :: (SListI xs, All c xs)
 >       => Proxy c -> (forall a . c a => f a -> g a) -> NP f xs -> NP g xs
 > hcmap p f xs = hcpure p (Fn f) `hap` xs
+> -}
+
+------------------------------------------------------------------------------
+Eq, Show support
+
+> deriving instance Show (SList (xs :: [k]))
+> deriving instance Eq   (SList (xs :: [k]))
+> deriving instance Ord  (SList (xs :: [k]))
+>
+> class (f (g x)) => (f `Compose` g) x    -- MultiParamTypeClasses, ConstraintKinds, UndecidableSuperClasses
+> instance (f (g x)) => (f `Compose` g) x -- FlexibleInstances
+> infixr 9 `Compose`
+>
+> class (AllF f xs, SListI xs) => All (f :: k -> Constraint) (xs :: [k]) -- UndecidableInstances
+> instance (AllF f xs, SListI xs) => All f xs
+>
+> type family
+>   AllF (c :: k -> Constraint) (xs :: [k]) :: Constraint where
+>   AllF _c '[]       = ()
+>   AllF  c (x ': xs) = (c x, All c xs)
+>
+> -- manual, because built-in deriving does not use associativity info
+> instance All (Show `Compose` f) xs => Show (NP f xs) where
+>   showsPrec _ Nil       = showString "Nil"
+>   showsPrec d (f :* fs) = showParen (d > 5)
+>     $ showsPrec (5 + 1) f
+>     . showString " :* "
+>     . showsPrec 5 fs
+>
+> deriving instance All (Eq   `Compose` f) xs => Eq   (NP f xs)
 
 ------------------------------------------------------------------------------
 
 > test :: IO Counts
 > test  =
->     runTestTT $ TestList $ txsum ++ tv3 ++ tvr3 ++ tva ++ tvfffvabc
+>   runTestTT $ TestList $
+>   txsum ++ tv3 ++ tvr3 ++ tva ++ tvfffvabc ++
+>   gnpi ++ gchar ++ g2 ++ exj ++ hpn ++ hpk ++ hpt ++ hmi
+
+

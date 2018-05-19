@@ -6,7 +6,6 @@ cabal-version:         >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     HC
-                     , TL
   build-depends:       base >= 4.7 && < 5
                      , HUnit
                      , test-hunit-util
