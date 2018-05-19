@@ -1,14 +1,14 @@
-name:                simple
-version:             0.1.0.0
-build-type:          Simple
--- extra-source-files:
-cabal-version:       >=1.10
+name:                  andres-loh-type-level-and-generic
+version:               0.1.0.0
+build-type:            Simple
+cabal-version:         >=1.10
 
 library
   hs-source-dirs:      src
   exposed-modules:     HC
+                     , TL
   build-depends:       base >= 4.7 && < 5
-                     , generics-sop
                      , HUnit
                      , test-hunit-util
+  ghc-options:         -Wall
   default-language:    Haskell2010

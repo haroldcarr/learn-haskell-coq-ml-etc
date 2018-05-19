@@ -1,6 +1,5 @@
 *.stack-work
-Intro.pdf
-LectureNodes.pdf
+*.pdf
 src/NP.hs
 src/NS.hs
 src/Use.hs
