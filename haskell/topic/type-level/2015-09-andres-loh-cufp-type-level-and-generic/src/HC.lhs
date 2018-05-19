@@ -634,6 +634,7 @@ Examples
 > numbers :: NP (K Int) '[String, Int]
 > numbers = K 2 :* K 5 :* Nil
 
+> {-# ANN fn_2 "HLint: ignore Avoid lambda" #-}
 > fn_2 :: (f a -> f' a -> f''  a)
 >      -> (f -.-> (f' -.-> f'')) a
 > fn_2 f = Fn (\x -> Fn (\y -> f x y))
