@@ -9,11 +9,16 @@ import           GCoin (testIsValidCoin)
 
 spec :: Spec
 spec = do
-  testAddTxToPool
+  t01
+  t02
+  t03
   testMine
   testProofOfWork
   testEvidence
-  testLongestChain
+  testLongestChain1
+  testLongestChain2
+  testLongestChain3
+  testLongestChainNegative
   testIsValidChain
   testIsValidBlock
   ----------------

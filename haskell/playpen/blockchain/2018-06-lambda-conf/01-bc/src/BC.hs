@@ -54,7 +54,7 @@ type TXs         = [Transaction] -- TODO
 type Proof       = Integer
 
 genesisBlock :: Block
-genesisBlock = Block "1" 0 [] 100
+genesisBlock  = Block "1" 0 [] 100
 
 ------------------------------------------------------------------------------
 data BCState = BCState
@@ -63,11 +63,18 @@ data BCState = BCState
   , bcProofDifficulty :: ProofDifficulty
   } deriving (Eq, Show)
 
-type Chain           = [Block] -- TODO
+type Chain           = [Block] -- TODO : Data.Sequence
 type ProofDifficulty = Int
 
 initialBCState :: BCState
 initialBCState = BCState [] [genesisBlock] 4
+
+-- stack test --test-arguments "-m t01-initialBCState"
+t01 = describe "t01-initialBCState" $ it "has empty pool and only genesisBlock in chain" $
+  initialBCState `shouldBe`
+  BCState { bcTXPool = []
+          , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
+          , bcProofDifficulty = 4}
 
 ------------------------------------------------------------------------------
 addTxToPool :: BCState -> Transaction -> BCState
@@ -75,22 +82,25 @@ addTxToPool s tx =
   if txInPoolOrChain tx s then s
   else s { bcTXPool = bcTXPool s ++ [tx] } -- TODO
 
-searchPool
-  :: (Transaction -> Bool)
-  -> Transaction -- fake "zero" TX
-  -> TXs
-  -> (Bool, Transaction)
-searchPool f z = foldr (\tx txs -> if f tx then (True, tx) else txs)
-                       (False, z)
-searchChain
-  :: (Transaction -> Bool)
-  -> Transaction -- fake "zero" TX
-  -> Chain
-  -> (Bool, Transaction)
-searchChain f z = foldr go (False, z)
- where
-  go block blocks = let r@(b,_) = searchPool f z (bTXs block)
-                     in if b then r else blocks
+-- stack test --test-arguments "-m t02-addTxToPool-initialBCState"
+t02 = describe "t02-addTxToPool-initialBCState" $ it "adds new to pool" $
+        addTxToPool (addTxToPool initialBCState "TX1") "TX2" `shouldBe`
+        BCState { bcTXPool = ["TX1","TX2"]
+                , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
+                , bcProofDifficulty = 4}
+
+txInPoolOrChain :: Transaction -> BCState -> Bool
+txInPoolOrChain tx = fst . searchPoolAndChain (==tx) "JUNK"
+
+-- stack test --test-arguments "-m t03-addTxToPool"
+t03 = describe "t03-addTxToPool" $ it "does not add duplicates to pool" $ do
+        let s  = addTxToPool (addTxToPool initialBCState "TX1") "TX2"
+        let s' = addTxToPool (addTxToPool s              "TX1") "TX2"
+         in s' `shouldBe`
+          BCState
+          { bcTXPool = ["TX1","TX2"]
+          , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
+          , bcProofDifficulty = 4}
 
 searchPoolAndChain
   :: (Transaction -> Bool)
@@ -102,32 +112,23 @@ searchPoolAndChain f tx s =
   in if b then r
      else        searchChain f tx (bcChain  s)
 
-txInPoolOrChain :: Transaction -> BCState -> Bool
-txInPoolOrChain tx = fst . searchPoolAndChain (==tx) "JUNK"
+searchPool
+  :: (Transaction -> Bool)
+  -> Transaction -- fake "zero" TX
+  -> TXs
+  -> (Bool, Transaction)
+searchPool f z = foldr (\tx txs -> if f tx then (True, tx) else txs)
+                       (False, z)
 
-testAddTxToPool =
-  describe "testAddTxToPool" $ do
-    it "initialState has an empty pool" $
-      initialBCState
-      `shouldBe`
-      BCState { bcTXPool = []
-              , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
-              , bcProofDifficulty = 4}
-    it "adds new to pool" $
-      addTxToPool (addTxToPool initialBCState "TX1") "TX2"
-      `shouldBe`
-      BCState { bcTXPool = ["TX1","TX2"]
-              , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
-              , bcProofDifficulty = 4}
-    it "does not add duplicates to pool" $ do
-      let s  = addTxToPool (addTxToPool initialBCState "TX1") "TX2"
-      let s' = addTxToPool (addTxToPool s              "TX1") "TX2"
-       in s'
-          `shouldBe`
-          BCState
-              { bcTXPool = ["TX1","TX2"]
-              , bcChain = [Block {bPrevHash = "1", bIndex = 0, bTXs = [], bProof = 100}]
-              , bcProofDifficulty = 4}
+searchChain
+  :: (Transaction -> Bool)
+  -> Transaction -- fake "zero" TX
+  -> Chain
+  -> (Bool, Transaction)
+searchChain f z = foldr go (False, z)
+ where
+  go block blocks = let r@(b,_) = searchPool f z (bTXs block) -- TODO "searchPool"
+                     in if b then r else blocks
 
 ------------------------------------------------------------------------------
 mine :: BCState -> (BCState, Block)
@@ -142,14 +143,15 @@ mine s =
 addBlock :: BCState -> BHash -> Proof -> (BCState, Block)
 addBlock s pHash proof =
   let b = Block pHash
-                (length (bcChain s))
+                (length (bcChain s)) -- TODO
                 (bcTXPool s)
                 proof
       s' = s { bcTXPool = [], bcChain = bcChain s ++ [b] } -- TODO
    in (s', last (bcChain s'))
 
+-- stack test --test-arguments "-m testMine"
 testMine =
-  describe "testMine" $do
+  describe "testMine" $ do
     it "addBlock" $
       let (s, _) = mine (addTxToPool (addTxToPool initialBCState "TX1") "TX2")
        in s `shouldBe`
@@ -176,6 +178,7 @@ testMine =
 -- | SHA-256 hash of a Block
 hash :: BS.ByteString -> BHash
 hash = SHA.hash
+
 hashBlock :: Block -> BHash
 hashBlock = BC.hash . BSC8.pack . show
 
@@ -200,6 +203,7 @@ proofOfWork proofDifficulty lastBlock =
 
 (bcTX1,_) = mine (addTxToPool initialBCState "TX1")
 
+-- stack test --test-arguments "-m proofOfWork"
 testProofOfWork =
   describe "proofOfWork" $ do
     it "from genesisBlock" $
@@ -221,6 +225,7 @@ evidence lastProof lastHash proof =
  let guess = BSC8.pack (show lastProof) <> BSC8.pack (show proof) <> lastHash
  in Hex.hex (BC.hash guess)
 
+-- stack test --test-arguments "-m evidence"
 testEvidence =
   describe "evidence" $ do
     it "from genesisBlock" $
@@ -265,11 +270,42 @@ longestChain s chains = go
 sTX0 :: BCState
 (sTX0,_) = mine (addTxToPool initialBCState "TX-0")
 
-eLongerChainAndPoolUpdateIn :: BCState
-eLongerChainAndPoolUpdateIn = initialBCState { bcTXPool = ["TX-0","TX-should-stay"] }
+-- stack test --test-arguments "-m longestChain1"
+testLongestChain1 = describe "longestChain1" $ do
+    it "found longer chain" $
+      longestChain initialBCState  [bcChain sTX0]
+      `shouldBe` (sTX0 , (True , ""))
+    it "no    longer chain" $
+      longestChain sTX0          [bcChain initialBCState]
+      `shouldBe` (sTX0 , (False, ""))
 
-e1LongerChainAndPoolUpdateOut :: BCState
+eLongerChainAndPoolUpdateIn, e1LongerChainAndPoolUpdateOut :: BCState
+eLongerChainAndPoolUpdateIn   = initialBCState { bcTXPool = ["TX-0","TX-should-stay"] }
 e1LongerChainAndPoolUpdateOut = sTX0 { bcTXPool = ["TX-should-stay"] }
+
+-- stack test --test-arguments "-m longestChain2"
+testLongestChain2 = describe "longestChain2" $
+  it "found longer chain and pool update" $
+    longestChain eLongerChainAndPoolUpdateIn  [bcChain sTX0]
+    `shouldBe` (e1LongerChainAndPoolUpdateOut, (True , ""))
+
+s1NotLost :: BCState
+(s1NotLost,_) = mine (addTxToPool (addTxToPool initialBCState "TX1") "TX2")
+
+s2NotLost :: BCState
+s2NotLost =
+  let (etx1,_) = mine (addTxToPool initialBCState "TX1")
+      (etx2,_) = mine (addTxToPool etx1       "TX3")
+   in  etx2
+
+s1NotLastAfterLongestChain :: BCState
+s1NotLastAfterLongestChain = s2NotLost { bcTXPool = ["TX2"] }
+
+-- stack test --test-arguments "-m longestChain3"
+testLongestChain3 = describe "longestChain3" $ it "should not drop TX" $
+  longestChain s1NotLost   [bcChain s2NotLost]
+  `shouldBe` ( s1NotLastAfterLongestChain
+             , (True, ""))
 
 e1BadPHash :: BCState
 e1BadPHash = sTX0 { bcChain = makeChain "X" 658 }
@@ -284,41 +320,16 @@ makeChain ph p =
           , bIndex = 1, bTXs = ["TX-0"]
           , bProof = p}]
 
-s1NotLost :: BCState
-(s1NotLost,_) = mine (addTxToPool (addTxToPool initialBCState "TX1") "TX2")
-
-s2NotLost :: BCState
-s2NotLost =
-  let (etx1,_) = mine (addTxToPool initialBCState "TX1")
-      (etx2,_) = mine (addTxToPool etx1       "TX3")
-   in  etx2
-
-s1NotLastAfterLongestChain :: BCState
-s1NotLastAfterLongestChain = s2NotLost { bcTXPool = ["TX2"] }
-
-testLongestChain =
-  describe "LongestChain" $ do
-    it "found longer chain" $
-      longestChain initialBCState  [bcChain sTX0]
-      `shouldBe` (sTX0 , (True , ""))
-    it "no    longer chain" $
-      longestChain sTX0          [bcChain initialBCState]
-      `shouldBe` (sTX0 , (False, ""))
-    it "found longer chain and pool update" $
-      longestChain eLongerChainAndPoolUpdateIn  [bcChain sTX0]
-      `shouldBe` (e1LongerChainAndPoolUpdateOut, (True , ""))
-    it "invalid previous hash" $
-      longestChain initialBCState  [bcChain e1BadPHash]
-      `shouldBe` (initialBCState
-                 , (False, "longestChain: invalid chain invalid bPrevHash at 1"))
-    it "invalid proof of work" $
-      longestChain initialBCState  [bcChain e1BadProof]
-      `shouldBe` (initialBCState
-                 , (False, "longestChain: invalid chain invalid bProof at 1"))
-    it "should not drop TX" $
-      longestChain s1NotLost   [bcChain s2NotLost]
-      `shouldBe` (s1NotLastAfterLongestChain
-                 , (True, ""))
+-- stack test --test-arguments "-m longestChainNegative"
+testLongestChainNegative = describe "longestChainNegative" $ do
+  it "invalid previous hash" $
+    longestChain initialBCState  [bcChain e1BadPHash]
+    `shouldBe` (initialBCState
+               , (False, "longestChain: invalid chain invalid bPrevHash at 1"))
+  it "invalid proof of work" $
+    longestChain initialBCState  [bcChain e1BadProof]
+    `shouldBe` (initialBCState
+               , (False, "longestChain: invalid chain invalid bProof at 1"))
 
 -- | Determine if a given blockchain is valid
 isValidChain :: ProofDifficulty -> Chain -> Either T.Text ()
@@ -329,21 +340,21 @@ isValidChain pd bc = do
   sequence_ (map (isValidBlock pd) (P.zip3 [1 .. ] bc (P.tail bc)))
   return ()
 
-testIsValidChain =
-  describe "isValidChain" $ do
-    it "invalid empty" $
-      isValidChain 4 [] `shouldBe` Left "empty blockchain"
-    it "  valid genesis" $
-      isValidChain 4 [genesisBlock] `shouldBe` Right ()
-    it "invalid genesis" $
-      let bg = genesisBlock { bIndex = 6 }
-      in isValidChain 4 [bg] `shouldBe` Left "invalid genesis block"
-    it "  valid sTX0" $
-      isValidChain 4 (bcChain sTX0) `shouldBe` Right ()
-    it "invalid previous hash" $
-      isValidChain 4 (bcChain e1BadPHash) `shouldBe` Left "invalid bPrevHash at 1"
-    it "invalid proof" $
-      isValidChain 4 (bcChain e1BadProof) `shouldBe` Left "invalid bProof at 1"
+-- stack test --test-arguments "-m isValidChain"
+testIsValidChain = describe "isValidChain" $ do
+  it "invalid empty" $
+    isValidChain 4 [] `shouldBe` Left "empty blockchain"
+  it "  valid genesis" $
+    isValidChain 4 [genesisBlock] `shouldBe` Right ()
+  it "invalid genesis" $
+    let bg = genesisBlock { bIndex = 6 }
+    in isValidChain 4 [bg] `shouldBe` Left "invalid genesis block"
+  it "  valid sTX0" $
+    isValidChain 4 (bcChain sTX0) `shouldBe` Right ()
+  it "invalid previous hash" $
+    isValidChain 4 (bcChain e1BadPHash) `shouldBe` Left "invalid bPrevHash at 1"
+  it "invalid proof" $
+    isValidChain 4 (bcChain e1BadProof) `shouldBe` Left "invalid bProof at 1"
 
 -- | Given a valid previous block and a block to check.
 --   Returns `Just ()` if valid.
@@ -356,17 +367,17 @@ isValidBlock pd (i, validBlock, checkBlock) = do
             (Left ("invalid bProof at "    <> T.pack (show i)))
   return ()
 
-testIsValidBlock =
-  describe "isValidBlock" $ do
-    it "  valid sTX0" $
-      isValidBlock 4 (1, genesisBlock, bcChain sTX0 !! 1)
-      `shouldBe` Right ()
-    it "invalid previous hash" $
-      isValidBlock 4 (1, genesisBlock, bcChain e1BadPHash !! 1)
-      `shouldBe` Left "invalid bPrevHash at 1"
-    it "invalid proof" $
-      isValidBlock 4 (1, genesisBlock, bcChain e1BadProof !! 1)
-      `shouldBe` Left "invalid bProof at 1"
+-- stack test --test-arguments "-m isValidBlock"
+testIsValidBlock = describe "isValidBlock" $ do
+  it "  valid sTX0" $
+    isValidBlock 4 (1, genesisBlock, bcChain sTX0 !! 1)
+    `shouldBe` Right ()
+  it "invalid previous hash" $
+    isValidBlock 4 (1, genesisBlock, bcChain e1BadPHash !! 1)
+    `shouldBe` Left "invalid bPrevHash at 1"
+  it "invalid proof" $
+    isValidBlock 4 (1, genesisBlock, bcChain e1BadProof !! 1)
+    `shouldBe` Left "invalid bProof at 1"
 
 ------------------------------------------------------------------------------
 -- IO
@@ -538,7 +549,6 @@ isValidTX s tx = case tx of
   tcTest stxHash x = case decodeSTX x of
     (SignedTX (TransferCoin _ stxHash' _) _) -> stxHash == stxHash' -- already spent
     _                                        -> False
-
 
 testIsValidTX = do
   u                      <- runIO createUUID
