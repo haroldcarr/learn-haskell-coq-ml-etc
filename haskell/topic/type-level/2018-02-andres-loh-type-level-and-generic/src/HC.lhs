@@ -513,6 +513,7 @@ No constraints on `xs` so no need for type class.
 >
 > groupHL :: HList '[Char, Bool, Int]
 > groupHL  = toHList groupNPI
+> ghl = U.t "ghl" groupHL ('x' `HCons` False `HCons` 3 `HCons` HNil)
 
 > groupNPM :: NP Maybe '[Char, Bool, Int]
 > groupNPM  = Just 'x' :* Just False :* Just (3::Int) :* Nil
@@ -751,45 +752,31 @@ also holds for n-ary products:
 ------------------------------------------------------------------------------
 -- p 19 1.7 Abstracting from class and type functions
 
-> {-
-
-Cannot do:
+Cannot do `NP I -> NP (K String)` because
 
 ~~~{.haskell}
--- try to do: NP I -> NP (K String)
 hmap (K . show . unI) group'
-~~~
-
-because
-
-~~~{.haskell}
+-- because no match due to the class constraint on `Show`
 :t K . show . unI
 --            ... :: Show a => I a -> K String b
+                               f x -> g        x -- type of fun arg to hmap
 ~~~
 
-does not match
-
-~~~{.haskell}
-                               f x -> g        x
-~~~
-
-the class constraint on `Show`.
-
-But useful to enable functions with class constraints to be used with `hmap`
-(assuming elements meet constraint).
+It is useful to enable this to be able to use other functions with other class constraints
+to map over an NP, provided that all elements in NP are instances of the class.
 
 -- p19 1.7.1 The kind `Constraint`
 
 Classes can be seen as types with a different kind.
 
 - `data` produces types of kind `*`
-- class produces types of kind `Constraint`
+- class  produces types of kind `Constraint`
 
 Examples
 
-- `Show`, `Eq`, `Ord` have kind `* -> Constraint`
-- `Functor`, `Monad`  have kind `(* -> *) -> Constraint`
-- multiparameter `MonadReader` has kind `* -> (* -> *) -> Constraint`
+- `Show`, `Eq`, `Ord`        have kind            `*  -> Constraint`
+- `Functor`, `Monad`         have kind      `(* -> *) -> Constraint`
+- `MonadReader` (multiparam) has  kind `* -> (* -> *) -> Constraint`
 
 -- p20
 
@@ -832,11 +819,8 @@ Note: the above looks nested, but is really a flat union.
 > hToString :: All Show xs => HList xs -> String
 > hToString        HNil  = ""
 > hToString (HCons x xs) = show x ++ hToString xs
-
-~~~{.haskell}
-hToString group
--- "'x'False3"
-~~~
+>
+> htos = U.t "htos" (hToString group) "'x'False3"
 
 Pattern matching on `HCons` says
 
@@ -851,7 +835,7 @@ To do same for `NP` (e.g., `NP f '[Int, Bool]`) need
 
 or, if type-level function composition existed
 
-- `((SHow `Compose` f) Int, (Show `Compose` f) Bool)`
+- `((Show `Compose` f) Int, (Show `Compose` f) Bool)`
 
 but
 
@@ -868,11 +852,13 @@ For case of composition where result is `Constraint`:
 > --                    FlexibleInstances
 > --                    v
 > instance (f (g x)) => (f `Compose` g) x
+> infixr 9 `Compose`
 
 Inferred kind for `Compose`:
 
 ~~~{.haskell}
-Compose :: (b -> Constraint) -> (a -> b) -> a -> Constraint
+:kind Compose
+--        ... :: (k1 -> Constraint) -> (k2 -> k1) -> k2 -> Constraint
 ~~~
 
 `class` defined constraints (unlike type synonyms and type families)
@@ -887,24 +873,23 @@ can be partially applied.
 > hToString' :: All (Show `Compose` f) xs => NP f xs -> String
 > hToString'      Nil  = ""
 > hToString' (x :* xs) = show x ++ hToString' xs
-
-~~~{.haskell}
-hToString' groupNPM
--- "Just 'x'Just FalseJust 3"
-~~~
+>
+> htos' = U.t "htos'" (hToString' groupNPM) "Just 'x'Just FalseJust 3"
 
 Now can derive `Show` because it has same type requirements as `hToString'`:
 
-> deriving instance (All (Compose Show f) xs) => Show (NP f xs)
-
 ~~~{.haskell}
-show groupNPM
--- "Just 'x' :* (Just False :* (Just 3 :* Nil))"
+deriving instance (All (Compose Show f) xs) => Show (NP f xs)
 ~~~
 
--- p22 1.7.4 Proxies
+See end of file for manual version.
 
-Use abstraction over constraints to define `hpure` variant
+> sgnpm = U.t "sgnpm" (show groupNPM) "Just 'x' :* Just False :* Just 3 :* Nil"
+> -- auto derived version would print : "Just 'x' :* (Just False :* (Just 3 :* Nil))"
+
+-- p21 1.7.4 Proxies
+
+use abstraction over constraints to define `hpure` variant
 
 ~~~{.haskell}
 -- takes (for some parameterized constraint `c`)
@@ -913,10 +898,11 @@ forall a . c a => f a
 forall a .        f a
 ~~~
 
-~~~{.haskell}
-hpure  :: forall f xs . SListI xs => (forall a .        f a) -> NP f xs
+-- p22
 
-hcpure ::  (SListI xs,  All c xs) => (forall a . c a => f a) -> NP f xs
+~~~{.haskell}
+hpure  :: forall f xs . SListI xs  => (forall a .        f a) -> NP f xs
+hcpure ::   (All c xs , SListI xs) => (forall a . c a => f a) -> NP f xs
 ~~~
 
 A dummy parameter must be provided to the function (a "proxy")
@@ -930,46 +916,31 @@ Proxy
 > -- works for args of any kind (e.g., * -> Constraint)
 > data Proxy (a :: k) = Proxy
 
-> hcpure :: forall c f xs . (SListI xs, All c xs)
+> hcpure :: forall c f xs . (All c xs, SListI xs)
 >        => Proxy c -> (forall a . c a => f a) -> NP f xs
-
--- p23
-
 > hcpure p x = case sList :: SList xs of
 >     SNil  -> Nil
 >     SCons -> x :* hcpure p x
 
-> hcp1 :: NP I '[Char, Bool] -- inferred
-> hcp1 = hcpure (Proxy :: Proxy Bounded) (I minBound) :: NP I '[Char, Bool]
+> hcp1 = U.t "hcp0" (hcpure (Proxy :: Proxy Bounded) (I minBound) :: NP I '[Char, Bool])
+>                   (I {unI = '\NUL'} :* (I {unI = False} :* Nil))
+>
+> hcp2 :: NP (K String) '[Char, Bool, Integer] -- inferred
+> hcp2 = hcpure (Proxy :: Proxy Show) (Fn (K . show . unI)) `hap` groupI
+> hcp2t = U.t "hcp2t" hcp2 (K {unK = "'x'"} :* K {unK = "False"} :* K {unK = "3"} :* Nil)
 
-> hcp2 :: NP (K String) '[Char, Bool, Int] -- inferred
-> hcp2 = hcpure (Proxy :: Proxy Show) (Fn (K . show . unI)) `hap` npgroup
-
-Composing `hcpure` with `hap` also provides mapping of constrained functions over environments.
+Composing `hcpure` with `hap` also provides mapping of constrained functions over NP.
 
 > hcmap :: (SListI xs, All c xs)
 >       => Proxy c -> (forall a . c a => f a -> g a) -> NP f xs -> NP g xs
 > hcmap p f xs = hcpure p (Fn f) `hap` xs
-> -}
 
 ------------------------------------------------------------------------------
 Eq, Show support
 
-> deriving instance Show (SList (xs :: [k]))
 > deriving instance Eq   (SList (xs :: [k]))
 > deriving instance Ord  (SList (xs :: [k]))
->
-> class (f (g x)) => (f `Compose` g) x    -- MultiParamTypeClasses, ConstraintKinds, UndecidableSuperClasses
-> instance (f (g x)) => (f `Compose` g) x -- FlexibleInstances
-> infixr 9 `Compose`
->
-> class (AllF f xs, SListI xs) => All (f :: k -> Constraint) (xs :: [k]) -- UndecidableInstances
-> instance (AllF f xs, SListI xs) => All f xs
->
-> type family
->   AllF (c :: k -> Constraint) (xs :: [k]) :: Constraint where
->   AllF _c '[]       = ()
->   AllF  c (x ': xs) = (c x, All c xs)
+> deriving instance Show (SList (xs :: [k]))
 >
 > -- manual, because built-in deriving does not use associativity info
 > instance All (Show `Compose` f) xs => Show (NP f xs) where
@@ -979,7 +950,16 @@ Eq, Show support
 >     . showString " :* "
 >     . showsPrec 5 fs
 >
-> deriving instance All (Eq   `Compose` f) xs => Eq   (NP f xs)
+> deriving instance All (Eq `Compose` f) xs => Eq   (NP f xs)
+>
+> instance All Show xs => Show (HList xs) where
+>   showsPrec _ HNil           = showString "HNil"
+>   showsPrec d (x `HCons` xs) = showParen (d > 5)
+>     $ showsPrec (5 + 1) x
+>     . showString " `HCons` "
+>     . showsPrec 5 xs
+>
+> deriving instance All Eq xs => Eq (HList xs)
 
 ------------------------------------------------------------------------------
 
@@ -987,6 +967,7 @@ Eq, Show support
 > test  =
 >   runTestTT $ TestList $
 >   txsum ++ tv3 ++ tvr3 ++ tva ++ tvfffvabc ++
->   gnpi ++ gchar ++ g2 ++ exj ++ hpn ++ hpk ++ hpt ++ hmi
+>   gnpi ++ ghl ++ gchar ++ g2 ++ exj ++ hpn ++ hpk ++ hpt ++ hmi ++ htos ++ htos' ++ sgnpm ++
+>   hcp1 ++ hcp2t
 
 
