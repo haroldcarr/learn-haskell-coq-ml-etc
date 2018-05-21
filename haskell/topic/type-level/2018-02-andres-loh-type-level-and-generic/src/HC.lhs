@@ -1,9 +1,7 @@
 > {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-> -- {-# OPTIONS_GHC -fno-warn-type-defaults      #-}
-
+>
 > {-# LANGUAGE ConstraintKinds           #-}
 > {-# LANGUAGE DataKinds                 #-}
-> -- {-# LANGUAGE ExistentialQuantification #-}
 > {-# LANGUAGE FlexibleInstances         #-}
 > {-# LANGUAGE GADTs                     #-}
 > {-# LANGUAGE KindSignatures            #-}
@@ -40,6 +38,7 @@ outline
 - heterogeneous lists
 - n-ary products (aka "Environments")
 
+------------------------------------------------------------------------------
 -- p7  1.2 Kinds and data kinds
 
 layered type system
@@ -61,15 +60,15 @@ kinds
 
 -- p8 1.2.2 Promoted data kinds
 
-Data type promotion
+data type promotion
 
-Define new data type:
+define new data type:
 
 > data XBool = XFalse | XTrue
 
 - `XBool`
-    - new *type* with *term* constructors  `XFalse`,  `XTrue`
-    - new *kind* with *type* constructors `'XFalse`, `'XTrue` (promotion via DataKinds)
+    - new *type*  `XBool` with *term* constructors  `XFalse`,  `XTrue`
+    - new *kind* `'XBool` with *type* constructors `'XFalse`, `'XTrue` (promotion via DataKinds)
 
 All kinds from promoted datatypes are uninhabited (e.g., there are *no* terms/values of type `'XFalse`).
 
@@ -89,22 +88,28 @@ length-indexed lists (aka vectors)
 used in promoted form:
 
 ~~~{.haskell}
-'Zero :: Nat
-'Suc  :: Nat -> Nat
+:set -XDataKinds
+:k 'Zero
+--   ... :: Nat
+:k  'Suc
+--   ... :: Nat -> Nat
+:t  Zero
+     ... :: Nat
+:t   Suc
+     ... :: Nat -> Nat
 ~~~
 
 GADT enables restricting
 - `VNil`  to `Zero
 - `VCons` to non-zero
 
-> --    KindSignatures  DataKinds  GADT
+> --      KindSignatures DataKinds GADT
 > --          v        v   v       v
 > data Vec (a :: *) (n :: Nat) where
 >                 -- DataKinds
 >                 -- v
 >     VNil  ::                 Vec a  'Zero
 >     VCons :: a -> Vec a n -> Vec a ('Suc n)
->
 > infixr 5 `VCons`
 >
 > -- StandaloneDeriving
@@ -272,19 +277,19 @@ Another way: mutually-recursive (used in remainder of paper):
 >     SSuc  :: SNatI n => SNat ('Suc n)
 >
 > class SNatI (n :: Nat) where
->     sNat :: SNat n
+>     sNat  :: SNat n
 >
 > instance SNatI 'Zero where
->     sNat = SZero
+>     sNat   = SZero
 >
 > instance SNatI n => SNatI ('Suc n) where
->     sNat = SSuc
+>     sNat   = SSuc
 
 > --                      RankNTypes (or ExistentialQuantification, ...)
 > --                       v
 > vreplicate :: forall a n . SNatI n => a -> Vec a n
 > --                  ScopedTypeVariables
-> --                  v
+> --                               v
 > vreplicate x = case sNat :: SNat n of -- choice of sNat to run at runtime is made via type at compiletime
 >     SZero -> VNil
 >     SSuc  -> x `VCons` vreplicate x
@@ -309,7 +314,7 @@ CONS
 
 -- p12 1.4.2 Applicative vectors
 
-vreplicate can support something like the interface of an applicative functor
+vreplicate can be used to create the equivalent of the applicative interface
 
 ~~~{.haskell}
 class Functor f => Applicative f where
@@ -356,8 +361,8 @@ implement same idea for vectors
 > va :: Vec Integer ('Suc ('Suc ('Suc 'Zero)))
 > va  = ((2*) `VCons` (5*) `VCons` (9*) `VCons` VNil) `vapply`
 >       ( 1   `VCons`  4   `VCons`  7   `VCons` VNil)
-
-> tva = U.t "tva" va (VCons 2 (VCons 20 (VCons 63 VNil)))
+> tva = U.t "tva" va
+>       ( 2   `VCons` 20   `VCons` 63   `VCons` VNil)
 
 Note: `Vec` cannot be made `Applicative` instance because its parameters are in the wrong order.
 
@@ -408,11 +413,11 @@ Type-level list of promoted `Bool`, `Nat`, `[*]`
 
 ~~~{.haskell}
 :set -XDataKinds
-:kind [True, False]
---              ... :: [Bool]
+:kind ['True, 'False]
+--                  ... :: [Bool]
 
-:kind [Zero, Three]
---              ... :: [Nat]
+:kind ['Zero, Three]
+--                  ... :: [Nat]
 
 :kind [Char, Bool, Int]
 --                  ... :: [*]
@@ -425,10 +430,9 @@ Need kind `[*]` for heterogeneous lists.
 > -- TODO : when/where are values, length and types handled?
 > data HList (xs :: [*]) where
 >     HNil  :: HList '[]
-> --                                     TypeOperators
-> --                                     v
 >     HCons :: x -> HList xs -> HList (x ': xs)
->
+> --                                     ^
+> --                                     TypeOperators
 > infixr 5 `HCons`
 
 > hhead :: HList (x ': xs) -> x
@@ -437,7 +441,7 @@ Need kind `[*]` for heterogeneous lists.
 > htail :: HList (x ': xs) -> HList xs
 > htail (_ `HCons` xs) = xs
 
-Represent
+example: represent
 
 > data Group = Group Char Bool Int
 
@@ -459,14 +463,13 @@ Couldn't match type ‘Char’ with ‘Int’
 
 -- p14 1.5.2 n-ary products (aka "Environments")
 
-`HList` variant where each element is determined by applying a type constructor to types in the index list.
-- e.g., `Maybe`, `IO`
+`NP` means "n-ary product"
 
-`NP` means *n-ary product
-
-variant of HList
+`HList` variant
 - also abstracted over type constructor f
-- has elements of ttype f x
+    - each element determined by applying a type constructor to types in the index list
+    - e.g., `Maybe`, `IO`
+- has elements of type f x
     - where x is a member of the index list
 
 > --            PolyKinds
@@ -479,7 +482,6 @@ variant of HList
 
 (see end of file for Eq, Show definitions)
 
-`NP` means *n-ary product (aka "environment")
 - list `xs` is signature
 - kind polymorphic
     - not required to be `[*]`
@@ -488,7 +490,7 @@ variant of HList
     - possible because elements of signature do not appear in environment
         - they appear as arg to `f` instead
 
-Case where `k` is `*`: shows that NP is generalization of `HList`
+case where `k` is `*`: shows that NP is generalization of `HList`
 
 > -- identity function on types
 > newtype I a = I {unI :: a} deriving (Eq, Read, Show)
@@ -497,7 +499,7 @@ Case where `k` is `*`: shows that NP is generalization of `HList`
 
 -- p15
 
-> fromHList :: HList xs -> NP I   xs
+> fromHList :: HList xs  -> NP I  xs
 > fromHList           HNil =  Nil
 > fromHList (x `HCons` xs) = I x :*      fromHList xs
 
