@@ -1,0 +1,25 @@
+* build
+
+#+begin_src
+stack build
+#+end_src
+
+* run
+
+#+begin_src
+stack exec main
+#+end_src
+
+* output
+
+#+begin_src
+> stack exec main
+Example 1 2
+trace output will appear before this line
+1 2
+#+end_src
+
+The line that says =Example 1 2= comes from =makeTraceTextShowId=.
+
+
+
