@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: aa24eb9d775155339cb9e24880e5295ad7090e8da884eb512838f4da19d86d7f
+-- hash: 868fc67a4cbe39b6377beeb812e03f8124db8080ab601d8f02ab1ee6af9cecca
 
 name:           applied-haskell-snoyman
 version:        0.1.0.0
@@ -19,10 +19,11 @@ library
   ghc-options: -Wall
   build-depends:
       base >=4.7 && <5
+    , deepseq
   default-language: Haskell2010
 
 executable average
-  main-is: Average.hs
+  main-is: Main.hs
   other-modules:
       Paths_applied_haskell_snoyman
   hs-source-dirs:
@@ -31,4 +32,5 @@ executable average
   build-depends:
       applied-haskell-snoyman
     , base >=4.7 && <5
+    , deepseq
   default-language: Haskell2010

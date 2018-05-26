@@ -3,6 +3,7 @@ version:             0.1.0.0
 
 dependencies:
 - base >= 4.7 && < 5
+- deepseq
 
 library:
   source-dirs:
@@ -12,7 +13,7 @@ library:
 
 executables:
   average:
-    main:                Average.hs
+    main:                Main.hs
     source-dirs:         app
     ghc-options:
     - -Wall
