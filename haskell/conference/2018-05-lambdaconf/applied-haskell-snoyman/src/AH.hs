@@ -2,20 +2,26 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns  #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module AH where
 
+import qualified Conduit             as C
 import           Control.DeepSeq
+import qualified Data.Foldable       as F
+import qualified Data.Vector         as V
+import qualified Data.Vector.Unboxed as VU
 import           Debug.Trace
-import           GHC.Generics (Generic)
+import           GHC.Generics        (Generic)
 import           Text.Read
 
+{-# ANN module ("HLint: ignore Eta reduce" :: String) #-}
 {-# ANN module ("HLint: ignore Redundant seq" :: String) #-}
 {-# ANN module ("HLint: ignore Use const" :: String) #-}
-{-# ANN module ("HLint: ignore Use newtype instead of data" :: String) #-}
 {-# ANN module ("HLint: ignore Use foldl" :: String) #-}
+{-# ANN module ("HLint: ignore Use newtype instead of data" :: String) #-}
+{-# ANN module ("HLint: ignore Use sum" :: String) #-}
 
 -- ==============================================================================
 -- https://github.com/fpco/applied-haskell/tree/2018#readme
@@ -469,7 +475,7 @@ mydeepseq a b = rnf a `seq` b
 -- make it impossible to constructor a value with laziness inside
 
 data RunningTotal5 = RunningTotal5
-  { sum5 :: !Int
+  { sum5   :: !Int
   , count5 :: !Int
   }
   -- deriving Generic
@@ -537,30 +543,30 @@ No RT representation, so same as nt5
 -}
 nt6 = case Baz undefined of { Baz _ -> putStrLn "Still alive!" }
 
--- ** other ways to force evaluation
+-- ** other ways to force evaluation : $! $!! force
 
 mysum1 :: [Int] -> Int
 mysum1 list0 = go list0 0
   where
-    go [] total = total
+    go [] total     = total
     go (x:xs) total = go xs $   total + x
 
 mysum2 :: [Int] -> Int
 mysum2 list0 = go list0 0
   where
-    go [] total = total
+    go [] total     = total
     go (x:xs) total = go xs $!  total + x -- $!  uses     seq to force evaluation before recursion
 
 mysum3 :: [Int] -> Int
 mysum3 list0 = go list0 0
   where
-    go [] total = total
+    go [] total     = total
     go (x:xs) total = go xs $!! total + x -- $!! uses deepseq to force evaluation before recursion
 
 mysum4 :: [Int] -> Int
 mysum4 list0 = go list0 0
   where
-    go [] total = total
+    go [] total     = total
     -- function : evaluates a WHNF expression to NF
     go (x:xs) total = go xs $!! force (total + x)
 
@@ -577,10 +583,156 @@ stack exec average --rts-options "+RTS -s" -- s 3
 stack exec average --rts-options "+RTS -s" -- s 4
 -}
 
--- TODO EXERCISE Define these in terms of seq and deepseq.
+dollar,dollar' ::             (a -> b) -> a -> b
+dollar''       :: NFData a => (a -> b) -> a -> b
+force'         :: NFData a =>  a            -> a
+dollar   f a =                             f a
+dollar'  f a =                 a `seq`     f a
+dollar'' f a =                 a `deepseq` f a
+force'     a =                 a `deepseq`   a
 
 -- ** DATA STRUCTURES
 
+-- *** LISTS
 
+-- lazy
+data List1 a = Cons1 a (List1 a) | Nil1
+-- hello
+ec11 = Cons1 undefined undefined `seq` putStrLn "Hello World"
+-- hello
+ec12 =       undefined:undefined `seq` putStrLn "Hello World"
 
+-- spine strict (i.e., strict in tail)
+data List2 a = Cons2 a !(List2 a) | Nil2
+-- error
+ec21 = Cons2 undefined undefined `seq` putStrLn "Hello World"
+-- hello
+ec22 = Cons2 undefined (Cons2 undefined Nil2) `seq` putStrLn "Hello World"
+
+-- value strict
+data List3 a = Cons3 !a !(List3 a) | Nil3
+-- error
+ec31 = Cons3 undefined (Cons3 undefined Nil3) `seq` putStrLn "Hello World"
+
+-- strict in value but not tail - not aware of any use of this
+data List4 a = Cons4 !a (List4 a) | Nil4
+
+-- *** VECTORS
+
+--  Data.Vector : (aka "boxed vectors") are spine strict
+
+-- hello
+vb1 = V.fromList           [undefined] `seq` putStrLn "Hello World"
+-- error
+vb2 = V.fromList (undefined:undefined) `seq` putStrLn "Hello World"
+-- I guessed hello --- but error
+vb3 = V.fromList            undefined  `seq` putStrLn "Hello World"
+
+-- Data.Vector.Unboxed are value strict
+-- GHC needs inference help
+vuFromList :: [Int] -> VU.Vector Int
+vuFromList = VU.fromList
+
+-- all throw error
+vu1 = vuFromList           [undefined] `seq` putStrLn "Hello World"
+vu2 = vuFromList (undefined:undefined) `seq` putStrLn "Hello World"
+vu3 = vuFromList            undefined  `seq` putStrLn "Hello World"
+
+-- no strict boxed vector
+
+-- *** SETS and MAPS
+
+{-
+unordered-containers
+Map-like structures have Strict and Lazy variants
+Set-like structures do not (e.g., Data.IntSet)
+Because all are spine strict : strict in keys.
+Set only has keys : so also value strict.
+Map lazy spine-strict, value-lazy
+Map strict are spine and value strict.
+
+TODO EXERCISE Analyze the Data.Sequence.Seq data type and classify it as either lazy, spine strict, or value strict.
+-}
+
+-- ** FUNCTION ARGUMENTS
+
+{-
+function strict in an arg
+- if applied to bottom value for that argument result is bottom
+- + : strict in both
+- const : strict in first
+- (:) laz in both
+-}
+
+-- ** FOLDS
+
+runfoldl  = print $   foldl  (+) 0 [1..10000000]
+runfoldl' = print $ F.foldl' (+) 0 [1..10000000]
+runfoldr  = print $   foldr  (+) 0 [1..10000000]
+runfoldr' = print $ F.foldr' (+) 0 [1..10000000]
+
+{-
+stack build
+stack exec average --rts-options "+RTS -s" -- f 1
+stack exec average --rts-options "+RTS -s" -- f 2
+stack exec average --rts-options "+RTS -s" -- f 3
+stack exec average --rts-options "+RTS -s" -- f 4
+-}
+
+-- *** STREAMING DATA
+
+averageC :: Monad m => C.ConduitM Int o m Double
+averageC = divide <$> C.foldlC add (0, 0)
+  where
+    divide (total, count)   = fromIntegral total / count
+    add    (total, count) x = (total + x, count + 1)
+
+runaveragec = print $ C.runConduitPure $ C.enumFromToC 1 10000000 C..| averageC
+
+{-
+stack build
+stack exec average --rts-options "+RTS -s" -- a 6
+
+EXERCISE TODO : Make above run in constant resident memory, by using:
+
+1. The force function
+2. Bang patterns
+3. A custom data type with strict fields
+-}
+
+-- *** CHAIN REACTION TODO
+
+-- ** FURTHER READING TODO
+
+{-
+http://fixpt.de/blog/2017-12-04-strictness-analysis-part-1.html
+-}
+
+-- ==============================================================================
+
+-- * Data Structure - Data Structures
+
+-- ==============================================================================
+
+-- * Data Structure - String Types
+
+-- ==============================================================================
+
+-- * Data Structure - Containers
+
+-- ==============================================================================
+
+-- * Data Structure - Vector
+
+-- ==============================================================================
+
+-- * Data Structure - revisit data structure quiz
+
+-- ==============================================================================
+
+-- * RIO - Monad Transformers
+
+-- ==============================================================================
+
+-- * RIO - RIO
 
