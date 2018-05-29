@@ -5,6 +5,7 @@ dependencies:
 - base >= 4.7 && < 5
 - conduit
 - deepseq
+- mtl
 - vector
 
 library:

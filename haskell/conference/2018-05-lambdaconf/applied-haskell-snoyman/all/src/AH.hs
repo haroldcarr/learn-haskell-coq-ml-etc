@@ -3,12 +3,14 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 {-# LANGUAGE BangPatterns  #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module AH where
 
 import qualified Conduit             as C
 import           Control.DeepSeq
+import qualified Control.Monad.State as S
 import qualified Data.Foldable       as F
 import qualified Data.Vector         as V
 import qualified Data.Vector.Unboxed as VU
@@ -731,8 +733,125 @@ http://fixpt.de/blog/2017-12-04-strictness-analysis-part-1.html
 -- ==============================================================================
 
 -- * RIO - Monad Transformers
+-- https://github.com/fpco/applied-haskell/blob/2018/monad-transformers.md
+
+-- ** Using Either as a monad : foldL with early termination
+
+foldEitherTerminate :: (b -> a -> Either b b) -> b -> [a] -> b
+foldEitherTerminate f acc0 list0 = either id id (go acc0 list0) -- either makes go call in Either context
+  where
+    go !accum rest = do
+      -- usual end of list termination, but in Either
+      (x, xs) <- case rest of
+                   []   -> Left accum
+                   x:xs -> Right (x, xs)
+      accum' <- f accum x -- can exit early via Left
+      go accum' xs
+
+sumTerm = foldEitherTerminate go 0 ([300, -1] ++ [1..])
+ where go acc x
+         | x < 0     = Left acc
+         | otherwise = Right (acc + x)
+
+-- foldL using State
+
+foldState :: (b -> a -> b) -> b -> [a] -> b
+foldState f acc0 list0 = S.execState (mapM_ go list0) acc0
+  where go x = S.modify' (`f` x)
+
+-- StateEither monad
+
+-- Cannot compose State and Either.  So define new StateEither monad
+
+newtype StateEither s e a = StateEither
+  { -- given initial state value
+    -- return updated state value and an Either result value.
+    -- When result is Left: stop processing. When Right: continue.
+    runStateEither :: s -> (s, Either e a) }
+  deriving Functor
+
+instance Applicative (StateEither s e) where
+  pure a = StateEither (\s -> (s, Right a))
+  StateEither ff <*> StateEither fa = StateEither $ \s0 ->
+    case ff s0 of
+      (s1, Left e)  -> (s1, Left e)
+      (s1, Right f) -> case fa s1 of
+        (s2, Left e)  -> (s2, Left e)
+        (s2, Right a) -> (s2, Right (f a))
+
+instance Monad (StateEither s e) where
+  return = pure
+  StateEither f >>= g = StateEither $ \s0 ->
+    case f s0 of
+      (s1, Left e)  -> (s1, Left e)
+      (s1, Right x) -> runStateEither (g x) s1
+
+execStateEither :: StateEither s e a -> s -> s
+execStateEither m = fst . runStateEither m
+
+modifyStateEither' :: (s -> Either e s) -> StateEither s e ()
+modifyStateEither' f = StateEither $ \s0 ->
+  case f s0 of
+    Left   e  -> (s0, Left e)
+    Right !s1 -> (s1, Right ())
+
+foldStateEitherTerminate :: (b -> a -> Either b b) -> b -> [a] -> b
+foldStateEitherTerminate f accum0 list0 = execStateEither (mapM_ go list0) accum0
+  where go x = modify' (`f` x)
+
+-- monads can make it easier to implement some functions
+-- composing monads isn't possible
+-- manually defining the compositions is possible
+
+-- Reformulating StateEither
+
+-- newtype StateEither s e a = StateEither (s -> (s, Either e a))
+-- newtype State s a = State (s -> (s, a))
+-- newtype StateEither2 s e a = StateEither2 (State s (Either e a))
+
+newtype StateEither2 s e a = StateEither2
+  { unStateEither2 :: S.State s (Either e a) }
+  deriving Functor
+
+-- This never touches the state value.
+-- It reuses underlying State's Monad instance via do-notation and return.
+-- Just focuses on Either shortcut logic.
+instance Applicative (StateEither2 s e) where
+  pure a = StateEither2 $ return $ Right a
+  StateEither2 ff <*> StateEither2 fa = StateEither2 $ do
+    ef <- ff
+    case ef of
+      Left  e -> return $ Left e
+      Right f -> do
+        ea <- fa
+        case ea of
+          Left  e -> return $ Left e
+          Right a -> return $ Right $ f a
+
+instance Monad (StateEither2 s e) where
+  return = pure
+  StateEither2 f >>= g = StateEither2 $ do
+    ex <- f
+    case ex of
+      Left  e -> return         $ Left e
+      Right x -> unStateEither2 $ g x
+
+execStateEither2 :: StateEither2 s e a -> s -> s
+execStateEither2 (StateEither2 m) s = execState m s
+
+modifyStateEither2' :: (s -> Either e s) -> StateEither2 s e ()
+modifyStateEither2' f = StateEither2 $ do
+  s0 <- S.get
+  case f s0 of
+    Left   e -> return $ Left e
+    Right s1 -> do
+      S.put $! s1
+      return $ Right ()
+
+-- Just State? -- TODO ...
 
 -- ==============================================================================
 
 -- * RIO - RIO
+-- see ../../
 

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 09dd503f8d478af2837d40d92f067cdd55bb109001b776e625aac5b0375b2eb4
+-- hash: 878b6471ff180e61dc159a7556d6f5241990c971ac69c806e97e931846888956
 
 name:           applied-haskell-snoyman
 version:        0.1.0.0
@@ -21,6 +21,7 @@ library
       base >=4.7 && <5
     , conduit
     , deepseq
+    , mtl
     , vector
   default-language: Haskell2010
 
@@ -36,5 +37,6 @@ executable average
     , base >=4.7 && <5
     , conduit
     , deepseq
+    , mtl
     , vector
   default-language: Haskell2010
