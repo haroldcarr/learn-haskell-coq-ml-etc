@@ -296,7 +296,7 @@ add !x !y = x + y -- evaluate args before entering functions (not really, see ne
 
 -- unsugared
 
-add' x y = x `seq` y `seq` x + y
+add' x y = x `seq` y `seq` x + y -- but bad example because `+` is strict
 
 a1 = do
   let   five  = trace "five"  (add (1 + 1) (1 + 2))
@@ -361,15 +361,16 @@ stack exec average --rts-options "+RTS -s" -- a 1
 
 -- seq evaluates to WHNF
 -- WHNF is "unwrapping constructor" (not what is inside)
+--          unwrapping one level
 
-x1 = putStrLn $        undefined  `seq` "Hello"
+x1 = putStrLn $        undefined  `seq` "Hello"  -- err
 -- WHNF only evaluates outer constructor
-x2 = putStrLn $ Just   undefined  `seq` "Hello"
+x2 = putStrLn $ Just   undefined  `seq` "Hello"  -- Hello
 -- partially applied fun is WHNF
-x3 = putStrLn $ error             `seq` "Hello"
-x4 = putStrLn $ (\_ -> undefined) `seq` "Hello"
+x3 = putStrLn $ error             `seq` "Hello"  -- Hello
+x4 = putStrLn $ (\_ -> undefined) `seq` "Hello"  -- Hello
 -- fully applied WHNF
-x5 = putStrLn $ error "FOO"       `seq` "Hello"
+x5 = putStrLn $ error "FOO"       `seq` "Hello"  -- err
 
 -- no
 e1 = (+) undefined
@@ -550,25 +551,25 @@ nt6 = case Baz undefined of { Baz _ -> putStrLn "Still alive!" }
 mysum1 :: [Int] -> Int
 mysum1 list0 = go list0 0
   where
-    go [] total     = total
+    go    []  total = total
     go (x:xs) total = go xs $   total + x
 
 mysum2 :: [Int] -> Int
 mysum2 list0 = go list0 0
   where
-    go [] total     = total
+    go    []  total = total
     go (x:xs) total = go xs $!  total + x -- $!  uses     seq to force evaluation before recursion
 
 mysum3 :: [Int] -> Int
 mysum3 list0 = go list0 0
   where
-    go [] total     = total
+    go    []  total = total
     go (x:xs) total = go xs $!! total + x -- $!! uses deepseq to force evaluation before recursion
 
 mysum4 :: [Int] -> Int
 mysum4 list0 = go list0 0
   where
-    go [] total     = total
+    go    []  total = total
     -- function : evaluates a WHNF expression to NF
     go (x:xs) total = go xs $!! force (total + x)
 
@@ -794,11 +795,11 @@ modifyStateEither' f = StateEither $ \s0 ->
   case f s0 of
     Left   e  -> (s0, Left e)
     Right !s1 -> (s1, Right ())
-
+{-
 foldStateEitherTerminate :: (b -> a -> Either b b) -> b -> [a] -> b
 foldStateEitherTerminate f accum0 list0 = execStateEither (mapM_ go list0) accum0
   where go x = modify' (`f` x)
-
+-}
 -- monads can make it easier to implement some functions
 -- composing monads isn't possible
 -- manually defining the compositions is possible
@@ -837,7 +838,7 @@ instance Monad (StateEither2 s e) where
       Right x -> unStateEither2 $ g x
 
 execStateEither2 :: StateEither2 s e a -> s -> s
-execStateEither2 (StateEither2 m) s = execState m s
+execStateEither2 (StateEither2 m) s = S.execState m s
 
 modifyStateEither2' :: (s -> Either e s) -> StateEither2 s e ()
 modifyStateEither2' f = StateEither2 $ do

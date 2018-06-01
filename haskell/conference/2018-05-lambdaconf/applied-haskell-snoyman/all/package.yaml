@@ -4,8 +4,10 @@ version:             0.1.0.0
 dependencies:
 - base >= 4.7 && < 5
 - conduit
+- containers
 - deepseq
 - mtl
+- text
 - vector
 
 library:
@@ -15,7 +17,7 @@ library:
   - -Wall
 
 executables:
-  average:
+  main:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

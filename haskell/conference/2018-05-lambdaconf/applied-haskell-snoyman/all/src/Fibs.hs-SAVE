@@ -1,0 +1,18 @@
+#!/usr/bin/env stack
+-- stack --resolver 11.10 script
+{-# LANGUAGE OverloadedStrings #-}
+
+import qualified Data.ByteString as BS
+import System.IO
+
+cp :: FilePath -> FilePath -> IO ()
+cp from to =
+  withBinaryFile from ReadMode $ \f ->
+    withBinaryFIle to WriteMode $ \t -> do
+      loop f t
+ where
+  loop f t = do
+    x <- BS.hGetSome 10000 from
+    when (x /= BS.empty) $
+      BS.hPut t x
+      loop f t

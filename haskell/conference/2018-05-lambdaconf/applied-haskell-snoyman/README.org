@@ -1,0 +1,17 @@
+Johan Tibell:
+Should Haskell be lazy or strict?
+Wrong question.
+Recommend:
+- data      : strict by default
+- functions : lazy by default
+
+------------------------------------------------------------------------------
+
+`seq` on functions breaks equational reasoning
+
+------------------------------------------------------------------------------
+
+Don't use Text IO - convert to ByteString and use ByteString IO.
+
+------------------------------------------------------------------------------
+
