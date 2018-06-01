@@ -1,5 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-
+BETTER SOLUTION:
+read as bytestring
+convert to Text
+process via row : M.insertWith (M.unionWith (+)) state (M.singleton city 1)
+map to HTML : use ByteString builder
+-}
+
 module E1 where
 
 import           Data.List (foldl')
@@ -21,7 +29,10 @@ input = "Alice,Los Angeles,California\n\
 parse :: T.Text -> [[T.Text]]
 parse t = map (map T.strip . T.splitOn ",") (T.lines t)
 
-type StateCityCount = M.Map T.Text (M.Map T.Text Int)
+type State = T.Text
+type City  = T.Text
+type Count = Int
+type StateCityCount = M.Map State (M.Map City Count)
 
 --                      bad input , the map
 mkMap :: [[T.Text]] -> ([[T.Text]], StateCityCount)

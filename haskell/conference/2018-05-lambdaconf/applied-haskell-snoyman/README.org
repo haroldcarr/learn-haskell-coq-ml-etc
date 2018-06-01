@@ -15,3 +15,28 @@ Don't use Text IO - convert to ByteString and use ByteString IO.
 
 ------------------------------------------------------------------------------
 
+modify                                     -- implicit `forall` on `v` and `a`
+ :: V.Vector v a                           -- caller choses 'a' - impl   must be able to handle it
+ => (forall s. V.Mutable v s a -> ST s ()) -- impl   choses 's' - caller must be able to handle it
+ -> v a
+ -> v a
+
+------------------------------------------------------------------------------
+
+hoogle searches using specific lts (or nightly)
+
+https://www.stackage.org/lts-8.8/hoogle?q=fmap
+
+
+------------------------------------------------------------------------------
+
+1. mtl using FD functional dependencies
+2. then transformers for base types
+   and transformers-FD
+   and transformers-TF (type families)
+3. then transformers-FD became mtl that uses transformers
+
+------------------------------------------------------------------------------
+
+
+

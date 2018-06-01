@@ -3,11 +3,13 @@ version:             0.1.0.0
 
 dependencies:
 - base >= 4.7 && < 5
+- bytestring
 - conduit
 - containers
 - deepseq
 - mtl
 - text
+- transformers
 - vector
 
 library:
