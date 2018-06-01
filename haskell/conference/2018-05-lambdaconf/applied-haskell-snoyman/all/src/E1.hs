@@ -34,13 +34,25 @@ mkMap = foldl' go ([], M.empty)
                                       Just n  -> M.insert city (1 + n) m2) m1)
   go (iv,m1)  x             = (x:iv, m1)
 
+-- TODO : use Builder
 mkXml :: StateCityCount -> T.Text
-mkXml = M.foldlWithKey go1 ""
+mkXml s = "<ul>" <> M.foldlWithKey go1 "" s <> "</ul>"
  where
-  go1 r k v = r <> "<li>" <> k <> "<dl>" <> M.foldlWithKey go2 "" v <> "</dl></li>"
+  go1 r k v = r <> "<li>" <> k <> "<dl>"  <>  M.foldlWithKey go2 "" v  <> "</dl></li>"
   go2 r k v = r <> "<dt>" <> k <> "</dt>" <> "<dd>" <> T.pack (show v) <> "</dd>"
 
+textToXml :: T.Text -> T.Text
+textToXml = mkXml . snd . mkMap . parse
 {-
-mkXml (snd (mkMap (parse input)))
+textToXml input
+
+-- mkXml :: StateCityCount -> TL.Text
+mkXml x = TLB.toLazyText (M.foldlWithKey go1 "" x)
+ where
+  go1 r k v =
+    r <> "<li>" <> k <> "<dl>" <> M.foldlWithKey go2 "" v <> "</dl></li>"::TLB.Builder
+  go2 r k v =
+    r <> "<dt>" <> k <> "</dt>" <> "<dd>" <> TLB.fromString (show v) <> "</dd>"::TLB.Builder
+
 -}
 
