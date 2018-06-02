@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 62bf83ba97aac82eced4429bbffa10f770be93e11fc701554d54cac4aa368a38
+-- hash: f22f16635954cf68de0111ce24957ba7c0f14d74aba9701a8447b8271fc976e1
 
 name:           applied-haskell-snoyman
 version:        0.1.0.0
@@ -14,7 +14,8 @@ library
       AH
       E1
       E1Michael
-      RT
+      MySTM
+      MyTMVar
   other-modules:
       Paths_applied_haskell_snoyman
   hs-source-dirs:
@@ -27,6 +28,8 @@ library
     , containers
     , deepseq
     , mtl
+    , say
+    , stm
     , text
     , transformers
     , vector
@@ -47,6 +50,8 @@ executable main
     , containers
     , deepseq
     , mtl
+    , say
+    , stm
     , text
     , transformers
     , vector

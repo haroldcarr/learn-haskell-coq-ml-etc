@@ -8,6 +8,8 @@ dependencies:
 - containers
 - deepseq
 - mtl
+- say
+- stm
 - text
 - transformers
 - vector

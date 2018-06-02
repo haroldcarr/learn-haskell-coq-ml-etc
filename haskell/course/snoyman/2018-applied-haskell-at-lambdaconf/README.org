@@ -1,3 +1,9 @@
+------------------------------------------------------------------------------
+
+https://gitter.im/applied-haskell/2018
+
+------------------------------------------------------------------------------
+
 Johan Tibell:
 Should Haskell be lazy or strict?
 Wrong question.
@@ -38,5 +44,23 @@ https://www.stackage.org/lts-8.8/hoogle?q=fmap
 
 ------------------------------------------------------------------------------
 
+prefer `withAsync` over `async`
 
+------------------------------------------------------------------------------
 
+https://www.snoyman.com/reveal
+
+------------------------------------------------------------------------------
+
+hand written To/FromJSON instance (instead of derived via Generic)
+so you do not change interface on wire if you change the name of a field on the data type.
+
+------------------------------------------------------------------------------
+
+GHC.Prim
+unsafeDupablePerformIO
+
+https://haskell-lang.org/tutorial/primitive-haskell
+https://wiki.haskell.org/Evaluation_order_and_state_tokens
+
+------------------------------------------------------------------------------
