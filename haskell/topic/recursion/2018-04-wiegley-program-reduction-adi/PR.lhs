@@ -170,7 +170,7 @@ context around each evaluation step
 >   xxx' <- xxx
 >   return $ evaluate xxx'
 >
-> rttt = runReaderT (em ia) []
+> -- rttt = runReaderT (em ia) []
 
 rest of logic happens in throwError, which queries MonadReader instance
 for the current list of frames, and reports all the positions to the user

@@ -61,10 +61,10 @@ cataM f = (f =<<) . traverse (cataM f) . unFix
 eval :: Expr -> ((), Maybe Int)
 eval  = adi phi psi
   where
-    phi          (Val x)    = x
-    phi          (Add x y)  = x + y
-    psi k v@(Fix (Val _))   = trace "Evaluating Val" $ k v
-    psi k v@(Fix (Add _ _)) = trace "Evaluating Add" $ k v
+    phi          (Val x)    = trace "\neval phi     Val"   x
+    phi          (Add x y)  = trace "\neval phi     Add" $ x + y
+    psi k v@(Fix (Val _))   = trace "\neval psi Fix Val" $ k v
+    psi k v@(Fix (Add _ _)) = trace "\neval psi Fix Add" $ k v
 
 ph :: ExprF Int -> Int
 ph (Val x)   = x
