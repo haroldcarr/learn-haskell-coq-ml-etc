@@ -1,0 +1,49 @@
+name:                hc
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.10 && < 10
+- pretty-show
+- rio >= 0.1.1.0
+
+# configuration
+- etc
+- file-embed
+- aeson
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+
+executables:
+  main:
+    source-dirs:         app
+    main:                Main.hs
+    dependencies:
+    - hc
+    - optparse-simple
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+
+tests:
+  hc-test:
+    source-dirs:         test
+    main:                Spec.hs
+    dependencies:
+    - hc
+    - hspec
+
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N

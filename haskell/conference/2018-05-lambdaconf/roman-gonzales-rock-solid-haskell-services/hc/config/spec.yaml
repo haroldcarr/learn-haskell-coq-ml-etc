@@ -1,0 +1,47 @@
+etc/files:
+  env: APP_CONFIG_FILE
+  paths:
+  - ./config/development.yaml
+  - /etc/my-app/integration.yaml
+  - /etc/my-app/production.yaml
+
+etc/entries:
+  logging:
+    verbose:
+      etc/spec:
+        default: False
+        env: APP_LOG_VERBOSE
+    handle:
+      etc/spec:
+        default: 'stdout'
+        env: APP_LOG_HANDLE
+
+  database:
+    username:
+      etc/spec:
+        default: lc2018
+        type: string
+        env: APP_DB_USER
+        cli:
+          input: option
+          required: false
+          long: user
+          metavar: USERNAME
+    password:
+      etc/spec:
+        type: string
+        sensitive: true
+        env: APP_DB_PASSWORD
+        cli:
+          input: option
+          required: false
+          long: password
+          metavar: PASSWORD
+    database:
+      etc/spec:
+        default: lc2018
+        type: string
+    host:
+      etc/spec:
+        default: localhost
+        type: string

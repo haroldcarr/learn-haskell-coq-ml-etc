@@ -1,0 +1,141 @@
+------------------------------------------------------------------------------
+* notes
+
+MonadThrow is GOOD API - use it
+
+Matt
+- best lens tutorial: Lens Over Tea
+- person who wrote it wrote microlens in process of understanding lens
+
+------------------------------------------------------------------------------
+* intro
+
+Rock-Solid Haskell Services - Roman Gonzalez
+https://github.com/roman/lc-2018-rock-solid-haskell-services
+git clone git@github.com:roman/lc-2018-rock-solid-haskell-services.git
+cd lc-2018-rock-solid-haskell-services.git
+git submodule init && git submodule update
+
+./lc-2018-rock-solid-haskell-services/slides/slides.html
+
+slack #haskell-rss-2018
+
+** prerequisites
+
+- stack
+- Docker (and docker-compose)
+- Toxiproxy-cli and toxiproxy-server (link)
+  - https://github.com/Shopify/toxiproxy/releases/tag/v2.1.3
+- ghcid
+
+
+------------------------------------------------------------------------------
+* implement small program in RIO
+
+./lc-2018-rock-solid-haskell-services/1-small-program/app/Main.lhs
+cd ./lc-2018-rock-solid-haskell-services/1-small-program/
+stack repl
+
+mainLogger
+mainProc
+
+------------------------------------------------------------------------------
+* team workflow
+
+Do not script directly against Travis, Jenkins, etc.
+Use Makefiles (or Shake, or whatever)
+
+------------------------------------------------------------------------------
+* config
+
+do NOT use Data.Default
+- bad use of type classes
+- do not put Defaults in code
+
+use =etc= : https://github.com/roman/Haskell-etc
+
+./lc-2018-rock-solid-haskell-services/2-config-program/app/Main.hs
+cd ./lc-2018-rock-solid-haskell-services/2-config-program
+stack repl
+
+main
+*** Exception: InvalidConfiguration (Just "database") "Error in $.password: expected Text, encountered Null"
+
+docker-compose up -d
+docker-compose stop
+
+updated config file:
+
+etc/files:
+  env: APP_CONFIG_FILE
+  paths:
+  - ./config/development.yaml
+  - /etc/my-app/integration.yaml
+  - /etc/my-app/production.yaml
+
+etc/entries:
+  logging:
+    verbose:
+      etc/spec:
+        default: False
+        env: APP_LOG_VERBOSE
+    handle:
+      etc/spec:
+        default: 'stdout'
+        env: APP_LOG_HANDLE
+
+  database:
+    username:
+      etc/spec:
+        default: lc2018
+        type: string
+        env: APP_DB_USER
+        cli:
+          input: option
+          required: false
+          long: user
+          metavar: USERNAME
+    database:
+      etc/spec:
+        default: lc2018
+        type: string
+    host:
+      etc/spec:
+        default: localhost
+        type: string
+    password:
+      etc/spec:
+        type: string
+        sensitive: true
+        env: APP_DB_PASSWORD
+        cli:
+          input: option
+          required: false
+          long: password
+          metavar: PASSWORD
+
+------------------------------------------------------------------------------
+* define your application in layers
+
+./lc-2018-rock-solid-haskell-services/3-component-program/app/Main.hs
+./lc-2018-rock-solid-haskell-services/3-component-program
+
+ComponentM is layer 0
+ResourceT is layer 2
+
+------------------------------------------------------------------------------
+* Model sensitive components as reliable processes
+
+replace forkIO or async
+
+./lc-2018-rock-solid-haskell-services/4-producer-consumers/app/Main.hs
+
+see : capataz : StealWorkerPool
+
+------------------------------------------------------------------------------
+* dealing with flaky integration points
+
+
+
+
+

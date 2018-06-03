@@ -1,0 +1,11 @@
+resolver: lts-11.11
+packages:
+- .
+extra-deps:
+- etc-0.4.0.3
+flags:
+  etc:
+    yaml: true
+    cli: true
+    extra: true
+# extra-package-dbs: []
