@@ -7,6 +7,7 @@ library
   build-depends:       base >=4.7 && <5
                      , haskell-src-exts
                      , universum
-  exposed-modules:     PR
+  exposed-modules:     ADI
+                     , PR
   ghc-options:         -Wall
   default-language:    Haskell2010
