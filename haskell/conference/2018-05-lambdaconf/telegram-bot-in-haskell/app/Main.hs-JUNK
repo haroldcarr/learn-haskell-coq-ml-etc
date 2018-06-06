@@ -1,0 +1,40 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+module Main where
+
+import           Data.Text
+import qualified Telegram.Bot.API as Telegram
+import           Telegram.Bot.Simple
+import           Telegram.Bot.Simple.Debug
+
+data Model = Model deriving Show
+
+data Action
+  = DoNothing
+  | Echo Text
+  deriving Show
+
+bot :: BotApp Model Action
+bot = BotApp
+  { botInitialModel = Model
+  , botAction = handleUpdate
+  , botHandler = handleAction
+  , botJobs = []
+  }
+
+-- parse update structure
+handleUpdate :: Telegram.Update -> Model -> Maybe Action
+handleUpdate _ _ = Just (Echo "Hello")
+
+-- | computation that produces new state and new action
+handleAction :: Action -> Model -> Eff Action Model
+handleAction _ model = pure model
+
+-- run :: Telegram.Token -> IO ()
+run token = do
+  env <- Telegram.defaultTelegramClientEnv token
+  startBot bot env
+
+-- main :: IO ()
+main = getEnvToken "HCTELEGRAM" >>= run
+
