@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c2fd4e3c64c7246f829310323143f5727640be0f6bbe06b7ecdf92d98abdafc9
+-- hash: fd7c177139ae16fae39c8bfc805cfc93f3ae5a6da9d36ef563bd4499cde176ec
 
 name:           hc
 version:        0.1.0.0
@@ -24,10 +24,13 @@ library
   build-depends:
       aeson
     , base >=4.10 && <10
+    , componentm
+    , componentm-devel
     , etc
     , file-embed
     , pretty-show
-    , rio >=0.1.1.0
+    , rio
+    , rio-orphans
   default-language: Haskell2010
 
 executable main
@@ -40,12 +43,15 @@ executable main
   build-depends:
       aeson
     , base >=4.10 && <10
+    , componentm
+    , componentm-devel
     , etc
     , file-embed
     , hc
     , optparse-simple
     , pretty-show
-    , rio >=0.1.1.0
+    , rio
+    , rio-orphans
   default-language: Haskell2010
 
 test-suite hc-test
@@ -60,10 +66,13 @@ test-suite hc-test
   build-depends:
       aeson
     , base >=4.10 && <10
+    , componentm
+    , componentm-devel
     , etc
     , file-embed
     , hc
     , hspec
     , pretty-show
-    , rio >=0.1.1.0
+    , rio
+    , rio-orphans
   default-language: Haskell2010

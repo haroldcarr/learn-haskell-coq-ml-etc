@@ -1,0 +1,204 @@
+==============================================================================
+SUNDAY
+
+Mike Stay
+Rho calculus
+doing both sharding and off-chain TXs
+https://medium.com/@vimirimious34/rchain-multi-threading-blockchain-visa-alike-scalability-ff865d0b8eb6
+
+https://dl.acm.org/citation.cfm?id=1705674
+https://ac.els-cdn.com/S1571066105051893/1-s2.0-S1571066105051893-main.pdf?_tid=713012f8-af17-4779-adc6-396f1fe7b720&acdnat=1528228920_e36220d062dc62504f81e6be0729fd2f
+https://tech.labs.oliverwyman.com/downloads/ex_nihilo_logic.pdf
+
+
+==============================================================================
+MONDAY
+------------------------------------------------------------------------------
+
+* ./telegram-bot-in-haskell/0-README.org
+
+------------------------------------------------------------------------------
+* Alejandro - the ultimate generics library
+
+based on Victor's structural diff work.
+
+can handle GADTs
+
+https://gist.github.com/serras/b6a0640402cd662254332eef4aa40acb
+
+------------------------------------------------------------------------------
+* Eff in Anger
+
+Arnaud Bailly, Jan Christopher Vogt : http://symbiont.io
+
+Control.Monad.Freer
+
+https://tiny.cc/eff-in-anger
+https://github.com/symbiont-io/eff-in-anger
+
+------------------------------------------------------------------------------
+* Wabbit (FFI)
+
+Chris McKinlay : formation.ai
+
+import Language.C.InLine (by FPComplete)
+- more concise way to use FFI
+
+trick:
+- haskell contains pointers/index to structures that only live in C
+
+------------------------------------------------------------------------------
+* hallway - thomas dietert - nanocoin
+ECC
+pedersen commitments
+clients just trying now
+use cloud haskell with 1 to 4 nodes
+- leader and validators
+------------------------------------------------------------------------------
+* generate, compile, test, build presentation
+Markus Hauck : Codecentric
+
+uses: shake, dhall, imagemagick, ditta,  graphviz, plantuml, latex, ...
+reproducible: via nix
+
+http://github.com/markus1189/how-this-presentation
+
+------------------------------------------------------------------------------
+* alejandro - what is a side-effect
+
+------------------------------------------------------------------------------
+* hallway - Joel Burget - "Kadena"
+
+PACT has assertions.
+Uses Z3 to check assertions.
+
+==============================================================================
+TUESDAY
+------------------------------------------------------------------------------
+* ME
+------------------------------------------------------------------------------
+* Ivan Gromakovskii (Serokell) "Developing Cardano Cryptocurrency in Haskell"
+
+Best Practices: https://github.com/input-output-hk/cardano-sl/tree/develop/docs
+
+https://github.com/input-output-hk/cardano-sl
+
+** serialization
+
+replace `binary` with https://github.com/input-output-hk/cardano-sl/tree/develop/binary
+use it with cborg
+
+** database
+
+rocksdb
+- stores blockchain state computed from blocks
+
+filesystem
+- stores blocks
+
+acid-state
+- wallet
+
+** monitoring
+
+ekg
+- general: CPU, memeory, RTS
+- frequence of block creation; usage of queues; wait times
+- ekg-statsd -> Datadog -> PagerDuty
+
+cardano-report-server
+
+** Effect handling
+
+type classes viz explicit dictionaries
+
+impure code:they use:
+- newtype Base a = BaseIO (IO a)
+- method dictionaries + ReaderT + Has + HasLens
+
+pure code
+- concreate monad transforers: StateT/ExceptT (not MonadState/MonadError)
+- hightlishs purity of code
+- avoid WriterT
+  - leaks space (use StateT instead)
+
+** Exception handling
+
+programmer mistake
+- call impartial function
+- do not use undefined; non-exhaustive pattern matching
+- DO: use TYPES; comment invariants, pre/post
+
+regular error
+- readFile
+- do not: use error/undefined; MonadFile; Text to rep errors
+- DO: custom exception type; Either ErrorADT, Maybe; ErrorT; ExceptT
+
+purity level
+- impure: readFile, lookupThrow
+- pure: lookupMaybe
+- DONOT; MonadFila, CatchT, return m (Either e a) if e has Exception instance
+- DO : throwM
+
+** infrastructure
+
+stack, nix, https://github.com/input-output-hk/stack2nix
+ci: travis; BuildKite; Appveyor
+
+** conventions
+
+universum
+async
+
+------------------------------------------------------------------------------
+* Joel Burget (Kadena) "Authoring and Formal Verification of Smart Contracts in PACT"
+
+joel@monic.co
+
+Pact property checking system
+
+Pact
+- non turing complete
+- data stored intables owned by the contract
+- authZ "keysets: entities that can do an action"
+- TX semantics (and =enforce=)
+
+smart contracts
+- unit tests are not sufficient versus adversaries
+- a contract is only as correct as its spec
+
+paper: formal ver of spacecraft ...
+
+property checker
+- static analysis (not interactive)
+- microsoft Z3 theorem prover
+- enfore schema invariants and function properties for all possible inputs and program states
+  - NOT a proof that program is correct
+
+schema invariants : (invariant (> balance 0))
+function invqriants : result is > 0
+
+translate to haskell library =SBV= format (SMTLib)
+
+------------------------------------------------------------------------------
+* Monica Quaintance (Kadena) "ChainWeb: A Parallel-Chain Architecture for Massive Throughput"
+
+ScalableBFT: variant of RAFT / Tangoroa
+
+ChainWeb
+Scalability : 10,000 TPS
+
+fixed graph structure (i.e., number of chains) : hard fork for growth
+entaglement for extra security and the ability to pass info along entanglement paths
+- but gives quicker hash rate, easier to forge, but stronger security offsets
+
+------------------------------------------------------------------------------
+* François-René Rideau (Legicash) : BINDING BLOCKCHAINS TOGETHER WITH ACCOUNTABILITY THROUGH COMPUTABILITY LOGIC
+
+
+
+
+info          : https://legi.cash/
+help telegram : https://t.me/LegicashCommunity
+whitepaper    : https://j.mp/FaCTS
+code          : https://j.mp/LegicashCodeReleasePreview

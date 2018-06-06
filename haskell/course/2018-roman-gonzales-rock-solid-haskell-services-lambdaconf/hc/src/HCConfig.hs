@@ -4,12 +4,14 @@
 
 module HCConfig where
 
-import qualified Data.Aeson       as JSON
-import qualified Data.Aeson.Types as JSON
-import qualified Data.FileEmbed   as DFE
+import qualified Control.Monad.Component as CMC
+-- import qualified Control.Monad.Component.Development as CMCD
+import qualified Data.Aeson              as JSON
+import qualified Data.Aeson.Types        as JSON
+import qualified Data.FileEmbed          as DFE
 import           RIO
-import qualified RIO.Text         as Text
-import qualified System.Etc       as Etc
+import qualified RIO.Text                as Text
+import qualified System.Etc              as Etc
 
 specBytes :: ByteString
 specBytes = $(DFE.embedFile "./config/spec.yaml")
@@ -29,8 +31,8 @@ resolveConfigSpec configSpec = do
   return ( defaultConfig <> fileConfig <> envConfig <> cliConfig
          , fileWarnings )
 
-buildConfig :: IO (Etc.Config, Vector SomeException)
-buildConfig = do
+buildConfig :: CMC.ComponentM (Etc.Config, Vector SomeException)
+buildConfig = CMC.buildComponent_ "buildConfig" $ do
   configSpec <- parseConfigSpec
   resolveConfigSpec configSpec
 
@@ -51,5 +53,10 @@ buildLogOptions config = do
   handle0 <- Etc.getConfigValueWith parseLogHandle ["logging", "handle"] config
   logOptionsHandle handle0 True
 
+buildLogger :: Etc.Config -> CMC.ComponentM LogFunc
+buildLogger config = do
+  logOptions       <- liftIO $ buildLogOptions config
+  (appLogFunc, _)  <- CMC.buildComponent "logger" (newLogFunc logOptions) snd
+  return appLogFunc
 
 

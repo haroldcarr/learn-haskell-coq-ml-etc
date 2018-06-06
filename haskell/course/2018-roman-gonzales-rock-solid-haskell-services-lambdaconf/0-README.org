@@ -7,6 +7,11 @@ Matt
 - best lens tutorial: Lens Over Tea
 - person who wrote it wrote microlens in process of understanding lens
 
+in IO: (approximately):
+runMaybeT $ do
+  x <- MaybeT xxx
+  y <- MaybeT xxx
+
 ------------------------------------------------------------------------------
 * intro
 

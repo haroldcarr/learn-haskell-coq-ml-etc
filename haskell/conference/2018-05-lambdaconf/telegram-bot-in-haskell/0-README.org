@@ -1,0 +1,31 @@
+
+https://github.com/fizruk/lambdaconf-2018-workshop/blob/master/PREPARE.md
+git clone https://github.com/fizruk/lambdaconf-2018-workshop.git
+
+https://github.com/fizruk/telegram-bot-simple
+
+------------------------------------------------------------------------------
+
+BotFather, [04.06.18 09:27]
+Alright, a new bot. How are we going to call it? Please choose a name for your bot.
+
+Harold Carr, [04.06.18 09:27]
+hclambdaconf2018
+
+BotFather, [04.06.18 09:27]
+Good. Now let's choose a username for your bot. It must end in `bot`. Like this, for example: TetrisBot or tetris_bot.
+
+Harold Carr, [04.06.18 09:27]
+hclambdaconf2018bot
+
+BotFather, [04.06.18 09:27]
+Done! Congratulations on your new bot. You will find it at t.me/hclambdaconf2018bot. You can now add a description, about section and profile picture for your bot, see /help for a list of commands. By the way, when you've finished creating your cool bot, ping our Bot Support if you want a better username for it. Just make sure the bot is fully operational before you do this.
+
+Use this token to access the HTTP API:
+554397039:AAEcaBmixdMBA0_udSN3WAX3ufgh0_e3DA8
+
+For a description of the Bot API, see this page: https://core.telegram.org/bots/api
+
+------------------------------------------------------------------------------
+
+export TELEGRAM_BOT_TOKEN=554397039:AAEcaBmixdMBA0_udSN3WAX3ufgh0_e3DA8

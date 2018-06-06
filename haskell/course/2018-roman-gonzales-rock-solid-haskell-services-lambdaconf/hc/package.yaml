@@ -4,12 +4,15 @@ version:             0.1.0.0
 dependencies:
 - base >= 4.10 && < 10
 - pretty-show
-- rio >= 0.1.1.0
+- rio
+- rio-orphans
 
 # configuration
+- aeson
+- componentm
+- componentm-devel
 - etc
 - file-embed
-- aeson
 
 ghc-options:
 - -Wall

@@ -9,7 +9,8 @@ import RIO.Process
 import HCConfig
 
 main :: IO ()
-main = do
+main = do undefined
+  {-
   (config, _fileWarnings) <- buildConfig
   logOptions <- buildLogOptions config
   pc <- mkDefaultProcessContext
@@ -18,3 +19,4 @@ main = do
                   , appProcessContext = pc
                   }
      in runRIO app (run config)
+  -}
