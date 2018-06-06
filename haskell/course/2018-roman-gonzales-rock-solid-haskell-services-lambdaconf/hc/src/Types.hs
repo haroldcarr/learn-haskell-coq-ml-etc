@@ -3,7 +3,8 @@
 module Types where
 
 import           RIO
-import           RIO.Process
+
+{-# ANN module ("HLint: ignore Use newtype instead of data" :: String) #-}
 
 -- | Command line arguments
 data Options = Options
@@ -11,11 +12,8 @@ data Options = Options
   }
 
 data App = App
-  { appLogFunc        :: !LogFunc
-  , appProcessContext :: !ProcessContext
+  { appLogFunc :: !LogFunc
   }
 
 instance HasLogFunc App where
   logFuncL = lens appLogFunc (\x y -> x { appLogFunc = y })
-instance HasProcessContext App where
-  processContextL = lens appProcessContext (\x y -> x { appProcessContext = y })

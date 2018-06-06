@@ -1,11 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
--- | Silly utility module, used to demonstrate how to write a test
--- case.
+
+-- | Demonstrates how to write a test case that tests this module.
 module Util
   ( plus2
-  ) where
+  )
+where
 
-import RIO
+import           RIO
 
 plus2 :: Int -> Int
 plus2 = (+ 2)

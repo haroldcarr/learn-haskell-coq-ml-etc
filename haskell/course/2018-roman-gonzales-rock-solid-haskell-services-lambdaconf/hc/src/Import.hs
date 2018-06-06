@@ -4,5 +4,5 @@ module Import
   , module Types
   ) where
 
-import RIO
-import Types
+import           RIO
+import           Types
