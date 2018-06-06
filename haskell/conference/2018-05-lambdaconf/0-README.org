@@ -193,12 +193,26 @@ entaglement for extra security and the ability to pass info along entanglement p
 - but gives quicker hash rate, easier to forge, but stronger security offsets
 
 ------------------------------------------------------------------------------
-* François-René Rideau (Legicash) : BINDING BLOCKCHAINS TOGETHER WITH ACCOUNTABILITY THROUGH COMPUTABILITY LOGIC
-
-
-
+* François-René Rideau (Legicash) : Binding Blockchains Together with Accountability Through Computability Logic
 
 info          : https://legi.cash/
 help telegram : https://t.me/LegicashCommunity
 whitepaper    : https://j.mp/FaCTS
 code          : https://j.mp/LegicashCodeReleasePreview
+
+==============================================================================
+WEDNESDAY
+------------------------------------------------------------------------------
+Brooklyn Zelenka : FinHaven : Vancouver, Canada
+
+https://www.finhaven.com/
+https://medium.com/finhaven-technology
+https://medium.com/@expede
+
+Creating constraint language (looks like Cobol) for financial transfer.
+Sends to constraint solver.
+If valid, compiles to intermediate language.
+Compile intermediate to EVM (and others in future).
+
+Using Haskell for language.
+
