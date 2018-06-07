@@ -3,7 +3,7 @@
 
 module ADI where
 
-import Control.Monad.Reader
+-- import Control.Monad.Reader
 import           Debug.Trace
 
 {-# ANN module ("HLint: ignore Avoid lambda"        :: String) #-}
@@ -40,13 +40,15 @@ data ExprF r
 type Expr = Fix ExprF
 
 evalCata :: Expr -> Int
-evalCata = cata $ \case
-  Const (AInt  n) -> n
-  Const (ABool b) -> if b then 1 else 0
-  Add   l r       -> l + r
-  If    c t e     -> if c /= 0 then t else e
+evalCata = cata phi
+  where
+    phi = \case
+      Const (AInt  n) -> n
+      Const (ABool b) -> if b then 1 else 0
+      Add   l r       -> l + r
+      If    c t e     -> if c /= 0 then t else e
 
--- | psi
+-- | phi
 --   - Runs first.
 --   - It is given a continuation `k` and values before recursion.
 --   - Whatever it returns to `k` is the given to phi.
@@ -66,7 +68,7 @@ evalAdi  = adi phi psi
     psi k v@(Fix (If  _ _ _))       = trace "\nFix If"   $ k v
 
 iff :: Expr
-iff = Fix (If (Fix (Const (AInt 0)))
+iff = Fix (If (Fix (Const (ABool False)))
               (Fix (Const (AInt 1)))
               (Fix (Const (AInt 2))))
 
@@ -82,14 +84,17 @@ eai   = evalAdi  (Fix (Const (AInt 0)))
 ecadd = evalCata add
 eaadd = evalAdi  add
 
-evalAdiR :: Expr -> Reader Int Int
-evalAdiR  = adi phi psi
+evalAdiBeforeAfter :: Expr -> Int
+evalAdiBeforeAfter  = adi phi psi
   where
-    phi          (Const (AInt  n))  = trace "\nNInt"     $ n
-    phi          (Const (ABool b))  = trace "\nBool"     $ if b then 1 else 0
-    phi          (Add l r)          = trace "\nNAdd"     $ l + r
-    phi          (If  c t e)        = trace "\nIf"       $ if c /= 0 then t else e
-    psi k   (Fix (Const (AInt  n))) = trace "\nFix Int"  $ k (Fix (Const (AInt (n))))
-    psi k v@(Fix (Const (ABool _))) = trace "\nFix Bool" $ k v
-    psi k   (Fix (Add l _))         = trace "\nFix Add"  $ k (Fix (Const (AInt (psi k l))))
-    psi k v@(Fix (If  _ _ _))       = trace "\nFix If"   $ k v
+    phi          (Const (AInt  n))  = trace  "\nNInt"             $ n
+    phi          (Const (ABool b))  = trace  "\nBool"            $ if b then 1 else 0
+    phi          (Add l r)          = trace  "\nNAdd"            $ l + r
+    phi          (If  c t e)        = trace  "\nIf"              $ if c /= 0 then t else e
+    psi k   (Fix (Const (AInt  n))) = trace  "\nFix Int"         $ k (Fix (Const (AInt (n))))
+    psi k v@(Fix (Const (ABool _))) = trace  "\nFix Bool Before" $ case k v of
+                                x ->  trace ("\nFix Bool After" ++ show x)
+                                                                 $ x
+    psi k   (Fix (Add l _))         = trace "\nFix Add"          $ k (Fix (Const (AInt (psi k l))))
+    psi k v@(Fix (If  _ _ _))       = trace "\nFix If"           $ k v
+

@@ -25,7 +25,8 @@ type Expr = Fix ExprF
 adi :: (Monoid b, Applicative s, Traversable t)
     => (t a -> a)
     -> ((Fix t -> (b, s a)) -> Fix t -> (b, s a))
-    -> Fix t -> (b, s a)
+    -> Fix t
+    -> (b, s a)
 adi f g = g (go . traverse (adi f g) . unFix)
   where
     go = fmap (fmap f . sequenceA)
