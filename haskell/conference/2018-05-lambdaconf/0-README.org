@@ -216,3 +216,9 @@ Compile intermediate to EVM (and others in future).
 
 Using Haskell for language.
 
+------------------------------------------------------------------------------
+Coury Ditch : Opolis : Denver, Colorado
+
+https://opolis.co/
+https://github.com/cmditch/elm-ethereum
+cmditch@gmail.com

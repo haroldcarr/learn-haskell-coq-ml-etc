@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fd7c177139ae16fae39c8bfc805cfc93f3ae5a6da9d36ef563bd4499cde176ec
+-- hash: 574c01cff07d3bc1674a6ef474a21500b688b243736ef0881a58dd94e400711f
 
 name:           hc
 version:        0.1.0.0
@@ -11,7 +11,6 @@ cabal-version:  >= 1.10
 
 library
   exposed-modules:
-      HCConfig
       Import
       Run
       Types
