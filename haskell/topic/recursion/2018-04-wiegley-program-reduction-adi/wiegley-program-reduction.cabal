@@ -8,7 +8,10 @@ library
                      , haskell-src-exts
                      , mtl
                      , universum
+                     , wl-pprint
   exposed-modules:     ADI
+                     , ANN
+                     , ExprF
                      , PR
   ghc-options:         -Wall
   default-language:    Haskell2010
