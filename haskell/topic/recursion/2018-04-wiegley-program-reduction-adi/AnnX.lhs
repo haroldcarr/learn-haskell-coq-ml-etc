@@ -11,9 +11,10 @@
 >
 > module ANN where
 >
-> import Control.Arrow ((&&&))
+> import           Control.Arrow ((&&&))
 > import qualified Text.PrettyPrint.Leijen       as PP
-> import ExprF
+> ------------------------------------------------------------------------------
+> import           ExprF
 
 > type Expr = Fix ExprF
 >
@@ -42,11 +43,11 @@
 example: Annotating
 -------------------
 
-- useful for storing intermediate values
-- inspired by ideas from *attribute grammars*
+- use-case: storing intermediate values
 
-Use a *cofree comonad* structure `Ann f a` to annotate nodes of
-type `f` with attributes of type `a`.
+Use a *cofree comonad* structure `Ann f a`
+- to annotate nodes of type `f`
+- with attributes of type `a`.
 
 > -- | Annotate (f r) with attribute a
 > newtype AnnF f a r = AnnF (f r, a) deriving Functor
@@ -99,7 +100,6 @@ For example, annotating each node with the sizes of all subtrees:
     else (b @ 4 + 2 @ 4) @ 3) @ 2
       * 3 @ 2) @ 1
 ~~~
-
 
 ------------------------------------------------------------------------------
 
