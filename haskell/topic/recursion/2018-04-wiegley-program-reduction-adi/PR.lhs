@@ -9,6 +9,7 @@
 > import Data.Functor.Compose
 > import Language.Haskell.Exts.SrcLoc
 > import Universum
+> import Fix
 
 John Wiegley
 Program Reduction: A Win for Recursion Schemes
@@ -27,9 +28,7 @@ places in structure where recursion is possible identified by type variable r
 > data NExprF r
 >   = NConstant NAtom
 >   | NIf r r r
->   deriving (Show, Functor)
->
-> newtype Fix f = Fix { unFix :: f (Fix f) }
+>   deriving (Functor, Show)
 >
 > -- The type of recursive expression trees is the
 > -- least fixed-point of the expression functor above.

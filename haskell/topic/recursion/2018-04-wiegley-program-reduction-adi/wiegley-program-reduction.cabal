@@ -10,8 +10,10 @@ library
                      , universum
                      , wl-pprint
   exposed-modules:     ADI
-                     , ANN
+                     , Ann
                      , ExprF
+                     , Fix
                      , PR
+                     , RS
   ghc-options:         -Wall
   default-language:    Haskell2010

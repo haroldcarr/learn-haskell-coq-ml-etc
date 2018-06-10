@@ -1,10 +1,11 @@
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE LambdaCase #-}
 
 module ADI where
 
--- import Control.Monad.Reader
 import           Debug.Trace
+import           ExprF
+import           Fix
+import           RS
 
 {-# ANN module ("HLint: ignore Avoid lambda"        :: String) #-}
 {-# ANN module ("HLint: ignore Eta reduce"          :: String) #-}
@@ -12,32 +13,24 @@ import           Debug.Trace
 {-# ANN module ("HLint: ignore Redundant bracket"   :: String) #-}
 {-# ANN module ("HLint: ignore Use record patterns" :: String) #-}
 
-newtype Fix f = Fix { unFix :: f (Fix f) }
-
+{-
 cata,cata'
   :: Functor f
   =>        (f a ->   a)                  -- f
   ->                        Fix f -> a
+-}
 adi,adi',adi''
   :: Functor f
   =>        (f a ->   a)                  -- f
   ->   ((Fix f   ->   a) -> Fix f -> a)   -- g
   ->                        Fix f -> a
+{-
 cata  f     =            f . fmap (cata f)   . unFix
 cata' f x   =            f  (fmap (cata f)    (unFix       x))
+-}
 adi   f g   = g         (f . fmap (adi  f g) . unFix)
 adi'  f g x = g ( \z -> (f . fmap (adi  f g) . unFix) z)   x
 adi'' f g x = g ( \z ->  f  (fmap (adi  f g)  (unFix  z))) x
-
-data Atom = AInt Int | ABool Bool deriving Show
-
-data ExprF r
-  = Const Atom
-  | Add r r
-  | If r r r
-  deriving (Show, Functor)
-
-type Expr = Fix ExprF
 
 evalCata :: Expr -> Int
 evalCata = cata phi
@@ -48,13 +41,10 @@ evalCata = cata phi
       Add   l r       -> l + r
       If    c t e     -> if c /= 0 then t else e
 
--- | phi
---   - Runs first.
---   - It is given a continuation `k` and values before recursion.
+-- | psi
+--   - Given continuation `k` and values before recursion.
 --   - Whatever it returns to `k` is the given to phi.
---   psi
---   - Runs second.
---   - It is given fully evaluated arguments.
+--   phi
 evalAdi :: Expr -> Int
 evalAdi  = adi phi psi
   where
@@ -87,7 +77,7 @@ eaadd = evalAdi  add
 evalAdiBeforeAfter :: Expr -> Int
 evalAdiBeforeAfter  = adi phi psi
   where
-    phi          (Const (AInt  n))  = trace  "\nNInt"             $ n
+    phi          (Const (AInt  n))  = trace  "\nNInt"            $ n
     phi          (Const (ABool b))  = trace  "\nBool"            $ if b then 1 else 0
     phi          (Add l r)          = trace  "\nNAdd"            $ l + r
     phi          (If  c t e)        = trace  "\nIf"              $ if c /= 0 then t else e

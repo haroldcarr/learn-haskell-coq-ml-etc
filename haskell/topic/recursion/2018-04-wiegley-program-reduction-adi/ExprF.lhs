@@ -11,38 +11,30 @@
 >
 > module ExprF where
 >
-> import           Data.Functor.Classes  (Eq1(..), Show1(..))
+> import           Fix
 >
 > {-# ANN module "HLint: ignore Use record patterns"           #-}
 >
-> data ExprF r = Const Int
->              | Var   Id
->              | Add   r r
->              | Mul   r r
->              | IfNeg r r r
->                deriving (Eq, Foldable, Functor, Ord, Show, Traversable)
+> data Atom = AInt Int | ABool Bool deriving (Eq, Ord, Show)
+>
+> data ExprF r
+>   = Const Atom
+>   | Add r r
+>   | If r r r
+>   deriving (Eq, Foldable, Functor, Ord, Show, Traversable)
+>
+> type Expr = Fix ExprF
 
-> instance Eq1 ExprF where
->   liftEq _  (Const il)       (Const ir)       = il == ir
->   liftEq _  (Const  _)        _               = False
->   liftEq _           _       (Const  _)       = False
->   liftEq _  (Var il)         (Var ir)         = il == ir
->   liftEq _  (Var  _)          _               = False
->   liftEq _           _       (Var  _)         = False
->   liftEq eq (Add l1 l2)      (Add r1 r2)      = eq l1 r1 && eq l2 r2
->   liftEq _  (Add  _  _)       _               = False
->   liftEq _           _       (Add  _  _)      = False
->   liftEq eq (Mul l1 l2)      (Mul r1 r2)      = eq l1 r1 && eq l2 r2
->   liftEq _  (Mul  _  _)       _               = False
->   liftEq _                _  (Mul  _  _)      = False
->   liftEq eq (IfNeg l1 l2 l3) (IfNeg r1 r2 r3) = eq l1 r1 && eq l2 r2 && eq l3 r3
+------------------------------------------------------------------------------
 
-> -- TODO
-> instance Show1 ExprF where
->   liftShowsPrec _  _ _  (Const _)     = showString "Const"
->   liftShowsPrec _  _ _  (Var   _)     = showString "Var"
->   liftShowsPrec _  _ _  (Add   _ _)   = showString "Add"
->   liftShowsPrec _  _ _  (Mul   _ _)   = showString "Mul"
->   liftShowsPrec _  _ _  (IfNeg _ _ _) = showString "IfNeg"
-
-> type Id = String
+> e1 :: Fix ExprF
+> e1 = Fix (Add
+>            (Fix (If (Fix (Const (ABool True)))
+>                     (Fix (Add (Fix (Const (AInt 2)))
+>                               (Fix (Const (AInt 3)))))
+>                     (Fix (Add (Fix (Const (AInt (-2))))
+>                               (Fix (Const (AInt (-3))))))))
+>            (Fix (Const (AInt 3))))
+>
+> e2 :: Fix ExprF
+> e2 = Fix (If (Fix (Const (ABool False)))  e1 (Fix (Const (AInt 4))))
