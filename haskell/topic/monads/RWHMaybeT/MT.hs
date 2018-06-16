@@ -1,6 +1,7 @@
 module MT where
 
 import           Data.Functor.Classes
+import           Prelude              hiding (Either (..))
 import           Test.HUnit           (Counts, Test (TestList), runTestTT)
 import qualified Test.HUnit.Util      as U (t,tt)
 
@@ -10,7 +11,6 @@ import qualified Test.HUnit.Util      as U (t,tt)
 --                  wraps UNDERLYING monad's        type parameter with Maybe
 --                                         v        v
 newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) }
-
 
 instance (Functor m) => Functor (MaybeT m) where
     -- (a -> b) -> MaybeT m a -> MaybeT m b
@@ -41,7 +41,7 @@ instance Monad m => Monad (MaybeT m) where
     --         m (Maybe a)
     --                     MaybeT m a
     -- v       v           v
-    unwrapped <- runMaybeT x
+    unwrapped <- runMaybeT x -- runMaybeT remove the 'MaybeT'; '<-' removes the "unknown" monad
     case unwrapped of
       --         m (Maybe b)
       --                Maybe b
@@ -52,7 +52,9 @@ instance Monad m => Monad (MaybeT m) where
       -- Maybe a            a -> MaybeT m b
       --   a                  a
       -- v v  v  v          v v
-      Just y  -> runMaybeT (f y)
+      Just y  -> runMaybeT (f y) -- runMaybeT to remove MaybeT added by 'f'
+                                 -- MaybeT will get added right back outside of 'do'
+                                 -- 'do' body so can run inside "unknown" monad
   -- Monad m => a -> MaybeT m a
   return = MaybeT . return . Just
   -- Monad m => t -> MaybeT m a
@@ -77,8 +79,73 @@ instance (Monad m)       => Monad (IdentityT m) where
 
 ------------------------------------------------------------------------------
 
--- loops
--- xx  = runIdentityT (runMaybeT (fmap (+1) e1))
+class MonadTrans t where
+    -- | Lift a computation from the argument monad to the constructed monad.
+    lift :: (Monad m) => m a -> t m a
+
+instance MonadTrans MaybeT where
+  lift ma = MaybeT $ do
+    a <- ma
+    return (Just a)
+
+{-
+instance MonadTrans MaybeT where
+  lift m = MaybeT (Just `liftM` m)
+-}
+liftM :: Monad m => (a -> b) -> m a -> m b
+liftM f ma = do { a <- ma; return (f a) }
+
+------------------------------------------------------------------------------
+
+data  Either a b  =  Left a | Right b
+  deriving (Eq, Ord, Read, Show)
+
+instance Functor (Either a) where
+  fmap _ (Left  x) = Left x
+  fmap f (Right y) = Right (f y)
+
+instance Applicative (Either e) where
+  pure          = Right
+  Left  e <*> _ = Left e
+  Right f <*> r = fmap f r
+
+instance Monad (Either e) where
+  Left  l >>= _ = Left l
+  Right r >>= k = k r
+
+newtype ExceptT e m a = ExceptT { runExceptT :: m (Either e a) }
+
+mapExceptT :: (m (Either e a) -> n (Either e' b))
+           -> ExceptT e m a
+           -> ExceptT e' n b
+mapExceptT f m = ExceptT $ f (runExceptT m)
+
+instance (Functor m) => Functor (ExceptT e m) where
+  fmap f = ExceptT . fmap (fmap f) . runExceptT
+
+instance (Functor m, Monad m) => Applicative (ExceptT e m) where
+  pure a = ExceptT $ return (Right a)
+  ExceptT f <*> ExceptT v = ExceptT $ do
+    mf <- f
+    case mf of
+      Left  e -> return (Left e)
+      Right k -> do
+        mv <- v
+        case mv of
+          Left  e -> return (Left e)
+          Right x -> return (Right (k x))
+
+instance (Monad m) => Monad (ExceptT e m) where
+  return a = ExceptT $ return (Right a)
+  m >>= k = ExceptT $ do
+    a <- runExceptT m
+    case a of
+      Left  e -> return (Left e)
+      Right x -> runExceptT (k x)
+  fail = ExceptT . fail
+
+------------------------------------------------------------------------------
+
 
 te01,te02,te03,te04::[Test]
 tfe01,tfe02,tfe03,tfe04::[Test]
@@ -108,8 +175,32 @@ r02 =               runMaybeT e02
 tr01 = U.t "tr01" r01 [Just 3]
 tr02 = U.t "tr02" r02 [Just 3]
 
-tfm :: [Test]
-tfm = U.tt "tfm"
+tfm1 :: [Test]
+tfm1 = U.tt "tfm1"
+  [                  fmap (+1)               (MaybeT [Just       (3::Int)]) -- MaybeT fmap def; rm 1 fmap; add 2 ->
+  , mapMaybeT (fmap (fmap (+1)))             (MaybeT [Just       (3::Int)]) -- mapMaybeT def ->
+  , (MaybeT .  fmap (fmap (+1)) . runMaybeT) (MaybeT [Just       (3::Int)]) -- runMaybeT; add MaybeT to result; rm fromdata ->
+  , (MaybeT .  fmap (fmap (+1))            )         [Just       (3::Int)]  -- [] fmap def; rm 1 fmap ->
+  ,  MaybeT         [fmap (+1)                       (Just       (3::Int))] -- Maybe fmap def ->
+  ,  MaybeT                                          [Just ((+1) (3::Int))] -- apply fun
+  ,  MaybeT                                          [Just       (4::Int)]
+  ]
+  (MaybeT [Just 4])
+
+tfm2 :: [Test]
+tfm2 = U.tt "tfm2"
+  [                  fmap show               (MaybeT (Just (Just       (3::Int))))
+  , mapMaybeT (fmap (fmap show))             (MaybeT (Just (Just       (3::Int))))
+  , (MaybeT .  fmap (fmap show) . runMaybeT) (MaybeT (Just (Just       (3::Int))))
+  , (MaybeT .  fmap (fmap show)            )         (Just (Just       (3::Int)))
+  , MaybeT    (Just (fmap show                             (Just       (3::Int))))
+  , MaybeT    (Just                                        (Just (show (3::Int))))
+  , MaybeT    (Just                                        (Just       "3"))
+  ]
+  (MaybeT (Just (Just "3")))
+
+tfm3 :: [Test]
+tfm3 = U.tt "tfm3"
   [                         fmap (+1)                       (MaybeT (IdentityT [Just (3::Int)])) -- MaybeT fmap def: rm outer fmap; add 2 fmap ->
   , mapMaybeT             (fmap (fmap (+1)))                (MaybeT (IdentityT [Just (3::Int)])) -- mapMaybeT def -> wrap result with MaybeT
   , (MaybeT .              fmap (fmap (+1)) . runMaybeT)    (MaybeT (IdentityT [Just (3::Int)])) -- runMaybeT def -> rm MaybeT from data
@@ -120,7 +211,7 @@ tfm = U.tt "tfm"
   ,  MaybeT ((IdentityT .  fmap (fmap (+1)))                                   [Just (3::Int)])  -- replace . with explicit call ->
   ,  MaybeT ( IdentityT (  fmap (fmap (+1))                                    [Just (3::Int)])) -- [] fmap def ->
   ,  MaybeT ( IdentityT (   map (fmap (+1))                                    [Just (3::Int)])) -- map def : apply fun '(fmap (+1))' to list elements ->
-  ,  MaybeT ( IdentityT                                             [fmap (+1) (Just (3::Int))]) -- Maybe fmap def: rm fmap; apply (+1) to arg; wrap in Just ->
+  ,  MaybeT ( IdentityT         [fmap (+1)                                     (Just (3::Int))]) -- Maybe fmap def: rm fmap; apply (+1) to arg; wrap in Just ->
   ,  MaybeT ( IdentityT                                                  [Just ((+1) (3::Int))]) -- apply (+1) to value ->
   ,  MaybeT ( IdentityT                                                        [Just (4::Int)])
   ]
@@ -132,7 +223,7 @@ test =
     te01 ++ te02 ++ te03 ++ te04 ++
     tfe01 ++ tfe02 ++ tfe03 ++ tfe04 ++
     tr01 ++ tr02 ++
-    tfm
+    tfm1 ++ tfm2 ++ tfm3
 
 ------------------------------------------------------------------------------
 
@@ -158,8 +249,8 @@ instance (Show1 m) => Show1 (MaybeT m) where
         sp' = liftShowsPrec sp sl
         sl' = liftShowList sp sl
 
-instance (Eq1 m, Eq a) => Eq (MaybeT m a) where (==) = eq1
-instance (Ord1 m, Ord a) => Ord (MaybeT m a) where compare = compare1
+instance (Eq1   m, Eq   a) => Eq   (MaybeT m a) where (==)      = eq1
+instance (Ord1  m, Ord  a) => Ord  (MaybeT m a) where compare   = compare1
 instance (Read1 m, Read a) => Read (MaybeT m a) where readsPrec = readsPrec1
 instance (Show1 m, Show a) => Show (MaybeT m a) where showsPrec = showsPrec1
 
@@ -181,8 +272,7 @@ instance (Show1 f) => Show1 (IdentityT f) where
     liftShowsPrec sp sl d (IdentityT m) =
         showsUnaryWith (liftShowsPrec sp sl) "IdentityT" d m
 
-
-instance (Eq1 f, Eq a) => Eq (IdentityT f a) where (==) = eq1
-instance (Ord1 f, Ord a) => Ord (IdentityT f a) where compare = compare1
+instance (Eq1   f, Eq   a) => Eq   (IdentityT f a) where (==)      = eq1
+instance (Ord1  f, Ord  a) => Ord  (IdentityT f a) where compare   = compare1
 instance (Read1 f, Read a) => Read (IdentityT f a) where readsPrec = readsPrec1
 instance (Show1 f, Show a) => Show (IdentityT f a) where showsPrec = showsPrec1

@@ -11,7 +11,7 @@
 -}
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2015 Aug 31 (Mon) 21:48:02 by Harold Carr.
+Last Modified : 2018 Jun 16 (Sat) 11:52:04 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -37,6 +37,14 @@ import           System.Random      (Random(..), StdGen, getStdGen, mkStdGen, ra
 import qualified Test.HUnit         as TT
 import qualified Test.HUnit.Util    as U
 import           X_02_example       hiding (parent)
+
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
+{-# ANN module ("HLint: ignore Use const" :: String) #-}
+{-# ANN module ("HLint: ignore Redundant lambda" :: String) #-}
+{-# ANN module ("HLint: ignore Redundant bracket" :: String) #-}
+{-# ANN module ("HLint: ignore Collapse lambdas" :: String) #-}
+{-# ANN module ("HLint: ignore Avoid lambda" :: String) #-}
+
 
 {-
 ------------------------------------------------------------------------------
@@ -98,9 +106,9 @@ momsPaternalGF1 s =
                  Nothing -> Nothing
                  Just gf -> father gf
 
-mom1  = U.t "mom1"  (show (mother breedSheep))           (show (Just "Molly"))
-dad1  = U.t "dad1"  (show (father breedSheep))           (show (Nothing::Maybe Sheep))
-mgf1  = U.t "mgf1"  (show (maternalGF1 breedSheep))      (show (Just "Roger"))
+mom1  = U.t "mom1"  (show (mother          breedSheep))  (show (Just "Molly"))
+dad1  = U.t "dad1"  (show (father          breedSheep))  (show (Nothing::Maybe Sheep))
+mgf1  = U.t "mgf1"  (show (maternalGF1     breedSheep))  (show (Just "Roger"))
 mpgf1 = U.t "mpgf1" (show (momsPaternalGF1 breedSheep))  (show (Just "Kronos"))
 
 {-
@@ -153,9 +161,9 @@ maternalGF3 s = mfromMaybe (mother s) >>= mfromMaybe . father
 dadsMaternalGF3 :: Sheep -> [Sheep]
 dadsMaternalGF3 s = mfromMaybe (father s) >>= mfromMaybe . mother >>= mfromMaybe . mother
 
-mgf2  = U.t "mgf2"  (show (maternalGF2 breedSheep))           (show $ Just "Roger")
+mgf2  = U.t "mgf2"  (show (maternalGF2     breedSheep))       (show $ Just "Roger")
 dmgf2 = U.t "dmgf2" (show (dadsMaternalGF2 breedSheep))       (show (Nothing::Maybe Sheep))
-mgf3  = U.t "mgf3"  (show (maternalGF3 breedSheep))           (show ["Roger"])
+mgf3  = U.t "mgf3"  (show (maternalGF3     breedSheep))       (show ["Roger"])
 dmgf3 = U.t "dmgf3" (show (dadsMaternalGF3 breedSheep))       (show ([]::[String]))
 
 {-
@@ -331,9 +339,12 @@ traceFamily :: Monad m => Sheep -> [ Sheep -> m Sheep ] -> m Sheep
 traceFamily = foldM getParent
   where getParent s f = f s
 
-fm  = U.t "fm"  (show (traceFamily breedSheep [father, mother]))         (show (Nothing::Maybe Sheep))
-mff = U.t "mff" (show (traceFamily breedSheep [mother, father, father])) (show (Just "Kronos"))
-mmm = U.t "mmm" (show (traceFamily breedSheep [mother,mother,mother]))   (show (Just "Eve"))
+fm  = U.t "fm"  (show (traceFamily breedSheep [father, mother]))
+                (show (Nothing::Maybe Sheep))
+mff = U.t "mff" (show (traceFamily breedSheep [mother, father, father]))
+                (show (Just "Kronos"))
+mmm = U.t "mmm" (show (traceFamily breedSheep [mother,mother,mother]))
+                (show (Just "Eve"))
 
 {-
 Typical use of foldM is within a do block.
@@ -673,14 +684,14 @@ find email prefs given full or nick name.
 type EmailAddr = String
 data MailPref = HTML | Plain deriving (Eq, Show)
 
-data MailSystem = MS { fullNameDB::[(String,EmailAddr)],
-                       nickNameDB::[(String,EmailAddr)],
-                       prefsDB   ::[(EmailAddr,MailPref)] }
+data MailSystem = MS { fullNameDB :: [(String,EmailAddr)],
+                       nickNameDB :: [(String,EmailAddr)],
+                       prefsDB    :: [(EmailAddr,MailPref)] }
 
-data UserInfo = User { msName::String,
-                       nick::String,
-                       email::EmailAddr,
-                       prefs::MailPref }
+data UserInfo = User { msName :: String,
+                       nick   :: String,
+                       email  :: EmailAddr,
+                       prefs  :: MailPref }
 
 makeMailSystem :: [UserInfo] -> MailSystem
 makeMailSystem users = let fullLst = map (msName &&& email) users
@@ -1092,40 +1103,40 @@ inc x = do
     put (i + x)
     return (chr i)
 
-incB :: Int -> State Int Char
-incB x =
+incB0 :: Int -> State Int Char
+incB0 x =
     get         >>= \i ->
     put (i + x) >>
     return (chr i)
 
-incB' :: Int -> State Int Char
-incB' x =
+incB1 :: Int -> State Int Char
+incB1 x =
   state (\g -> (    g,     g)) >>= \i ->
   state (\_ -> (   (), i + x)) >>
   state (\s -> (chr i,     s))
 
-incB'' :: Int -> State Int Char
-incB'' x =
+incB2 :: Int -> State Int Char
+incB2 x =
   state $ \s ->
     let (v,s') = (\g -> (g, g)) s
-    in runState ((\i -> state $ \s ->
-                          let (v,s') = (\_ -> ((), i + x)) s
-                          in runState ((\_ -> state (\r -> (chr i, r))) v) s')
+    in runState ((\i -> state $ \s2 ->
+                          let (v',s'') = (\_ -> ((), i + x)) s2
+                          in runState ((\_ -> state (\r -> (chr i, r))) v') s'')
                  v) s'
 
-incB''' :: Int -> (Int -> (Char, Int))
-incB''' x =
+incB3 :: Int -> (Int -> (Char, Int))
+incB3 x =
     \s ->
       let (v,s') = (\g -> (g, g)) s
-      in ((\i -> \s -> let (v,s') = (\_ -> ((), i + x)) s
-                       in ((\_ -> (\r -> (chr i, r))) v) s')
+      in ((\i -> \s'' -> let (v',s''') = (\_ -> ((), i + x)) s''
+                       in ((\_ -> (\r -> (chr i, r))) v') s''')
           v) s'
 
 -- COMPLETELY REDUCED
-incB'''' :: Int -> (Int -> (Char, Int))
-incB'''' x =
+incB4 :: Int -> (Int -> (Char, Int))
+incB4 x =
     \s0 ->
-      ((\(i, s) -> ((\(v2,r) -> (chr i, r))    -- return
+      ((\(i, s) -> ((\(_v2,r) -> (chr i, r))   -- return
                     ((\_ -> ((), i + x)) s)))  -- put
        ((\g -> (g, g)) s0))                    -- get
 
@@ -1138,13 +1149,13 @@ incer = runState
 
 incerB :: Int -> ((Char,Char,Char), Int)
 incerB = runState
-       (incB 10 >>= \i1 ->
-        incB 40 >>= \i2 ->
-        incB 8  >>= \i3 ->
+       (incB0 10 >>= \i1 ->
+        incB0 40 >>= \i2 ->
+        incB0 8  >>= \i3 ->
         return (i1, i2, i3))
 
-incer' :: Int -> ((Char,Char,Char), Int)
-incer' = runState (do i1 <- ((\x -> do
+incer1 :: Int -> ((Char,Char,Char), Int)
+incer1 = runState (do i1 <- ((\x -> do
                                    -- i <- get
                                    i <- state (\s -> (s, s))
                                    -- put (i + x)
@@ -1156,8 +1167,8 @@ incer' = runState (do i1 <- ((\x -> do
                       i3 <- inc 8
                       return (i1, i2, i3))
 
-incerB' :: Int -> ((Char,Char,Char), Int)
-incerB' = runState (((\x ->
+incerB1 :: Int -> ((Char,Char,Char), Int)
+incerB1 = runState (((\x ->
                        state (\s -> (s, s))      >>= \i ->  -- get
                        state (\_ -> ((), i + x)) >>         -- put
                        state (\s -> (chr i, s))             -- return
@@ -1174,13 +1185,13 @@ TWO VIEWS OF BIND:
         ~(v, s') <- runStateT m s
         runStateT (f v) s'
 -}
-incerB'' :: Int -> ((Char,Char,Char), Int)
-incerB'' = runState (((\x ->
+incerB2 :: Int -> ((Char,Char,Char), Int)
+incerB2 = runState (((\x ->
                        -- definition of 'inc' expanded
-                       state $ \s -> let (v,s') = (\s -> (s, s)) s              -- get
+                       state $ \s -> let (v,s') = (\s'' -> (s'', s'')) s        -- get
                                      in runState ((\i ->
                                                   state (\_ -> ((), i + x)) >>  -- put
-                                                  state (\s -> (chr i, s)))     -- return
+                                                  state (\s'' -> (chr i, s''))) -- return
                                                   v) s'
                       ) :: Int -> State Int Char) 10        >>= \i1 ->
                     inc 40                                  >>= \i2 ->
@@ -1191,19 +1202,19 @@ incerB'' = runState (((\x ->
                                                v) s')
 
 rinc = U.tt "rinc"
-               [ runState (inc      1) 45
-               , runState (incB'    1) 45
-               , runState (incB''   1) 45
-               ,           incB'''  1  45
-               ,           incB'''' 1  45
+               [ runState (inc   1) 45
+               , runState (incB1 1) 45
+               , runState (incB2 1) 45
+               ,           incB3 1  45
+               ,           incB4 1  45
                ]
                ('-',46)
 
-ri = U.tt "ri" [ incer    45
-               , incer'   45
-               , incerB   45
-               , incerB'  45
-               , incerB'' 45
+ri = U.tt "ri" [ incer   45
+               , incer1  45
+               , incerB  45
+               , incerB1 45
+               , incerB2 45
                ]
                (('-','7','_'),103)
 
@@ -1693,6 +1704,8 @@ instance (MonadPlus m) => MonadPlus (StateT s m) where
     (StateT x1) `mplus` (StateT x2) = StateT $ \s -> (x1 s) `mplus` (x2 s)
 
 21.2 Defining the lifting function
+
+TODO: LEFT OFF RIGHT HERE
 -}
 
 ------------------------------------------------------------------------------
