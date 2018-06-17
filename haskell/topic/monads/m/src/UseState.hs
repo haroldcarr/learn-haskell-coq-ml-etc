@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module State where
+module UseState where
 
-import           Control.Monad.State
+import           StateT
 import           Data.Map            as M
 import           Test.HUnit          as T (Test (TestList), runTestTT)
 import           Test.HUnit.Util     as U
@@ -18,11 +18,11 @@ s = do
 rs :: (String, Map String Int)
 rs = runState s M.empty
 
-trs = U.t "trs"
+testRs = U.t "testRs"
     rs
     ("C",fromList [("H",6)])
 
 ------------------------------------------------------------------------------
 
-testState = runTestTT $ TestList {- $ -} trs
+testState = runTestTT $ TestList {- $ -} testRs
 ts = testState

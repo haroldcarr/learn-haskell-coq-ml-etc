@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Writer where
+module UseWriter where
 
 import Control.Monad.Writer
 import Prelude hiding (log)

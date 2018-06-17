@@ -1,12 +1,14 @@
 module Test where
 
-import           Reader
-import           State
-import           Writer
+import           UseReader
+import           UseReaderState
+import           UseState
+import           UseWriter
 
 ta = testAll
 testAll = do
   testReader
+  testReaderState
   testState
   testWriter
 

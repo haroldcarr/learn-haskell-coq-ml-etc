@@ -11,7 +11,7 @@
 -}
 {-
 Created       : 2015 Aug 15 (Sat) 09:41:08 by Harold Carr.
-Last Modified : 2018 Jun 16 (Sat) 11:52:04 by Harold Carr.
+Last Modified : 2018 Jun 17 (Sun) 11:33:26 by Harold Carr.
 
 https://wiki.haskell.org/All_About_Monads
 http://web.archive.org/web/20061211101052/http://www.nomaware.com/monads/html/index.html
@@ -251,13 +251,15 @@ prnt2 = U.t "prnt1" (show (parent (head (parent breedSheep))))     (show ["Holly
 -- If any computation fails, then the whole function fails:
 sequence :: Monad m => [m a] -> m [a]
 sequence = foldr mcons (return [])
-  where mcons p q = p >>= \x -> q >>= \y -> return (x:y)
+  where mcons x acc = x >>= \x' -> acc >>= \acc' -> return (x':acc')
 -}
 
 seqExM = U.t "seqExM" (sequence [Just 1,  Just 2])
                       (Just [1,2])
 seqExL = U.t "seqExL" (sequence [[    1], [    2]])
                            [[1,2]]
+seqExF = U.t "seqExF" (sequence [Just 1,  Just 2, Nothing, Just 3])
+                      Nothing
 
 {-          mcons
            /     \
@@ -457,8 +459,9 @@ ac3 = U.t "ac3" (allCombinations div [[100, 45, 365], [3, 5], [2, 4], [2]])
 {-
 related function : 'ap' : sometimes more lift.
 
-ap :: (Monad m) => m (a -> b) -> m a -> m b
-ap = liftM2 ($)
+liftM  :: (Monad m) =>   (a -> b) -> (m a -> m b) -- for comparison
+ap     :: (Monad m) => m (a -> b) -> (m a -> m b)
+ap      = liftM2 ($)
 
 Note:      liftM2 f      x      y
            return f `ap` x `ap` y
@@ -614,8 +617,8 @@ Cont
 ------------------------------------------------------------------------------
 8 The Identity monad
 
-Computation: Simple function application
-Binding: bound function applied to input.: Identity x >>= f == Identity (f x)
+Computation: function application
+Binding: bound function applied to input: Identity x >>= f == Identity (f x)
 Use:  Monads derived from monad transformers applied to Identity monad.
 Zero/plus: None.
 Example: Identity a
@@ -647,7 +650,7 @@ type State s a = StateT s Identity a
 9 The Maybe monad
 
 Computation: may return Nothing
-Binding: Nothing bypasses bound function, Just given as input to bound function.
+Binding: Nothing bypasses bound function; Just given as input to bound function.
 Use: sequences of computations that may return Nothing (e.g., database queries, dictionary lookups)
 Zero/plus: Nothing/zero. Plus returns first non-Nothing value or Nothing if both Nothing.
 Example: Maybe a
@@ -990,7 +993,7 @@ main2 = (do putStr "Enter set1: "
 13 The State monad
 
 Computation: maintain state.
-Binding: threads state parameter through sequence of bound functions
+Binding: state parameter threaded through sequence of bound functions
          so that same state value is never used twice, giving the illusion of in-place update.
 Use: sequences of operations that require a shared state.
 Zero/plus: None.
@@ -1713,7 +1716,7 @@ TODO: LEFT OFF RIGHT HERE
 testing =
     TT.runTestTT $ TT.TestList $
         mom1 ++ dad1 ++ mgf1 ++ mpgf1 ++ listEx ++ mgf2 ++ dmgf2 ++ mgf3 ++ dmgf3 ++ prnt1 ++ prnt2 ++
-        seqExM ++ seqExL ++ mapMExM ++ fm ++ mff ++ mff ++ zipWithMHC ++ gn ++ ac1 ++ ac2 ++ ac3 ++
+        seqExM ++ seqExL ++ seqExF ++ mapMExM ++ fm ++ mff ++ mff ++ zipWithMHC ++ gn ++ ac1 ++ ac2 ++ ac3 ++
         apEx1 ++ apEx2 ++ apEx3 ++ ms1 ++ ms2 ++ ms3 ++ gyt1 ++ gyt2 ++
         mail1 ++ mail2 ++ mail3 ++ mail4 ++ p1 ++ p2 ++ p3 ++ sr1 ++ sr2 ++ sr3 ++
         ranT ++ rinc ++ ri ++ t30 ++ exW ++ exCont
