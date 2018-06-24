@@ -46,5 +46,5 @@ instance (Monad m) => Monad (ReaderT r m) where
 instance MonadTrans (ReaderT r) where
     lift        = liftReaderT
 
-liftReaderT   :: m a -> ReaderT r m a
-liftReaderT m  = ReaderT (const m)
+liftReaderT    :: m a -> ReaderT r m a
+liftReaderT m   = ReaderT (const m)

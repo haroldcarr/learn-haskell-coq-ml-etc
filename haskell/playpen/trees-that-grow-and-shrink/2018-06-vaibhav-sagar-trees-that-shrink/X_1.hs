@@ -16,7 +16,7 @@ Problem solved by:
 https://www.microsoft.com/en-us/research/wp-content/uploads/2016/11/trees-that-grow.pdf
 -}
 
--- |ADT of lambda calculus with de Bruijn indices
+-- | ADT of lambda calculus with de Bruijn indices
 data Expr a
   = Lit a
   | Var Int
