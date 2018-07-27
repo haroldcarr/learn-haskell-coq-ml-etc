@@ -1,12 +1,11 @@
-name:                  michael-xavier-lensed-reader
+name:                  harold-carr-program-structure
 version:               0.1.0.0
 build-type:            Simple
 cabal-version:         >=1.10
 
 library
-  exposed-modules:     LR
+  exposed-modules:     HC
   build-depends:       base >= 4.7 && < 5
-                     , either
                      , lens
                      , mtl
   ghc-options:         -Wall
