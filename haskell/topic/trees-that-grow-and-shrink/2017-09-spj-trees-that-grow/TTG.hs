@@ -54,13 +54,18 @@ Each constructor has "extra" field
 - used to extend data type with new constructors
 -}
 data ExpX ξ
+--      place for new fields
+--          v
   = LitX (XLit ξ) Integer
   | VarX (XVar ξ) Var
   | AnnX (XAnn ξ) (ExpX ξ) Typ
   | AbsX (XAbs ξ) Var      (ExpX ξ)
   | AppX (XApp ξ) (ExpX ξ) (ExpX ξ)
-  | ExpX (XExp ξ)
+  | ExpX (XExp ξ)                     -- place for new constructors
 
+-- for specifying type
+-- - of new fields
+-- - of new constructors
 type family XLit ξ
 type family XVar ξ
 type family XAnn ξ
