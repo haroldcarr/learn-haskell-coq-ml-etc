@@ -1,11 +1,11 @@
 > {-# LANGUAGE FlexibleContexts           #-}
 > {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+> {-# LANGUAGE LambdaCase                 #-}
 > {-# LANGUAGE TemplateHaskell            #-}
 >
-> module Lib where
+> module LR where
 >
 > import Control.Lens
-> import Control.Lens.TH
 > import Control.Monad.IO.Class
 > import Control.Monad.Reader
 > import Control.Monad.Trans.Either
@@ -32,7 +32,7 @@ GeneralizedNewtypeDeriving (above)
 - enables piggybacking on ReaderT’s instances
   - if ReaderT r m a has instance, then app can get it without any boilerplate
 
-> data AppState1 = AppState1 Int
+> newtype AppState1 = AppState1 Int
 
 > newtype AppT1 m a = AppT1 { unAppT1 :: ReaderT AppState1 m a}
 >   deriving (Applicative, Functor, Monad, MonadIO, MonadReader AppState1)
@@ -48,6 +48,7 @@ GeneralizedNewtypeDeriving (above)
 >   AppState1 x <- ask
 >   return (x + 1)
 
+> testTop1 :: IO Int
 > testTop1 = runAppT1 (AppState1 3) top1
 
 ------------------------------------------------------------------------------
@@ -55,7 +56,7 @@ GeneralizedNewtypeDeriving (above)
 
 app that logs
 
-> data Config = Config { companyName :: String }
+> newtype Config = Config { companyName :: String }
 
 > data AppState2 =
 >   AppState2 { asConfig :: Config
@@ -81,6 +82,7 @@ app that logs
 >   n <- getCompanyName
 >   logMsg n
 
+> testTop2 :: IO ()
 > testTop2 = runAppT2 (AppState2 (Config "CPC") putStrLn) top2
 
 Problems with above
@@ -96,9 +98,10 @@ example: adding more layers in stack
 
 > update :: EitherT String (AppT2 IO) ()
 > update = do
->   EitherT (tryUpdate True)        -- set to False to fail
+>   _ <- EitherT (tryUpdate True)   -- set to False to fail
 >   lift (logMsg "Update complete") -- this line will not happen if previous line fails
 
+> testTop2e :: IO ()
 > testTop2e = runAppT2 (AppState2 (Config "CPC") putStrLn)
 >                      (runEitherT update >> top2)
 
@@ -127,8 +130,9 @@ No more lifts
 >   logger <- asks asLogger
 >   liftIO (logger msg)
 
-> getCompanyName3 :: (MonadReader AppState2 m) => m String
-> getCompanyName3 = asks (companyName . asConfig)
+  -- IO no longer present
+  getCompanyName3 :: (MonadReader AppState2 m) => m String
+  getCompanyName3 = asks (companyName . asConfig)
 
 > tryUpdate3 :: Monad m => Bool -> m (Either String String)
 > tryUpdate3 True  = return (Right "OK")
@@ -136,18 +140,19 @@ No more lifts
 
 > update3 :: (MonadIO m, MonadReader AppState2 m) => EitherT String m ()
 > update3 = do
->   EitherT (tryUpdate3 False)
+>   _ <- EitherT (tryUpdate3 False)
 >   logMsg3 "Update complete"
 
 > topNoop :: AppT2 IO ()
 > topNoop = return ()
 
+> testTop3 :: IO ()
 > testTop3 = runAppT2 (AppState2 (Config "CPC") putStrLn)
->                     (runEitherT update3 >>= \x -> case x of
->                                                     Left x -> do
->                                                       liftIO $ putStrLn x
->                                                       topNoop
->                                                     Right x -> top2)
+>                     (runEitherT update3 >>= \case
+>                                                Left x -> do
+>                                                  liftIO $ putStrLn x
+>                                                  topNoop
+>                                                Right _x -> top2)
 
 ------------------------------------------------------------------------------
 4. More Granularity with Lensed Reader
@@ -157,10 +162,10 @@ When just need config from AppState
 - solution: refactor AppState into what is needed
 - via classy lenses
 
-> data Config4   = Config4   { _companyName4 :: String }
-> data AppState4 = AppState4 { _asConfig4    :: Config4
->                            , _asLogger4    :: String -> IO ()
->                            }
+> newtype Config4   = Config4   { _companyName4 :: String }
+> data    AppState4 = AppState4 { _asConfig4    :: Config4
+>                               , _asLogger4    :: String -> IO ()
+>                               }
 > makeClassy ''Config4
 > makeLenses ''AppState4
 
@@ -211,7 +216,9 @@ benefits
 > runLightReportA :: AppState4 -> String
 > runLightReportA = runReader lightReport
 
+> testRunLightReportC :: String
 > testRunLightReportC = runLightReportC (Config4 "CPC")
+> testRunLightReportA :: String
 > testRunLightReportA = runLightReportA (AppState4 (Config4 "CPC") putStrLn)
 
 note: heaveReport can only be used in AppState4 because too specific
@@ -223,7 +230,45 @@ note: heaveReport can only be used in AppState4 because too specific
 
 > runHeavyReportA :: AppState4 -> String
 > runHeavyReportA = runReader heavyReport
+> testRunHeavyReportA :: String
 > testRunHeavyReportA = runHeavyReportA (AppState4 (Config4 "CPC") putStrLn)
+
+------------------------------------------------------------------------------
+HC
+
+> -- note : lenses compose in opposite direction of functions, therefore config, then companyName
+> getLogger4 :: (MonadReader AppState4 m) => m (String -> IO ())
+> getLogger4 = do
+>    AppState4 _ l <- ask
+>    return l
+
+> reallyHeavyReport :: (MonadIO m, MonadReader AppState4 m) => m String
+> reallyHeavyReport = do
+>   cn <- getCompanyName4
+>   l <- getLogger4          -- can access, even without MonadIO
+>   let rpt = cn ++ " HEAVY"
+>   liftIO (l rpt)           -- can NOT call unless MonadIO included
+>   return rpt
+
+> newtype AppT4 m a = AppT4 { unAppT4 :: ReaderT AppState4 m a}
+>   deriving (Applicative, Functor, Monad, MonadIO, MonadReader AppState4)
+
+> runAppT4 :: AppState4 -> AppT4 m a -> m a
+> runAppT4 s m = runReaderT (unAppT4 m) s
+
+> top4 :: AppT4 IO String
+> top4 = do
+>   lr <- lightReport
+>   liftIO (putStrLn lr)
+>   hr <- heavyReport
+>   liftIO (putStrLn hr)
+>   rhr <- reallyHeavyReport
+>   liftIO (putStrLn rhr)
+>   AppState4 x _y <- ask
+>   return (_companyName4 x)
+
+> testTop4 :: IO String
+> testTop4 = runAppT4 (AppState4 (Config4 "HC") putStrLn) top4
 
 ------------------------------------------------------------------------------
 Summary
@@ -238,3 +283,16 @@ Summary
   - larger ones accumulate combined constraints
   - constraints show functions capabilities
 - GHC 8.0 with -Wall -Werror warns about unnecessary constraints
+
+------------------------------------------------------------------------------
+
+> test :: IO ()
+> test = do
+>   testTop1 >>= print
+>   testTop2
+>   testTop2e
+>   testTop3
+>   print testRunLightReportC
+>   print testRunLightReportA
+>   print testRunHeavyReportA
+>   testTop4 >>= print

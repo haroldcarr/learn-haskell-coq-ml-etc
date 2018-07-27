@@ -1,0 +1,7 @@
+# NOTE: later LTS versions have an 'either' package which is entirely different than 'EitherT'
+resolver: lts-8.5
+packages:
+- '.'
+# extra-deps:
+# flags: {}
+# extra-package-dbs: []
