@@ -1,17 +1,17 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE TemplateHaskell            #-}
 
 module HC where
 
-import Control.Concurrent.MVar
-import Control.Lens
-import Control.Monad.IO.Class
-import Control.Monad.Reader
-import Control.Monad.State.Strict
-import Control.Monad.RWS.Strict
-import Prelude hiding (log)
+import           Control.Concurrent.MVar
+import           Control.Lens
+import           Control.Monad.IO.Class
+import           Control.Monad.Reader
+import           Control.Monad.RWS.Strict
+import           Prelude                    hiding (log)
 
 {-# ANN module "HLint: ignore Reduce duplication" #-}
 
@@ -19,8 +19,8 @@ data    Config   = Config   { _username :: String
                             , _password :: String
                             }
 newtype Other    = Other    { _dbname :: String }
-data    Logger   = Logger   { _level  :: MVar Int
-                            , _log    :: Int -> String -> IO ()
+data    Logger   = Logger   { _level :: MVar Int
+                            , _log   :: Int -> String -> IO ()
                             }
 data    App      = App      { _asConfig :: Config
                             , _asOther  :: Other
@@ -53,7 +53,7 @@ runAppT app m = runReaderT (unAppT m) app
 
 newtype AppState = AppState { num :: Int }
 newtype AppTWithState m a = AppTWithState { unAppTWithState :: RWST App () AppState m a}
-  deriving (Applicative, Functor, Monad, MonadIO, MonadReader App)
+  deriving (Applicative, Functor, Monad, MonadIO, MonadReader App, MonadState AppState)
 
 runAppTWithState :: App -> AppState -> AppTWithState m a -> m (a, AppState, ())
 runAppTWithState app appState m = runRWST (unAppTWithState m) app appState
@@ -93,7 +93,7 @@ top = do
 
 top2 :: AppTWithState IO String
 top2 = do
-  -- update          --   *************
+  update
   lr <- configOnly
   liftIO (putStrLn lr)
   hr <- fullAccessButCannotDoIO
