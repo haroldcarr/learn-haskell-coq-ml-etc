@@ -8,7 +8,7 @@
 > import Control.Lens
 > import Control.Monad.IO.Class
 > import Control.Monad.Reader
-> import Control.Monad.Trans.Either
+> import Control.Monad.Except
 
  http://michaelxavier.net/posts/2016-04-03-Enterprise-Haskell-Pattern-Lensed-Reader.html
 
@@ -96,14 +96,14 @@ example: adding more layers in stack
 > tryUpdate True  = return (Right "OK")
 > tryUpdate False = return (Left "update failed")
 
-> update :: EitherT String (AppT2 IO) ()
+> update :: ExceptT String (AppT2 IO) ()
 > update = do
->   _ <- EitherT (tryUpdate True)   -- set to False to fail
+>   _ <- ExceptT (tryUpdate True)   -- set to False to fail
 >   lift (logMsg "Update complete") -- this line will not happen if previous line fails
 
 > testTop2e :: IO ()
 > testTop2e = runAppT2 (AppState2 (Config "CPC") putStrLn)
->                      (runEitherT update >> top2)
+>                      (runExceptT update >> top2)
 
 Better to be able to access logging/company AppState is available:
 
@@ -138,9 +138,9 @@ No more lifts
 > tryUpdate3 True  = return (Right "OK")
 > tryUpdate3 False = return (Left "update failed")
 
-> update3 :: (MonadIO m, MonadReader AppState2 m) => EitherT String m ()
+> update3 :: (MonadIO m, MonadReader AppState2 m) => ExceptT String m ()
 > update3 = do
->   _ <- EitherT (tryUpdate3 False)
+>   _ <- ExceptT (tryUpdate3 False)
 >   logMsg3 "Update complete"
 
 > topNoop :: AppT2 IO ()
@@ -148,7 +148,7 @@ No more lifts
 
 > testTop3 :: IO ()
 > testTop3 = runAppT2 (AppState2 (Config "CPC") putStrLn)
->                     (runEitherT update3 >>= \case
+>                     (runExceptT update3 >>= \case
 >                                                Left x -> do
 >                                                  liftIO $ putStrLn x
 >                                                  topNoop

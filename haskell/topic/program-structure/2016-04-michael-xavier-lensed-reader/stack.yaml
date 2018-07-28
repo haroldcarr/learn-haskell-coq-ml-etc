@@ -1,5 +1,4 @@
-# NOTE: later LTS versions have an 'either' package which is entirely different than 'EitherT'
-resolver: lts-8.5
+resolver: lts-12.2
 packages:
 - '.'
 # extra-deps:
