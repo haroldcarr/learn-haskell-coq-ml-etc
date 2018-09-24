@@ -191,7 +191,7 @@ traverse ((:) 'x' . show) (Val 34) :: [ExprF Char]
 [Val 34]
 λ: head (traverse ((:) 'x' . show) (Val 34))
 Val 34
-λ: :t head (traverse ((:) 'x' . show) (Val 34)) 
+λ: :t head (traverse ((:) 'x' . show) (Val 34))
 head (traverse ((:) 'x' . show) (Val 34)) :: ExprF Char
 λ: let (Val x) = head (traverse ((:) 'x' . show) (Val 34))
 λ: x
@@ -284,6 +284,7 @@ mcons x y = do
   x' <- x
   y' <- y
   return (x': y')
+
 ------------------------------------------------------------------------------
 
 runTests :: IO Counts
