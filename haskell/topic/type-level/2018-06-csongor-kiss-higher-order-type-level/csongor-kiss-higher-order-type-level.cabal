@@ -1,0 +1,33 @@
+-- This file has been generated from package.yaml by hpack version 0.28.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: cc959bd9742981640d97bb253127f8a12f487e3186e2fa3d7b838a1562ecbdfc
+
+name:           csongor-kiss-higher-order-type-level
+version:        0.1.0.0
+homepage:       https://github.com/githubuser/csongor-kiss-higher-order-type-level#readme
+bug-reports:    https://github.com/githubuser/csongor-kiss-higher-order-type-level/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2018 Author name here
+license:        BSD3
+build-type:     Simple
+cabal-version:  >= 1.10
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/csongor-kiss-higher-order-type-level
+
+library
+  exposed-modules:
+      HOTL
+  other-modules:
+      Paths_csongor_kiss_higher_order_type_level
+  hs-source-dirs:
+      ./.
+  ghc-options: -Wall
+  build-depends:
+      base >=4.7 && <5
+    , text
+  default-language: Haskell2010
