@@ -30,11 +30,9 @@ places in structure where recursion is possible identified by type variable r
 >   | NIf r r r
 >   deriving (Functor, Show)
 >
-> -- The type of recursive expression trees is the
-> -- least fixed-point of the expression functor above.
-> -- Recursion naturally terminates at symbols and atomic
-> -- values: any construction that doesn't reference the
-> -- type variable, or only uses it conditionally.
+> -- Type of recursive expression trees : the  least fixed-point of the expression functor above.
+> -- Recursion terminates at symbols and atomic values
+> -- - any construction that doesn't reference the type variable, or only uses it conditionally.
 > type NExpr = Fix NExprF
 
 'Fix' used to express recursion
@@ -44,7 +42,6 @@ use generic catamorphism to recurse over AST
 - passing function that defines how each "data layer" *separately* reduces
 
 see 'cata' definition below
-
 
 > evaluate :: NExpr -> Int
 > evaluate = cata $ \case
@@ -138,7 +135,7 @@ With Conal Elliott found a way to unify the two ideas
 > adiM f g = g ((f <=< traverse (adiM f g)) . unFix)
 
 replacements for cata and cataM
-modify the "f" algorithm using "g" transformation
+modify the 'f' algorithm using 'g' transformation
 
 Error reporting with context
 
@@ -165,9 +162,7 @@ context around each evaluation step
 > -- type Framed e m = (MonadReader e m, MonadThrow m)
 
 > em :: MonadReader [NExprLoc] m => m NExpr -> m Int
-> em xxx = do
->   xxx' <- xxx
->   return $ evaluate xxx'
+> em xxx = evaluate <$>xxx
 >
 > -- rttt = runReaderT (em ia) []
 
@@ -319,15 +314,18 @@ let
   };
   y = "Hello";
 in y
+
 It even works for my huge thunk recursion problem in nixpkgs, reducing that large amount of code spread across many files, to a single file containing less than 10k lines of code with very few imports remaining (those that could not be statically determined).
 
 Conclusion
-In the four years I’ve been using recursion schemes in this project and elsewhere, I haven’t really encountered many downsides, while reaping many benefits. The worst aspect is definitely the extra boilerplate needed to define and work with the types (see my parsec-free library for a rather extreme case of this).
 
-However, using modern GHC with bidirectional pattern synonyms, you can easily hide this boilerplate from your users. For example, if you’re using the Free type instead of Fix – because your functor doesn’t have its own base case – you would have code like that follows this general pattern:
+recursion schemes
+- CONS: boilerplate to define and work with types
+ - but hide via bidirectional pattern synonyms (see below)
+- PROS: see above
 
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveFunctor   #-}
+{-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE PatternSynonyms #-}
 
 module Main where
@@ -335,21 +333,19 @@ module Main where
 import Control.Monad.Free
 
 data TeletypeF r
-  = GetF (String -> r) | PutF String r
+  = GetF (String -> r)
+  | PutF String r
   deriving Functor
 
 type Teletype = Free TeletypeF
 
-pattern Get
-  :: (String -> Teletype a) -> Teletype a
+pattern Get :: (String -> Teletype a) -> Teletype a
 pattern Get x = Free (GetF x)
 
-pattern Put
-  :: String -> Teletype a -> Teletype a
+pattern Put :: String  -> Teletype a  -> Teletype a
 pattern Put s r = Free (PutF s r)
 
--- Note that the 'Free' constructor is not
--- seen in any of the code below.
+-- Note : the 'Free' constructor is not seen in any of the code below.
 main :: IO ()
 main = iterM phi prog
  where
@@ -360,8 +356,5 @@ main = iterM phi prog
   phi  = \case
     GetF k -> k =<< readLn
     PutF s k -> putStrLn s >> k
-In conclusion: I highly recommend the recursion schemes approach. Even if you start using it just because it sounds cool, it’s a sound design decision to include at the beginning of a project that could potentially lead to big wins down the line. Had the hnix project started with traditional recursive types, it would have much harder at this point to retrofit it with fixed-points of functors; but since that decision was made from the start, we’re able to keep extending its functionality in ways like those I’ve described above, but where each new layer of functionality is almost entirely self-contained and separately testable and reviewable.
 
-
-Receive new posts by e-mail
-Copyright (c) 1994-2017 
+recommendation: use recursion schemes (instead of traditional recursive types)

@@ -1,0 +1,16 @@
+name:                alejandro-serrano-bom
+version:             0.1.0.0
+github:              "githubuser/alejandro-serrano-bom"
+license:             BSD3
+author:              "Author name here"
+maintainer:          "example@example.com"
+copyright:           "2018 Author name here"
+
+dependencies:
+- base >= 4.7 && < 5
+- free
+- HUnit
+- test-hunit-util
+
+library:
+  source-dirs: src

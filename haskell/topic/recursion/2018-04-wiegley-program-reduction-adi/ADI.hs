@@ -36,7 +36,6 @@ adi   f g   = g        (f . fmap (adi   f g) . unFix)
 adi'  f g x = g (\z -> (f . fmap (adi'  f g) . unFix) z)   x
 adi'' f g x = g (\z ->  f  (fmap (adi'' f g)  (unFix  z))) x
 
-
 adiM
   :: (Traversable t, Monad m)
   =>        (t a -> m a)
@@ -59,6 +58,7 @@ evalCata = cata phi
 --     - given to next level of 'adi' recursion
 --     - result of recursion given to phi
 --   phi
+--   - the "fold" function
 evalAdi :: Expr -> Int
 evalAdi  = adi phi psi
   where
@@ -68,7 +68,7 @@ evalAdi  = adi phi psi
     phi          (If    c t e)      = trace "\nIf"       $ if c /= 0 then t else e
     psi k   (Fix (Const (AInt  n))) = trace "\nFix Int"  $ k (Fix (Const (AInt n)))
     psi k v@(Fix (Const (ABool _))) = trace "\nFix Bool" $ k v
-    psi k   (Fix (Add   l _))       = trace "\nFix Add"  $ k (Fix (Const (AInt (psi k l)))) -- HERE
+    psi k   (Fix (Add   l _))       = trace "\nFix Add"  $ k (Fix (Const (AInt (psi k l)))) -- CHANGE ADD TO CONST
     psi k v@(Fix (If    _ _ _))     = trace "\nFix If"   $ k v
 
 iff :: Expr
