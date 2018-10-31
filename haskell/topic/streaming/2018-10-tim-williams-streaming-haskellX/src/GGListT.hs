@@ -1,0 +1,454 @@
+-- library for streaming results in constant space
+-- - does not provide way to collect all results in memory
+
+-- "List Transformer" because it takes a base `Monad` m,
+-- and returns a new transformed `Monad` that adds support for list comprehensions
+
+{-# LANGUAGE BangPatterns          #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances  #-}
+------------------------------------------------------------------------------
+-- for examples
+{-# LANGUAGE MonadComprehensions   #-}
+
+module GGListT where
+
+import           Control.Applicative        (Applicative (..), Alternative (..), liftA2)
+import           Control.Monad              (MonadPlus(..), (=<<)) -- =<< for example
+import           Control.Monad.Error.Class  (MonadError(..))
+import           Control.Monad.Fail         (MonadFail (..))
+import           Control.Monad.Reader.Class (MonadReader(..))
+import           Control.Monad.State.Class  (MonadState(..))
+import           Control.Monad.Trans        (MonadTrans(..), MonadIO(..))
+import qualified Data.Foldable
+import           Data.Semigroup             (Semigroup(..))
+import           Prelude                    hiding (drop, pred, take, takeWhile, zip)
+------------------------------------------------------------------------------
+-- for examples
+import qualified System.IO
+
+{-# ANN module "HLint: ignore Eta reduce" #-}
+
+-- like a list that enables interleaving of effects between each list element
+-- begins with an outermost effect `m`
+newtype ListT m a = ListT { next :: m (Step m a) }
+
+-- the return value of that effect
+data Step m a
+  = Cons a (ListT m a)
+  | Nil
+
+-- use case: generate list element's using `IO`
+-- interleave effects between each list element
+
+stdin :: ListT IO String
+stdin = ListT $ do
+  eof <- System.IO.isEOF
+  if eof
+    then return Nil
+    else do
+      string <- getLine
+      return (Cons string stdin)
+
+-- consume elements one-at-a-time -- only run effects for what is actually needed
+
+stdout :: ListT IO String -> IO ()
+stdout strings = do
+  s <- next strings
+  case s of
+    Nil                  -> return ()
+    Cons string strings' -> do
+      putStrLn string
+      stdout strings'
+
+-- Use `runListT` to drain a `ListT`,
+-- running it to completion and discarding all values.  For example:
+stdout2 :: ListT IO String -> IO ()
+stdout2 l = runListT $ do
+  str <- l
+  liftIO (putStrLn str)
+
+-- lines one-by-one from standard input to standard output
+-- lines stream in constant space, never retaining more than one line in memory
+stdinout :: IO ()
+stdinout = stdout stdin
+
+stdinout2 :: IO ()
+stdinout2 = stdout2 stdin
+
+-- another version
+-- `Monad` instance for `ListT` behaves like a list comprehension
+
+stdoutM :: ListT IO String -> IO ()
+stdoutM strings = runListT $ do
+  -- for each string in strings
+  string <- strings
+  -- call `putStrLn` on string
+  liftIO (putStrLn string)
+
+-- another version: use list comprehension (needs MonadComprehensions)
+
+stdoutLC :: ListT IO String -> IO ()
+stdoutLC strings = runListT [ r | str <- strings, r <- liftIO (putStrLn str) ]
+
+{-
+important operations
+
+> empty :: ListT IO a             -- empty `ListT` with 0 elements
+> pure, return :: a -> ListT IO a -- convert value into a one-element `ListT`
+> liftIO :: IO a -> ListT IO a   -- converts `IO` action into a one-element `ListT`
+> (<|>) :: ListT IO a -> ListT IO a -> ListT IO a       -- concatenate two `ListT`s
+> (>>=) :: ListT IO a -> (a -> ListT IO b) -> ListT IO b -- do notation
+-}
+
+-- example : build three elements `ListT` with no effects
+three1 :: ListT IO Int
+three1  = pure 1 <|> pure 2 <|> pure 3
+three2 :: ListT IO Int
+three2  = select [1, 2, 3] :: ListT IO Int
+
+-- guess what this code does
+
+promptAndGetLine :: ListT IO String
+promptAndGetLine = do
+  _ <- select (repeat ())
+  liftIO (putStrLn "Say something:")
+  liftIO getLine
+
+saysomething :: IO ()
+saysomething = runListT $ do
+  string <- pure "Hello, there!" <|> promptAndGetLine
+  liftIO (putStrLn string)
+
+-- library does not `mapM` etc, because there are many variations
+-- all variations stream in constant space
+-- (whereas @"Control.Monad".`mapM`@ buffers entire output list before returning
+-- a single element)
+
+mapMSelect              :: Monad m => (a ->       m b) ->       [a] -> ListT m b
+mapMMonadComprehensions :: Monad m => (a ->       m b) ->       [a] -> ListT m b
+mapMSelect f xs = do
+  x <- select xs
+  lift (f x)
+mapMMonadComprehensions f xs =
+  [ r | x <- select xs, r <- lift (f x) ]
+
+mapMM                   :: Monad m => (a ->       m b) -> ListT m a -> ListT m b
+mapMMC                  :: Monad m => (a ->       m b) -> ListT m a -> ListT m b
+mapMM f xs = do
+  x <- xs
+  lift (f x)
+mapMMC f xs =
+  [ r | x <- xs, r <- lift (f x) ]
+
+mapMX                   :: Monad m => (a -> ListT m b) -> ListT m a -> ListT m b
+mapMXMC                 :: Monad m => (a -> ListT m b) -> ListT m a -> ListT m b
+mapMCM                  :: Monad m => (a -> ListT m b) -> ListT m a -> ListT m b
+mapMX f xs = do
+  x <- xs
+  f x
+mapMXMC f xs =
+  [ r | x <- xs, r <- f x ]
+-- using "Control.Monad" =<<
+mapMCM = (=<<)
+
+------------------------------------------------------------------------------
+
+instance MonadTrans ListT where
+    lift m = ListT (do
+        x <- m
+        return (Cons x empty) )
+
+instance Monad m => Functor (ListT m) where
+    fmap k (ListT m) = ListT (fmap k <$> m)
+
+instance Monad m => Applicative (ListT m) where
+    pure x = ListT (return (Cons x empty))
+
+    ListT m <*> l = ListT (do
+        s <- m
+        case s of
+            Nil       -> return Nil
+            Cons f l' -> next (fmap f l <|> (l' <*> l)) )
+
+    ListT m *> l = ListT (do
+        s <- m
+        case s of
+            Nil       -> return Nil
+            Cons _ l' -> next (l <|> (l' *> l)) )
+
+    ListT m <* l = ListT (do
+        s <- m
+        case s of
+            Nil       -> return Nil
+            Cons x l' -> next ((x <$ l) <|> (l' <* l)) )
+
+instance Monad m => Monad (ListT m) where
+    return = pure
+
+    ListT m >>= k = ListT (do
+        s <- m
+        case s of
+            Nil       -> return Nil
+            Cons x l' -> next (k x <|> (l' >>= k)) )
+
+    fail _ = mzero
+
+instance Monad m => Alternative (ListT m) where
+    empty = ListT (return Nil)
+
+    ListT m <|> l = ListT (do
+        s <- m
+        case s of
+            Nil       -> next l
+            Cons x l' -> return (Cons x (l' <|> l)) )
+
+instance Monad m => MonadPlus (ListT m) where
+    mzero = empty
+    mplus = (<|>)
+
+instance Monad m => MonadFail (ListT m) where
+    fail _ = mzero
+
+instance (Monad m, Data.Semigroup.Semigroup a) => Data.Semigroup.Semigroup (ListT m a) where
+    (<>) = liftA2 (<>)
+
+instance (Monad m, Data.Semigroup.Semigroup a, Monoid a) => Monoid (ListT m a) where
+    mempty  = pure mempty
+    mappend = (<>)
+
+instance MonadIO m => MonadIO (ListT m) where
+    liftIO = lift . liftIO
+
+instance MonadError e m => MonadError e (ListT m) where
+    throwError e           = ListT (throwError e)
+    catchError (ListT m) k = ListT (catchError m (next . k))
+
+instance MonadReader i m => MonadReader i (ListT m) where
+    ask = lift ask
+
+    local k (ListT m) = ListT (do
+        s <- local k m
+        case s of
+            Nil      -> return Nil
+            Cons x l -> return (Cons x (local k l)) )
+
+    reader k = lift (reader k)
+
+instance MonadState s m => MonadState s (ListT m) where
+    get     = lift get
+    put   x = lift (put x)
+    state k = lift (state k)
+
+instance (Monad m, Num a) => Num (ListT m a) where
+    fromInteger n = pure (fromInteger n)
+    negate        = fmap negate
+    abs           = fmap abs
+    signum        = fmap signum
+    (+)           = liftA2 (+)
+    (*)           = liftA2 (*)
+    (-)           = liftA2 (-)
+
+instance (Monad m, Fractional a) => Fractional (ListT m a) where
+    fromRational n = pure (fromRational n)
+    recip          = fmap recip
+    (/)            = liftA2 (/)
+
+instance (Monad m, Floating a) => Floating (ListT m a) where
+    pi   = pure pi
+    exp  = fmap exp
+    sqrt = fmap sqrt
+    log  = fmap log
+    sin  = fmap sin
+    tan  = fmap tan
+    cos  = fmap cos
+    asin = fmap asin
+    atan = fmap atan
+    acos = fmap acos
+    sinh = fmap sinh
+    tanh = fmap tanh
+    cosh = fmap cosh
+    asinh = fmap asinh
+    atanh = fmap atanh
+    acosh = fmap acosh
+    (**)    = liftA2 (**)
+    logBase = liftA2 logBase
+
+-- most common specialized type for `runListT` is runListT :: ListT IO a -> IO ()
+runListT :: Monad m => ListT m a -> m ()
+runListT (ListT m) = do
+    s <- m
+    case s of
+        Cons _ l -> runListT l
+        Nil      -> return ()
+
+{-| Use this to fold a `ListT` into a single value.  This is designed to be
+    used with the @foldl@ library:
+
+> import Control.Foldl (purely)
+> import List.Transformer (fold)
+>
+> purely fold :: Monad m => Fold a b -> ListT m a -> m b
+
+    ... but you can also use the `fold` function directly:
+
+> fold (+) 0 id :: Num a => ListT m a -> m a
+-}
+fold :: Monad m => (x -> a -> x) -> x -> (x -> b) -> ListT m a -> m b
+fold step begin done l = go begin l
+  where
+    go !x (ListT m) = do
+        s <- m
+        case s of
+            Cons a l' -> go (step x a) l'
+            Nil       -> return (done x)
+
+{-| Use this to fold a `ListT` into a single value.  This is designed to be
+    used with the @foldl@ library:
+
+> import Control.Foldl (impurely)
+> import List.Transformer (fold)
+>
+> impurely fold :: Monad m => FoldM m a b -> ListT m a -> m b
+
+    ... but you can also use the `foldM` function directly.
+-}
+foldM :: Monad m => (x -> a -> m x) -> m x -> (x -> m b) -> ListT m a -> m b
+foldM step begin done l0 = do
+    x0 <- begin
+    go x0 l0
+  where
+    go !x (ListT m) = do
+        s <- m
+        case s of
+            Cons a l' -> do
+                x' <- step x a
+                go x' l'
+            Nil       -> done x
+
+{-| Convert any collection that implements `Foldable` to another collection that
+    implements `Alternative`
+
+    For this library, the most common specialized type for `select` will be:
+
+> select :: [a] -> ListT IO a
+-}
+select :: (Foldable f, Alternative m) => f a -> m a
+select = Data.Foldable.foldr cons empty
+  where
+    cons x xs = pure x <|> xs
+
+
+-- | @take n xs@ takes @n@ elements from the head of @xs@.
+--
+-- >>> let list xs = do x <- select xs; liftIO (print (show x)); return x
+-- >>> let sum = fold (+) 0 id
+-- >>> sum (take 2 (list [5,4,3,2,1]))
+-- "5"
+-- "4"
+-- 9
+take :: Monad m => Int -> ListT m a -> ListT m a
+take n l
+    | n <= 0    = empty
+    | otherwise = ListT $ do
+        s <- next l
+        case s of
+            Cons a l' -> return (Cons a (take (n-1) l'))
+            Nil       -> return Nil
+
+-- | @drop n xs@ drops @n@ elements from the head of @xs@, but still runs their
+-- effects.
+--
+-- >>> let list xs = do x <- select xs; liftIO (print (show x)); return x
+-- >>> let sum = fold (+) 0 id
+-- >>> sum (drop 2 (list [5,4,3,2,1]))
+-- "5"
+-- "4"
+-- "3"
+-- "2"
+-- "1"
+-- 6
+drop :: Monad m => Int -> ListT m a -> ListT m a
+drop n l
+    | n <= 0    = l
+    | otherwise = ListT (do
+        s <- next l
+        case s of
+            Cons _ l' -> next (drop (n-1) l')
+            Nil       -> return Nil)
+{-
+HC
+λ: :t list [2,3]
+list [2,3]       :: (Alternative m, MonadIO m, Show b, Num b) => m b
+λ: :t list [2,3  ::Int]
+list [2,3::Int]  :: (Alternative m, MonadIO m)                => m Int
+λ: :t list [2,3] :: ListT IO Int
+list [2,3]       :: ListT IO Int :: ListT IO Int
+-}
+-- | @takeWhile pred xs@ takes elements from @xs@ until the predicate @pred@ fails
+--
+-- >>> let list xs = do x <- select xs; liftIO (print (show x)); return x
+-- >>> let sum = fold (+) 0 id
+-- >>> sum (takeWhile even (list [2,4,5,7,8]))
+-- "2"
+-- "4"
+-- "5"
+-- 6
+takeWhile :: Monad m => (a -> Bool) -> ListT m a -> ListT m a
+takeWhile pred l = ListT (do
+    n <- next l
+    case n of
+        Cons x l' | pred x -> return (Cons x (takeWhile pred l'))
+        _                  -> return Nil )
+
+-- | @unfold step seed@ generates a 'ListT' from a @step@ function and an
+-- initial @seed@.
+unfold :: Monad m => (b -> m (Maybe (a, b))) -> b -> ListT m a
+unfold step = loop
+  where
+    loop seed = ListT (do
+        mx <- step seed
+        case mx of
+            Just (x, seed') -> return (Cons x (loop seed'))
+            Nothing         -> return Nil)
+
+-- | @zip xs ys@ zips two 'ListT' together, running the effects of each before
+-- possibly recursing. Notice in the example below, @4@ is output even though
+-- it has no corresponding element in the second list.
+--
+-- >>> let list xs = do x <- select xs; liftIO (print (show x)); return x
+-- >>> runListT (zip (list [1,2,3,4,5]) (list [6,7,8]))
+-- "1"
+-- "6"
+-- "2"
+-- "7"
+-- "3"
+-- "8"
+-- "4"
+zip :: Monad m => ListT m a -> ListT m b -> ListT m (a, b)
+zip xs ys = ListT (do
+    sx <- next xs
+    sy <- next ys
+    case (sx, sy) of
+        (Cons x xs', Cons y ys') -> return (Cons (x, y) (zip xs' ys'))
+        _                        -> return Nil)
+
+
+{-| Pattern match on this type when you loop explicitly over a `ListT` using
+    `next`.  For example:
+
+> stdout :: ListT IO String -> IO ()
+> stdout l = do
+>     s <- next l
+>     case s of
+>         Nil       -> return ()
+>         Cons x l' -> do
+>             putStrLn x
+>             stdout l'
+-}
+
+instance Monad m => Functor (Step m) where
+    fmap _  Nil       = Nil
+    fmap k (Cons x l) = Cons (k x) (fmap k l)
+

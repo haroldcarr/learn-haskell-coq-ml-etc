@@ -40,11 +40,11 @@ mkC = PN.toSocket
 sendIt :: P.MonadIO m => PN.Socket -> m ()
 sendIt soc = do
     let c = mkC soc
---    P.runEffect $ PB.stdin P.>-> PP.take 1 P.>-> c
-    P.runEffect $ P.each ["abc\n"] P.>-> c
+ -- P.runEffect $ PB.stdin P.>-> PP.take 1 P.>-> c
+    P.runEffect $ P.each ["a", "b", "c", "\n"] P.>-> c
 
 tt :: P.MonadIO m => m ()
-tt = P.runEffect $ P.each ["abc\n"] P.>-> PB.stdout
+tt = P.runEffect $ P.each ["a", "b", "c", "\n"] P.>-> PB.stdout
 
 recIt :: PN.Socket -> IO ()
 recIt soc = do
@@ -110,7 +110,7 @@ readFile file = PS.bracket
     PB.fromHandle
 
 test :: IO ()
-test = PS.runSafeT $ P.runEffect $ readFile "TAGS" P.>-> PP.take 4 P.>-> PB.stdout
+test = PS.runSafeT $ P.runEffect $ readFile "src/Lib.hs" P.>-> PP.take 4 P.>-> PB.stdout
 
 {-
 java -cp ~/.m2/repository/ws-commons/tcpmon/1.0/tcpmon-1.0.jar  org.apache.ws.commons.tcpmon.TCPMon 2999 127.0.0.1 3000 &

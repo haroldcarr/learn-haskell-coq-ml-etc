@@ -1,0 +1,172 @@
+{-# LANGUAGE RankNTypes #-}
+
+module RNT where
+{-
+
+Rank-N types
+
+https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#arbitrary-rank-polymorphism
+
+Contents
+
+1 About <#About>
+2 Church-encoded Lists <#Church-encoded_Lists>
+3 Relation to Existentials <#Relation_to_Existentials>
+4 See also <#See_also>
+
+------------------------------------------------------------------------------
+1 About
+
+Haskell '98 types are Rank-1. Equivalent:
+-}
+one ::             a ->            b -> a  -- implied universal quantificaation
+two :: forall a b. a ->            b -> a
+thr :: forall a  . a -> (forall b. b -> a) -- to right of (->)
+one  = undefined
+two  = undefined
+thr  = undefined
+{-
+forall appearing within left-hand side of (->) can NOT be moved up
+- it forms another level or rank N
+- where N is number of nested foralls that cannot be merged with a previous one
+
+Rank-2 type because can only be expressed as two levels (i.e., not merged):
+-}
+rank2    ::           (forall a. a -> a) -> (forall b. b -> b)
+rank2'   :: forall b. (forall a. a -> a) -> (          b -> b)
+rank2''  ::           (forall a. a -> a) ->            b -> b
+rank2   _ = id
+rank2'  _ = id
+rank2'' _ = id
+{-
+can be moved to the start but the former one cannot
+- two levels of universal quantification
+
+sometimes undecidable, then us explicit types
+
+------------------------------------------------------------------------------
+2 Church-encoded Lists
+
+Church-encoded lists use RankNTypes
+http://stackoverflow.com/a/15593349/849891
+-}
+-- | Laws:
+--
+-- > runList xs cons nil == xs
+-- > runList (fromList xs) f z == foldr f z xs
+-- > foldr f z (toList xs) == runList xs f z
+newtype ChurchList a =
+    ChurchList { runList :: forall r. (a -> r -> r) -> r -> r }
+
+-- | Make a 'ChurchList' out of a regular list.
+fromList :: [a] -> ChurchList a
+fromList xs = ChurchList $ \k z -> foldr k z xs
+
+-- | Turn a 'ChurchList' into a regular list.
+toList :: ChurchList a -> [a]
+toList xs = runList xs (:) []
+
+-- | The 'ChurchList' counterpart to '(:)'.
+-- Unlike 'DList', whose impl uses the regular list type,
+-- 'ChurchList' abstracts over it as well.
+cons :: a -> ChurchList a -> ChurchList a
+cons x xs = ChurchList $ \k z -> k x (runList xs k z)
+
+-- | Append two 'ChurchList's. O(1).
+-- Note : no need to materialize the lists as @[a]@.
+append :: ChurchList a -> ChurchList a -> ChurchList a
+append xs ys = ChurchList $ \k z -> runList xs k (runList ys k z)
+
+-- i.e.,
+nil :: ChurchList a
+nil         = {- fromList []
+            =    ChurchList $  \k z -> foldr k z []
+            = -} ChurchList $ \_k z -> z
+
+singleton :: a -> ChurchList a
+singleton x = {- cons x nil
+            =    ChurchList $ \k z -> k x (runList nil k z)
+            = -} ChurchList $ \k z -> k x z
+
+snoc :: ChurchList a -> a -> ChurchList a
+snoc   xs x = {- append xs $ singleton x
+            =    ChurchList $ \k z -> runList xs k (runList (singleton x) k z)
+            = -} ChurchList $ \k z -> runList xs k (k x z)
+{-
+
+    3 Relation to Existentials
+
+In order to unpack an existential type, you need a polymorphic function
+that works on any type that could be stored in the existential. This
+leads to a natural relation between higher-rank types and existentials;
+and an encoding of existentials in terms of higher rank types in
+continuation-passing style.
+
+In general, you can replace
+
+data T a1 .. ai = forall t1 .. tj. constraints => Constructor e1 .. ek
+
+(where e1..ek
+are types in terms of a1..ai
+and t1..tj
+)
+
+Constructor exp1 .. expk -- application of the constructor
+
+case e of (Constructor pat1 .. patk) -> res
+
+with
+
+data T' a1 .. ai = Constructor' (forall b. (forall t1..tj. constraints => e1 -> e2 -> ... -> ek -> b) -> b)
+
+Constructor' (\f -> f exp1 .. expk)
+
+case e of (Constructor' f) -> let k pat1 .. patk = res in f k
+
+
+    4 See also
+
+  * Rank-N types <https://prime.haskell.org/wiki/RankNTypes> on the
+    Haskell' <http://wiki.haskell.org/Haskell%27> website.
+  * The GHC User's Guide on higher-ranked polymorphism
+    <https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#arbitrary-rank-polymorphism>.
+
+
+Retrieved from
+"https://wiki.haskell.org/index.php?title=Rank-N_types&oldid=62491"
+Category <http://wiki.haskell.org/Special:Categories>:
+
+  * Language extensions
+    <http://wiki.haskell.org/Category:Language_extensions>
+
+
+          Navigation
+
+  * Haskell <http://wiki.haskell.org/Haskell>
+  * Wiki community <http://wiki.haskell.org/HaskellWiki:Community>
+  * Recent changes <http://wiki.haskell.org/Special:RecentChanges>
+  * Random page <http://wiki.haskell.org/Special:Random>
+
+
+          Tools
+
+  * What links here
+    <http://wiki.haskell.org/Special:WhatLinksHere/Rank-N_types>
+  * Related changes
+    <http://wiki.haskell.org/Special:RecentChangesLinked/Rank-N_types>
+  * Special pages <http://wiki.haskell.org/Special:SpecialPages>
+  * Printable version
+    <http://wiki.haskell.org/index.php?title=Rank-N_types&printable=yes>
+  * Permanent link
+    <http://wiki.haskell.org/index.php?title=Rank-N_types&oldid=62491>
+
+Powered by MediaWiki <http://www.mediawiki.org/>
+
+  * This page was last modified on 24 May 2018, at 01:18.
+  * Recent content is available under a simple permissive license
+    <http://wiki.haskell.org/HaskellWiki:Copyrights>.
+  * Privacy policy <http://wiki.haskell.org/HaskellWiki:Privacy_policy>
+  * About HaskellWiki <http://wiki.haskell.org/HaskellWiki:About>
+  * Disclaimers <http://wiki.haskell.org/HaskellWiki:General_disclaimer>
+
+-}
