@@ -6,21 +6,27 @@
 {-# LANGUAGE KindSignatures    #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds         #-}
+{-# LANGUAGE TypeApplications  #-}
 {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE TypeInType        #-}
 {-# LANGUAGE TypeOperators     #-}
 
 -- https://www.imperial.ac.uk/media/imperial-college/faculty-of-engineering/computing/public/ug-prizes-201718/Csongor-Kiss-Higher-order-type-level-programming-in-Haskell.pdf
 
 module HOTL where
 
+import           Data.Kind
 import           Data.Text as T
+
+
+-- p 7 : 1.2 Type-level properties
 
 data Nat
   = Zero
   | Succ Nat
 
-data Vector :: Nat -> * -> * where                  -- GADTs, KindSignatures
-  VNil  ::                    Vector  'Zero    a    -- DataKinds
+data Vector :: Nat -> * -> * where                  -- GADTs [Cheney and Hinze, 2003], KindSignatures
+  VNil  ::                    Vector  'Zero    a    -- DataKinds  [Yorgey et al., 2012]
   VCons :: a -> Vector n a -> Vector ('Succ n) a
 
 safeHead :: Vector ('Succ n) a -> a
@@ -30,7 +36,7 @@ sh :: Integer
 sh = safeHead (VCons 1 (VCons 2 VNil))
 -- xx = safeHead VNil
 
--- TypeFamilies
+-- p 8 : 1.3 TypeFamilies [Chakravarty et al., 2005] [Eisen- berg and Stolarek, 2014]
 
 type family Add (a :: Nat) (b :: Nat) :: Nat where
   Add  'Zero    b =              b
@@ -41,6 +47,8 @@ vappend  VNil        v =                     v
 vappend (VCons a as) v = VCons a (vappend as v)
 
 -- value-level functions can be curried/partially applied, type families can NOT
+
+-- p 9 :  1.4 Limitations
 
 -- this def type checks, but cannot pass in an 'f' (because it would be partially applied)
 type family Map (f :: a -> b) (xs :: [a]) :: [b] where
@@ -55,6 +63,8 @@ type family MapAddOne (xs :: [Nat ]) :: [Nat ] where
   MapAddOne      '[]  = '[]
   MapAddOne (x ': xs) = 'Succ x ': MapAddOne xs
 
+
+-- p 12 : 2.1 Types and kind
 
 data HCMaybe a = HCNothing | HCJust a
 
@@ -75,6 +85,8 @@ instance HCFunctor HCMaybe where
   hcfmap f (HCJust a) = HCJust (f a)
 
 -- kind system rules:    κ ::= * | κ -> κ
+
+-- p 14 : 2.2 Rich kinds
 
 -- Kiselyov et al. [2004] : store info about collections in types (e.g., length of list)
 
@@ -103,7 +115,7 @@ xx = undefined
 -- - collapses infinite universes into one,
 -- - introduces inconsistency into type system (e.g., Russell’s paradox)
 
--- Chakravarty et al. [2005] : TYPE EQUALITIES
+-- p 15 : 2.3 Equality Chakravarty et al. [2005] : TYPE EQUALITIES
 
 -- introduced into the equational theory as axioms by type family declarations, e.g.,
 
@@ -159,4 +171,88 @@ type family Equals (a :: k) (b :: k) :: Bool where
 -- :kind! Add ('Succ 'Zero) ('Succ 'Zero)
 -- > = 'Succ ('Succ 'Zero)
 
--- 2.4 Type functions are first-order : type families cannot take other type families as arguments
+-- p 17 : 2.4 Type functions are first-order : type families cannot take other type families as arguments
+
+{-
+therefore the type language a first-order system
+
+reason for this restriction: type inference engine
+
+when dealing with an equality between type applications
+checker decomposes
+-}
+replaceWith10 :: Functor f => f a -> f Int
+replaceWith10 fa = fmap (\_ -> 10) fa
+{-
+say called : replaceWith10 (Just False)
+
+solve equality constraint f a ∼ Maybe Bool
+
+decomposes to : f ∼ Maybe
+                a ∼ Bool
+via substitution map [f -> Maybe, a -> Bool]
+then type inference is done   replaceWith10 :: Maybe Bool -> Maybe Int
+-}
+
+{-
+consider
+-}
+decompose :: (f a ~ g b) => a -> b
+decompose = id -- in/out the same
+{-
+f a ∼ g b decomposes to f ∼ g; a ∼ b
+f ~ g discarded since not used
+a ∼ b used to refine result : a -> a
+-}
+
+{-
+now show that allowing type families to be unsaturated violates type safety
+-}
+
+-- | discards its arg; always returns Int
+type family AlwaysInt a where AlwaysInt _ = Int
+
+{-
+bad :: Integer -> Char
+bad = decompose @AlwaysInt @Integer @AlwaysInt @Char
+
+type of bad is (AlwaysInt Integer ∼ AlwaysInt Char) => Integer -> Char
+
+equality constraint normalises to Int ∼ Int
+
+if allowed, would mean id would need to coerce any Integer into any Char
+
+problem :
+- trying to substitute a non-injective function for a var that GHC assumes to be injective (and generative)
+
+INJECTIVITY  : f is injective  <==> f a ∼ f b ==> a ∼ b
+GENERATIVITY : f is generative <==> f a ∼ g b ==> f ∼ g
+MATCHABILITY : f is matchable  <==> f is injective and generative
+
+type families generally not injective nor generative
+
+for type system to decompose f a ∼ g b to f ∼ g; a ∼ b
+- ensure neither f nor g can be instantiated with type families
+- achieved by enforcing type families to be fully saturated, so they can reduce
+-}
+
+-- p 19 : 2.5 Singletons Eisenberg and Weirich [2012]
+
+{-
+differentiates type functions and type constructors at kind level
+via defunctionalisation using code generation generation [Sheard and Peyton Jones, 2002]
+
+defunctionalisation
+- eliminates higher-order functions
+- replaces them with a first-order apply function
+- higher-order function calls replaced by unique identifier that represents that function call
+- then Apply function dispatches on the unique identifier
+
+e.g.,
+-}
+type TyFun a b = a -> b -> *
+infixr 0 `TyFun`
+data SymConst2         :: * `TyFun` * `TyFun` *
+data SymConst (n :: *) :: * `TyFun` *
+data SymId             :: * `TyFun` *
+
