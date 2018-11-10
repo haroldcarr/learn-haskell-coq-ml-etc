@@ -1,0 +1,133 @@
+Created       : 2013 Oct 04 (Fri) 09:43:02 by carr.
+Last Modified : 2017 Jul 09 (Sun) 07:04:32 by Harold Carr.
+
+- [[http://www.haskellers.com/user/haroldcarr]]
+
+------------------------------------------------------------------------------
+* lists
+
+- https://gist.github.com/biboudis/377b4a4de4d1718df2d0
+- https://github.com/steshaw/plt-study
+- https://github.com/bitemyapp/learnhaskell
+- https://wwwhome.ewi.utwente.nl/~kant/summerschools/
+- http://user.it.uu.se/~bengt/Info/summer-schools.shtml
+- http://compsciclub.ru/en/schools/
+
+------------------------------------------------------------------------------
+* source code
+
+- pipes, mtl, lens-family
+
+------------------------------------------------------------------------------
+* summer schools
+
+- list: [[http://user.it.uu.se/~bengt/Info/summer-schools.shtml]]
+
+
+- April - July 2014
+  - England :    http://www.cs.nott.ac.uk/MGS/
+  - France : formal math https://ihp2014.pps.univ-paris-diderot.fr/doku.php
+             certification of programs: July 7-11
+                         https://ihp2014.pps.univ-paris-diderot.fr/doku.php?id=workshop_5
+- May-July
+  - Paris
+    - https://ihp2014.pps.univ-paris-diderot.fr/doku.php
+  - Stanford : SAT/SMT Summer School
+    - http://smt2015.csl.sri.com/school/
+- May
+  - Atherton, California : Summer School on Formal Techniques
+    - http://fm.csl.sri.com/SSFT15/
+    - http://fm.csl.sri.com/SSFT14/
+    - http://fm.csl.sri.com/SSFT11
+    - http://fm.csl.sri.com/SSFT12
+    - http://fm.csl.sri.com/SSFT13
+  - France : Coq http://www.epit2015.website/
+  - Italy :
+    - May 20-27, 2017: Programming Language Implementation Summer School
+    - https://pliss2017.github.io/
+- June
+  - Homotopy Type Theory workshop @ Snowbird June 1-4, 2017
+    -  http://www.ams.org/programs/research-communities/2017MRC-1
+  - NASA Formal Methods Symposium
+    - http://crisys.cs.umn.edu/nfm2016
+  - OPLSS: Oregon: [[http://www.cs.uoregon.edu/research/summerschool]]
+- July
+  - Salt Lake
+    - The Racket School of Languages and Semantics: 2017 Summer School : Salt Lake City
+      - http://summer-school.racket-lang.org/2017/
+  - Philadelphia
+    - DeepSpec Summer School on Verified Systems, July 17-28, 2017 :
+      - https://sympa.inria.fr/sympa/arc/coq-club/2016-12/msg00127.html
+      - July 13-15 : Coq intensive
+  - UK : http://www.cs.ox.ac.uk/projects/utgp/school/ : Generic and Effectful Programming
+  - Utrecht: [[http://www.utrechtsummerschool.nl/index.php?type=courses&code=H9]]
+             [[http://www.utrechtsummerschool.nl/courses/science/applied-functional-programming-in-haskell]]
+  - Spain : http://grammars.grlmc.com/sstic2014/
+  - England : http://www.cs.ox.ac.uk/projects/tlcbx/ssbx/
+  - Austria :
+    - Dependently Typed Programming 2014, Vienna, Austria http://eb.host.cs.st-andrews.ac.uk/DTP2014/
+      - Affiliated with July 14-18: CS Logic / Logic in CS: http://lics.rwth-aachen.de/csl-lics14/
+- August
+  - Cambridge : http://www.cl.cam.ac.uk/events/metaprog2016/ (International summer school on metaprogramming)
+  - Edinburgh: http://www.macs.hw.ac.uk/~dsg/events/ISS-AiPL-2014/ (Advances in Programming Languages)
+  - St. Andrews : http://eb.host.cs.st-andrews.ac.uk/PracticalTypes/ (Practical Types)
+  - https://asimod.in.tum.de/2017/ (Logical Methods for Safety and Security of Software Systems)
+- Sept
+  - Elba, Italy
+    - [[http://laser.inf.ethz.ch/2014/]] (Leading-Edge Software Engineering)
+    - http://laser.inf.ethz.ch/2013/ (Cloud and Big Data)
+    - http://laser.inf.ethz.ch/2011/ (verification, includes Coq)
+    - http://laser.inf.ethz.ch/2013/editions.php (past sessions)
+
+** past
+- 2013: NY: [[http://www.cs.cornell.edu/conferences/formalnetworks/]]
+- 2013: France: [[http://www-hpc.cea.fr/SummerSchools2013-CS.htm]]
+- 2012: France: http://www-hpc.cea.fr/SummerSchools2012-CS.htm
+- 1998: Portugal: [[http://www.di.uminho.pt/afp98/preprogram.html]] (advanced functional programming)
+
+------------------------------------------------------------------------------
+* courses
+
+** NICTA (Tony Morris & Mark Hibberd)
+
+- https://github.com/NICTA/course
+
+** stanford
+
+- http://www.scs.stanford.edu/14sp-cs240h/
+- [[http://www.scs.stanford.edu/11au-cs240h/]]
+
+** upenn
+
+- [[http://www.cis.upenn.edu/~bcpierce/][Benjamin Pierce]]
+- [[http://www.seas.upenn.edu/~sweirich/][Weirach]]: [[http://www.seas.upenn.edu/~cis552/12fa/schedule.html]]
+- Yorgey: [[http://www.seas.upenn.edu/~cis194/]]  - Introduction to Haskell
+- Yorgey: http://www.cis.upenn.edu/~cis39903/ - The Art of Recusion
+
+** chalmers
+
+- intro: http://www.cse.chalmers.se/edu/year/2010/course/TDA451_Functional_Programming/
+- intro: [[http://www.cse.chalmers.se/edu/year/2012/course/TDA452/]]
+- intro: [[http://www.cse.chalmers.se/edu/course/TDA555/]]
+- advanced: [[http://www.cse.chalmers.se/edu/course/afp/]]
+- parallel: [[http://www.cse.chalmers.se/edu/course/pfp/]]
+- category theory: http://wiki.portal.chalmers.se/cse/pmwiki.php/CTFP14/CoursePlan
+- research group: [[http://wiki.portal.chalmers.se/cse/pmwiki.php/FP/FP]]
+
+** mit
+- foundations/Chlipala: [[https://stellar.mit.edu/S/course/6/fa13/6.820/index.html]]
+- category theory/Spivak: http://math.mit.edu/~dspivak/teaching/sp13/
+
+** university of virginia
+
+- student-lead course : [[http://shuklan.com/haskell/]]
+
+** caltech
+
+- [[http://courses.cms.caltech.edu/cs11/material/haskell/]]
+
+** RWTHAACHEN University (Germany)
+
+- https://www.youtube.com/channel/UC9ZJ-o00b2t79v6er1O-eBQ/videos?view=0&flow=list&live_view=500&sort=dd
+
+# End of file.

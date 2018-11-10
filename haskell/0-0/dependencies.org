@@ -1,0 +1,33 @@
+transitive dependencies
+
+https://harry.garrood.me/blog/tracking-down-transitive-dependencies/
+
+ex:
+
+
+> cd juno-obm-checkpointing
+
+> stack dot --external | gvpr 'E[$.head.name=="*"]'
+
+strict digraph gvpr_result {
+	juno	 [style=dashed];
+	juno -> array;
+        ..
+	juno -> "ekg-core";
+        ...
+	juno -> "zeromq4-haskell";
+	juno -> zlib;
+	rts	 [shape=box];
+	AES -> bytestring;
+	...
+	base -> rts;
+	base -> "ghc-prim";
+	base -> "integer-gmp";
+	cereal -> array;
+        ...
+
+------------------------------------------------------------------------------
+
+module dependencies in library
+https://github.com/yav/graphmod/wiki
+see ~/ws/OLABS/graphmod.sh

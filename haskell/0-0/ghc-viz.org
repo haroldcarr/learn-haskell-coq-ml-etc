@@ -1,0 +1,48 @@
+------------------------------------------------------------------------------
+
+https://github.com/def-/ghc-vis
+
+
+------------------------------------------------------------------------------
+INSTALL STACK
+
+pacman -S mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gtk3 mingw-w64-x86_64-gtk2 wget unzip
+
+echo 'export PATH=/c/graphviz/bin:$PATH' >> ~/.bashrc
+
+
+stack install gtk2hs-buildtools
+stack install glib
+stack install cairo
+stack install pango
+stack install gtk # get GHC error
+git clone https://github.com/def-/ghc-vis.git
+stack install
+cd ghc-vis
+stack repl
+ghci> :script ghci
+ghci> :vis
+
+------------------------------------------------------------------------------
+INSTALL MAC OS
+
+http://felsin9.de/nnis/ghc-vis/installing-osx/
+
+brew install gtk graphviz
+gtk-demo
+
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig
+export LDFLAGS=-L/usr/local/lib
+export CFLAGS=-I/usr/local/include
+export LIBS=-L/usr/local/lib
+
+# TODO : use NIX
+cabal update
+cabal install gtk2hs-buildtools
+cabal install ghc-vis --disable-library-profiling
+
+# does not work
+nix-shell -p "haskell.packages.ghc802.ghcWithPackages (pkgs: with pkgs; [ base transformers gtk2hs-buildtools ghc-vis ])"
+
+
+

@@ -1,0 +1,51 @@
+From: Christopher Done <chrisdone@gmail.com>
+Subject: Looking for maintainers or comaintainers on my Haskell projects
+Newsgroups: gmane.comp.lang.haskell.cafe
+To: Haskell Cafe <haskell-cafe@haskell.org>
+Date: Tue, 28 Feb 2017 17:18:27 +0000 (22 hours, 20 minutes, 26 seconds ago)
+Reply-To: chrisdone@googlemail.com
+
+Hi all,
+
+The short version is: I’ve been battling RSI in my fingers for some years. I’m doing various things to mitigate that problem, but I have very limited finger
+bandwidth these days; enough to work at my usual pace at my job, but not much in the evenings and weekends, and so I can’t manage to do much on my
+hobby projects. I’m also not as motivated these days to work on my set of open source projects, and am turning my attention to different things. It’s not
+great, but that’s life.
+
+I don’t think that the users of my packages are getting the best maintainership deal. Rather than be “the absentee maintainer”, I’d prefer a straight-forward
+transition of maintainership or ownership to someone who can put the right energy and time in.
+
+In terms of packages, there are really two that have a significant maintenance burden and users aren’t being served very well:
+
+* HIndent has a significant amount of issues opened for it regularly, and many of them require discussion and debate. If someone would like to become a
+ co-maintainer, let me know. It may (eventually) make sense to move it to a more general GitHub organization like commercialhaskell or haskell. 
+* Intero, which seems to have been a success, has a pretty big maintenance burden on “this doesn’t work” kind of issues which require investigation. There’s
+ some Emacs Lisp work to do on it, and some Haskell work on the intero binary, and a whole lot of platform-specific problems or tooling not working
+ together. On the other hand people really like this project, and there’s a lot of tooling potential. 
+
+If you want to take xeno and make it into a publishable package, please do so.
+
+The rest of my projects that are on Stackage are: labels, ace, ical, check-email, freenect, frisby, gd, ini, lucid, osdkeys, pdfinfo, present, pure-io, scrobble,
+shell-conduit, sourcemap, descriptive, wrap, path, weigh, haskell-docs, and structured-haskell-mode. If you’re interested in taking over or co-maintaining any
+of them, let me know. Some are interesting, others are boring, some are trivial.
+
+I have other packages on Hackage, but they’re mostly dead or experiments that don’t need maintenance anyway.
+
+I’ve started the process of adding or changing maintainers on my public services:
+
+* Haskell News is now a GitHub organization. Luke Murphy is a co-owner, and has full access to the DigitalOcean account that is running the service. So if
+ you want to work on that project, I’m not in the way. 
+* lpaste has been moved to its own DigitalOcean account too. If anyone is interested in taking over the project or co-running it, let me know. 
+* tryhaskell doesn’t really require any maintenance, but it’s also on its own DigitalOcean account now too. 
+* IRCBrowse is now on its own DigitalOcean account too. It requires maintenance once in a while. If anyone is interested in taking over the project or
+ co-running it, let me know. 
+
+Cheers!
+
+​
+_______________________________________________
+Haskell-Cafe mailing list
+To (un)subscribe, modify options or view archives go to:
+http://mail.haskell.org/cgi-bin/mailman/listinfo/haskell-cafe
+Only members subscribed via the mailman list are allowed to post.
+

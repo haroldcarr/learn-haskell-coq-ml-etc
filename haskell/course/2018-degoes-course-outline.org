@@ -1,0 +1,60 @@
+Day 1: Functional Essentials
+
+- Function Composition
+- Algebraic Data Types
+- Higher-Kinded Types
+  - abstract over first-order abstractions (e.g. collection-like data structure)
+- Type Classes
+  - adding structure to types
+
+Day 2: Functional Abstractions : core type classes; lenses
+
+- Abstract Algebra
+  - monoids, semigroups, rings, fields, ...
+    - encapsulate common patterns of composition and combination
+- Functor Hierarchy
+  - names to common patterns; behavior described with structured type classes/laws
+  - functor, applicative, monad ...
+- Folds
+  - focus on step of a loop
+- Optics: lenses / prisms
+  - preserve local reasoning
+  - first class fields (passed in/out and stored in data)
+  - manipulate deeply nested data
+
+Day 3: Functional Effects
+
+- ZIO
+  - asynchronous; concurrent
+  - acquiring/releasing resources
+  - running tasks in parallel
+  - racing tasks
+  - forking tasks to run on green threads
+  - interrupting forked tasks
+  - joining forked tasks
+- Effects
+  - effects are values : therefore types describe behavior
+  - monadic effect types
+- Asynchronicity, Concurrency & Parallelism
+- Resource-Safety
+  - try / finally across asynchronous and concurrent code,
+    and across threads as well as file and socket handles
+- Work Management
+  - composable back-pressure; early termination
+- Interop
+  - ZIO interop with Future and Cats Effects,
+
+Day 4: Functional Applications
+
+- Real World Programming : partiality, optionality, input and output, logging, bad user input, ...
+- Functional Architecture
+- Testing & Mocking (effectful code)
+
+Day 5: Functional Arts
+
+- Category Theory
+- Strange Functors : twisted; representable; selectable; ... functors
+- Dual Abstractions (e.g., Comonad)
+- Higher-Order Abstract Syntax : DSL using HOAS
+
+

@@ -1,0 +1,11 @@
+Created       : 2014 Mar 19 (Wed) 10:46:40 by Harold Carr.
+Last Modified : 2014 Mar 19 (Wed) 10:47:46 by Harold Carr.
+
+* IRC
+
+[[http://www.irchelp.org/irchelp/irctutorial.html]]
+
+Do *NOT* do more than two lines in IRC.  Instead, use http://lpaste.net/
+
+- e.g., http://lpaste.net/101461
+

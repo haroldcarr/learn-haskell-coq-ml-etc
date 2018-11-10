@@ -1,0 +1,52 @@
+Created       : 2014 Aug 08 (Fri) 18:13:47 by Harold Carr.
+Last Modified : 2015 Sep 29 (Tue) 21:32:32 by Harold Carr.
+
+ghc-mod:   https://github.com/kazu-yamamoto/ghc-mod structured-haskell-mode: https://github.com/chrisdone/structured-haskell-mode
+hdevtools: https://github.com/bitc/hdevtools﻿
+
+
+Haskell-mode: https://github.com/haskell/haskell-mode
+Manual:       https://github.com/haskell/haskell-mode/wiki﻿
+
+Pasting code:
+http://paste.lisp.org/ -- for Emacs Lisp syntax highlighting
+https://gist.github.com/ -- for private pastes
+http://lpaste.net/ -- if you want others to be able to edit yours﻿
+
+------------------------------------------------------------------------------
+
+501 hcarr-mac Library> sudo find / -name "*askell*" -print
+/Library/Caches/Homebrew/brew-cask--git/Casks/haskell-platform.rb
+/nix/store/0hx7hcfvzn181zby5mxmwihl9g3dfhjc-haskell-mode-13.14-169-g0d3569d.drv
+/Users/carr/.stack/programs/x86_64-osx/ghc-7.8.4/bin/runhaskell
+/Users/carr/.stack-work-HC/utah-haskell-infrastructure/install/x86_64-osx/lts-2.18/7.8.4/flag-cache/utah-haskell-0.1.0.0-34593f919b23872cb08048ed53ee40a6
+
+/usr/local/Cellar/brew-cask/0.54.1/Casks/haskell-platform.rb
+/usr/local/Cellar/emacs/24.5/share/emacs/24.5/lisp/org/ob-haskell.el.gz
+/usr/local/Cellar/emacs/24.5/share/emacs/24.5/lisp/org/ob-haskell.elc
+/usr/local/Library/Homebrew/language/haskell.rb
+/usr/local/Library/Taps/caskroom/homebrew-cask/Casks/haskell-platform.rb
+
+/Volumes/HC/.sync/.esync/emacs/hcHaskell.el
+
+/Volumes/HC/.sync/ftptmp/Beginning_Haskell.pdf
+/Volumes/HC/.sync/ftptmp/Duality for Haskellers   Inside 206-105.html
+/Volumes/HC/.sync/ftptmp/Duality for Haskellers   Inside 206-105_files
+
+------------------------------------------------------------------------------
+
+509 hcarr-mac ~> 509 hcarr-mac ~> sudo find / -name "*ghc*" -print
+/Library/Caches/Homebrew/brew-cask--git/Casks/ghc.rb
+/nix/store/1y18ng146bsyz1jws5xa75l9ibcdz0lf-nixpkgs-16.03pre68524.747e014/nixpkgs/pkgs/development/compilers/ghc
+/Users/carr/.ghci
+/Users/carr/.stack/programs/x86_64-osx/ghc-7.10.2
+/Users/carr/Library/Logs/Homebrew/ghc
+
+/usr/bin/patch-ghc-settings
+/usr/local/Cellar/brew-cask/0.54.1/Casks/ghc.rb
+/usr/local/lib/x86_64-osx-ghc-7.6.3
+/usr/local/Library/Formula/ghc.rb
+/usr/local/Library/Taps/caskroom/homebrew-cask/Casks/ghc.rb
+/usr/local/share/doc/x86_64-osx-ghc-7.6.3
+/usr/share/man/man1/ghc.1
+

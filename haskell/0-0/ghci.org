@@ -1,0 +1,5 @@
+Created       : 2014 Feb 12 (Wed) 09:58:28 by Harold Carr.
+Last Modified : 2014 Feb 12 (Wed) 09:58:32 by Harold Carr.
+
+http://www.haskell.org/haskellwiki/GHC/GHCi
+

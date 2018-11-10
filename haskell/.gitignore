@@ -8,7 +8,6 @@ cabal.sandbox.config
 *.chs.h
 .virthualenv
 .stack-work
-0-0
 0-CONFERENCES-TO-SUBMIT.org
 0-TODO-GITIGNORE
 group-like-structures.png

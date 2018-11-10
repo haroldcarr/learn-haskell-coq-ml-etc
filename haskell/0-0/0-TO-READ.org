@@ -1,0 +1,46 @@
+Better Haskell packages with hpack
+http://taylor.fausak.me/2017/04/12/better-haskell-packages-with-hpack/
+
+
+Refactor: Rename, Generate type signature, Generate exports, Extract binding, Inline binding, Organize imports
+http://haskelltools.org/
+
+
+Hedgehog will eat all your bugs.
+https://github.com/hedgehogqa/haskell-hedgehog
+
+
+DEPENDENT TYPES IN HASKELL: THEORY AND PRACTICE
+Richard A. Eisenberg (DISSERTATION)
+http://cs.brynmawr.edu/~rae/papers/2016/thesis/eisenberg-thesis.pdf
+
+
+Constrained Type Families (extended version), preprint
+J. Garrett Morris, Richard A. Eisenberg
+http://cs.brynmawr.edu/~rae/papers/2017/partiality/partiality.pdf
+
+
+Using types to unit-test in Haskell
+https://lexi-lambda.github.io/blog/2016/10/03/using-types-to-unit-test-in-haskell/
+
+
+Haskell Type Equality Constraints
+http://blog.infinitenegativeutility.com/2017/1/haskell-type-equality-constraints
+
+
+Proving Stuff in Haskell
+http://madsbuch.com/blog/proving-stuff-in-haskell/
+
+
+Why prove programs equivalent when your compiler can do that for you?
+http://www.joachim-breitner.de/blog/717-Why_prove_programs_equivalent_when_your_compiler_can_do_that_for_you_
+
+
+Verify your Typeclass Instances in Haskell Today!
+https://blog.jle.im/entry/verified-instances-in-haskell.html
+
+
+Speeding up a distributed computation in Haskell
+http://mazzo.li/posts/speeding-up-haskell-server.html
+
+

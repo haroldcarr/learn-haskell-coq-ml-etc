@@ -1,0 +1,228 @@
+Created       : 2014 May 16 (Fri) 15:02:32 by Harold Carr.
+Last Modified : 2014 May 17 (Sat) 13:55:36 by Harold Carr.
+
+Here are three things I would like help with:
+
+-------------------------
+1. BitlyClient
+
+As an exercise to learn TemplateHaskell and Aeson I am writing a bit.ly client:
+
+    https://github.com/haroldcarr/bitly-client
+
+Besides getting a code review, I'm stuck on how to deal with bitly
+responses and Aeson.  I am not sure if either I do not know
+Aeson/Haskell well enough or if bitly's responses need special casing.
+I will show you the details if you are interested.
+
+-------------------------
+2. Pluggable "interfaces"
+
+I would like to learn the typical Haskell idioms for plugging in
+different implementations of interfaces.  One package that I have used as a guide is:
+
+Interface:
+
+    http://hackage.haskell.org/package/network-transport-0.3.0.1/docs/Network-Transport.html
+
+Implementations:
+
+    https://hackage.haskell.org/package/network-transport-tcp-0.3.1/docs/Network-Transport-TCP.html
+    https://hackage.haskell.org/package/courier-0.1.0.5/docs/Network-Transport-Memory.html
+
+What are other ways to plug in implementations?
+
+-------------------------
+3. Haskell Emacs environment
+
+I would like to see everyone's emacs environment.  Currently I am following Tim Dysinger's setup:
+
+    http://tim.dysinger.net/posts/2014-02-18-haskell-with-emacs.html
+
+Regards,
+Harold
+
+------------------------------------------------------------------------------
+FRIDAY
+
+------------------------------------------------------------------------------
+* Programming with Pipes - Gabriel Gonzalez
+
+* The problem
+
+replicateM
+- must give all input before you can begin processing
+- must store all intermediate results before can return
+- ...
+
+* Solution
+- Producer - like a generator (coroutine)
+- streaming : produce a value, deal with a value
+- lazyly interleave effects with values
+
+- ListT is a beginner-friendly subset of pipes (but without memory
+- pipes: motivation: lazily stream values while interleaving effects
+  - e.g, log messages immediately (as opposed to WriteT [])
+- pipes: is a coroutine library at heart
+- pipes disadvantage compared to conduit - holds onto resources longer
+
+------------------------------------------------------------------------------
+Edward K: Boston Hackathon - August 1-3
+------------------------------------------------------------------------------
+
+Free * - Dan Piponi
+
+
+class Magma m where
+  o :: m -> m -> m
+e.g.,
+class Magma Integer where
+  0 = (+)
+
+Monoid like Magma but adds identity
+
+
+free Magmas, Monoids, Monads
+
+http://blog.sigfpe.com
+
+------------------------------------------------------------------------------
+SATURDAY
+
+------------------------------------------------------------------------------
+Conquering Cabal - Jonathan Fischoff
+
+- ghc : builds the package
+- ghc-pkg : registers/unregisters packages
+- ar : links libraries
+- clang, g++ ...
+
+ghc-pkg --help
+ghc-pkg list
+ghc-pkg describe mtl
+
+compiled library and/or executables
+*.hi : Interface file
+...
+
+------------------------------------------------------------------------------
+Experience works:
+
+
+IM.VU
+- Andy Friesen's, im.vue (where Johanth Fischoff works), experience talk
+- They are hiring: http://im.vu/hackerdojo
+
+AlephCloud - access to encrypted documents
+- Jeff Pollock
+- build everything in Haskell
+- use type-level computation to guarantee crypto stuff (bit length)
+- Use Haste to generate JavaScript from Haskell
+- converting some stuff to PureScript
+
+DOX (formerlly) DocMunch
+- Max (cofounder) @maxcan (he first started using Haskell at Jane Street)
+- Use Yesod and Persistent (typed DB access works with SQL, Mongo, ...)
+- Yesod has type-safe routing - appropriate for multiple page apps
+  - for single-page app: githum.com/docmunch/yesod-routes-typescript
+
+Pingwell http://www.pingwell.com/
+- Tim Sears
+- latest app: Grocery Exchange (find out item pricing)
+- haskell used to extract data from shopping label images
+  - OCR with ... video pixels (look at each frame to try to decode) to shelf label record
+- StateT monad is very useful
+
+tree.is
+- Luke Iannini
+- GHCiOS
+- Project: SpaceTime : make multiplayer games easy to use
+- App that uses it: InfiniteSketch
+- Another app: mesh
+- Uses cloud haskell
+
+------------------------------------------------------------------------------
+* Dan Burton - Yesod
+
+Stackage: Haskell Platform plust tons of useful packages the Just Work
+- managed by FP complete
+- to avoid cabal hell
+- if you use FPComplete IDE
+
+------------------------------------------------------------------------------
+* Shachaf Ben-Kiki - What is in the Lens library
+
+------------------------------------------------------------------------------
+* Dinner with Edward Kmett, ReinH, et al
+
+Edward sketched data structures for a JSON parser 4x faster than existing ones.
+
+https://code.google.com/p/taiju/
+
+LOUDS : Level Order Unary Depth Sequence
+DFUDS : Depth-First Unary Depth Sequence
+range min-max tree
+wavelet tree
+semi-index
+jacobson's binary tree encoding
+
+------------------------------------------------------------------------------
+SUNDAY
+
+------------------------------------------------------------------------------
+* David Thomas of Snowdrift
+
+talked to him about RDF Triple Browser
+
+Yesod + postgres + fay
+http conduit
+
+rdf + persistent (or otherwise) - talk to Snoyman
+
+------------------------------------------------------------------------------
+* Even Czaplicki - Functional Reactive Programming in Elm
+
+http://elm-lang.org/ compiler written in Haskell
+
+Nice interactive coding interface (aka Brent Victor)
+
+Works at http://prezi.com/
+
+------------------------------------------------------------------------------
+* Conal Elliot
+
+Who has most experience finding/building reusable abstractions: Math - abstract algebra
+
+non-leaky abstraction == homomorphism
+
+In haskell
+- type claes
+- loaw
+- semantic type class morphisms (TCMs)
+
+Read Peter Landin's "the next 70 programming languages" paper
+
+Denotation Design
+- specification
+- informs use and imple without entangling
+- standard algebraic abstractions
+- free of abstraction leaks
+- laws for free
+- principled construction of correct impl
+
+Plan
+- interface
+- denotation (what interface means)
+- representation
+- calculation (impl)
+
+-----
+
+continuous time is important for the same reason laziness is important : strictness breaks modularity @conal
+
+------------------------------------------------------------------------------
+* Greg Weber - Docmunch/Dox - Getting Things Done with Haskell
+
+Greg is the author of Shelly
+
+# End of file.

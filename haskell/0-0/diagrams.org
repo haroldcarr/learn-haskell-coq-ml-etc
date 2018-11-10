@@ -1,0 +1,17 @@
+Haskell Diagrams Notes
+
+#+BEGIN_EXAMPLE
+Created       : 2013 Jun 15 (Sat) 19:40:46 by carr.
+Last Modified : 2013 Jun 15 (Sat) 19:58:50 by carr.
+#+END_EXAMPLE
+
+[[http://projects.haskell.org/diagrams]]
+
+#+BEGIN_EXAMPLE
+sudo cabal install diagrams
+... Installed diagrams-0.6
+
+ghc --make DiagramsTutorial.lhs
+./DiagramsTutorial --help
+./DiagramsTutorial -o circle.svg -w 400
+#+END_EXAMPLE

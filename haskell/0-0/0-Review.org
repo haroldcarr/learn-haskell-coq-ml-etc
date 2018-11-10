@@ -1,0 +1,243 @@
+Created       : 2015 Apr 15 (Wed) 16:07:09 by Harold Carr.
+Last Modified : 2015 Apr 16 (Thu) 16:32:01 by Harold Carr.
+
+------------------------------------------------------------------------------
+* A
+
+------------------------------------------------------------------------------
+* B
+
+** bottom
+
+- value that inhabits every type (because Haskell is not total, i.e., every function is partial)
+- means : diverge : infinite loop; exception
+- [[http://dev.stephendiehl.com/hask/#bottoms]]
+
+------------------------------------------------------------------------------
+* C
+
+** Cabal
+
+- use : pkg mgr; build system
+- [[http://dev.stephendiehl.com/hask/#cabal]]
+
+------------------------------------------------------------------------------
+* D
+
+** DataKinds (GHC extension)
+
+- use : to extend the kind (types of types) system
+- e.g., with DK extension:
+  data Nat = S Nat | Z -- gets promoted to kind
+then can create (via GADT)
+  data Vec :: Nat -> * where
+     Nil  :: Vec Z
+     Cons :: Int -> Vec n -> Vec (S n)
+- haskell hierarchy: values : types : kinds : sorts
+  - Coq/Agda have infinite stack
+
+** debug
+
+- [[http://dev.stephendiehl.com/hask/#debugger]]
+- [[http://dev.stephendiehl.com/hask/#stacktraces]]
+- [[http://dev.stephendiehl.com/hask/#trace]]
+
+** development
+
+- see [[haddock]]
+- see [[type holes]]
+
+------------------------------------------------------------------------------
+* E
+
+------------------------------------------------------------------------------
+* F
+
+** Foldable (type class)
+
+- use : data structures that can be "folded" to a summary value
+- src : https://hackage.haskell.org/package/base-4.8.0.0/docs/Data-Foldable.html
+- visual : [[https://wiki.haskell.org/Fold#List_folds_as_structural_transformations]]
+
+------------------------------------------------------------------------------
+* G
+
+** GADT (GHC extension)
+
+- use : implement DSLs
+- enable to explicitly write types of constructors (so finer-grained pattern-match on those constructors)
+
+** GHCI
+
+- use : interactive shell
+- [[http://dev.stephendiehl.com/hask/#ghci]]
+- with emacs : [[https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md]]
+
+------------------------------------------------------------------------------
+* H
+
+<<hackage>>
+** Hackage
+
+- use : canonical repo of open source pkgs
+- [[http://dev.stephendiehl.com/hask/#hackage]]
+- see : [[stackage]]
+
+<<haddock>>
+** Haddock
+
+- use : doc tool
+
+------------------------------------------------------------------------------
+* I
+
+------------------------------------------------------------------------------
+* J
+
+------------------------------------------------------------------------------
+* K
+
+------------------------------------------------------------------------------
+* L
+
+------------------------------------------------------------------------------
+* M
+
+** Monad (type class)
+
+- use : pure but "effectful" programming (i.e., non-local control flow, state)
+- structure that represents computations defined as sequences of steps/monads - how to chain them
+
+------------------------------------------------------------------------------
+* N
+
+** non-exhaustive patterns
+
+- means : if cases not covered then program diverges
+- [[http://dev.stephendiehl.com/hask/#exhaustiveness]]
+
+------------------------------------------------------------------------------
+* O
+
+------------------------------------------------------------------------------
+* P
+
+------------------------------------------------------------------------------
+* Q
+
+------------------------------------------------------------------------------
+* R
+
+------------------------------------------------------------------------------
+* S
+
+<<stackage>>
+** Stackage
+
+- use : stable source of open source pkgs (by [[https://www.fpcomplete.com/]])
+- [[https://www.stackage.org/]]
+- see [[hackage]]
+
+------------------------------------------------------------------------------
+* T
+
+** Type Classes
+- enable ad hoc polymorphism of functions (e.g., overload `eq` on different data types)
+- functor
+  - =fmap ::    (a -> b) -> f a -> f b=
+  - apply a fun to all elements in container/context
+  - laws ensure fmap only changes elements, not container/structure
+- applicative
+  - =(<*>) :: f (a -> b) -> f a -> f b=
+  - apply a fun to multiple "effectful" arguments
+  - applicative can parse context free grammar
+- monad
+  - (>>=)  :: m a -> (a -> m b) -> m b
+    - given result of first computation, uses result to decide what to do,
+      produces a second computation
+  - monad can parse context-senstive grammar
+- monad transformers
+  - combine two or more monads into single "monad stack" with auto-lifting
+- MonadFix enables recursive do
+- semigroup
+  - =(<>) :: a -> a -> a=
+  - set with associative binary operation
+- monoid
+  - =mempty  :: a=
+  - =mappend :: a -> a -> a=
+  - semigroup with identity element
+- alternative
+  - =empty :: f a=
+  - =(<|>) :: f a -> f a -> f a=
+  - like 'or' that returns first non 'empty' alternative in 1 <|> 2 <|> ...
+- MonadPlus
+  - =mzero :: m a=
+  - =mplus :: m a -> m a -> m a=
+  - supports choice and failure
+- foldable
+  - =foldr   :: (a -> b -> b) -> b -> t a -> b=
+  - containers/contexts that can be folded in a single value
+  - container agnostic
+- traversable (generalization of Functor)
+  - traverse is an "effectful fmap"
+  - map over a structure of type t a,
+    applying fun to all elements of type a
+    produce a new structure of type t b
+    (fun may have some effects)
+  - Traversable and Functor instances for a type almost identical;
+    difference is Functor uses normal function application, whereas
+    Traversable uses (<$>) and (<*>)
+- arrow
+  - generalization of function application
+- arrowchoice
+  - alternate paths based on intermediate results (like monads do)
+
+** Type Families
+
+- enables ad hoc polymorphism of data types
+- parametric types that can be assigned specialized representations
+  based on the type parameters they are instantiated with
+- provide a more functional style of type-level programming than the relational style of functional dependencies.
+- GADTs like type families : allow a parametric type's constructors to depend on the type's parameters
+  - but GADT constructors must be defined in one place
+  - whereas type families can be extended
+
+<<type holes>>
+** type holes
+
+- use : have GHC tell you what type may be at a location indicated by '_'
+- [[http://dev.stephendiehl.com/hask/#type-holes]]
+
+------------------------------------------------------------------------------
+* U
+
+------------------------------------------------------------------------------
+* V
+
+------------------------------------------------------------------------------
+* W
+
+------------------------------------------------------------------------------
+* X
+
+------------------------------------------------------------------------------
+* Y
+
+------------------------------------------------------------------------------
+* Z
+
+# End of file.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

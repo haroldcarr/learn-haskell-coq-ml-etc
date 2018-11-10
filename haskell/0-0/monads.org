@@ -1,0 +1,14 @@
+Created       : 2015 Aug 15 (Sat) 19:03:36 by Harold Carr.
+Last Modified : 2015 Aug 18 (Tue) 07:59:24 by Harold Carr.
+
+- http://apfelmus.nfshost.com/articles/operational-monad.html
+- http://programmers.stackexchange.com/questions/242795/what-is-the-free-monad-interpreter-pattern
+- https://www.reddit.com/r/haskell/comments/38zpuo/real_world_examples_of_the_cont_monad/
+- http://okmij.org/ftp/Computation/monads.html
+- Free monads : compose programs from modular, interpretable languages.
+  - trees described by free monads are dynamic: structure depends on runtime values
+  - limits types of analysis one can do on these trees
+- Free applicatives : address this limitation
+  - only permit trees whose structure can be described statically, independent from runtime values.
+  - this tradeoff enables introspection and transformation of the structure of a program
+    in ways that are impossible with free monads.

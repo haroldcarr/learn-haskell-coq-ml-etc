@@ -5,7 +5,7 @@ First, (continue to) learn Haskell.  My path so far:
 Thank you.)
 
 2013-07    : attended   : Oregon Programming Languages Summer School, Eugene, Oregon (two weeks)
-2013-11... : self-study : [[https://github.com/data61/fp-course][Data61]] FP course (formerly NICTA) 
+2013-11... : self-study : [[https://github.com/data61/fp-course][Data61]] FP course (formerly NICTA)
 2013-11    : completed  : Coursera Odersky FP in Scala (online, did in Haskell too)
 2014-02    : presented  : "Monads", Utah Lambda Lounge, SLC, Utah
 2014-04    : presented  : "Monads", LambdaConf, Boulder, Colorado
@@ -28,6 +28,10 @@ Thank you.)
 2017-09    : attended   : ICFP/CUFP, Oxford, England
 2017-10    : attended   : Haskell Exchange, London, England
 2017-10    : hired      : blockchain scalability/accountability research in Haskell, Oracle Labs
+2018-06    : attended   : [[http://lambdaconf.us/training/lcusc/applied-haskell.html][Applied Haskell]], Michael Snoyman, Boulder, Colorado (2 days)
+2018-06    : presented  : "Let's Build a Blockchain", LambdaConf, Boulder, Colorado
+2018-09    : attended   : ICFP/etc, St. Louis
+2018-09    : paper at   : "Authenticated Modular Maps in Haskell", TyDe, St. Louis.
 
 Also not included are the many papers, blogs, books I read and tried.
 See: https://github.com/haroldcarr/learn-haskell-coq-ml-etc

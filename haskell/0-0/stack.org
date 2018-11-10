@@ -1,0 +1,60 @@
+Created       : 2015 Jul 18 (Sat) 22:05:26 by Harold Carr.
+Last Modified : 2018 Nov 07 (Wed) 12:07:31 by Harold Carr.
+
+** test
+
+# add test directory to paths
+stack repl --test
+
+# selectively run tests
+stack test --test-arguments "-m AuthMapMeasureViaJcs"
+stack test --test-arguments "-m BC.GoofyCoin"
+stack test --test-arguments "-m GCoin.GoofyCoin"
+stack test juno:test:tests-unit
+stack test juno:test:tests-raft
+
+------------------------------------------------------------------------------
+latest LTS
+
+lts-12.*
+lts-11.22
+lts-10.10
+lts-9.21
+lts-8.24
+lts-7.24
+lts-6.35
+lts-5.18
+lts-4.2
+lts-3.22
+lts-2.22
+
+------------------------------------------------------------------------------
+
+stack 1.6.1 stack.yaml changes:
+https://www.fpcomplete.com/blog/2017/07/stacks-new-extensible-snapshots
+
+------------------------------------------------------------------------------
+
+https://www.reddit.com/r/haskell/comments/3ros1b/best_current_way_to_install_dev_environment_on_a/cwrn9ff
+
+stack install hasktags stylish-haskell hlint hoogle hindent
+=> Copied executables to /Users/carr/.local/bin:
+- stylish-haskell
+- hoogle
+- hlint
+- hindent-generate-tests
+- hindent
+- hasktags
+
+find . -name stylish-haskell -print
+=>
+./.local/bin/stylish-haskell
+./.local/share/Trash/files/Haskell/repo-cache/hackage.haskell.org/stylish-haskell
+./.stack/indices/Hackage/packages/stylish-haskell
+./.stack/snapshots/x86_64-osx/lts-3.15/7.10.2/bin/stylish-haskell
+./.stack/snapshots/x86_64-osx/lts-3.4/7.10.2/bin/stylish-haskell
+
+install ghc-mod : https://touk.pl/blog/2015/10/14/getting-started-with-haskell-stack-and-spacemacs/
+put a version of ghc on path: see: https://github.com/kazu-yamamoto/ghc-mod/issues/660
+
+haven't looked at: https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md

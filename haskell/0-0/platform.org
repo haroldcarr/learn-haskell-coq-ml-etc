@@ -1,0 +1,123 @@
+Haskell notes
+
+#+BEGIN_EXAMPLE
+Created       : 2011 Dec 29 (Thu) 19:40:46 by carr.
+Last Modified : 2014 Feb 09 (Sun) 11:49:07 by Harold Carr.
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* install Haskell
+
+** install via haskell.org
+
+#+BEGIN_EXAMPLE
+apple -> about this mac -> more info -> system report -> software : 64-bit Kernel and Extensions [ Yes | No ]
+Download Haskell Platform ... 64 bit (10.6 or later)
+#+END_EXAMPLE
+
+- [[http://hackage.haskell.org/platform/mac.html]]
+- [[http://www.haskell.org/platform/download/2013.2.0.0/Haskell%20Platform%202013.2.0.0%2064bit.pkg]]
+
+puts symlinks in =/usr/bin=
+
+Installed 2014-01-02
+- 2012.4.0.0 (Mac 64 bit)
+- GHC   7.6.3
+- GHCi  7.6.3
+- Cabal 1.16.0
+  - THEN
+    cabal install cabal-install
+        Downloading Cabal-1.18.1.2...
+
+sudo chown -R carr /Library/Frameworks/GHC.framework
+
+- [[file:///Library/Haskell/doc/start.html]]
+- [[file:///Library/Haskell/current/doc/start.html]]
+
+- [[file:///Library/Frameworks/GHC.framework/Versions/Current/usr/bin]]
+- [[file:///Library/Frameworks/GHC.framework/Versions/Current/usr/share/doc/ghc]]
+- [[file:///Library/Frameworks/GHC.framework/Versions/Current/usr/share/doc/ghc/html/index.html]]
+
+- [[file:///Users/carr/Library/Haskell]]
+- [[file:///Users/carr/Library/Haskell/doc/index.html]]
+- [[file:///Users/carr/Library/Haskell/ghc-7.0.4/lib/HDBC-2.3.1.0/lib]]
+- [[file:///Users/carr/Library/Haskell/ghc-7.4.2/lib/]]
+
+- [[file:///Users/carr/.cabal]]
+- [[file:///Users/carr/.ghc]]
+
+** uninstall platform (after 7.4.2 installed above)
+
+[[http://stackoverflow.com/questions/6884478/everywhere-that-ghc-haskell-platform-installs/]]
+
+#+BEGIN_EXAMPLE
+sudo uninstall-hs only 7.4.2
+-- Would remove just version 7.4.2
+/Library/Frameworks/GHC.framework/Versions/7.4.2-x86_64
+/Library/Haskell/ghc-7.4.2
+/Users/carr/.ghc/x86_64-darwin-7.4.2
+/Users/carr/Library/Haskell/ghc-7.4.2
+/usr/bin/ghc-7.4.2@ -> /Library/Frameworks/GHC.framework/Versions/7.4.2-x86_64/usr/bin/ghc-7.4.2
+/usr/bin/ghc-pkg-7.4.2@ -> /Library/Frameworks/GHC.framework/Versions/7.4.2-x86_64/usr/bin/ghc-pkg-7.4.2
+/usr/bin/ghci-7.4.2@ -> /Library/Frameworks/GHC.framework/Versions/7.4.2-x86_64/usr/bin/ghci-7.4.2
+/usr/bin/haddock-ghc-7.4.2@ -> /Library/Frameworks/GHC.framework/Versions/7.4.2-x86_64/usr/bin/haddock-ghc-7.4.2
+/Users/carr/Library/Haskell/bin/cabal@ -> ../ghc-7.4.2/lib/cabal-install-1.16.0.2/bin/cabal
+/Users/carr/Library/Haskell/bin/xmonad@ -> ../ghc-7.4.2/lib/xmonad-0.11/bin/xmonad
+-- To actually remove these files, sudo run the command again with --remove
+-- To generate a script to remove these files, run the command again with --script
+
+sudo uninstall-hs --remove only 7.4.2
+#+END_EXAMPLE
+
+** install/uninstall via macport
+
+#+BEGIN_EXAMPLE
+# too old : ghc @6.10.4 lang/ghc
+port list ghc
+
+# remove it
+sudo port uninstall haskell-platform
+for p in  hs-platform-OpenGL hs-platform-GLUT        hs-platform-HTTP     hs-platform-HUnit    hs-platform-QuickCheck  hs-platform-zlib \
+          hs-platform-mtl    hs-platform-parsec      hs-platform-network  hs-platform-xhtml    hs-platform-cgi         hs-platform-editline \
+          hs-platform-fgl    hs-platform-haskell-src hs-platform-html     hs-platform-parallel hs-platform-regex-base  hs-platform-regex-posix \
+          hs-platform-regex-compat  hs-platform-stm  hs-platform-time     hs-platform-alex     hs-platform-cabal       hs-platform-happy
+do
+    sudo port uninstall $p
+done
+sudo port uninstall ghc ghci cabal
+/Library/Haskell/ghc-7.0.4/bin/uninstall-hs --remove only 6.10.4
+#+END_EXAMPLE
+
+------------------------------------------------------------------------------
+* development environment
+
+[[http://www.haskell.org/haskellwiki/How_to_write_a_Haskell_program]]
+
+#+BEGIN_EXAMPLE
+cabal update
+sudo cabal install cabal-install
+
+leksah.org : IDE (or emacs/haskell-mode)
+Cabal      : package management
+Haddock    : source documentation
+Darcs      : revision control
+----
+HaRe       : refactoring
+lhs2tex    : publication
+#+END_EXAMPLE
+
+[[http://en.wikibooks.org/wiki/Haskell]]
+
+
+Hackage-Fu Chrome Extension
+
+
+------------------------------------------------------------------------------
+* when package names collide
+
+e.g., Ambiguous module name `Control.Monad.Writer': it was found in multiple packages: monads-tf-0.1.0.1 mtl-2.1.2
+
+http://stackoverflow.com/questions/2048953/control-monad-state-found-in-multiple-packages-haskell
+
+# End of file.
+

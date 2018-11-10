@@ -1,0 +1,97 @@
+Created       : 2013 Aug 21 (Wed) 14:54:35 by carr.
+Last Modified : 2014 Aug 03 (Sun) 10:47:04 by Harold Carr.
+
+------------------------------------------------------------------------------
+* CABAL INSTALLS
+
+cabal update
+cabal install cabal-install
+- [[https://groups.google.com/forum/#!topic/haskell-cafe/SFoNwaq8wdc]]
+cd /Library/Haskell/bin
+sudo mv cabal.real cabal.real-1.16
+sudo ln -s ~/Library/Haskell/bin/cabal cabal.real
+sudo chown carr cabal.real
+
+cd ~/.sync/.esync/java/org/openhc/test-hunit-util
+make configure build install
+
+cabal install aeson
+cabal install hlint
+cabal install primes
+cabal install hsparql
+cabal install hoogle
+hoogle data
+
+# install Pandoc, Haykll, ...
+cd ~/.sync/sites/haroldcarr.com/
+cabal install
+
+cabal install hasktags
+-- example usage
+cd ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/course/coursera-fp-odersky-but-in-haskell/
+hasktags -e --ignore-close-implementation .
+M-x visit-tags-table
+
+https://github.com/jaspervdj/stylish-haskell/blob/master/README.markdown
+cabal install stylish-haskell
+
+http://www.reddit.com/r/haskell/comments/1zdbgz/ann_cabalgraphdeps_graphs_installtime_cabal/
+cabal install cabal-graphdeps
+usage:
+cabal-graphdeps pandoc | tred | dot -Tpng > pandoc.png
+
+
+TODO
+cabal install lhs2tex
+
+------------------------------------------------------------------------------
+** WHEN UPGRADING GHC
+
+install all previously installed packages
+some might not install, in which case delete from ~/.cabal/world and run again
+and install them again later when they are working again with that version of ghc.
+
+cabal install world
+
+------------------------------------------------------------------------------
+* CABAL SANDBOXES
+
+- [[http://coldwa.st/e/blog/2013-08-20-Cabal-sandbox.html]]
+
+- http://ro-che.info/articles/2014-03-05-cabal-sandbox-tips.html
+
+I do not want the sandbox contents copied when syncing via CrashPlan, unison, get, etc.
+And I do not want to tell each of them to ignore.
+Instead I have a special place to put all sandboxes and then link to them.
+
+mkdir ~/CABAL-SANDBOXES
+
+cd ~/.sync/ftptmp/ebooks-music-pics/tech
+git clone git@github.com:robstewart57/hsparql.git
+cd ~/.sync/ftptmp/ebooks-music-pics/tech/hsparql
+
+# NOTE:
+# - does not expand ~ : do not use
+# - not portable
+cabal sandbox init --sandbox=/Users/carr/CABAL-SANDBOXES/hsparql
+cabal install --only-dependencies
+cabal build
+
+ln -s ~/ftptmp/ebooks-music-pics/tech/programming-language/haskell/interview/s.hs
+
+# To add a local package to a sandbox
+cabal sandbox add-source ~/.sync/.esync/java/org/openhc/test-hunit-util
+cabal install --dependencies-only            # Install it into the sandbox
+cabal build                                  # Build the local package
+$EDITOR /my/patched/library/Source.hs        # Modify the add-source dependency
+cabal build                                  # Modified dependency is automatically reinstalled
+
+# WHEN DONE
+cabal sandbox delete
+
+------------------------------------------------------------------------------
+* using cabal in a project
+
+cabal repl
+
+# End of file.
