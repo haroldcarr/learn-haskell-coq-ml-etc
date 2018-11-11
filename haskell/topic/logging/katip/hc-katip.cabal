@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: de9cbce88fd82e314c0a0a2562f4991024f4f75861702787ee97638fa91b468f
+-- hash: 7decf0158a66af17ae3b9dfa46a10843b96e8dbc17be8809e2d8739d3549398e
 
 name:           hc-katip
 version:        0.1.0.0
@@ -14,6 +14,7 @@ build-type:     Simple
 library
   exposed-modules:
       Lib
+      LogData
       Raft
   other-modules:
       Paths_hc_katip
