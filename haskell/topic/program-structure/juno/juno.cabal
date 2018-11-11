@@ -4,19 +4,18 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: de9cbce88fd82e314c0a0a2562f4991024f4f75861702787ee97638fa91b468f
+-- hash: 02e20cd4c3778136d1e8a8a689973ccfedddbae8f124e7a297be7eb8c0170eda
 
-name:           hc-katip
+name:           juno
 version:        0.1.0.0
 license:        BSD3
 build-type:     Simple
 
 library
   exposed-modules:
-      Lib
       Raft
   other-modules:
-      Paths_hc_katip
+      Paths_juno
   hs-source-dirs:
       src
   ghc-options: -Wall
@@ -24,17 +23,16 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
-    , katip
-    , scientific
-    , text
-    , unordered-containers
-    , vector
+    , lens
+    , mtl
+    , random
+    , thyme
   default-language: Haskell2010
 
 executable m
   main-is: Main.hs
   other-modules:
-      Paths_hc_katip
+      Paths_juno
   hs-source-dirs:
       app
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
@@ -42,10 +40,9 @@ executable m
       aeson
     , base >=4.7 && <5
     , bytestring
-    , hc-katip
-    , katip
-    , scientific
-    , text
-    , unordered-containers
-    , vector
+    , juno
+    , lens
+    , mtl
+    , random
+    , thyme
   default-language: Haskell2010

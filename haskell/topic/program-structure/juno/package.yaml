@@ -1,4 +1,4 @@
-name:                hc-katip
+name:                juno
 version:             0.1.0.0
 license:             BSD3
 
@@ -6,11 +6,10 @@ dependencies:
 - aeson
 - base >= 4.7 && < 5
 - bytestring
-- unordered-containers
-- katip
-- scientific
-- text
-- vector
+- lens
+- mtl
+- random
+- thyme
 
 ghc-options:
 - -Wall
@@ -27,4 +26,4 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - hc-katip
+    - juno

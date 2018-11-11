@@ -17,21 +17,14 @@ import qualified Control.Exception        as CE
 import qualified Katip                    as K
 import qualified Katip.Core               as K
 import qualified System.IO                as SIO
-import qualified Control.Monad.RWS.Strict as RWS
 import           GHC.Generics
 ------------------------------------------------------------------------------
 import qualified Raft as R
 
 type Stack a = K.KatipContextT IO a
 
-someFunc :: IO ()
-someFunc = do
-  let (s, e) = R.mkSpecStateEnv
-   in RWS.void $ RWS.evalRWST R.server e s
-  main2
-
-main2 :: IO ()
-main2 = do
+run :: IO ()
+run = do
   -- handleScribe <- K.mkHandleScribe K.ColorIfTerminal SIO.stdout K.InfoS K.V2
   handleScribe <- K.mkHandleScribeWithFormatter
                    K.jsonFormat K.ColorIfTerminal SIO.stdout K.InfoS K.V2

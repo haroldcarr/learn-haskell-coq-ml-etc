@@ -56,8 +56,11 @@ Last Modified : 2017 Jul 09 (Sun) 07:04:32 by Harold Carr.
     - The Racket School of Languages and Semantics: 2017 Summer School : Salt Lake City
       - http://summer-school.racket-lang.org/2017/
   - Philadelphia
-    - DeepSpec Summer School on Verified Systems, July 17-28, 2017 :
+    - DeepSpec Summer School on Verified Systems, 2nd half of July
+      - https://deepspec.org/event/dsss17/
+      - https://deepspec.org/event/dsss18/
       - https://sympa.inria.fr/sympa/arc/coq-club/2016-12/msg00127.html
+      - http://lambda.jstolarek.com/2017/07/deepspec-summer-school-2017-a-summary/
       - July 13-15 : Coq intensive
   - UK : http://www.cs.ox.ac.uk/projects/utgp/school/ : Generic and Effectful Programming
   - Utrecht: [[http://www.utrechtsummerschool.nl/index.php?type=courses&code=H9]]

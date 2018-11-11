@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import Raft
 
 main :: IO ()
 main = run
