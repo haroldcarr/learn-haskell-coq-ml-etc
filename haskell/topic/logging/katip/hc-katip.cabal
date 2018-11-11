@@ -1,0 +1,59 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 7b4e8e2291b1fb274c419a50ab5a1721bd43f9f1a43d0fb76bbc4305efa0724b
+
+name:           hc-katip
+version:        0.1.0.0
+license:        BSD3
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+      Raft
+  other-modules:
+      Paths_hc_katip
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , katip
+    , lens
+    , mtl
+    , random
+    , scientific
+    , text
+    , thyme
+    , unordered-containers
+    , vector
+  default-language: Haskell2010
+
+executable m
+  main-is: Main.hs
+  other-modules:
+      Paths_hc_katip
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , hc-katip
+    , katip
+    , lens
+    , mtl
+    , random
+    , scientific
+    , text
+    , thyme
+    , unordered-containers
+    , vector
+  default-language: Haskell2010

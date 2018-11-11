@@ -1,0 +1,16 @@
+resolver: lts-12.17
+packages:
+- .
+extra-deps:
+- katip-0.6.3.0@sha256:55de9e007352cf3fb9de8de8b9ac17c1070824e07e6f6d5b676f9f3cff44d23c
+- thyme-0.3.5.5@sha256:a723192fd26240b38589029fbc05fc25ba7c0b105042601e554db18e69860931
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=1.9"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor
