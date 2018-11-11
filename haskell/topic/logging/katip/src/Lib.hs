@@ -51,5 +51,5 @@ test = do
           K.katipAddContext (R.Term 1) $
             $(K.logTM) K.InfoS "KKK"
   K.logMsg mempty K.InfoS "----------------------------------------------------------------------"
-  $(K.logT) LD.alil mempty K.InfoS "BBB"
+  $(K.logT) LD.exll mempty K.InfoS "BBB"
 

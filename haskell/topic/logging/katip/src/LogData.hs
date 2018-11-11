@@ -16,24 +16,58 @@ import           GHC.Generics
 ------------------------------------------------------------------------------
 import qualified Raft as R
 
-alil :: ALIL
-alil = ALIL [ LI (R.LogIndex 7777)
-            , RID (R.RequestId (-2) (-3))
-            , NID (R.NodeID "host" 8080 "host:8080")
-            , TERM (R.Term 1)
-            , TXT "catchup"
-            ]
+------------------------------------------------------------------------------
+type LL = LogList
+exll :: LogList
+exll = LogList [ LI (R.LogIndex 7777)
+               , RID (R.RequestId (-2) (-3))
+               , NID (R.NodeID "host" 8080 "host:8080")
+               , TERM (R.Term 1)
+               , TXT "catchup"
+               ]
 oo  :: JS.Object
-oo   = K.toObject alil
+oo   = K.toObject exll
 ooe :: BSL.ByteString
 ooe  = JS.encode oo
 tj  :: JS.Value
-tj   = JS.toJSON alil
+tj   = JS.toJSON exll
 tje :: BSL.ByteString
 tje  = JS.encode tj
-en  :: BSL.ByteString
-en   = JS.encode alil
 
+xx :: JS.Object
+xx =  case exll of
+  LogList xs -> case JS.toJSON xs of
+    a@(JS.Array _) -> HMap.singleton "appdata" a
+    x              -> error ("xx LogList JSON" <> show x)
+xxe :: BSL.ByteString
+xxe  = JS.encode xx
+
+en  :: BSL.ByteString
+en   = JS.encode exll
+
+{-
+:set -XOverloadedStrings
+import qualified Data.ByteString.Lazy.Char8 as BSLC8
+import qualified Data.Aeson as JS
+BSLC8.putStrLn ooe
+BSLC8.putStrLn tje
+BSLC8.putStrLn xxe
+BSLC8.putStrLn en
+
+JS.decode ooe :: Maybe JS.Value
+JS.decode ooe :: Maybe LogList -- Nothing
+
+JS.decode tje :: Maybe JS.Value
+JS.decode tje :: Maybe LogList
+
+JS.decode xxe :: Maybe JS.Value
+JS.decode xxe :: Maybe LogList -- Nothing
+
+JS.decode en  :: Maybe JS.Value
+JS.decode en  :: Maybe LogList
+-}
+
+------------------------------------------------------------------------------
 instance K.ToObject R.NodeID where
   toObject (R.NodeID _ _ fs) = HMap.singleton "NodeID" (JS.String (T.pack fs))
 instance K.LogItem R.NodeID where
@@ -56,22 +90,22 @@ instance K.ToObject R.RequestId where
 instance K.LogItem R.RequestId where
   payloadKeys _ _ = K.AllKeys
 
-data ALI
+data LogItem
   = NID  R.NodeID
   | RID  R.RequestId
   | LI   R.LogIndex
   | TERM R.Term
   | TXT  T.Text
   deriving Generic
-instance Show ALI where
+instance Show LogItem where
   show (NID  x) = show x
   show (RID  x) = show x
   show (LI   x) = show x
   show (TERM x) = show x
   show (TXT  x) = T.unpack x
-instance JS.ToJSON   ALI
-instance JS.FromJSON ALI
-instance K.ToObject ALI where
+instance JS.ToJSON   LogItem
+instance JS.FromJSON LogItem
+instance K.ToObject LogItem where
   toObject (NID nid) =
     HMap.singleton "NodeID" (JS.toJSON nid)
   toObject (RID rid) =
@@ -82,23 +116,23 @@ instance K.ToObject ALI where
     HMap.singleton "LogIndex" (JS.toJSON li)
   toObject (TXT x) =
     HMap.singleton "TXT" (JS.toJSON x)
-instance K.LogItem ALI where
+instance K.LogItem LogItem where
   payloadKeys _ _ = K.AllKeys
 
-newtype ALIL = ALIL [ALI] deriving Generic
-instance Show ALIL where
-  show (ALIL x) = show x
-instance JS.ToJSON   ALIL
-instance JS.FromJSON ALIL
+newtype LogList = LogList [LogItem] deriving Generic
+instance Show LogList where
+  show (LogList x) = show x
+instance JS.ToJSON   LogList
+instance JS.FromJSON LogList
 {-
-instance K.ToObject ALIL where
-  toObject (ALIL xs) = case JS.toJSON xs of
+instance K.ToObject LogList where
+  toObject (LogList xs) = case JS.toJSON xs of
     a@(JS.Array _) -> HMap.singleton "appdata" a
-    x              -> error ("toObject ALIL" <> show x)
+    x              -> error ("toObject LogList" <> show x)
 -}
-instance K.ToObject ALIL where
-  toObject (ALIL xs) =
-    HMap.singleton "alil" (JS.Array (V.fromList (map (JS.Object . K.toObject) xs)))
-instance K.LogItem ALIL where
+instance K.ToObject LogList where
+  toObject (LogList xs) =
+    HMap.singleton "LL" (JS.Array (V.fromList (map (JS.Object . K.toObject) xs)))
+instance K.LogItem LogList where
   payloadKeys _ _ = K.AllKeys
 
