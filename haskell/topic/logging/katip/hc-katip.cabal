@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b62b963ac0819290bdfcb5a12860c98a82d44c63e774b38653bd7512b13cec23
+-- hash: 2d0236eb1ad450a3697083ca5bd70b79e7167c7b704ac1b927ee7a2f82021afd
 
 name:           hc-katip
 version:        0.1.0.0
@@ -51,10 +51,11 @@ executable m
     , vector
   default-language: Haskell2010
 
-test-suite xxx-test
+test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      LogDataSpec
       Paths_hc_katip
   hs-source-dirs:
       test
@@ -63,10 +64,12 @@ test-suite xxx-test
       aeson
     , base >=4.7 && <5
     , bytestring
+    , hc-katip
+    , hspec
+    , hspec-expectations
     , katip
     , scientific
     , text
     , unordered-containers
     , vector
-    , xxx
   default-language: Haskell2010

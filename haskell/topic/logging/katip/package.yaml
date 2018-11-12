@@ -20,8 +20,8 @@ library:
 
 executables:
   m:
-    main:                Main.hs
     source-dirs:         app
+    main:                Main.hs
     ghc-options:
     - -threaded
     - -rtsopts
@@ -30,12 +30,15 @@ executables:
     - hc-katip
 
 tests:
-  xxx-test:
-    main:                Spec.hs
+  spec:
     source-dirs:         test
+    main:                Spec.hs
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - xxx
+    - hc-katip
+    - hspec
+    - hspec-expectations
+

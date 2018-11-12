@@ -7,7 +7,6 @@ module Lib where
 
 import qualified Control.Exception    as CE
 import qualified Data.Aeson           as JS
-import qualified Data.ByteString.Lazy as BSL
 import qualified Data.HashMap.Strict  as HMap
 import qualified Data.Scientific      as Sci
 import qualified Data.Text            as T
@@ -57,13 +56,8 @@ test = do
           K.katipAddContext (R.Term 1) $
             $(K.logTM) K.InfoS "KKK"
   K.logMsg mempty K.InfoS "----------------------------------------------------------------------"
-  $(K.logT) LD.exll mempty K.InfoS "BBB"
+  $(K.logT) LD.exampleLogList mempty K.InfoS "BBB"
 
-------------------------------------------------------------------------------
-oo  :: JS.Object
-oo   = K.toObject LD.exll
-ooe :: BSL.ByteString
-ooe  = JS.encode oo
 ------------------------------------------------------------------------------
 
 -- BEGIN : only necessary when giving directly as context

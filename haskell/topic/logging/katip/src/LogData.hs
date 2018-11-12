@@ -24,7 +24,7 @@ data LogItem
   | LI   R.LogIndex
   | TERM R.Term
   | TXT  T.Text
-  deriving Generic
+  deriving (Eq, Generic)
 instance Show LogItem where
   show (LI   x) = show x
   show (NID  x) = show x
@@ -34,7 +34,7 @@ instance Show LogItem where
 instance JS.ToJSON   LogItem
 instance JS.FromJSON LogItem
 
-newtype LogList = LogList [LogItem] deriving Generic
+newtype LogList = LogList [LogItem] deriving (Eq, Generic)
 instance Show LogList where
   show (LogList x) = show x
 instance JS.ToJSON   LogList
@@ -79,11 +79,11 @@ taggedJsonValuesToLogItems :: [(T.Text, JS.Value)] -> Either T.Text [LogItem]
 taggedJsonValuesToLogItems = mapM f
  where
   f (l, v) = case l of
-    "LI"   -> fj @R.LogIndex  v >>= Right . LI
-    "NID"  -> fj @R.NodeID    v >>= Right . NID
-    "RID"  -> fj @R.RequestId v >>= Right . RID
-    "TERM" -> fj @R.Term      v >>= Right . TERM
-    "TXT"  -> fj @T.Text      v >>= Right . TXT
+    "LI"   -> LI   <$> fj @R.LogIndex  v
+    "NID"  -> NID  <$> fj @R.NodeID    v
+    "RID"  -> RID  <$> fj @R.RequestId v
+    "TERM" -> TERM <$> fj @R.Term      v
+    "TXT"  -> TXT  <$> fj @T.Text      v
     e      -> Left $ "taggedJsonValuesToLogItems : unexpected: " <> e
   fj :: forall a . JS.FromJSON a => JS.Value -> Either T.Text a
   fj v' = case JS.fromJSON v' of
@@ -99,27 +99,11 @@ decodeLogList a = case JS.eitherDecode a of
 
 ------------------------------------------------------------------------------
 
-type LL = LogList
-exll :: LogList
-exll = LogList [ LI   (R.LogIndex 7777)
-               , RID  (R.RequestId (-2) (-3))
-               , NID  (R.NodeID "host" 8080 "host:8080")
-               , TERM (R.Term 1)
-               , TXT  "catchup"
-               ]
-jsen :: BSL.ByteString
-jsen  = JS.encode exll
-
-loen :: BSL.ByteString
-loen  = (JS.encode . toLabeledJsonObject) exll
-
-jsdv :: Maybe JS.Value
-jsdv  = JS.decode jsen
-jsdd :: Maybe LogList
-jsdd  = JS.decode jsen
-
-lodv :: Maybe JS.Value
-lodv  = JS.decode loen
-lodd :: Either T.Text LogList
-lodd  = decodeLogList loen -- does not work
-
+exampleLogList :: LogList
+exampleLogList =
+  LogList [ LI   (R.LogIndex 7777)
+          , RID  (R.RequestId (-2) (-3))
+          , NID  (R.NodeID "host" 8080 "host:8080")
+          , TERM (R.Term 1)
+          , TXT  "catchup"
+          ]
