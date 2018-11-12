@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -5,6 +7,10 @@ module Lib where
 
 import qualified Control.Exception    as CE
 import qualified Data.Aeson           as JS
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.HashMap.Strict  as HMap
+import qualified Data.Scientific      as Sci
+import qualified Data.Text            as T
 import qualified Katip                as K
 import qualified Katip.Core           as K
 import qualified System.IO            as SIO
@@ -52,4 +58,46 @@ test = do
             $(K.logTM) K.InfoS "KKK"
   K.logMsg mempty K.InfoS "----------------------------------------------------------------------"
   $(K.logT) LD.exll mempty K.InfoS "BBB"
+
+------------------------------------------------------------------------------
+oo  :: JS.Object
+oo   = K.toObject LD.exll
+ooe :: BSL.ByteString
+ooe  = JS.encode oo
+------------------------------------------------------------------------------
+
+-- BEGIN : only necessary when giving directly as context
+instance K.ToObject R.NodeID where
+  toObject (R.NodeID _ _ fs) = HMap.singleton "NodeID" (JS.String (T.pack fs))
+instance K.LogItem R.NodeID where
+  payloadKeys _ _ = K.AllKeys
+
+instance K.ToObject R.Term where
+  toObject (R.Term t) = HMap.singleton "Term" (JS.Number (Sci.scientific (toInteger t) 0))
+instance K.LogItem R.Term where
+  payloadKeys _ _ = K.AllKeys
+
+instance K.ToObject R.LogIndex where
+  toObject (R.LogIndex i) = HMap.singleton "LogIndex" (JS.Number (Sci.scientific (toInteger i) 0))
+instance K.LogItem R.LogIndex where
+  payloadKeys _ _ = K.AllKeys
+
+instance K.ToObject R.RequestId where
+  toObject x = case JS.toJSON x of
+    JS.Object o -> o
+    _           -> error "toObject R.RequestId"
+instance K.LogItem R.RequestId where
+  payloadKeys _ _ = K.AllKeys
+-- END : only necessary when giving directly as context
+
+-- If context is always enclosed in LogList, then above ToObject are NOT necessary.
+instance K.ToObject LD.LogItem where
+  toObject = LD.toLabeledJsonObject
+instance K.LogItem LD.LogItem where
+  payloadKeys _ _ = K.AllKeys
+
+instance K.ToObject LD.LogList where
+  toObject = LD.toLabeledJsonObject
+instance K.LogItem LD.LogList where
+  payloadKeys _ _ = K.AllKeys
 
