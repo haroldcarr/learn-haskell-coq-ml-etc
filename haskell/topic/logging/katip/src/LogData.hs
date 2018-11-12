@@ -1,7 +1,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE ExplicitForAll    #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications  #-}
 
 module LogData where
 
@@ -77,16 +79,16 @@ taggedJsonValuesToLogItems :: [(T.Text, JS.Value)] -> Either T.Text [LogItem]
 taggedJsonValuesToLogItems = mapM f
  where
   f (l, v) = case l of
-    "LI"   -> (fj v :: Either T.Text R.LogIndex)  >>= Right . LI
-    "NID"  -> (fj v :: Either T.Text R.NodeID)    >>= Right . NID
-    "RID"  -> (fj v :: Either T.Text R.RequestId) >>= Right . RID
-    "TERM" -> (fj v :: Either T.Text R.Term)      >>= Right . TERM
-    "TXT"  -> (fj v :: Either T.Text T.Text)      >>= Right . TXT
+    "LI"   -> fj @R.LogIndex  v >>= Right . LI
+    "NID"  -> fj @R.NodeID    v >>= Right . NID
+    "RID"  -> fj @R.RequestId v >>= Right . RID
+    "TERM" -> fj @R.Term      v >>= Right . TERM
+    "TXT"  -> fj @T.Text      v >>= Right . TXT
     e      -> Left $ "taggedJsonValuesToLogItems : unexpected: " <> e
-  fj :: JS.FromJSON a => JS.Value -> Either T.Text a
+  fj :: forall a . JS.FromJSON a => JS.Value -> Either T.Text a
   fj v' = case JS.fromJSON v' of
-            JS.Success a -> Right a
-            JS.Error   s -> Left (T.pack s)
+    JS.Success a -> Right a
+    JS.Error   s -> Left (T.pack s)
 
 decodeLogList :: BSL.ByteString -> Either T.Text LogList
 decodeLogList a = case JS.eitherDecode a of
