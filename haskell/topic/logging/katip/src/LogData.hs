@@ -7,14 +7,15 @@
 
 module LogData where
 
-import qualified Data.Aeson           as JS
-import qualified Data.ByteString.Lazy as BSL
-import qualified Data.HashMap.Strict  as HMap
-import qualified Data.Text            as T
-import qualified Data.Vector          as V
+import qualified Data.Aeson                 as JS
+import qualified Data.ByteString.Lazy       as BSL
+import qualified Data.ByteString.Lazy.Char8 as BSLC8
+import qualified Data.HashMap.Strict        as HMap
+import qualified Data.Text                  as T
+import qualified Data.Vector                as V
 import           GHC.Generics
 ------------------------------------------------------------------------------
-import qualified Raft                 as R
+import qualified Raft                       as R
 
 ------------------------------------------------------------------------------
 
@@ -56,6 +57,23 @@ mkSingleton l x = HMap.singleton l (JS.toJSON x)
 instance ToLabeledJsonObject LogList where
   toLabeledJsonObject (LogList xs) =
     HMap.singleton "LL" (JS.Array (V.fromList (map (JS.Object . toLabeledJsonObject) xs)))
+
+data Format = JSON | CompactJSON | Textual
+
+encode :: Format -> LogList -> BSL.ByteString
+encode JSON a =
+  JS.encode $ HMap.fromList [ ("encoding"::T.Text, JS.String "JSON")
+                            , ("data", JS.toJSON a)
+                            ]
+encode CompactJSON (LogList xs) =
+  JS.encode $ HMap.fromList [ ("encoding"::T.Text, JS.String "CompactJSON")
+                            , ("data"    ::T.Text, toLabeledJsonArray xs)
+                            ]
+encode Textual a =
+  (BSLC8.pack . show) a
+
+toLabeledJsonArray :: [LogItem] -> JS.Value
+toLabeledJsonArray xs = JS.Array (V.fromList (map (JS.Object . toLabeledJsonObject) xs))
 
 ------------------------------------------------------------------------------
 
