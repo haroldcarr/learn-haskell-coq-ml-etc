@@ -8,8 +8,6 @@ module LogData where
 import qualified Data.Aeson           as JS
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.HashMap.Strict  as HMap
-import qualified Data.List            as DL
-import qualified Data.Maybe           as DM
 import qualified Data.Text            as T
 import qualified Data.Vector          as V
 import           GHC.Generics
@@ -31,52 +29,52 @@ jsen  = JS.encode exll
 loen :: BSL.ByteString
 loen  = (JS.encode . toLabeledJsonObject) exll
 
-jsdv :: JS.Value
-Just jsdv  = JS.decode jsen
-jsdd :: LogList
-Just jsdd  = JS.decode jsen
+jsdv :: Maybe JS.Value
+jsdv  = JS.decode jsen
+jsdd :: Maybe LogList
+jsdd  = JS.decode jsen
 
-lodv :: JS.Value
-Just lodv  = JS.decode loen
-lodd :: LogList
+lodv :: Maybe JS.Value
+lodv  = JS.decode loen
+lodd :: Either T.Text LogList
 lodd  = dzzz loen -- does not work
 
-xxx :: JS.Value -> [(T.Text, JS.Value)]
-xxx v = case v of
+logListObjectToTaggedJsonValues :: JS.Value -> Either T.Text [(T.Text, JS.Value)]
+logListObjectToTaggedJsonValues v = case v of
   JS.Object o ->
     case HMap.lookup "LL" o of
-      Nothing -> error "xxx : missing LL"
-      Just (JS.Array a) -> map f (V.toList a)
-      _                 -> error "xxx : LL value not a JSON Array"
-  _           -> error "xxx : not an JSON Object"
+      Nothing           -> Left "xxx : missing LL"
+      Just (JS.Array a) -> Right $ map f (V.toList a)
+      _                 -> Left "xxx : LL value not a JSON Array"
+  _           -> Left "xxx : not an JSON Object"
  where
   f (JS.Object o') = case HMap.toList o' of
     [x] -> x
     _   -> error "xxx : object in array has more than one field"
   f _ = error "xxx : array contains items that are not JSON objects"
 
-yyy :: [(T.Text, JS.Value)] -> [LogItem]
-yyy [] = []
-yyy ((l,v):xs) = case l of
-  "LI" -> LI (fromJsonE v :: R.LogIndex) : yyy xs
-  "NID" -> NID (fromJsonE v :: R.NodeID) : yyy xs
-  "RID" -> RID (fromJsonE v :: R.RequestId) : yyy xs
-  "TERM" -> TERM (fromJsonE v :: R.Term) : yyy xs
-  "TXT" -> TXT (fromJsonE v :: T.Text) : yyy xs
-  _ -> error "yyy : unexpected"
+yyy :: [(T.Text, JS.Value)] -> Either T.Text [LogItem]
+yyy = mapM f
  where
-  fromJsonE :: JS.FromJSON a => JS.Value -> a
-  fromJsonE v' = case JS.fromJSON v' of
-    JS.Success a -> a
-    JS.Error   s -> error s
+  f (l, v) = case l of
+    "LI"   -> (fj v :: Either T.Text R.LogIndex)  >>= Right . LI
+    "NID"  -> (fj v :: Either T.Text R.NodeID)    >>= Right . NID
+    "RID"  -> (fj v :: Either T.Text R.RequestId) >>= Right . RID
+    "TERM" -> (fj v :: Either T.Text R.Term)      >>= Right . TERM
+    "TXT"  -> (fj v :: Either T.Text T.Text)      >>= Right . TXT
+    e      -> Left $ "yyy : unexpected: " <> e
+  fj :: JS.FromJSON a => JS.Value -> Either T.Text a
+  fj v' = case JS.fromJSON v' of
+            JS.Success a -> Right a
+            JS.Error   s -> Left (T.pack s)
 
-zzz :: JS.Value -> LogList
-zzz = LogList . yyy . xxx
+zzz :: JS.Value -> Either T.Text LogList
+zzz v = logListObjectToTaggedJsonValues v >>= yyy >>= Right . LogList
 
-dzzz :: BSL.ByteString -> LogList
-dzzz a = case JS.decode a of
-  Nothing -> error "dzzz"
-  Just a' -> zzz a'
+dzzz :: BSL.ByteString -> Either T.Text LogList
+dzzz a = case JS.eitherDecode a of
+  Left  e -> Left (T.pack e)
+  Right v -> zzz v
 
 ------------------------------------------------------------------------------
 
