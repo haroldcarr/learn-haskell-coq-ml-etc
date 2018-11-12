@@ -9,6 +9,7 @@ import qualified Data.Aeson           as JS
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.HashMap.Strict  as HMap
 import qualified Data.List            as DL
+import qualified Data.Maybe           as DM
 import qualified Data.Text            as T
 import qualified Data.Vector          as V
 import           GHC.Generics
@@ -37,15 +38,8 @@ Just jsdd  = JS.decode jsen
 
 lodv :: JS.Value
 Just lodv  = JS.decode loen
-lodd :: Maybe LogList
-lodd  = JS.decode loen -- does not work
-
-{-
-turn
-(Object (fromList [("LL",Array [Object (fromList [             ("LI",             Number 7777.0)]),Object (fromList [("RID",Object (fromList [("_ridShard",Number -3.0),("_ridNonce",Number -2.0)]))]),Object (fromList [("NID",Object (fromList [("fullAddr",String "host:8080"),("host",String "host"),("port",Number 8080.0)]))]),Object (fromList [("TERM",Number 1.0)]),Object (fromList [("TXT",String "catchup")])])]))
-into
-                        (Array [Object (fromList [("tag",String "LI"),("contents",Number 7777.0)]),Object (fromList [("tag",String "RID"),("contents",Object (fromList [("_ridShard",Number -3.0),("_ridNonce",Number -2.0)]))]),Object (fromList [("tag",String "NID"),("contents",Object (fromList [("fullAddr",String "host:8080"),("host",String "host"),("port",Number 8080.0)]))]),Object (fromList [("tag",String "TERM"),("contents",Number 1.0)]),Object (fromList [("tag",String "TXT"),("contents",String "catchup")])])
--}
+lodd :: LogList
+lodd  = dzzz loen -- does not work
 
 xxx :: JS.Value -> [(T.Text, JS.Value)]
 xxx v = case v of
@@ -61,53 +55,28 @@ xxx v = case v of
     _   -> error "xxx : object in array has more than one field"
   f _ = error "xxx : array contains items that are not JSON objects"
 
-yyy :: [(T.Text, JS.Value)] -> [[(T.Text, JS.Value)]]
+yyy :: [(T.Text, JS.Value)] -> [LogItem]
 yyy [] = []
-yyy ((l,v):xs) = [("tag"::T.Text, JS.String l), ("contents"::T.Text, v)] : yyy xs
+yyy ((l,v):xs) = case l of
+  "LI" -> LI (fromJsonE v :: R.LogIndex) : yyy xs
+  "NID" -> NID (fromJsonE v :: R.NodeID) : yyy xs
+  "RID" -> RID (fromJsonE v :: R.RequestId) : yyy xs
+  "TERM" -> TERM (fromJsonE v :: R.Term) : yyy xs
+  "TXT" -> TXT (fromJsonE v :: T.Text) : yyy xs
+  _ -> error "yyy : unexpected"
+ where
+  fromJsonE :: JS.FromJSON a => JS.Value -> a
+  fromJsonE v' = case JS.fromJSON v' of
+    JS.Success a -> a
+    JS.Error   s -> error s
 
-zzz :: [[(T.Text, JS.Value)]] -> JS.Value
-zzz = JS.Array .V.fromList . map (JS.Object . HMap.fromList)
+zzz :: JS.Value -> LogList
+zzz = LogList . yyy . xxx
 
-zzz' :: JS.Value -> Maybe LogList
-zzz' = JS.decode . JS.encode
-
--- zzz' (zzz $ yyy $ xxx lodv)
-
-tj  :: JS.Value
-tj   = JS.toJSON exll
-tje :: BSL.ByteString
-tje  = JS.encode tj -- same as enc
-
-xx :: JS.Object
-xx =  case exll of
-  LogList xs -> case JS.toJSON xs of
-    a@(JS.Array _) -> HMap.singleton "appdata" a
-    x              -> error ("xx LogList JSON" <> show x)
-xxe :: BSL.ByteString
-xxe  = JS.encode xx -- same as enc but enclosed in object
-
-
-{-
-:set -XOverloadedStrings
-import qualified Data.ByteString.Lazy.Char8 as BSLC8
-import qualified Data.Aeson as JS
-BSLC8.putStrLn ooe -- BEST OUTPUT
-BSLC8.putStrLn tje
-BSLC8.putStrLn xxe
-BSLC8.putStrLn en
-
-JS.decode ooe :: Maybe JS.Value
-JS.decode ooe :: Maybe LogList -- Nothing -- BUT DOESN'T REVERSE
-
-JS.decode tje :: Maybe JS.Value
-JS.decode tje :: Maybe LogList
-
-JS.decode xxe :: Maybe JS.Value
-JS.decode xxe :: Maybe LogList -- Nothing
-
-JS.decode en  :: Maybe JS.Value
-JS.decode en  :: Maybe LogList
--}
+dzzz :: BSL.ByteString -> LogList
+dzzz a = case JS.decode a of
+  Nothing -> error "dzzz"
+  Just a' -> zzz a'
 
 ------------------------------------------------------------------------------
 
@@ -119,9 +88,9 @@ data LogItem
   | TXT  T.Text
   deriving Generic
 instance Show LogItem where
+  show (LI   x) = show x
   show (NID  x) = show x
   show (RID  x) = show x
-  show (LI   x) = show x
   show (TERM x) = show x
   show (TXT  x) = "TXT " ++ T.unpack x
 instance JS.ToJSON   LogItem
