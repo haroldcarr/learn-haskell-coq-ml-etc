@@ -13,6 +13,7 @@ import qualified Data.Text            as T
 import qualified Katip                as K
 import qualified Katip.Core           as K
 import qualified System.IO            as SIO
+import qualified Data.Vector          as V
 ------------------------------------------------------------------------------
 import qualified LogData              as LD
 import qualified Raft                 as R
@@ -94,4 +95,6 @@ instance K.ToObject LD.LogList where
   toObject = LD.toLabeledJsonObject
 instance K.LogItem LD.LogList where
   payloadKeys _ _ = K.AllKeys
-
+instance LD.ToLabeledJsonObject LD.LogList where
+  toLabeledJsonObject (LD.LogList xs) =
+    HMap.singleton "LL" (JS.Array (V.fromList (map (JS.Object . LD.toLabeledJsonObject) xs)))

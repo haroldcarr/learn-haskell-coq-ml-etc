@@ -7,6 +7,7 @@
 
 module LogData where
 
+------------------------------------------------------------------------------
 import qualified Data.Aeson                 as JS
 import qualified Data.ByteString.Lazy       as BSL
 import qualified Data.ByteString.Lazy.Char8 as BSLC8
@@ -16,9 +17,10 @@ import qualified Data.Vector                as V
 import           GHC.Generics
 ------------------------------------------------------------------------------
 import qualified Raft                       as R
-
 ------------------------------------------------------------------------------
+-- API
 
+-- | Things that can be logged.
 data LogItem
   = NID  R.NodeID
   | RID  R.RequestId
@@ -26,6 +28,32 @@ data LogItem
   | TERM R.Term
   | TXT  T.Text
   deriving (Eq, Generic)
+
+-- | Ordered list of things to be logged.
+newtype LogList = LogList [LogItem] deriving (Eq, Generic)
+
+-- | Encoding format.
+data Format = JSON | CompactJSON | Textual
+
+-- | Encode according to format.
+encode :: Format -> LogList -> BSL.ByteString
+encode JSON        = JS.encode
+encode CompactJSON = JS.encode . toLabeledJsonArray
+ where toLabeledJsonArray (LogList xs) =
+         JS.Array (V.fromList (map (JS.Object . toLabeledJsonObject) xs))
+encode Textual     = BSLC8.pack . show
+
+-- | Decode according to format.
+decode :: Format -> BSL.ByteString -> Either T.Text LogList
+decode JSON        = eitherStringToEitherText . JS.eitherDecode
+decode CompactJSON = decodeLogList
+decode Textual     = Left . ("cannot decode Textual: " <>) . T.pack . BSLC8.unpack
+
+------------------------------------------------------------------------------
+-- IMPL
+
+-- encoding
+
 instance Show LogItem where
   show (LI   x) = show x
   show (NID  x) = show x
@@ -35,7 +63,6 @@ instance Show LogItem where
 instance JS.ToJSON   LogItem
 instance JS.FromJSON LogItem
 
-newtype LogList = LogList [LogItem] deriving (Eq, Generic)
 instance Show LogList where
   show (LogList x) = show x
 instance JS.ToJSON   LogList
@@ -51,45 +78,24 @@ instance ToLabeledJsonObject LogItem where
   toLabeledJsonObject (LI   x) = mkSingleton "LI"   x
   toLabeledJsonObject (TXT  x) = mkSingleton "TXT"  x
 
-mkSingleton :: JS.ToJSON a => T.Text -> a -> JS.Object
-mkSingleton l x = HMap.singleton l (JS.toJSON x)
+-- decoding
 
-instance ToLabeledJsonObject LogList where
-  toLabeledJsonObject (LogList xs) =
-    HMap.singleton "LL" (JS.Array (V.fromList (map (JS.Object . toLabeledJsonObject) xs)))
+decodeLogList :: BSL.ByteString -> Either T.Text LogList
+decodeLogList a = case JS.eitherDecode a of
+  Left  e -> Left $ "decodeLogList: " <> T.pack e
+  Right v -> logListArrayToTaggedJsonValues v
+         >>= taggedJsonValuesToLogItems
+         >>= Right . LogList
 
-data Format = JSON | CompactJSON | Textual
-
-encode :: Format -> LogList -> BSL.ByteString
-encode JSON a =
-  JS.encode $ HMap.fromList [ ("encoding"::T.Text, JS.String "JSON")
-                            , ("data", JS.toJSON a)
-                            ]
-encode CompactJSON (LogList xs) =
-  JS.encode $ HMap.fromList [ ("encoding"::T.Text, JS.String "CompactJSON")
-                            , ("data"    ::T.Text, toLabeledJsonArray xs)
-                            ]
-encode Textual a =
-  (BSLC8.pack . show) a
-
-toLabeledJsonArray :: [LogItem] -> JS.Value
-toLabeledJsonArray xs = JS.Array (V.fromList (map (JS.Object . toLabeledJsonObject) xs))
-
-------------------------------------------------------------------------------
-
-logListObjectToTaggedJsonValues :: JS.Value -> Either T.Text [(T.Text, JS.Value)]
-logListObjectToTaggedJsonValues v = case v of
-  JS.Object o ->
-    case HMap.lookup "LL" o of
-      Nothing           -> Left $ "xxx : missing LL: " <> tshow v
-      Just (JS.Array a) -> mapM f (V.toList a)
-      Just x            -> Left $ "xxx : LL value not a JSON Array: " <> tshow x
-  _ -> Left $ "xxx : not an JSON Object: " <> tshow v
+logListArrayToTaggedJsonValues :: JS.Value -> Either T.Text [(T.Text, JS.Value)]
+logListArrayToTaggedJsonValues v = case v of
+  JS.Array a -> mapM f (V.toList a)
+  _          -> Left $ "llattjv : not an JSON Array: " <> tshow v
  where
   f (JS.Object o') = case HMap.toList o' of
     [x] -> Right x
-    e   -> Left $ "xxx : object in array has more than one field: " <> tshow e
-  f e = Left $ "xxx : array contains items that are not JSON objects: " <> tshow e
+    e   -> Left $ "llattjv : object in array has more than one field: " <> tshow e
+  f e = Left $ "llattjv : array contains items that are not JSON objects: " <> tshow e
   tshow :: Show a => a -> T.Text
   tshow = T.pack . show
 
@@ -108,14 +114,19 @@ taggedJsonValuesToLogItems = mapM f
     JS.Success a -> Right a
     JS.Error   s -> Left (T.pack s)
 
-decodeLogList :: BSL.ByteString -> Either T.Text LogList
-decodeLogList a = case JS.eitherDecode a of
-  Left  e -> Left $ "decodeLogList: " <> T.pack e
-  Right v -> logListObjectToTaggedJsonValues v
-         >>= taggedJsonValuesToLogItems
-         >>= Right . LogList
+------------------------------------------------------------------------------
+-- utilities
+
+mkSingleton :: JS.ToJSON a => T.Text -> a -> JS.Object
+mkSingleton l x = HMap.singleton l (JS.toJSON x)
+
+eitherStringToEitherText :: Either String a -> Either T.Text a
+eitherStringToEitherText ea = case ea of
+  Left str -> Left (T.pack str)
+  Right  a -> Right a
 
 ------------------------------------------------------------------------------
+-- test data
 
 exampleLogList :: LogList
 exampleLogList =
