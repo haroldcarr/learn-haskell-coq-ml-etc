@@ -1,7 +1,6 @@
 resolver: lts-12.18
 packages:
 - .
-- ../structured-log-lines
 - ../../program-structure/juno
 extra-deps:
 - katip-0.6.3.0@sha256:55de9e007352cf3fb9de8de8b9ac17c1070824e07e6f6d5b676f9f3cff44d23c

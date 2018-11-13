@@ -4,18 +4,18 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 13492fea2501e4fbfaf04b2ec298feaf03a47f36ec907e767e874a819037ae98
+-- hash: 236df8244cbc531baca14f80952c281325c5dde3d39f36d44b6c6eabe99cd138
 
-name:           hc-katip
+name:           structure-log-lines
 version:        0.1.0.0
 license:        BSD3
 build-type:     Simple
 
 library
   exposed-modules:
-      Lib
+      LogData
   other-modules:
-      Paths_hc_katip
+      Paths_structure_log_lines
   hs-source-dirs:
       src
   ghc-options: -Wall
@@ -24,29 +24,27 @@ library
     , base >=4.7 && <5
     , bytestring
     , juno
-    , katip
-    , scientific
-    , structure-log-lines
     , text
     , unordered-containers
     , vector
   default-language: Haskell2010
 
-executable m
-  main-is: Main.hs
+test-suite spec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
   other-modules:
-      Paths_hc_katip
+      LogDataSpec
+      Paths_structure_log_lines
   hs-source-dirs:
-      app
+      test
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
     , bytestring
-    , hc-katip
+    , hspec
+    , hspec-expectations
     , juno
-    , katip
-    , scientific
     , structure-log-lines
     , text
     , unordered-containers

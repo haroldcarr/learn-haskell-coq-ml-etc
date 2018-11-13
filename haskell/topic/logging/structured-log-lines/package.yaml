@@ -1,4 +1,4 @@
-name:                hc-katip
+name:                structure-log-lines
 version:             0.1.0.0
 license:             BSD3
 
@@ -6,10 +6,7 @@ dependencies:
 - aeson
 - base >= 4.7 && < 5
 - bytestring
-- katip
 - juno
-- scientific
-- structure-log-lines
 - text
 - unordered-containers
 - vector
@@ -20,13 +17,16 @@ ghc-options:
 library:
   source-dirs: src
 
-executables:
-  m:
-    source-dirs:         app
-    main:                Main.hs
+tests:
+  spec:
+    source-dirs:         test
+    main:                Spec.hs
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - hc-katip
+    - structure-log-lines
+    - hspec
+    - hspec-expectations
+
