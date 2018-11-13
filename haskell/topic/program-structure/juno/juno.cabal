@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 650f6844cf73f51ff9af4de7f3924819b1438379ed49899c6a67516626988233
+-- hash: 5d8eb0f6c8f7fdda556555910ac1f9072b29d7a6293bb039ad91ef08b0c979c1
 
 name:           juno
 version:        0.1.0.0
@@ -24,6 +24,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , cereal
     , lens
     , mtl
     , random
@@ -41,6 +42,7 @@ executable m
       aeson
     , base >=4.7 && <5
     , bytestring
+    , cereal
     , juno
     , lens
     , mtl
