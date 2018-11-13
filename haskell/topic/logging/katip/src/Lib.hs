@@ -16,7 +16,7 @@ import qualified System.IO            as SIO
 import qualified Data.Vector          as V
 ------------------------------------------------------------------------------
 import qualified LogData              as LD
-import qualified Raft                 as R
+import qualified Types                as R
 
 type Stack a = K.KatipContextT IO a
 

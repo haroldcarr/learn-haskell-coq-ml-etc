@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 02e20cd4c3778136d1e8a8a689973ccfedddbae8f124e7a297be7eb8c0170eda
+-- hash: 650f6844cf73f51ff9af4de7f3924819b1438379ed49899c6a67516626988233
 
 name:           juno
 version:        0.1.0.0
@@ -14,6 +14,7 @@ build-type:     Simple
 library
   exposed-modules:
       Raft
+      Types
   other-modules:
       Paths_juno
   hs-source-dirs:

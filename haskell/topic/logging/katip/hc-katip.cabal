@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2d0236eb1ad450a3697083ca5bd70b79e7167c7b704ac1b927ee7a2f82021afd
+-- hash: 6ab08cc39e30333f76e9115f80c773dd664ec28457e3dc57cba416aca665ed3c
 
 name:           hc-katip
 version:        0.1.0.0
@@ -15,7 +15,6 @@ library
   exposed-modules:
       Lib
       LogData
-      Raft
   other-modules:
       Paths_hc_katip
   hs-source-dirs:
@@ -25,6 +24,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , juno
     , katip
     , scientific
     , text
@@ -44,6 +44,7 @@ executable m
     , base >=4.7 && <5
     , bytestring
     , hc-katip
+    , juno
     , katip
     , scientific
     , text
@@ -67,6 +68,7 @@ test-suite spec
     , hc-katip
     , hspec
     , hspec-expectations
+    , juno
     , katip
     , scientific
     , text

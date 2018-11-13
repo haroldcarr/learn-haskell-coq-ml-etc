@@ -1,11 +1,12 @@
+{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes        #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TemplateHaskell            #-}
 
-module Raft where
+module Types where
 
-import qualified Data.Aeson as JS
+import           Control.Lens
+import qualified Data.Aeson   as JS
 import           GHC.Generics
 
 type ShardId = Int
@@ -16,6 +17,7 @@ instance JS.FromJSON X
 
 data NodeID = NodeID { _host :: !String, _port :: !Int, _fullAddr :: !String }
   deriving (Eq,Ord,Read,Generic)
+$(makeLenses ''NodeID)
 instance Show NodeID where
   show = ("NodeID " ++) . _fullAddr
 instance JS.ToJSON NodeID where

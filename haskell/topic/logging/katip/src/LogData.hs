@@ -16,7 +16,7 @@ import qualified Data.Text                  as T
 import qualified Data.Vector                as V
 import           GHC.Generics
 ------------------------------------------------------------------------------
-import qualified Raft                       as R
+import qualified Types                      as R
 ------------------------------------------------------------------------------
 -- API
 
