@@ -66,6 +66,8 @@ data Role = Follower
           | Candidate
           | Leader
   deriving (Show, Generic, Eq)
+instance JS.ToJSON   Role
+instance JS.FromJSON Role
 
 type MsgId = String
 
