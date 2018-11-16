@@ -10,6 +10,7 @@ dependencies:
 - lens
 - mtl
 - text
+- thyme
 - unix
 - unordered-containers
 - vector

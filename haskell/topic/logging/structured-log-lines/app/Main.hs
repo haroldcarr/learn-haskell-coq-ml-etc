@@ -3,6 +3,7 @@
 module Main where
 
 import           Control.Lens
+import           Control.Monad.IO.Class
 import qualified Control.Monad.RWS.Strict as RWS
 ------------------------------------------------------------------------------
 import qualified LogData                  as L
@@ -19,8 +20,11 @@ main =
 server :: Raft IO a ()
 server = do
   r <- RWS.ask
-  L.debugInfo L.exampleLogList
+  liftIO (putStrLn "")
+  L.debugInfo L.exampleLogList'
+  liftIO (putStrLn "")
   L.debugInfo $ L.debugUnexpectedS [L.TXT "internal error, there should be a next log entry"]
   let me = r^.cfg.nodeId
+  liftIO (putStrLn "")
   L.debugRaftHandler AE [L.NID me, L.TXT "sandbagging"] -- , show ae
   return ()

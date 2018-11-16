@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 68883843c5e54c8923eb1f15a9319481d5804e4c4994db86bee8ce43a119998d
+-- hash: b946715f518c417302b348ff238d3d733f1a184751b51afea9c3b5d2d0db1f6a
 
 name:           structure-log-lines
 version:        0.1.0.0
@@ -28,6 +28,7 @@ library
     , lens
     , mtl
     , text
+    , thyme
     , unix
     , unordered-containers
     , vector
@@ -49,6 +50,7 @@ executable sll
     , mtl
     , structure-log-lines
     , text
+    , thyme
     , unix
     , unordered-containers
     , vector
@@ -74,6 +76,7 @@ test-suite spec
     , mtl
     , structure-log-lines
     , text
+    , thyme
     , unix
     , unordered-containers
     , vector

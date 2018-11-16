@@ -30,7 +30,8 @@ newtype LogList = LogList [LogItem] deriving (Eq, Generic)
 
 -- | Things that can be logged.
 data LogItem
-  = CONSENSUS T.Text
+  = AT        T.Text
+  | CONSENSUS T.Text
   | EorE      T.Text
   | INFO      T.Text
   | LI        R.LogIndex
@@ -42,7 +43,7 @@ data LogItem
   | RID       R.RequestId
   | ROLE      R.Role
   | RPC_CATEGORY T.Text
-  | RPC_TXT   T.Text
+  | RPC_TEXT   T.Text
   | TERM      R.Term
   | TO        T.Text
   | TXT       T.Text
@@ -79,22 +80,23 @@ instance Show LogList where
   show (LogList x) = show x
 
 instance Show LogItem where
-  show (CONSENSUS x)    = showLogItemText "CONSENSUS" x
-  show (EorE x)         = showLogItemText "EorE" x
-  show (INFO x)         = showLogItemText "INFO" x
-  show (LI   x)         = show x
-  show (MSG_ID x)       = showLogItemText "MSG_ID" x
-  show (MSG_TYPE x)     = showLogItemText "MSG_TYPE" x
-  show (NETWORK x)      = showLogItemText "NETWORK" x
-  show (NID x)          = show x
-  show (RECOVERY x)     = showLogItemText "RECOVERY" x
+  show (AT           x) = showLogItemText "AT" x
+  show (CONSENSUS    x) = showLogItemText "CONSENSUS" x
+  show (EorE         x) = showLogItemText "EorE" x
+  show (INFO         x) = showLogItemText "INFO" x
+  show (LI           x) = show x
+  show (MSG_ID       x) = showLogItemText "MSG_ID" x
+  show (MSG_TYPE     x) = showLogItemText "MSG_TYPE" x
+  show (NETWORK      x) = showLogItemText "NETWORK" x
+  show (NID          x) = show x
+  show (RECOVERY     x) = showLogItemText "RECOVERY" x
   show (RPC_CATEGORY x) = showLogItemText "RPC_CATEGORY" x
-  show (RPC_TXT x)      = showLogItemText "RPC_TXT" x
-  show (RID  x)         = show x
-  show (ROLE x)         = showLogItemText "ROLE" (T.pack (show x)) -- TODO
-  show (TERM x)         = show x
-  show (TO x)           = showLogItemText "TO" x
-  show (TXT x)          = showLogItemText "TXT" x
+  show (RPC_TEXT     x) = showLogItemText "RPC_TEXT" x
+  show (RID          x) = show x
+  show (ROLE         x) = showLogItemText "ROLE" (T.pack (show x)) -- TODO
+  show (TERM         x) = show x
+  show (TO           x) = showLogItemText "TO" x
+  show (TXT          x) = showLogItemText "TXT" x
 
 showLogItemText :: String -> T.Text -> String
 showLogItemText s x = s ++ " " ++ T.unpack x
@@ -109,6 +111,7 @@ instance ShowCompact a => ShowCompact [a] where
   showCompact as = DL.intercalate "; " (map showCompact as)
 
 instance ShowCompact LogItem where
+  showCompact (AT x)           = showC' x
   showCompact (CONSENSUS x)    = showC' x
   showCompact (EorE x)         = showC' x
   showCompact (INFO x)         = showC' x
@@ -119,7 +122,7 @@ instance ShowCompact LogItem where
   showCompact (NID x)          = show x
   showCompact (RECOVERY x)     = showC' x
   showCompact (RPC_CATEGORY x) = showC' x
-  showCompact (RPC_TXT x)      = showC' x
+  showCompact (RPC_TEXT x)      = showC' x
   showCompact (RID  x)         = show x
   showCompact (ROLE x)         = show x
   showCompact (TERM x)         = show x
@@ -133,22 +136,23 @@ class JS.ToJSON a => ToLabeledJsonObject a where
   toLabeledJsonObject   :: a -> JS.Object
 
 instance ToLabeledJsonObject LogItem where
-  toLabeledJsonObject (EorE x)         = mkSingleton "EorE"   x
-  toLabeledJsonObject (CONSENSUS x)    = mkSingleton "CONSENSUS"   x
-  toLabeledJsonObject (INFO x)         = mkSingleton "INFO" x
-  toLabeledJsonObject (LI   x)         = mkSingleton "LI"   x
-  toLabeledJsonObject (MSG_ID   x)     = mkSingleton "MSG_ID"   x
-  toLabeledJsonObject (MSG_TYPE   x)   = mkSingleton "MSG_TYPE"   x
-  toLabeledJsonObject (NETWORK  x)     = mkSingleton "NETWORK"  x
-  toLabeledJsonObject (NID  x)         = mkSingleton "NID"  x
-  toLabeledJsonObject (RECOVERY x)     = mkSingleton "RECOVERY"  x
-  toLabeledJsonObject (RID  x)         = mkSingleton "RID"  x
-  toLabeledJsonObject (ROLE x)         = mkSingleton "ROLE" x
-  toLabeledJsonObject (RPC_CATEGORY x) = mkSingleton "RPC_CATEGORY" x
-  toLabeledJsonObject (RPC_TXT x)      = mkSingleton "RPC_TEXT" x
-  toLabeledJsonObject (TERM x)         = mkSingleton "TERM" x
-  toLabeledJsonObject (TO  x)          = mkSingleton "TO"  x
-  toLabeledJsonObject (TXT  x)         = mkSingleton "TXT"  x
+  toLabeledJsonObject (AT x)           = mkJsonObj "AT"   x
+  toLabeledJsonObject (CONSENSUS x)    = mkJsonObj "CONSENSUS"   x
+  toLabeledJsonObject (EorE x)         = mkJsonObj "EorE"   x
+  toLabeledJsonObject (INFO x)         = mkJsonObj "INFO" x
+  toLabeledJsonObject (LI   x)         = mkJsonObj "LI"   x
+  toLabeledJsonObject (MSG_ID   x)     = mkJsonObj "MSG_ID"   x
+  toLabeledJsonObject (MSG_TYPE   x)   = mkJsonObj "MSG_TYPE"   x
+  toLabeledJsonObject (NETWORK  x)     = mkJsonObj "NETWORK"  x
+  toLabeledJsonObject (NID  x)         = mkJsonObj "NID"  x
+  toLabeledJsonObject (RECOVERY x)     = mkJsonObj "RECOVERY"  x
+  toLabeledJsonObject (RID  x)         = mkJsonObj "RID"  x
+  toLabeledJsonObject (ROLE x)         = mkJsonObj "ROLE" x
+  toLabeledJsonObject (RPC_CATEGORY x) = mkJsonObj "RPC_CATEGORY" x
+  toLabeledJsonObject (RPC_TEXT x)      = mkJsonObj "RPC_TEXT" x
+  toLabeledJsonObject (TERM x)         = mkJsonObj "TERM" x
+  toLabeledJsonObject (TO  x)          = mkJsonObj "TO"  x
+  toLabeledJsonObject (TXT  x)         = mkJsonObj "TXT"  x
 
 -- decoding
 
@@ -175,13 +179,24 @@ taggedJsonValuesToLogItems :: [(T.Text, JS.Value)] -> Either T.Text [LogItem]
 taggedJsonValuesToLogItems = mapM f
  where
   f (l, v) = case l of
-    "LI"   -> LI   <$> fj @R.LogIndex  v
-    "NID"  -> NID  <$> fj @R.NodeID    v
-    "RID"  -> RID  <$> fj @R.RequestId v
-    "ROLE" -> ROLE <$> fj @R.Role      v
-    "TERM" -> TERM <$> fj @R.Term      v
-    "TXT"  -> TXT  <$> fj @T.Text      v
-    e      -> Left $ "taggedJsonValuesToLogItems : unexpected: " <> e
+    "AT"           -> AT           <$> fj @T.Text      v -- TODO UTCTime
+    "CONSENSUS"    -> CONSENSUS    <$> fj @T.Text      v
+    "EorE"         -> EorE         <$> fj @T.Text      v
+    "INFO"         -> INFO         <$> fj @T.Text      v
+    "LI"           -> LI           <$> fj @R.LogIndex  v
+    "MSG_ID"       -> MSG_ID       <$> fj @T.Text      v
+    "MSG_TYPE"     -> MSG_TYPE     <$> fj @T.Text      v
+    "NETWORK"      -> NETWORK      <$> fj @T.Text      v
+    "NID"          -> NID          <$> fj @R.NodeID    v
+    "RECOVERY"     -> RECOVERY     <$> fj @T.Text      v
+    "RID"          -> RID          <$> fj @R.RequestId v
+    "ROLE"         -> ROLE         <$> fj @R.Role      v
+    "RPC_CATEGORY" -> RPC_CATEGORY <$> fj @T.Text      v
+    "RPC_TEXT"      -> RPC_TEXT      <$> fj @T.Text      v
+    "TERM"         -> TERM         <$> fj @R.Term      v
+    "TO"           -> TO           <$> fj @T.Text      v
+    "TXT"          -> TXT          <$> fj @T.Text      v
+    e              -> Left $ "taggedJsonValuesToLogItems : unexpected: " <> e
   fj :: forall a . JS.FromJSON a => JS.Value -> Either T.Text a
   fj v' = case JS.fromJSON v' of
     JS.Success a -> Right a
@@ -190,8 +205,8 @@ taggedJsonValuesToLogItems = mapM f
 ------------------------------------------------------------------------------
 -- utilities
 
-mkSingleton :: JS.ToJSON a => T.Text -> a -> JS.Object
-mkSingleton l x = HMap.singleton l (JS.toJSON x)
+mkJsonObj :: JS.ToJSON a => T.Text -> a -> JS.Object
+mkJsonObj l x = HMap.singleton l (JS.toJSON x)
 
 eitherStringToEitherText :: Either String a -> Either T.Text a
 eitherStringToEitherText ea = case ea of
@@ -201,12 +216,13 @@ eitherStringToEitherText ea = case ea of
 ------------------------------------------------------------------------------
 -- test data
 
-exampleLogList' :: LogList
-exampleLogList'  = LogList exampleLogList
+exampleLogList :: LogList
+exampleLogList  = LogList exampleLogList'
 
-exampleLogList :: [LogItem]
-exampleLogList =
-  [ CONSENSUS "consensus"
+exampleLogList' :: [LogItem]
+exampleLogList' =
+  [ AT "at"
+  , CONSENSUS "consensus"
   , EorE "eore"
   , INFO "info"
   , LI (R.LogIndex 7777)
@@ -218,7 +234,7 @@ exampleLogList =
   , RID  (R.RequestId (-2) (-3))
   , ROLE R.Follower
   , RPC_CATEGORY "rpc_category"
-  , RPC_TXT   "rpc_txt"
+  , RPC_TEXT   "rpc_text"
   , TERM (R.Term 1)
   , TO "to"
   , TXT "txt"
