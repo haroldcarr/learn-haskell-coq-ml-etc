@@ -3,22 +3,26 @@
 module RetrofitDebug where
 
 ------------------------------------------------------------------------------
-import qualified Raft                     as R
-import qualified Types                    as R
+import qualified Raft                       as R
+import qualified Types                      as R
 ------------------------------------------------------------------------------
-import qualified LogData                  as L
+import qualified LogData                    as L
 ------------------------------------------------------------------------------
 import           Control.Lens
-import           Control.Monad            (void, when)
-import           Control.Monad.RWS.Strict (unless)
-import qualified Data.ByteString.Char8    as BS
-import qualified Data.Text                as T
-import           System.Exit              (ExitCode (ExitFailure))
-import           System.IO                (hFlush, stderr, stdout)
-import           System.IO.Unsafe         (unsafePerformIO)
-import           System.Posix.Process     (exitImmediately)
+import           Control.Monad              (void, when)
+import           Control.Monad.RWS.Strict   (unless)
+import qualified Data.ByteString            as BS
+import qualified Data.ByteString.Lazy       as BSL
+import qualified Data.Text                  as T
+import           System.Exit                (ExitCode (ExitFailure))
+import           System.IO                  (hFlush, stderr, stdout)
+import           System.IO.Unsafe           (unsafePerformIO)
+import           System.Posix.Process       (exitImmediately)
 
 {-# ANN module ("HLint: ignore Use camelCase"::String) #-}
+
+retrofitFormat :: L.Format
+retrofitFormat = L.JSONCompact
 
 data DebugInfo
   = DbgNetwork     DI_Network
@@ -43,9 +47,10 @@ debug k = do
   (role', nid, flds)  <- debugS k
   dontDebugFollower' <- view (R.cfg.R.dontDebugFollower)
   case role' of
-    R.Leader    -> dbg nid (show flds) -- TODO
-    R.Candidate -> dbg nid (show flds) -- TODO
-    R.Follower  -> unless dontDebugFollower' (dbg nid (show flds)) -- TODO
+    R.Leader    -> dbg nid (L.encode retrofitFormat $ L.LogList flds) -- TODO
+    R.Candidate -> dbg nid (L.encode retrofitFormat $ L.LogList flds) -- TODO
+    R.Follower  -> unless dontDebugFollower' $
+      dbg nid (L.encode retrofitFormat $ L.LogList flds) -- TODO
 
 debugInRaft :: (Monad m) => DebugInfo -> R.Raft m a [L.LogItem]
 debugInRaft d = do
@@ -76,15 +81,16 @@ logSend myNodeId msgNum (target, rpc) = do
               ]
 
 logRec
-  :: (String -> IO ())
+  :: (BSL.ByteString -> IO ())
   -> R.RPC
   -> IO ()
 logRec dbg rpc =
-  dbg $ show -- TODO
-    [ L.MSG_TYPE "REC"
+  dbg $ L.encode retrofitFormat $ -- TODO
+    L.LogList
+    [ L.MSG_TYPE       "REC"
     , L.RPC_CATEGORY $ T.pack $ R.rpcCategory rpc
-    , L.MSG_ID $ T.pack $ R.getMsgId rpc
-    , L.RPC_TXT $ T.pack $ R.logShow rpc
+    , L.MSG_ID       $ T.pack $ R.getMsgId rpc
+    , L.RPC_TXT      $ T.pack $ R.logShow rpc
     ]
 
 dHandleEnter, dHandleExit
@@ -101,7 +107,7 @@ dbgH enterOrExit rpc =
   debugInfo $
       L.EorE enterOrExit
     : (L.RPC_TXT $ T.pack $ R.rpcCategory rpc)
-    : (L.MSG_ID $ T.pack $ R.getMsgId rpc)
+    : (L.MSG_ID  $ T.pack $ R.getMsgId rpc)
     : [L.RPC_TXT $ T.pack $ R.logShow rpc | enterOrExit == "Enter"]
 
 errorExit :: [L.LogItem] -> a
@@ -136,7 +142,7 @@ debugNetwork = debug . DbgNetwork
 data DI_Consensus
   = DbgRoleChange R.Role
   | DbgTermChange R.Term
-  | DbgLbl R.MsgType String
+  | DbgLbl R.MsgType [L.LogItem]
   | DbgLogIndex R.LogIndex
   | DbgCommitIndex R.LogIndex
   | DbgHash String BS.ByteString
@@ -148,7 +154,7 @@ data DI_Consensus
 debugRaft :: (Monad m) => DI_Consensus -> R.Raft m a ()
 debugRaft = debug . DbgConsensus
 
-debugRaftHandler :: (Monad m) => R.MsgType -> String -> R.Raft m a ()
+debugRaftHandler :: (Monad m) => R.MsgType -> [L.LogItem] -> R.Raft m a ()
 debugRaftHandler m = debugRaft . DbgLbl m
 
 data DI_Recovery
@@ -198,7 +204,7 @@ instance PP DI_Recovery where
 instance PP DI_Consensus where
   pp (DbgRoleChange role) = [L.CONSENSUS "role-change", L.ROLE role]
   pp (DbgTermChange t)    = L.CONSENSUS "term-change" : pp t
-  pp (DbgLbl msg str)     = [L.CONSENSUS $ T.pack $ show msg, L.TXT $ T.pack str]
+  pp (DbgLbl msg logItems)     = (L.CONSENSUS $ T.pack $ show msg) : logItems
   pp (DbgLogIndex li)     = L.CONSENSUS "log-index" : pp li
   pp (DbgCommitIndex ci)  = L.CONSENSUS "commit-index" : pp ci
   pp (DbgHash t h)        = (L.CONSENSUS $ T.pack t) : pp h

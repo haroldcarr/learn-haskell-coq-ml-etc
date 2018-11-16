@@ -20,6 +20,17 @@ ghc-options:
 library:
   source-dirs: src
 
+executables:
+  sll:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - structure-log-lines
+
 tests:
   spec:
     source-dirs:         test

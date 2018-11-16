@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4ed479e86b180f7125641bdb35e1773e04ce0390cc7345b5b2185a3d7c818e8f
+-- hash: 68883843c5e54c8923eb1f15a9319481d5804e4c4994db86bee8ce43a119998d
 
 name:           structure-log-lines
 version:        0.1.0.0
@@ -27,6 +27,27 @@ library
     , juno
     , lens
     , mtl
+    , text
+    , unix
+    , unordered-containers
+    , vector
+  default-language: Haskell2010
+
+executable sll
+  main-is: Main.hs
+  other-modules:
+      Paths_structure_log_lines
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , juno
+    , lens
+    , mtl
+    , structure-log-lines
     , text
     , unix
     , unordered-containers

@@ -12,6 +12,7 @@ import qualified Data.Aeson                 as JS
 import qualified Data.ByteString.Lazy       as BSL
 import qualified Data.ByteString.Lazy.Char8 as BSLC8
 import qualified Data.HashMap.Strict        as HMap
+import qualified Data.List                  as DL
 import qualified Data.Text                  as T
 import qualified Data.Vector                as V
 import           GHC.Generics
@@ -19,6 +20,13 @@ import           GHC.Generics
 import qualified Types                      as R
 ------------------------------------------------------------------------------
 -- API
+
+-- | Encoding format.
+-- Note: 'Show' and 'ShowCompact' are one-way: they can only be encoded, not decoded.
+data Format = JSON | JSONCompact | Show | ShowCompact
+
+-- | Ordered list of things to be logged.
+newtype LogList = LogList [LogItem] deriving (Eq, Generic)
 
 -- | Things that can be logged.
 data LogItem
@@ -40,76 +48,107 @@ data LogItem
   | TXT       T.Text
   deriving (Eq, Generic)
 
--- | Ordered list of things to be logged.
-newtype LogList = LogList [LogItem] deriving (Eq, Generic)
-
--- | Encoding format.
-data Format = JSON | CompactJSON | Textual
-
 -- | Encode according to format.
 encode :: Format -> LogList -> BSL.ByteString
 encode JSON        = JS.encode
-encode CompactJSON = JS.encode . toLabeledJsonArray
+encode JSONCompact = JS.encode . toLabeledJsonArray
  where toLabeledJsonArray (LogList xs) =
          JS.Array (V.fromList (map (JS.Object . toLabeledJsonObject) xs))
-encode Textual     = BSLC8.pack . show
+encode Show        = BSLC8.pack . show
+encode ShowCompact = BSLC8.pack . showCompact
 
 -- | Decode according to format.
 decode :: Format -> BSL.ByteString -> Either T.Text LogList
 decode JSON        = eitherStringToEitherText . JS.eitherDecode
-decode CompactJSON = decodeLogList
-decode Textual     = Left . ("cannot decode Textual: " <>) . T.pack . BSLC8.unpack
+decode JSONCompact = decodeLogList
+decode Show        = Left . ("cannot decode Show: " <>)        . T.pack . BSLC8.unpack
+decode ShowCompact = Left . ("cannot decode ShowCompact: " <>) . T.pack . BSLC8.unpack
 
 ------------------------------------------------------------------------------
 -- IMPL
 
--- encoding
+instance JS.ToJSON   LogList
+instance JS.FromJSON LogList
 
-instance Show LogItem where
-  show x@(CONSENSUS _) = show x
-  show x@(EorE _) = show x
-  show x@(INFO _) = show x
-  show (LI   x) = show x
-  show x@(MSG_ID _) = show x
-  show x@(MSG_TYPE _) = show x
-  show x@(NETWORK _) = show x
-  show (NID  x) = show x
-  show x@(RECOVERY _) = show x
-  show x@(RPC_CATEGORY _) = show x
-  show x@(RPC_TXT _) = show x
-  show (RID  x) = show x
-  show x@(ROLE _) = show x
-  show (TERM x) = show x
-  show x@(TO _) = show x
-  show (TXT  x) = "TXT " ++ T.unpack x
 instance JS.ToJSON   LogItem
 instance JS.FromJSON LogItem
 
+-- encoding
+
 instance Show LogList where
   show (LogList x) = show x
-instance JS.ToJSON   LogList
-instance JS.FromJSON LogList
+
+instance Show LogItem where
+  show (CONSENSUS x)    = showLogItemText "CONSENSUS" x
+  show (EorE x)         = showLogItemText "EorE" x
+  show (INFO x)         = showLogItemText "INFO" x
+  show (LI   x)         = show x
+  show (MSG_ID x)       = showLogItemText "MSG_ID" x
+  show (MSG_TYPE x)     = showLogItemText "MSG_TYPE" x
+  show (NETWORK x)      = showLogItemText "NETWORK" x
+  show (NID x)          = show x
+  show (RECOVERY x)     = showLogItemText "RECOVERY" x
+  show (RPC_CATEGORY x) = showLogItemText "RPC_CATEGORY" x
+  show (RPC_TXT x)      = showLogItemText "RPC_TXT" x
+  show (RID  x)         = show x
+  show (ROLE x)         = showLogItemText "ROLE" (T.pack (show x)) -- TODO
+  show (TERM x)         = show x
+  show (TO x)           = showLogItemText "TO" x
+  show (TXT x)          = showLogItemText "TXT" x
+
+showLogItemText :: String -> T.Text -> String
+showLogItemText s x = s ++ " " ++ T.unpack x
+
+class Show a => ShowCompact a where
+  showCompact :: a -> String
+
+instance ShowCompact LogList where
+  showCompact (LogList x) = showCompact x
+
+instance ShowCompact a => ShowCompact [a] where
+  showCompact as = DL.intercalate "; " (map showCompact as)
+
+instance ShowCompact LogItem where
+  showCompact (CONSENSUS x)    = showC' x
+  showCompact (EorE x)         = showC' x
+  showCompact (INFO x)         = showC' x
+  showCompact (LI   x)         = show x
+  showCompact (MSG_ID x)       = showC' x
+  showCompact (MSG_TYPE x)     = showC' x
+  showCompact (NETWORK x)      = showC' x
+  showCompact (NID x)          = show x
+  showCompact (RECOVERY x)     = showC' x
+  showCompact (RPC_CATEGORY x) = showC' x
+  showCompact (RPC_TXT x)      = showC' x
+  showCompact (RID  x)         = show x
+  showCompact (ROLE x)         = show x
+  showCompact (TERM x)         = show x
+  showCompact (TO x)           = showC' x
+  showCompact (TXT x)          = showC' x
+
+showC' :: T.Text -> String
+showC' = T.unpack
 
 class JS.ToJSON a => ToLabeledJsonObject a where
   toLabeledJsonObject   :: a -> JS.Object
 
 instance ToLabeledJsonObject LogItem where
-  toLabeledJsonObject (EorE x) = mkSingleton "EorE"   x
-  toLabeledJsonObject (CONSENSUS x) = mkSingleton "CONSENSUS"   x
-  toLabeledJsonObject (INFO x) = mkSingleton "INFO" x
-  toLabeledJsonObject (LI   x) = mkSingleton "LI"   x
-  toLabeledJsonObject (MSG_ID   x) = mkSingleton "MSG_ID"   x
-  toLabeledJsonObject (MSG_TYPE   x) = mkSingleton "MSG_TYPE"   x
-  toLabeledJsonObject (NETWORK  x) = mkSingleton "NETWORK"  x
-  toLabeledJsonObject (NID  x) = mkSingleton "NID"  x
-  toLabeledJsonObject (RECOVERY x) = mkSingleton "RECOVERY"  x
-  toLabeledJsonObject (RID  x) = mkSingleton "RID"  x
-  toLabeledJsonObject (ROLE x) = mkSingleton "ROLE" x
+  toLabeledJsonObject (EorE x)         = mkSingleton "EorE"   x
+  toLabeledJsonObject (CONSENSUS x)    = mkSingleton "CONSENSUS"   x
+  toLabeledJsonObject (INFO x)         = mkSingleton "INFO" x
+  toLabeledJsonObject (LI   x)         = mkSingleton "LI"   x
+  toLabeledJsonObject (MSG_ID   x)     = mkSingleton "MSG_ID"   x
+  toLabeledJsonObject (MSG_TYPE   x)   = mkSingleton "MSG_TYPE"   x
+  toLabeledJsonObject (NETWORK  x)     = mkSingleton "NETWORK"  x
+  toLabeledJsonObject (NID  x)         = mkSingleton "NID"  x
+  toLabeledJsonObject (RECOVERY x)     = mkSingleton "RECOVERY"  x
+  toLabeledJsonObject (RID  x)         = mkSingleton "RID"  x
+  toLabeledJsonObject (ROLE x)         = mkSingleton "ROLE" x
   toLabeledJsonObject (RPC_CATEGORY x) = mkSingleton "RPC_CATEGORY" x
-  toLabeledJsonObject (RPC_TXT x) = mkSingleton "RPC_TEXT" x
-  toLabeledJsonObject (TERM x) = mkSingleton "TERM" x
-  toLabeledJsonObject (TO  x) = mkSingleton "TO"  x
-  toLabeledJsonObject (TXT  x) = mkSingleton "TXT"  x
+  toLabeledJsonObject (RPC_TXT x)      = mkSingleton "RPC_TEXT" x
+  toLabeledJsonObject (TERM x)         = mkSingleton "TERM" x
+  toLabeledJsonObject (TO  x)          = mkSingleton "TO"  x
+  toLabeledJsonObject (TXT  x)         = mkSingleton "TXT"  x
 
 -- decoding
 
@@ -162,11 +201,25 @@ eitherStringToEitherText ea = case ea of
 ------------------------------------------------------------------------------
 -- test data
 
-exampleLogList :: LogList
+exampleLogList' :: LogList
+exampleLogList'  = LogList exampleLogList
+
+exampleLogList :: [LogItem]
 exampleLogList =
-  LogList [ LI   (R.LogIndex 7777)
-          , RID  (R.RequestId (-2) (-3))
-          , NID  (R.NodeID "host" 8080 "host:8080")
-          , TERM (R.Term 1)
-          , TXT  "catchup"
-          ]
+  [ CONSENSUS "consensus"
+  , EorE "eore"
+  , INFO "info"
+  , LI (R.LogIndex 7777)
+  , NETWORK "network"
+  , MSG_ID "msg_id"
+  , MSG_TYPE "msg_type"
+  , NID  (R.NodeID "host" 8080 "host:8080")
+  , RECOVERY "recovery"
+  , RID  (R.RequestId (-2) (-3))
+  , ROLE R.Follower
+  , RPC_CATEGORY "rpc_category"
+  , RPC_TXT   "rpc_txt"
+  , TERM (R.Term 1)
+  , TO "to"
+  , TXT "txt"
+  ]
