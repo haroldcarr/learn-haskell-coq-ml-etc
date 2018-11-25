@@ -1,0 +1,43 @@
+Name:                  static-config
+Version:               0.1.0
+Cabal-Version:         >=1.8
+Build-Type:            Simple
+License:               BSD3
+License-File:          LICENSE
+Copyright:             Well-Typed LLP
+Author:                Harold Carr (based on work by Duncan Coutts, Nicolas Wu, Edsko de Vries)
+
+Library
+  Exposed-modules:     StaticConfig
+  Build-Depends:       base >= 4.4 && < 5
+                     , bytestring
+                     , distributed-process
+                     , exceptions
+                     , network
+                     , network-transport
+                     , network-transport-tcp
+  ghc-options:         -Wall
+
+Executable peer
+  HS-Source-Dirs:      app
+  Main-Is:             Peer.hs
+  Other-Modules:       Messages
+  Build-Depends:       base >= 4.4 && < 5
+                     , binary
+                     , distributed-process
+                     , exceptions
+                     , static-config
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+
+Executable client
+  HS-Source-Dirs:      app
+  Main-Is:             Client.hs
+  Other-Modules:       Messages
+  Build-Depends:       base >= 4.4 && < 5
+                     , binary
+                     , distributed-process
+                     , distributed-process-async
+                     , exceptions
+                     , static-config
+                     , random
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N

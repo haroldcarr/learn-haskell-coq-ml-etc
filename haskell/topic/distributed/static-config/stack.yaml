@@ -1,0 +1,7 @@
+resolver: lts-11.16
+packages:
+- .
+extra-deps:
+- distributed-process-async-0.2.6
+# flags: {}
+# extra-package-dbs: []
