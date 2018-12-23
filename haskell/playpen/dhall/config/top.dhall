@@ -2,7 +2,17 @@ let makeUser = ./makeUser.dhall
 
 in let makeBuildUser = \(index : Natural) -> makeUser "build${Natural/show index}"
 
--- import
+in let generate =
+        https://prelude.dhall-lang.org/List/generate
+            -- ... and optionally protect them with integrity checks
+            sha256:77dbfc09daa00a7c6ba0c834863e8ee42e538af0f0600397a1c34923f11454b5
+
+        -- 1st fallback
+      ? https://raw.githubusercontent.com/dhall-lang/Prelude/302881a17491f3c72238975a6c3e7aab603b9a96/List/generate
+
+        -- 2nd fallback
+      ? /usr/local/share/dhall/Prelude/List/generate
+
 in let User = ./User.dhall
 
 in    [ -- inline config for special cases
