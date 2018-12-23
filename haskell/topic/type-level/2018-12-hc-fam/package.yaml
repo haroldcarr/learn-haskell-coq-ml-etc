@@ -1,0 +1,22 @@
+name:                hc-fam
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+
+ghc-options:
+- -Wall
+
+library:
+  source-dirs: src
+
+tests:
+  hc-fam-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hc-fam
