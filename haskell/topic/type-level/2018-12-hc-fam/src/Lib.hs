@@ -1,5 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
+{-# OPTIONS_GHC -fno-warn-name-shadowing          #-}
 
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE ExplicitForAll        #-}
 {-# LANGUAGE GADTs                 #-}
@@ -69,12 +71,21 @@ class Functor1 (f :: Type -> Type) where
 class Functor2 (f :: Type -> Type) where
   fmap2 :: forall (a :: Type) (b :: Type). (a -> b) -> f a -> f b
 
-class Functor  (f :: Type -> Type) where
+class Functor3  (f :: Type -> Type) where
+  type FnctorCnstrt3 (f :: Type -> Type) (x :: Type) :: Constraint
+  type FnctorCnstrt3 f x  = ()
+  fmap3 :: forall (a :: Type) (b :: Type)
+         . (FnctorCnstrt3 f a, FnctorCnstrt3 f b)
+        =>                                 (a -> b) -> f a -> f b
+
+class Functor   (f :: Type -> Type) where
   type FnctorCnstrt (f :: Type -> Type) (x :: Type) :: Constraint
   type FnctorCnstrt f x  = ()
   fmap  :: forall (a :: Type) (b :: Type)
          . (FnctorCnstrt f a, FnctorCnstrt f b)
-        =>                                 (a -> b) -> f a -> f b
+        =>                    ((a :: Type) -> (b :: Type))
+        -> (f :: Type -> Type) (a :: Type)
+        -> (f :: Type -> Type)                (b :: Type)
 
 instance Functor     MaybeD where
   fmap _  NothingD = NothingD
@@ -96,10 +107,14 @@ instance Functor    (Either (a :: Type) :: Type -> Type) where
 
 -- applicative
 
-class Functor f                   => Applicative0 f                  where
-    pure0   ::                       a
+class Functor f => Applicative0 f where
+    pure0   ::                  a -> f a
+    liftA20 ::  f (a -> b) -> f a -> f b
+
+class Functor f                   => Applicative1 f                  where
+    pure1   ::                       a
             ->  f                    a
-    liftA20 ::  f                   (a          ->  b)
+    liftA21 ::  f                   (a          ->  b)
             ->  f                    a
             ->  f                                   b
 
@@ -121,4 +136,24 @@ instance Applicative Maybe where
     liftA2       _  Nothing  = Nothing
     liftA2 (Just f) (Just a) = Just (f a)
 
+-- monad
 
+class Applicative  m                  => Monad0  m                  where
+    return0 ::                                   a               -> m a
+    bind0   ::                                 m a -> (a -> m b) -> m b
+
+class Applicative (m :: Type -> Type) => Monad1 (m :: Type -> Type) where
+    return1 :: forall  a                     .   a               -> m a
+    bind1   :: forall  a           b         . m a -> (a -> m b) -> m b
+
+class Applicative (m :: Type -> Type) => Monad2 (m :: Type -> Type) where
+    return2 :: forall (a :: Type)            .   a               -> m a
+    bind2   :: forall (a :: Type) (b :: Type). m a -> (a -> m b) -> m b
+
+class Applicative (m :: Type -> Type) => Monad  (m :: Type -> Type) where
+    type MonadConstraint (m :: Type -> Type) (x :: Type) :: Constraint
+    type MonadConstraint f x = ApplicativeConstraint f x
+    return  :: ( MonadConstraint m a )
+            => forall (a :: Type)            .   a               -> m a
+    bind    :: ( MonadConstraint m a, MonadConstraint m b )
+            => forall (a :: Type) (b :: Type). m a -> (a -> m b) -> m b
