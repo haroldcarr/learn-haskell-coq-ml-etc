@@ -683,3 +683,175 @@ because they do not possess the necessary Defining Simon constraint.
 
 --------------------------------------------------
 -- 5.3 Building Theory Libraries
+{-
+redundant : both `St` and justified-containers export proof combinators that
+encoded basic facts about the algebra of sets.
+
+factor out axioms and deduction rules for specific theories
+
+data xs ⊆ ys
+subset_tr :: Proof (a ⊆ b) -> Proof (b ⊆ c) -> Proof (a ⊆ c)
+subset_tr _ _ = axiom
+
+can be used to reason about shared St regions and about key sets for maps
+
+split theory library into Assumed (carefully audited axioms) and Derived submodules (lemmas)
+
+--------------------------------------------------
+5.4 Ghosts on the Outside, Proofs on the Inside
+
+how can theory library be confident of correct lemmas?
+- formal verification tools : Liquid Haskell, hs-to-coq [16]
+- end-users of theory library still use just Haskell
+- demonstration using Liquid Haskell can be found in this paper’s repository
+
+--------------------------------------------------
+5.5 Building Custom Proof Tactics
+
+proof tactics (for complex properties)
+- strategy for proofs
+- usually targeted at proving particular class of theorems
+- e.g., Coq omega for proving theorems about arithmetic
+        simpl : simplifying a complex goal
+
+to providing custom tactics
+- use GHC’s type-checker plugins
+
+proof-of-concept : typechecker plugin that implements proof by analytic tableaux [15]
+                   for propositional logic
+- verifies satisfiability of any valid formula of propositional logic
+- tactic trigger by
+  - empty injective type family (hidden from user)
+  - exported function tableaux:
+
+type family ProofByTableaux p = p' | p' -> p
+tableaux :: ProofByTableaux p
+tableaux = error "proof by analytic tableaux."
+
+think of ProofByTableaux p as an alias for p
+- plugin will  check that proposition p is a valid formula of propositional logic
+- if yes, GHC replaces ProofByTableaux p with p
+
+for user, appears that tableaux can act as a value of type Proof p whenever p is a valid
+
+-- constructor proof by hand:
+proof1, proof2 :: Proof ((p --> q) --> (Not q --> Not p))
+proof1 =
+  implIntro $ \p2q ->
+    implIntro $ \notq ->
+      notIntro $ \p ->
+        (implElim p2q p) `contradicts` notq
+
+-- or use tactic that says "true by facts from propositional logic"
+proof2 = tableaux
+
+--------------------------------------------------
+5.6 Using Re ection to Pass Implicit Proofs
+
+reflection library : implementation of Kiselyov and Shan’s pearl about implicit configurations [7]
+- enables user to pass values implicitly using Haskell’s typeclass machinery
+
+combine reflection with GDP to pass proofs implicitly
+- they seem to come out of thin air when needed
+
+relevant part reflection:
+
+type Fact p = Given (Proof p) -- a useful constraint synonym
+-- lets the user make a proof implicit
+give  :: Proof a -> (Fact a => t) -> t
+-- recalls an implicit proof from the current context:
+given :: Fact a => Proof a
+
+to make practical, need way to apply implications to facts in current implicit context
+
+implications generally are name-polymorphic
+- can be hard to apply an implication to a specific fact
+- when antecedent of implication is simple predicate, can use:
+
+using :: Fact (p n)
+      => (Proof (p n) -> Proof q)
+      -> (a ~~ n)
+      -> (Fact q => t)
+      -> t
+using impl x = give (impl given)
+
+named parameter x :: a ~~ n    used to select the right proof from context
+
+now able to reflect proofs manually, but can it be made more automatic?
+- e.g., introduce Fact (IsCons xs) to implicit context inside the cons branch of a pattern-match?
+
+data ListCase' a xs where
+  Cons :: Fact (IsCons xs) => ListCase' a xs
+  Nil  :: Fact (IsNil  xs) => ListCase' a xs
+
+classify' :: forall a xs
+           . ([a] ~~ xs)
+          -> ListCase' a xs
+classify' xs = case the xs of
+  (_:_) -> give (axiom :: Proof (IsCons xs)) Cons
+  []    -> give (axiom :: Proof (IsNil xs))  Nil
+
+-- usage
+
+head :: Fact (IsCons xs)
+     => ([a] ~~ xs)
+     -> a
+head xs = Prelude.head (the xs)
+
+-- use reflection to implicitly propagate Proofs to their use-sites
+--
+-- but small amount of run-time overhead due to the passing of typeclass dictionaries for Facts
+-- and not always easy to extract the right proof from implicit context without type annotations
+gdpEndpts' = do
+  putStrLn "Enter a non-empty list of integers:"
+  xs <- readLn
+  name xs $ \xs -> case classify' xs of
+    Cons -> using rev_cons xs $
+      return (head xs, head (reverse xs))
+    Nil -> gdpEndpts'
+-}
+
+------------------------------------------------------------------------------
+--  6 related work
+
+{-
+phantom types
+- typed EDSLs       [12] embedded compiler : https://dl.acm.org/citation.cfm?id=1267936.1267945
+- pointer subtyping [11] wxHaskell         : http://doi.acm.org/10.1145/1017472.1017483
+- access control     [5] subtyping         : http://dx.doi.org/10.1017/S0956796806006046
+
+most phantom type apps use monomorphic or universally-quantified phantom types
+- GDP uses existentially-quantified phantom names
+  and combinators for building arguments about named values
+
+existentially-quantified phantom types
+- lazy state threads  [9] : Launchbury & SPJ "Lazy functional state threads"
+- static capabilities [8] : Oleg Kiselyov & Shan
+- GDP separates two orthogonal concerns within these designs
+  - introduction of existentially-quantified type-level names
+  - manipulation of proofs about those named values
+
+checking correctness
+- Liquid Haskell : uses SMT
+- hs-to-coq : converts Haskell to Coq : enabling theorems to be proved in Coq
+- therefore properties/proofs exist outside/in parallel to Haskell
+- GDP : properties/proofs carried by Haskell types and checked by compiler
+
+------------------------------------------------------------------------------
+-- 7 Summary
+
+GDP
+- safe API design
+- enables dialogue between library and user
+- provides user a vocabulary for expressing safety arguments
+- avoids need for partial functions or optional returns
+- achieves many benefits of dependent types and refinement types
+  but only requires extensions
+
+Acknowledgments
+- Baldur Blöndal
+- Hillel Wayne
+- Philipp Kant
+- Matt Parsons
+- IOHK
+-}
