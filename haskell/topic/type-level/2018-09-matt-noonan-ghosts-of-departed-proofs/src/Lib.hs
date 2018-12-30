@@ -1,7 +1,10 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
+{-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DefaultSignatures          #-}
 {-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -13,16 +16,23 @@
 module Lib where
 
 import           Data.Coerce
-import qualified Data.List       as L
-import           Data.List.Extra (upper)
-import qualified Data.List.Utils as U
-import qualified Data.Map.Strict as M
+import qualified Data.List          as L
+import           Data.List.Extra    (upper)
+import qualified Data.List.Utils    as U
+import qualified Data.Map.Justified as J
+import qualified Data.Map.Strict    as M
 import           Data.Ord
-import           Prelude         hiding (lookup)
+import           Prelude            as P hiding (lookup)
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
 
+------------------------------------------------------------------------------
+{-
+https://github.com/matt-noonan/gdp-paper/
+https://github.com/matt-noonan/gdp
+https://github.com/matt-noonan/justified-containers
+-}
 ------------------------------------------------------------------------------
 -- 1.
 
@@ -372,17 +382,19 @@ in scope of the Just case, key carries a phantom proof of presence
 that proof used as evidence that key is present in other maps (e.q., table’ and table'')
 -}
 
+test :: M.Map Integer String
 test = M.fromList [ (1, "Hello"), (2, "world!") ]
 
-x = withMap test $ \table ->
-      case member 1 table of
-        Nothing -> putStrLn "Missing key!"
-        Just key -> do
-          let table'  = reinsert key "Howdy" table
-              table'' = fmap (map upper) table
-          putStrLn ("Value in map 1: " ++ lookup key table)
-          putStrLn ("Value in map 2: " ++ lookup key table')
-          putStrLn ("Value in map 3: " ++ lookup key table'')
+eg :: IO ()
+eg = J.withMap test $ \table ->
+       case J.member 1 table of
+         Nothing -> putStrLn "Missing key!"
+         Just key -> do
+           let table'  = J.reinsert key "Howdy" table
+               table'' = fmap upper table
+           putStrLn ("Value in map 1: " ++ J.lookup key table)
+           putStrLn ("Value in map 2: " ++ J.lookup key table')
+           putStrLn ("Value in map 3: " ++ J.lookup key table'')
 -- Output:
 -- Value in map 1: Hello
 -- Value in map 2: Howdy
@@ -432,3 +444,242 @@ type Digraph vs v = JMap vs v [Key vs v]
 
 --------------------------------------------------
 -- 4.3 changing the key set
+
+{-
+case : maps that are related but do not have exactly the same key sets
+
+consider `insert`
+- usually modifies the key set of a map
+- gives knowledge of keys in updated map
+
+e.g., in possession of key and proof it is present
+- want to use same key in updated map
+- library provides a proof combinator that converts a proof of
+  "k is a valid key of m"
+     into a proof of
+  "k is a valid key of `insert k’ v m`"
+-}
+{-
+inserting
+  :: Ord k
+  => k -> v -> JMap ks  k v
+  -> (forall ks'
+      .        JMap ks' k v       -- 1
+      -> (Key ks  k -> Key ks' k) -- 2
+      ->  Key ks' k               -- 3
+      -> t)
+  -> t
+inserting = undefined -- impredicative
+-}
+
+{-
+insertion results in map with new key set
+- introduce ghost of new key set inside another forall
+
+other parameters being passed to the continuation
+- a collection of evidence and proof combinators that user may need to formulate a safety argument
+1. updated map : JMap ks’ k v
+   phantom type ks’ represents the key set ks, updated with the newly-inserted key
+2. function that represents inclusion of ks into ks’
+   user can apply this to convert a proof that a certain key belonged to the old map
+   (a value of type Key ks k) into a proof that the key also belongs to the new map
+   (a value of type Key ks’ k).
+3. evidence that inserted key is present in new key set
+-}
+
+------------------------------------------------------------------------------
+-- 5 case study #4 : arbitrary invariants
+
+{-
+above:
+- introduced names and predicates to enable user to express correctness proofs
+  - several ways to introduce name-like entity : `name`, `runSt2`, `withMap`, `inserting`
+- use of proofs carried by phantom type parameters
+  - phantom types attached via domain-specific newtype wrappers : `SortedBy`, `∈`, `JMap`
+
+this section shows a uniform mechanism for names/proofs
+
+separate type-level names from constraints placed on named values
+- e.g., safe head
+    newtype wrapper   :::    (pronounced "such that)
+
+then (a ~~ n ::: p) reads "value of type a, named n, such that condition p holds"
+-}
+data IsNil  xs
+data IsCons xs
+{-
+head :: ([a] ~~ xs ::: IsCons xs) -> a
+head xs = Prelude.head (the xs)
+
+:::    similar to Refined type from refinement : https://nikita-volkov.github.io/refined/
+- more power when used with names
+- names enable encoding predicates about specific values at type level
+
+--------------------------------------------------
+5.1 Logical Combinators for Ghostly Proofs
+
+how does create proofs to inhabit phantom types?
+-}
+
+-- single phantom type parameter and ONE non-bottom value
+-- type exported, constructor hidden (use `axiom`)
+data Proof p = QED
+
+-- can now encode rules of natural deduction as functions that produce terms of type Proof p
+
+-- attach proofs to values
+newtype a ::: p = SuchThat a
+-- proof of type `Proof p` is attached to
+-- a value of type `a` via :::
+-- producing a value of type (a ::: p)
+--
+-- p will usually be a proof about the wrapped value, but that is not required
+-- any value can carry any proof
+-- the only thing that links value to proof is the use of a common name.
+(...) :: a -> Proof p -> (a ::: p)
+x ... _proof = coerce x
+
+-- logical constants : empty because types are only used as phantoms
+data TRUE
+data FALSE
+data p && q
+data p || q
+data p --> q
+data Not p
+data p == q
+
+-- Natural deduction rules (implementations all -- ignore parameters and return `QED`)
+andIntro    :: Proof p -> Proof q -> Proof (p && q)
+andIntro     = undefined
+andElimL    ::                       Proof (p && q) -> Proof p
+andElimL     = undefined
+orIntroL    :: Proof p -> Proof q -> Proof (p || q)
+orIntroL     = undefined
+implIntro   :: (Proof p -> Proof q) -> Proof (p --> q)
+implIntro    = undefined
+implElim    ::                         Proof (p --> q) -> Proof p -> Proof q
+implElim     = undefined
+notIntro    :: (Proof p -> Proof FALSE)  -> Proof (Not p)
+notIntro     = undefined
+contradicts :: Proof p  -> Proof (Not p) -> Proof FALSE
+contradicts  = undefined
+absurd      :: Proof FALSE -> Proof p
+absurd       = undefined
+refl        :: Proof (x == x)
+refl         = undefined
+-- ...
+
+-- exported function that enables library authors to assert axioms about their API
+axiom       :: Proof p
+axiom        = QED
+
+{-
+--------------------------------------------------
+5.2 Naming Library Functions
+
+for a library author to export lemma "reversing a list twice gives the original list"
+- not sufficient to have a name for the original list
+- must also name some of the library’s functions
+
+extension to the Named module
+-}
+
+-- module Named
+
+data Defn = Defn -- Type exported, constructor hidden.
+
+-- constraint synonym expected to only be available in module where `f` is defined
+type Defining f = (Coercible Defn f, Coercible f Defn)
+
+-- Enable library authors to define introduction rules for -- names that they have defined.
+-- coercion is only possible since this function is in the Named module.
+defn :: Defining f
+     => a
+     -> (a ~~ f)
+defn = coerce
+
+{-
+- library introduces a new name X by defining X as a newtype alias of Defn
+- library does not export constructor of X
+- then the constraint Defining X only holds in the module where X was defined
+- the defn function is used to attach the name X to an arbitrary value
+  but only in the module where X is defined
+- by exporting `defn` with the `Defining f` constraint,
+  the Named module enables library authors to introduce new names and axioms
+  while users are restrained
+
+Note :viz-a-viz `inserting`, lemmas about a function now stand on their own
+- library can add lemmas about reverse without modifying its signature
+- can create lemmas that relate multiple functions:
+
+example:
+-}
+
+-- API functions
+reverse       :: ([a] ~~ xs) -> ([a] ~~ Rev xs)
+reverse xs     = defn (P.reverse (the xs))
+
+length :: ([a] ~~ xs) -> (Int ~~ Length xs)
+length xs = defn (P.length (the xs))
+{- TODO : compile
+zipWith
+  :: (a -> b -> c)
+  -> ([a] ~~ xs ::: Length xs == n)
+  -> ([b] ~~ ys ::: Length ys == n)
+  -> [c]
+zipWith f xs ys = P.zipWith f (the xs) (the ys)
+-}
+-- Names for API functions
+newtype Length xs = Length Defn
+newtype Rev    xs = Rev    Defn
+
+-- Lemmas (all bodies are `axiom`)
+revRev        :: Proof (Rev (Rev xs) == xs)
+revRev         = axiom
+{-
+revCons  :: Proof (IsCons xs) -> Proof (IsCons (Rev xs))
+revCons   = axiom
+-}
+revLength :: Proof (Length (Rev xs) == Length xs)
+revLength = axiom
+
+data ListCase a xs
+  = IsCons (Proof (IsCons xs))
+  | IsNil  (Proof (IsCons xs))
+
+classify :: ([a] ~~ xs) -> ListCase a xs
+classify xs = case the xs of
+  (_:_) -> IsCons axiom
+  []    -> IsNil  axiom
+
+-- sample of client code for above
+{- TODO : needs zipWith (above)
+-- user defined dot product that only can be applied to same-sized lists
+dot :: ([Double] ~~ vec1 ::: Length vec1 == n)
+    -> ([Double] ~~ vec2 ::: Length vec2 == n)
+    -> Double
+dot vec1 vec2 = sum (Lib.zipWith (*) vec1 vec2)
+
+-- Compute the dot product of a list with its reverse.
+-- user uses evidence to tell compiler that dot product of a list with its reverse is legal
+dotRev :: [Double] -> Double
+dotRev xs = name xs $ \vec ->
+  -- dot is well-typed by expressing a proof that vec and reverse vec have the same length
+  dot (vec ...refl) (Lib.reverse vec ...revLength)
+-}
+-- refl and revLength are axiom schemas
+-- unification with the type of dot selects the correct instances
+
+--------------------------------------------------
+-- On the safety of defn
+{-
+
+regarding "Simon" example above : is `defn` as bad as `any_name`?
+
+YES: but only for the library which must be careful about how Simon is introduced.
+Users still unable to name arbitrary values "Simon" using defn,
+because they do not possess the necessary Defining Simon constraint.
+-}
+
+--------------------------------------------------
+-- 5.3 Building Theory Libraries

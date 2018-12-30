@@ -5,6 +5,7 @@ dependencies:
 - base >= 4.7 && < 5
 - containers
 - extra
+- justified-containers
 - MissingH
 
 ghc-options:
