@@ -18,12 +18,11 @@ data Mode
 
 -- | Valid state transitions.
 data Transition (init :: Mode) (res :: Mode) where
-  TStartTwoFactorAuthN :: Transition 'LoggedOut 'Candidate
-  TwoFormAuthN         :: Transition 'Candidate 'LoggedIn
-  TimeoutCandidate     :: Transition 'Candidate 'LoggedOut
-  TimeoutLoggedIn      :: Transition 'LoggedIn  'LoggedOut
-  SendHeartbeat        :: Transition 'LoggedIn  'LoggedIn
-  Noop                 :: Transition init       init
+  LoggedOutToCandidate :: Transition 'LoggedOut 'Candidate
+  CandidateToLoggedIn  :: Transition 'Candidate 'LoggedIn
+  CandidateToLoggedOut :: Transition 'Candidate 'LoggedOut
+  LoggedInToLoggedOut  :: Transition 'LoggedIn  'LoggedOut
+  NoChange             :: Transition init       init
 
 deriving instance Show (Transition init res)
 

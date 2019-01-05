@@ -10,12 +10,12 @@ import           Protolude
 
 import           XTypes
 
--- | Interface for nodes to send messages to one another.
+-- | For nodes to send messages to one another.
 -- E.g. Control.Concurrent.Chan, Network.Socket, etc.
 class XSendRPC m v where
   sendRPC :: NodeId -> RPCMessage v -> m ()
 
--- | Interface for nodes to receive messages from one another.
+-- | For nodes to receive messages from one another.
 class Show (XRecvRPCError m v) => XRecvRPC m v where
   type XRecvRPCError m v
   receiveRPC :: m (Either (XRecvRPCError m v) (RPCMessage v))
@@ -26,17 +26,71 @@ data RPCMessage v = RPCMessage
   , rpc    :: RPC v
   } deriving Show
 
-newtype RPC v
-  = UsernamePasswordRPC (UsernamePassword v)
+data RPC v
+  = EnterUsernamePasswordRPC   EnterUsernamePassword
+  | UsernamePasswordRPC        UsernamePassword
+  | InvalidUserNamePasswordRPC InvalidUsernamePassword
+  | EnterPinRPC                EnterPin
+  | PinRPC                     Pin
+  | InvalidPinRPC              InvalidPin
+  | AcctNumOrQuitRPC           AcctNumOrQuit
+  | InvalidAcctNumRPC          InvalidAcctNum
+  | AcctBalanceRPC             (AcctBalance v)
+  | QuitRPC                    Quit
   deriving Show
 
 class RPCType a v where
   toRPC :: a -> RPC v
 
-instance RPCType (UsernamePassword v) v where
-  toRPC = UsernamePasswordRPC
+instance RPCType EnterUsernamePassword   v where toRPC = EnterUsernamePasswordRPC
+instance RPCType UsernamePassword        v where toRPC = UsernamePasswordRPC
+instance RPCType InvalidUsernamePassword v where toRPC = InvalidUserNamePasswordRPC
+instance RPCType EnterPin                v where toRPC = EnterPinRPC
+instance RPCType Pin                     v where toRPC = PinRPC
+instance RPCType InvalidPin              v where toRPC = InvalidPinRPC
+instance RPCType AcctNumOrQuit           v where toRPC = AcctNumOrQuitRPC
+instance RPCType InvalidAcctNum          v where toRPC = InvalidAcctNumRPC
+instance RPCType (AcctBalance v)         v where toRPC = AcctBalanceRPC
+instance RPCType Quit                    v where toRPC = QuitRPC
 
-newtype UsernamePassword v = UsernamePassword
-  { upUP :: v
-  }
-  deriving (Show)
+data EnterUsernamePassword = EnterUsernamePassword
+  deriving Show
+
+data UsernamePassword = UsernamePassword
+  { upUsername :: Text
+  , upPassword :: Text
+  } deriving Show
+
+data InvalidUsernamePassword = InvalidUsernamePassword
+  deriving Show
+
+data EnterPin = EnterPin
+  deriving Show
+
+newtype Pin = Pin
+  { pPin :: Text
+  } deriving Show
+
+newtype InvalidPin = InvalidPin
+  { ipPin :: Text
+  } deriving Show
+
+data EnterAcctNumOrQuit = EnterAcctNumOrQuit
+  deriving Show
+
+newtype AcctNumOrQuit = AcctNumOrQuit
+  { anoqAcctNum :: Text
+  } deriving Show
+
+newtype InvalidAcctNum = InvalidAcctNum
+  { ianAcctNum :: Text
+  } deriving Show
+
+data AcctBalance v = AcctBalance
+  { abBalance :: Int
+  , abV       :: v
+  } deriving Show
+
+data Quit = Quit
+  deriving Show
+

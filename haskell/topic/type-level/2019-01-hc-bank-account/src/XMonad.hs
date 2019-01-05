@@ -105,7 +105,7 @@ askNodeId = asks (configNodeId . nodeConfig)
 -- Handlers
 --------------------------------------------------------------------------------
 
-type RPCHandler ns sm r v
+type ClientInputHandler ns sm r v
   =  (RPCType r v, Show v)
   => NodeState ns v
   -> NodeId

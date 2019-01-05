@@ -28,18 +28,20 @@ import           Protolude
 handleUsernamePassword
   :: forall v sm
    . Show v
-  => RPCHandler 'LoggedOut sm (UsernamePassword v) v
-handleUsernamePassword (NodeLoggedOutState s) _nodeId up@(UsernamePassword _v) = do
+  => ClientInputHandler 'LoggedOut sm UsernamePassword v
+handleUsernamePassword (NodeLoggedOutState s) _nodeId up = do
   PersistentState{..} <- get
   if checkUsernamePassword up
     then do
       logInfo "LoggedOut.handleUsernamePassword valid"
-      tellAction (ClientAction EnterPin)
-      pure (candidateResultState TStartTwoFactorAuthN CandidateState)
+      tellAction (SendRPC (SendEnterPin EnterPin))
+      pure (candidateResultState LoggedOutToCandidate CandidateState)
     else do
       logInfo "LoggedOut.handleUsernamePassword invalid"
-      tellAction (ClientAction EnterUsernamePassword)
-      pure (loggedOutResultState Noop s)
+      tellActions [ SendRPC (SendInvalidUsernamePassword InvalidUsernamePassword)
+                  , SendRPC (SendEnterUsernamePassword   EnterUsernamePassword)
+                  ]
+      pure (loggedOutResultState NoChange s)
  where
   checkUsernamePassword = Prelude.undefined
 
@@ -49,7 +51,7 @@ handleTimeout (NodeLoggedOutState s) timeout =
     HeartbeatTimeout -> do
       logInfo "LoggedOut.handleTimeout"
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  , ClientAction EnterUsernamePassword
+                  , SendRPC (SendEnterUsernamePassword EnterUsernamePassword)
                   ]
-      pure (loggedOutResultState Noop s)
+      pure (loggedOutResultState NoChange s)
 

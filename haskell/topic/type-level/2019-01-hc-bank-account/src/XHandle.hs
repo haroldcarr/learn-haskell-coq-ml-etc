@@ -4,6 +4,7 @@
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
@@ -38,7 +39,7 @@ handleEvent (XNodeState initNodeState') transitionEnv persistentState event =
       (XNodeState resultState, persistentState', outputs, logMsgs)
 
 data XHandler ns sm v = XHandler
-  { handleUsernamePassword :: RPCHandler ns sm (UsernamePassword v) v
+  { handleUsernamePassword :: ClientInputHandler ns sm UsernamePassword v
   , handleTimeout          :: TimeoutHandler ns sm v
   }
 
@@ -90,3 +91,5 @@ handleEvent' initNodeState' transitionEnv persistentState event =
     case rpc of
       UsernamePasswordRPC x ->
         handleUsernamePassword initNodeState' sender x
+      _ ->
+        panic "not implemented"

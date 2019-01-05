@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE TypeFamilies      #-}
 
@@ -18,11 +19,14 @@ import           Protolude
 handleUsernamePassword
   :: forall v sm
    . Show v
-  => RPCHandler 'Candidate sm (UsernamePassword v) v
-handleUsernamePassword _ns@(NodeCandidateState _s) _nodeId _up@(UsernamePassword _v) =
-  Prelude.undefined
+  => ClientInputHandler 'Candidate sm UsernamePassword v
+handleUsernamePassword (NodeCandidateState s) _nodeId _up = do
+  logInfo "Candidate.handleUsernamePassword: should not happend"
+  pure (candidateResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'Candidate sm v
-handleTimeout (NodeCandidateState fs) timeout =
+handleTimeout (NodeCandidateState _s) timeout = do
+  logInfo ("Candidate.handleTimeout: " <> toS (Prelude.show timeout))
   case timeout of
-    HeartbeatTimeout -> pure (candidateResultState Noop fs)
+    HeartbeatTimeout ->
+      pure (loggedOutResultState CandidateToLoggedOut LoggedOutState)
