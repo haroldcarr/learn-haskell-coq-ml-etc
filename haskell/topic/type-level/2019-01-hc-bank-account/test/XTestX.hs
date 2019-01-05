@@ -20,6 +20,7 @@ import           XTestUtils
 import qualified Data.Map        as Map
 import qualified Data.Set        as Set
 import           Numeric.Natural
+import qualified Prelude
 import           Protolude
 
 type Var = ByteString
@@ -87,7 +88,28 @@ getNodeInfo nId = do
         pure (config, store, xState, persistentState)
   pure nodeInfo
 
-testHandleEvent :: NodeId -> Event StoreCmd -> Scenario StoreCmd ()
+-------------------------------
+-- Handle actions and events --
+-------------------------------
+
+testHandleLogs :: Maybe [NodeId] -> (Text -> IO ()) -> [LogMsg] -> Scenario v ()
+testHandleLogs nIdsM f logs = liftIO $
+  case nIdsM of
+    Nothing ->
+      mapM_ (f . logMsgToText) logs
+    Just nIds ->
+      mapM_ (f . logMsgToText) $ flip filter logs $ \log' ->
+        lmdNodeId (lmData log') `elem` nIds
+
+testHandleActions :: NodeId -> [Action Store StoreCmd] -> Scenario StoreCmd ()
+testHandleActions sender' =
+  mapM_ (testHandleAction sender')
+
+testHandleAction  :: NodeId ->  Action Store StoreCmd  -> Scenario StoreCmd ()
+testHandleAction _sender' _action =
+  Prelude.undefined
+
+testHandleEvent   :: NodeId -> Event StoreCmd          -> Scenario StoreCmd ()
 testHandleEvent nodeId event = do
   (nodeConfig', sm, xState, persistentState) <- getNodeInfo nodeId
   let transitionEnv = TransitionEnv nodeConfig' sm xState
@@ -101,6 +123,8 @@ testHandleEvent nodeId event = do
   print newPersistentState
   print actions
   print logMsgs
+  -- testHandleActions nodeId newXState
+  -- testHandleLogs Nothing (const $ pure ()) logMsgs
   return ()
 
 ----------------

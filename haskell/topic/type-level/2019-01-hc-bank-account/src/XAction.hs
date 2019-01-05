@@ -3,15 +3,20 @@
 module XAction where
 
 import XEvent
-import XTypes
 ------------------------------------------------------------------------------
 import Protolude
 
 data Action sm v
-  = SendRPC NodeId (SendRPCAction v)
+  = ClientAction (ClientAction v)
   | ResetTimeoutTimer Timeout
   deriving Show
 
-newtype SendRPCAction v
-  = StartTwoFactorAuthN v
+data ClientAction v
+  = EnterUsernamePassword
+  | InvalidUsernamePassword
+  | EnterPin
+  | InvalidPin
+  | EnterAccountNumberOrQuit
+  | InvalidAccountNumber
+  | AccountBalance Int
   deriving Show

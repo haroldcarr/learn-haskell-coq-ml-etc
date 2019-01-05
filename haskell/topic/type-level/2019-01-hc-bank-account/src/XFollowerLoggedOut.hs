@@ -29,19 +29,27 @@ handleUsernamePassword
   :: forall v sm
    . Show v
   => RPCHandler 'LoggedOut sm (UsernamePassword v) v
-handleUsernamePassword _ns@(NodeLoggedOutState s) _nodeId up@(UsernamePassword v) = do
+handleUsernamePassword (NodeLoggedOutState s) _nodeId up@(UsernamePassword _v) = do
   PersistentState{..} <- get
   if checkUsernamePassword up
-    then candidateResultState TStartTwoFactorAuthN <$> startTwoFactorAuthN v
-    else pure (loggedOutResultState Noop s)
+    then do
+      logInfo "LoggedOut.handleUsernamePassword valid"
+      tellAction (ClientAction EnterPin)
+      pure (candidateResultState TStartTwoFactorAuthN CandidateState)
+    else do
+      logInfo "LoggedOut.handleUsernamePassword invalid"
+      tellAction (ClientAction EnterUsernamePassword)
+      pure (loggedOutResultState Noop s)
  where
   checkUsernamePassword = Prelude.undefined
 
 handleTimeout :: TimeoutHandler 'LoggedOut sm v
-handleTimeout (NodeLoggedOutState _fs) timeout =
+handleTimeout (NodeLoggedOutState s) timeout =
   case timeout of
     HeartbeatTimeout -> do
       logInfo "LoggedOut.handleTimeout"
-      tellAction (ResetTimeoutTimer HeartbeatTimeout)
-      pure (candidateResultState TStartTwoFactorAuthN CandidateState)
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  , ClientAction EnterUsernamePassword
+                  ]
+      pure (loggedOutResultState Noop s)
 

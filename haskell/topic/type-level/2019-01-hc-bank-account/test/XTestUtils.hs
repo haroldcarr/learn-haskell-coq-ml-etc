@@ -57,15 +57,15 @@ testConfig2 = NodeConfig
   , configHeartbeatTimeout = msToMicroS 50
   }
 
--- | Zip maps using function. Throws away items left and right
+-- | Zip maps using function. Throws away items left and right.
 zipMapWith :: Ord k => (a -> b -> c) -> Map k a -> Map k b -> Map k c
 zipMapWith f = Merge.merge Merge.dropMissing Merge.dropMissing (Merge.zipWithMatched (const f))
 
--- | Perform an inner join on maps (hence throws away items left and right)
+-- | Perform an inner join on maps (hence throws away items left and right).
 combine :: Ord a => Map a b -> Map a c -> Map a (b, c)
 combine = zipMapWith (,)
 
-printIfNode :: (Show nId, Eq nId) => nId -> nId -> Prelude.String -> IO ()
+printIfNode  :: (Show nId, Eq nId) =>  nId  -> nId -> Prelude.String -> IO ()
 printIfNode nId nId' msg =
   when (nId == nId') $
     print $ show nId ++ " " ++ msg

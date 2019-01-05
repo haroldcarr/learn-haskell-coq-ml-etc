@@ -118,25 +118,6 @@ type TimeoutHandler ns sm v
   -> TransitionM sm v (ResultState ns v)
 
 --------------------------------------------------------------------------------
--- RWS Helpers
---------------------------------------------------------------------------------
-
-send :: NodeId -> SendRPCAction v -> TransitionM sm v ()
-send nodeId sendRPC' = tellAction (SendRPC nodeId sendRPC')
-
-resetHeartbeatTimeout :: TransitionM sm v ()
-resetHeartbeatTimeout  = tellAction (ResetTimeoutTimer HeartbeatTimeout)
-
---------------------------------------------------------------------------------
-
-startTwoFactorAuthN
-  :: v
-  -> TransitionM sm v (CandidateState v)
-startTwoFactorAuthN _v = do
-  resetHeartbeatTimeout
-  pure CandidateState
-
---------------------------------------------------------------------------------
 -- Logging
 --------------------------------------------------------------------------------
 
