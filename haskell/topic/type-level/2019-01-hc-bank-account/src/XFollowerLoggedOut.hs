@@ -18,7 +18,6 @@ import           XNodeState
 import           XPersistent
 import           XRPC
 ------------------------------------------------------------------------------
-import qualified Prelude
 import           Protolude
 
 --------------------------------------------------------------------------------
@@ -43,7 +42,7 @@ handleUsernamePassword (NodeLoggedOutState s) _nodeId up = do
                   ]
       pure (loggedOutResultState NoChange s)
  where
-  checkUsernamePassword = Prelude.undefined
+  checkUsernamePassword _ = True
 
 handleTimeout :: TimeoutHandler 'LoggedOut sm v
 handleTimeout (NodeLoggedOutState s) timeout =

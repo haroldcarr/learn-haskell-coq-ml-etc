@@ -113,12 +113,9 @@ testHandleEvent   :: NodeId -> Event StoreCmd          -> Scenario StoreCmd ()
 testHandleEvent nodeId event = do
   (nodeConfig', sm, xState, persistentState) <- getNodeInfo nodeId
   let transitionEnv = TransitionEnv nodeConfig' sm xState
-  print "BEFORE ----------------------------"
-  print xState
-  print persistentState
   let (newXState, newPersistentState, actions, logMsgs) =
         handleEvent xState transitionEnv persistentState event
-  print "AFTER ----------------------------"
+  print " ----------------------------"
   print newXState
   print newPersistentState
   print actions
@@ -131,6 +128,18 @@ testHandleEvent nodeId event = do
 -- Unit tests --
 ----------------
 
-unit_new_leader :: IO ()
-unit_new_leader = runScenario $
+unit_follower_username_password_valid :: IO ()
+unit_follower_username_password_valid = runScenario $
+  testHandleEvent node1
+  (MessageEvent
+   (RPCMessageEvent (RPCMessage "client" (UsernamePasswordRPC (UsernamePassword "foo" "bar")))))
+
+unit_follower_username_password_invalid :: IO ()
+unit_follower_username_password_invalid = runScenario $
+  testHandleEvent node1
+  (MessageEvent
+   (RPCMessageEvent (RPCMessage "client" (UsernamePasswordRPC (UsernamePassword "" "")))))
+
+unit_follower_heartbeat_timeout :: IO ()
+unit_follower_heartbeat_timeout = runScenario $
   testHandleEvent node1 (TimeoutEvent HeartbeatTimeout)
