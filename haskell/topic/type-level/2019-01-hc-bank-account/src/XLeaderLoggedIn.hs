@@ -20,7 +20,7 @@ handleUsernamePassword
   :: forall v sm
    . Show v
   => ClientInputHandler 'LoggedIn sm UsernamePassword v
-handleUsernamePassword _ns@(NodeLoggedInState s) _nodeId _up = do
+handleUsernamePassword _ns@(NodeLoggedInState s) _cid _up = do
   logCritical "LoggedIn.handleUsernamePassword: should not happend"
   pure (loggedInResultState NoChange s)
 

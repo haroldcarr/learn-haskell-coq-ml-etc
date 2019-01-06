@@ -20,7 +20,7 @@ handleUsernamePassword
   :: forall v sm
    . Show v
   => ClientInputHandler 'Candidate sm UsernamePassword v
-handleUsernamePassword (NodeCandidateState s) _nodeId _up = do
+handleUsernamePassword (NodeCandidateState s) _cid _up = do
   logCritical "Candidate.handleUsernamePassword: should not happend"
   pure (candidateResultState NoChange s)
 
