@@ -106,9 +106,9 @@ askNodeId = asks (configNodeId . nodeConfig)
 --------------------------------------------------------------------------------
 
 type ClientInputHandler ns sm r v
-  =  (RPCType r v, Show v)
+  =  Show v
   => NodeState ns v
-  -> NodeId
+  -> ClientId
   -> r
   -> TransitionM sm v (ResultState ns v)
 type TimeoutHandler ns sm v
@@ -116,11 +116,18 @@ type TimeoutHandler ns sm v
   => NodeState ns v
   -> Timeout
   -> TransitionM sm v (ResultState ns v)
+type RPCHandler ns sm r v
+  =  (RPCType r v, Show v) -- TODO : RPCType : what does it serve?
+  => NodeState ns v
+  -> NodeId
+  -> r
+  -> TransitionM sm v (ResultState ns v)
 
 --------------------------------------------------------------------------------
 -- Logging
 --------------------------------------------------------------------------------
 
-logInfo,logDebug  :: Text -> TransitionM sm v ()
-logInfo   = TransitionM . Logging.logInfo
-logDebug  = TransitionM . Logging.logDebug
+logCritical,logDebug,logInfo :: Text -> TransitionM sm v ()
+logDebug    = TransitionM . Logging.logDebug
+logInfo     = TransitionM . Logging.logInfo
+logCritical = TransitionM . Logging.logCritical

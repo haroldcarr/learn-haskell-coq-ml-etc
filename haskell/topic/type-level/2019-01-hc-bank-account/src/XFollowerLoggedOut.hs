@@ -12,11 +12,12 @@ module XFollowerLoggedOut
   ) where
 
 import           XAction
+import           XClient
 import           XEvent
 import           XMonad
 import           XNodeState
 import           XPersistent
-import           XRPC
+import           XTypes
 ------------------------------------------------------------------------------
 import           Protolude
 
@@ -33,12 +34,12 @@ handleUsernamePassword (NodeLoggedOutState s) _nodeId up = do
   if checkUsernamePassword up
     then do
       logInfo "LoggedOut.handleUsernamePassword valid"
-      tellAction (SendRPC "client" (SendEnterPin EnterPin))
+      tellAction (SendToClient (ClientId "client") CresEnterPin)
       pure (candidateResultState LoggedOutToCandidate CandidateState)
     else do
       logInfo "LoggedOut.handleUsernamePassword invalid"
-      tellActions [ SendRPC "client" (SendInvalidUsernamePassword InvalidUsernamePassword)
-                  , SendRPC "client" (SendEnterUsernamePassword   EnterUsernamePassword)
+      tellActions [ SendToClient (ClientId "client") CresInvalidUserNamePassword
+                  , SendToClient (ClientId "client") CresEnterUsernamePassword
                   ]
       pure (loggedOutResultState NoChange s)
  where
@@ -50,7 +51,7 @@ handleTimeout (NodeLoggedOutState s) timeout =
     HeartbeatTimeout -> do
       logInfo "LoggedOut.handleTimeout"
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  , SendRPC "client" (SendEnterUsernamePassword EnterUsernamePassword)
+                  , SendToClient (ClientId "client") CresEnterUsernamePassword
                   ]
       pure (loggedOutResultState NoChange s)
 

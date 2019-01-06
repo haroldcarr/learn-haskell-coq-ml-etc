@@ -12,6 +12,7 @@
 module XHandle where
 
 import           XAction
+import           XClient
 import qualified XCandidate         as Candidate
 import           XEvent
 import qualified XFollowerLoggedOut as Follower
@@ -40,23 +41,23 @@ handleEvent (XNodeState initNodeState') transitionEnv persistentState event =
 
 data XHandler ns sm v = XHandler
   { handleUsernamePassword :: ClientInputHandler ns sm UsernamePassword v
-  , handleTimeout          :: TimeoutHandler ns sm v
+  , handleTimeout          :: TimeoutHandler     ns sm                  v
   }
 
-followerXHandler :: Show v => XHandler 'LoggedOut sm v
-followerXHandler = XHandler
+followerXHandler  :: Show v => XHandler 'LoggedOut sm v
+followerXHandler   = XHandler
   { handleUsernamePassword = Follower.handleUsernamePassword
   , handleTimeout          = Follower.handleTimeout
   }
 
 candidateXHandler :: Show v => XHandler 'Candidate sm v
-candidateXHandler = XHandler
+candidateXHandler  = XHandler
   { handleUsernamePassword = Candidate.handleUsernamePassword
   , handleTimeout          = Candidate.handleTimeout
   }
 
-leaderXHandler :: Show v => XHandler 'LoggedIn sm v
-leaderXHandler = XHandler
+leaderXHandler    :: Show v => XHandler 'LoggedIn sm v
+leaderXHandler     = XHandler
   { handleUsernamePassword = Leader.handleUsernamePassword
   , handleTimeout          = Leader.handleTimeout
   }
@@ -80,16 +81,19 @@ handleEvent' initNodeState' transitionEnv persistentState event =
   runTransitionM transitionEnv persistentState $
     case event of
       MessageEvent mev ->
-        case mev of RPCMessageEvent rpcMsg -> handleRPCMessage rpcMsg
+        case mev of
+          RPCMessageEvent    e -> handleRPCMessage           e
+          ClientRequestEvent e -> handleClientRequestMessage e
       TimeoutEvent tout ->
         handleTimeout initNodeState' tout
  where
   XHandler{..} = mkXHandler initNodeState'
 
   handleRPCMessage :: RPCMessage v -> TransitionM sm v (ResultState ns v)
-  handleRPCMessage (RPCMessage sender rpc) =
-    case rpc of
-      UsernamePasswordRPC x ->
-        handleUsernamePassword initNodeState' sender x
-      _ ->
-        panic "not implemented"
+  handleRPCMessage (RPCMessage _sender _rpc) = panic "there are no RPC messages defined"
+
+  handleClientRequestMessage :: ClientRequest v -> TransitionM sm v (ResultState ns v)
+  handleClientRequestMessage msg = case msg of
+    CreqUsernamePassword cid up -> handleUsernamePassword initNodeState' cid up
+    CreqPin            _cid _p  -> panic "not implemented"
+    CreqAcctNumOrQuit  _cid _an -> panic "not implemented"

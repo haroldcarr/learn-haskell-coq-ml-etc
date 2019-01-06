@@ -2,6 +2,7 @@
 
 module XEvent where
 
+import           XClient
 import           XRPC
 ------------------------------------------------------------------------------
 import           Protolude
@@ -15,6 +16,7 @@ data Timeout
   = HeartbeatTimeout
   deriving Show
 
-newtype MessageEvent v
-  = RPCMessageEvent (RPCMessage v)
+data MessageEvent v
+  = RPCMessageEvent    (RPCMessage    v) -- incoming internode messages
+  | ClientRequestEvent (ClientRequest v)
   deriving Show

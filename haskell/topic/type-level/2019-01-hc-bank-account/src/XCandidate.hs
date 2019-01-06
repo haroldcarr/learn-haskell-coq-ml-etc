@@ -8,10 +8,10 @@
 
 module XCandidate where
 
+import           XClient
 import           XEvent
 import           XMonad
 import           XNodeState
-import           XRPC
 ------------------------------------------------------------------------------
 import qualified Prelude
 import           Protolude
@@ -21,7 +21,7 @@ handleUsernamePassword
    . Show v
   => ClientInputHandler 'Candidate sm UsernamePassword v
 handleUsernamePassword (NodeCandidateState s) _nodeId _up = do
-  logInfo "Candidate.handleUsernamePassword: should not happend"
+  logCritical "Candidate.handleUsernamePassword: should not happend"
   pure (candidateResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'Candidate sm v

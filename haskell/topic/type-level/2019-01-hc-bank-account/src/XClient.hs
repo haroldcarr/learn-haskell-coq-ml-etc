@@ -19,10 +19,23 @@ class Show (XRecvClientError m v) => XRecvClient m v where
   receiveClient :: m (Either (XRecvClientError m v) (ClientRequest v))
 
 data ClientRequest v
-  = CreqUsernamePassword ClientId Text Text
-  | CreqPin              ClientId Text
-  | CreqAcctNumOrQuit    ClientId Text
+  = CreqUsernamePassword ClientId UsernamePassword
+  | CreqPin              ClientId Pin
+  | CreqAcctNumOrQuit    ClientId AccNumOrQuit
   deriving Show
+
+data UsernamePassword = UsernamePassword
+  { upUsername :: Text
+  , upPassword :: Text
+  } deriving Show
+
+newtype Pin = Pin
+  { pPin :: Text
+  } deriving Show
+
+newtype AccNumOrQuit = AccNumOrQuit
+  { anoqAcctNumOrQuit :: Text
+  } deriving Show
 
 data ClientResponse s v
   = CresStateMachine s

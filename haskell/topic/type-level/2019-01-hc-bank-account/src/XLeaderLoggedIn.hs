@@ -8,10 +8,10 @@
 
 module XLeaderLoggedIn where
 
+import           XClient
 import           XEvent
 import           XMonad
 import           XNodeState
-import           XRPC
 ------------------------------------------------------------------------------
 import qualified Prelude
 import           Protolude
@@ -21,7 +21,7 @@ handleUsernamePassword
    . Show v
   => ClientInputHandler 'LoggedIn sm UsernamePassword v
 handleUsernamePassword _ns@(NodeLoggedInState s) _nodeId _up = do
-  logInfo "LoggedIn.handleUsernamePassword: should not happend"
+  logCritical "LoggedIn.handleUsernamePassword: should not happend"
   pure (loggedInResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'LoggedIn sm v

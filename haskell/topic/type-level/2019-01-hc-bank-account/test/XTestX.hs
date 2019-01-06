@@ -100,7 +100,7 @@ testHandleLogs nIdsM f logs = liftIO $
     Just nIds ->
       mapM_ (f . logMsgToText) $ flip filter logs $ \log' ->
         lmdNodeId (lmData log') `elem` nIds
-
+{-
 testHandleActions :: NodeId -> [Action Store StoreCmd] -> Scenario StoreCmd ()
 testHandleActions sender' =
   mapM_ (testHandleAction sender')
@@ -128,7 +128,7 @@ testHandleAction sender' action =
             SendInvalidAccountNum       InvalidAcctNum          -> panic "not implemented"
             -- messages FROM the client TO the server
             x -> panic ("XTestX.testHandleAction : should not happend : " <> toS (Prelude.show x))
-
+-}
 testHandleEvent   :: NodeId -> Event StoreCmd          -> Scenario StoreCmd ()
 testHandleEvent nodeId event = do
   (nodeConfig', sm, xState, persistentState) <- getNodeInfo nodeId
@@ -152,13 +152,13 @@ unit_follower_username_password_valid :: IO ()
 unit_follower_username_password_valid = runScenario $
   testHandleEvent node1
   (MessageEvent
-   (RPCMessageEvent (RPCMessage "client" (UsernamePasswordRPC (UsernamePassword "foo" "bar")))))
+   (ClientRequestEvent (CreqUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar"))))
 
 unit_follower_username_password_invalid :: IO ()
 unit_follower_username_password_invalid = runScenario $
   testHandleEvent node1
   (MessageEvent
-   (RPCMessageEvent (RPCMessage "client" (UsernamePasswordRPC (UsernamePassword "" "")))))
+   (ClientRequestEvent (CreqUsernamePassword (ClientId "client") (UsernamePassword "" ""))))
 
 unit_follower_heartbeat_timeout :: IO ()
 unit_follower_heartbeat_timeout = runScenario $
