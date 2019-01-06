@@ -33,6 +33,7 @@ data RPC v
   | EnterPinRPC                EnterPin
   | PinRPC                     Pin
   | InvalidPinRPC              InvalidPin
+  | EnterAcctNumOrQuitRPC      EnterAcctNumOrQuit
   | AcctNumOrQuitRPC           AcctNumOrQuit
   | InvalidAcctNumRPC          InvalidAcctNum
   | AcctBalanceRPC             (AcctBalance v)
@@ -48,6 +49,7 @@ instance RPCType InvalidUsernamePassword v where toRPC = InvalidUserNamePassword
 instance RPCType EnterPin                v where toRPC = EnterPinRPC
 instance RPCType Pin                     v where toRPC = PinRPC
 instance RPCType InvalidPin              v where toRPC = InvalidPinRPC
+instance RPCType EnterAcctNumOrQuit      v where toRPC = EnterAcctNumOrQuitRPC
 instance RPCType AcctNumOrQuit           v where toRPC = AcctNumOrQuitRPC
 instance RPCType InvalidAcctNum          v where toRPC = InvalidAcctNumRPC
 instance RPCType (AcctBalance v)         v where toRPC = AcctBalanceRPC
@@ -71,9 +73,8 @@ newtype Pin = Pin
   { pPin :: Text
   } deriving Show
 
-newtype InvalidPin = InvalidPin
-  { ipPin :: Text
-  } deriving Show
+data InvalidPin = InvalidPin
+  deriving Show
 
 data EnterAcctNumOrQuit = EnterAcctNumOrQuit
   deriving Show
@@ -82,9 +83,8 @@ newtype AcctNumOrQuit = AcctNumOrQuit
   { anoqAcctNum :: Text
   } deriving Show
 
-newtype InvalidAcctNum = InvalidAcctNum
-  { ianAcctNum :: Text
-  } deriving Show
+data InvalidAcctNum = InvalidAcctNum
+  deriving Show
 
 data AcctBalance v = AcctBalance
   { abBalance :: Int

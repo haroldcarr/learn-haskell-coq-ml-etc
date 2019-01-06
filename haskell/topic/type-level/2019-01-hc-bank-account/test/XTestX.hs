@@ -106,8 +106,26 @@ testHandleActions sender' =
   mapM_ (testHandleAction sender')
 
 testHandleAction  :: NodeId ->  Action Store StoreCmd  -> Scenario StoreCmd ()
-testHandleAction _sender' _action =
-  Prelude.undefined
+testHandleAction sender' action =
+  case action of
+    SendRPC nId rpcAction -> do
+      msg <- mkRPCfromSendRPCAction sender' rpcAction
+      testHandleEvent nId (MessageEvent (RPCMessageEvent msg))
+    ResetTimeoutTimer _ -> pure ()
+ where
+  mkRPCfromSendRPCAction :: NodeId -> SendRPCAction StoreCmd -> Scenario v (RPCMessage StoreCmd)
+  mkRPCfromSendRPCAction nId sendRPCAction = do
+        _sc <- get
+        (nodeConfig', _, XNodeState _ns, _) <- getNodeInfo nId
+        RPCMessage (configNodeId nodeConfig') <$>
+          case sendRPCAction of
+            SendEnterUsernamePassword   EnterUsernamePassword   -> panic "not implemented"
+            SendInvalidUsernamePassword InvalidUsernamePassword -> panic "not implemented"
+            SendEnterPin                EnterPin                -> panic "not implemented"
+            SendInvalidPin              InvalidPin              -> panic "not implemented"
+            SendEnterAcctNumOrQuit      EnterAcctNumOrQuit      -> panic "not implemented"
+            SendInvalidAccountNum       InvalidAcctNum          -> panic "not implemented"
+            x -> panic ("should only go from client to server: " <> toS (Prelude.show x))
 
 testHandleEvent   :: NodeId -> Event StoreCmd          -> Scenario StoreCmd ()
 testHandleEvent nodeId event = do
