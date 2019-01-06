@@ -119,13 +119,15 @@ testHandleAction sender' action =
         (nodeConfig', _, XNodeState _ns, _) <- getNodeInfo nId
         RPCMessage (configNodeId nodeConfig') <$>
           case sendRPCAction of
+            -- messages FROM the server TO client
             SendEnterUsernamePassword   EnterUsernamePassword   -> panic "not implemented"
             SendInvalidUsernamePassword InvalidUsernamePassword -> panic "not implemented"
             SendEnterPin                EnterPin                -> panic "not implemented"
             SendInvalidPin              InvalidPin              -> panic "not implemented"
             SendEnterAcctNumOrQuit      EnterAcctNumOrQuit      -> panic "not implemented"
             SendInvalidAccountNum       InvalidAcctNum          -> panic "not implemented"
-            x -> panic ("should only go from client to server: " <> toS (Prelude.show x))
+            -- messages FROM the client TO the server
+            x -> panic ("XTestX.testHandleAction : should not happend : " <> toS (Prelude.show x))
 
 testHandleEvent   :: NodeId -> Event StoreCmd          -> Scenario StoreCmd ()
 testHandleEvent nodeId event = do
