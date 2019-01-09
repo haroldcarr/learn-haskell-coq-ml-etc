@@ -1,0 +1,10 @@
+internal modules that are not exposed
+but available for testing
+
+use case supported by Cabal
+- define an internal/sublibrary that is visible in the package but not exposed outside
+- see: https://cabal.readthedocs.io/en/latest/developing-packages.html#sublibs
+
+private libraries in a package
+- See example: http://hackage.haskell.org/package/htoml-megaparsec
+
