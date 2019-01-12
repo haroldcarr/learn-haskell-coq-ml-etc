@@ -21,7 +21,6 @@ import           XTestUtils
 import qualified Data.Map        as Map
 import qualified Data.Set        as Set
 import           Numeric.Natural
-import qualified Prelude
 import           Protolude
 
 type Var = ByteString
@@ -108,52 +107,10 @@ getNodeInfo nId = do
 -- Handle actions and events --
 -------------------------------
 
-testHandleLogs :: Maybe [NodeId] -> (Text -> IO ()) -> [LogMsg] -> Scenario v ()
-testHandleLogs nIdsM f logs = liftIO $
-  case nIdsM of
-    Nothing ->
-      mapM_ (f . logMsgToText) logs
-    Just nIds ->
-      mapM_ (f . logMsgToText) $ flip filter logs $ \log' ->
-        lmdNodeId (lmData log') `elem` nIds
-
-testHandleActions :: NodeId -> [Action Store StoreCmd] -> Scenario StoreCmd ()
-testHandleActions sender' =
-  mapM_ (testHandleAction sender')
-
-testHandleAction  :: NodeId ->  Action Store StoreCmd  -> Scenario StoreCmd ()
-testHandleAction sender' action =
-  case action of
-    SendRPC _ _ ->
-      panic $ "testHandleAction: SendRPC should not happen: " <> toS (Prelude.show action)
-    SendToClient cid resp -> do
-      print (cid, resp)
-      case resp of
-        -- CresStateMachine s
-        CresEnterUsernamePassword ->
-          testHandleEvent sender'
-          (MessageEvent (ClientRequestEvent (CreqUsernamePassword cid (UsernamePassword "foo" "bar"))))
-        CresInvalidUserNamePassword ->
-          testHandleEvent sender'
-          (MessageEvent (ClientRequestEvent (CreqUsernamePassword cid (UsernamePassword "foo" "bar"))))
-        CresEnterPin ->
-          testHandleEvent sender'
-          (MessageEvent (ClientRequestEvent (CreqPin cid (Pin "1234"))))
-        CresInvalidPin ->
-          testHandleEvent sender'
-          (MessageEvent (ClientRequestEvent (CreqPin cid (Pin "1234"))))
-        CresEnterAcctNumOrQuit _t ->
-          testHandleEvent sender'
-          (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit cid (AccNumOrQuit "Q"))))
-        CresInvalidAcctNum ->
-          testHandleEvent sender'
-          (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit cid (AccNumOrQuit "Q"))))
-        CresQuit ->
-          pure ()
-        _ -> panic "testHandleAction: fall through"
-    ResetTimeoutTimer _ -> pure ()
-
-testHandleEvent   :: NodeId -> Event StoreCmd          -> Scenario StoreCmd ()
+testHandleEvent
+  :: NodeId
+  -> Event StoreCmd
+  -> Scenario StoreCmd ([Action Store StoreCmd], [LogMsg])
 testHandleEvent nodeId event = do
   (nodeConfig', sm, xState, persistentState) <- getNodeInfo nodeId
   let transitionEnv = TransitionEnv nodeConfig' sm xState
@@ -161,10 +118,7 @@ testHandleEvent nodeId event = do
         handleEvent xState transitionEnv persistentState event
   updatePersistentState nodeId newPersistentState
   updateXNodeState      nodeId newXState
-  testHandleActions     nodeId actions
-  testHandleLogs (Just [nodeId]) print logMsgs
-  -- applyLogEntries   nodeId sm
-  return ()
+  return (actions, logMsgs)
 
 ----------------
 -- Unit tests --
@@ -172,8 +126,11 @@ testHandleEvent nodeId event = do
 
 unit_logged_out_username_password_valid :: IO ()
 unit_logged_out_username_password_valid = runScenario $ do
-  testHandleEvent node1
-    (TimeoutEvent HeartbeatTimeout)
-  testHandleEvent node1
-    (MessageEvent
-      (ClientRequestEvent (CreqUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar"))))
+  (a1,l1) <- testHandleEvent node1 (TimeoutEvent HeartbeatTimeout)
+  print (a1,l1)
+  (a2,l2) <- testHandleEvent node1
+               (MessageEvent
+                (ClientRequestEvent (CreqUsernamePassword
+                                     (ClientId "client")
+                                     (UsernamePassword "foo" "bar"))))
+  print (a2,l2)
