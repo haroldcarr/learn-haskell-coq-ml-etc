@@ -14,7 +14,7 @@ data Event v
 
 data Timeout
   = HeartbeatTimeout
-  deriving Show
+  deriving (Eq, Show)
 
 data MessageEvent v
   = RPCMessageEvent    (RPCMessage    v) -- incoming internode messages

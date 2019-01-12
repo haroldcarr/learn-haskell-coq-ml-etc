@@ -13,7 +13,7 @@ data Action sm v
   = SendRPC           NodeId    (SendRPCAction     v) -- outgoing internode messages
   | SendToClient      ClientId  (ClientResponse sm v)
   | ResetTimeoutTimer Timeout
-  deriving Show
+  deriving (Eq, Show)
 
 data SendRPCAction v
-  deriving Show
+  deriving (Eq, Show)

@@ -47,5 +47,5 @@ data ClientResponse s v
   | CresInvalidAcctNum
   | CresAcctBalance v
   | CresQuit
-  deriving Show
+  deriving (Eq, Show)
 

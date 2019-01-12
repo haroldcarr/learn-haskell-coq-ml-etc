@@ -1,7 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
-{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
@@ -18,17 +17,18 @@ module XTestX where
 import           X0
 import           XTestUtils
 ------------------------------------------------------------------------------
-import qualified Data.Map        as Map
-import qualified Data.Set        as Set
+import qualified Data.Map         as Map
+import qualified Data.Set         as Set
 import           Numeric.Natural
 import           Protolude
+import qualified Test.Tasty.HUnit as HUnit
 
 type Var = ByteString
 
 data StoreCmd
   = Set  Var Natural
   | Incr Var
-  deriving (Show, Generic)
+  deriving (Eq, Show)
 
 type Store = Map Var Natural
 
@@ -126,11 +126,36 @@ testHandleEvent nodeId event = do
 
 unit_logged_out_username_password_valid :: IO ()
 unit_logged_out_username_password_valid = runScenario $ do
-  (a1,l1) <- testHandleEvent node1 (TimeoutEvent HeartbeatTimeout)
-  print (a1,l1)
-  (a2,l2) <- testHandleEvent node1
-               (MessageEvent
-                (ClientRequestEvent (CreqUsernamePassword
-                                     (ClientId "client")
-                                     (UsernamePassword "foo" "bar"))))
-  print (a2,l2)
+  r1 <- testHandleEvent node1 (TimeoutEvent HeartbeatTimeout)
+  liftIO $ assertActions r1
+             [ ResetTimeoutTimer HeartbeatTimeout
+             , SendToClient (ClientId "client") CresEnterUsernamePassword
+             ]
+  liftIO $ assertLogs r1
+             ["LoggedOut.handleTimeout"]
+  r2 <- testHandleEvent node1
+          (MessageEvent
+            (ClientRequestEvent (CreqUsernamePassword
+                                  (ClientId "client")
+                                  (UsernamePassword "foo" "bar"))))
+  liftIO $ assertActions r2
+             [SendToClient (ClientId "client") CresEnterPin]
+  liftIO $ assertLogs r2
+             ["LoggedOut.handleUsernamePassword valid: ClientId \"client\" UsernamePassword {upUsername = \"foo\", upPassword = \"bar\"}"]
+
+------------------
+-- Assert utils --
+------------------
+
+assertActions :: ([Action Store StoreCmd], [LogMsg]) -> [Action Store StoreCmd] -> IO ()
+assertActions (got,_) expected = do
+  HUnit.assertEqual "not the same length" (length expected) (length got)
+  mapM_ (uncurry (HUnit.assertEqual "unexpected Action"))
+        (zip expected got)
+
+assertLogs :: ([Action Store StoreCmd], [LogMsg]) -> [Text] -> IO ()
+assertLogs (_,got) expected = do
+  HUnit.assertEqual "not the same length" (length expected) (length got)
+  mapM_ (\(e,g) -> HUnit.assertEqual "unexpected log msg" e (lmdMsg (lmData g)))
+        (zip expected got)
+

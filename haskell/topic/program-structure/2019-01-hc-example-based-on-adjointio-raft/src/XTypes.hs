@@ -10,4 +10,4 @@ type NodeId  = ByteString
 type NodeIds = Set NodeId
 
 newtype ClientId = ClientId NodeId
-  deriving (Show, Eq, Ord)
+  deriving (Eq, Ord, Show)
