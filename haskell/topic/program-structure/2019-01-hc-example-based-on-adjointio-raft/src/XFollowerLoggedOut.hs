@@ -8,6 +8,7 @@
 
 module XFollowerLoggedOut
   ( handleUsernamePassword
+  , handlePin
   , handleTimeout
   ) where
 
@@ -19,6 +20,7 @@ import           XNodeState
 import           XPersistent
 import           XTypes
 ------------------------------------------------------------------------------
+import qualified Prelude
 import           Protolude
 
 --------------------------------------------------------------------------------
@@ -33,17 +35,25 @@ handleUsernamePassword (NodeLoggedOutState s) cid up = do
   PersistentState{..} <- get
   if checkUsernamePassword up
     then do
-      logInfo "LoggedOut.handleUsernamePassword valid"
+      logInfo $ "LoggedOut.handleUsernamePassword valid: " <> toS (Prelude.show cid) <> " " <> toS (Prelude.show up)
       tellAction (SendToClient cid CresEnterPin)
       pure (candidateResultState LoggedOutToCandidate CandidateState)
     else do
-      logInfo "LoggedOut.handleUsernamePassword invalid"
+      logInfo $ "LoggedOut.handleUsernamePassword invalid: " <> toS (Prelude.show cid) <> " " <> toS (Prelude.show up)
       tellActions [ SendToClient cid CresInvalidUserNamePassword
                   , SendToClient cid CresEnterUsernamePassword
                   ]
       pure (loggedOutResultState NoChange s)
  where
   checkUsernamePassword _ = True
+
+handlePin
+  :: forall v sm
+   . Show v
+  => ClientInputHandler 'LoggedOut sm Pin v
+handlePin (NodeLoggedOutState s) _c _p = do
+  logCritical "LoggedOut.handlePin: should not happend"
+  pure (loggedOutResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'LoggedOut sm v
 handleTimeout (NodeLoggedOutState s) timeout =

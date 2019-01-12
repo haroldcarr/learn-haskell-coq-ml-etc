@@ -23,6 +23,7 @@ import           XNodeState
 import           XPersistent
 import           XRPC
 ------------------------------------------------------------------------------
+import qualified Prelude
 import           Protolude
 
 -- | Entry point for handling events.
@@ -41,24 +42,28 @@ handleEvent (XNodeState initNodeState') transitionEnv persistentState event =
 
 data XHandler ns sm v = XHandler
   { handleUsernamePassword :: ClientInputHandler ns sm UsernamePassword v
+  , handlePin              :: ClientInputHandler ns sm Pin              v
   , handleTimeout          :: TimeoutHandler     ns sm                  v
   }
 
 followerXHandler  :: Show v => XHandler 'LoggedOut sm v
 followerXHandler   = XHandler
   { handleUsernamePassword = Follower.handleUsernamePassword
+  , handlePin              = Follower.handlePin
   , handleTimeout          = Follower.handleTimeout
   }
 
 candidateXHandler :: Show v => XHandler 'Candidate sm v
 candidateXHandler  = XHandler
   { handleUsernamePassword = Candidate.handleUsernamePassword
+  , handlePin              = Candidate.handlePin
   , handleTimeout          = Candidate.handleTimeout
   }
 
 leaderXHandler    :: Show v => XHandler 'LoggedIn sm v
 leaderXHandler     = XHandler
   { handleUsernamePassword = Leader.handleUsernamePassword
+  , handlePin              = Leader.handlePin
   , handleTimeout          = Leader.handleTimeout
   }
 
@@ -95,5 +100,5 @@ handleEvent' initNodeState' transitionEnv persistentState event =
   handleClientRequestMessage :: ClientRequest v -> TransitionM sm v (ResultState ns v)
   handleClientRequestMessage msg = case msg of
     CreqUsernamePassword cid up -> handleUsernamePassword initNodeState' cid up
-    CreqPin            _cid _p  -> panic "not implemented"
-    CreqAcctNumOrQuit  _cid _an -> panic "not implemented"
+    CreqPin              cid  p -> handlePin              initNodeState' cid  p
+    CreqAcctNumOrQuit    cid an -> panic $ "not implemented: " <> toS (Prelude.show (CreqAcctNumOrQuit cid an))

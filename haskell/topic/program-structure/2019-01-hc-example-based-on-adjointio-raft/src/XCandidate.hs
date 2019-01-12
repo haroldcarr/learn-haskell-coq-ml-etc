@@ -8,6 +8,7 @@
 
 module XCandidate where
 
+import           XAction
 import           XClient
 import           XEvent
 import           XMonad
@@ -23,6 +24,25 @@ handleUsernamePassword
 handleUsernamePassword (NodeCandidateState s) _cid _up = do
   logCritical "Candidate.handleUsernamePassword: should not happend"
   pure (candidateResultState NoChange s)
+
+handlePin
+  :: forall v sm
+   . Show v
+  => ClientInputHandler 'Candidate sm Pin v
+handlePin (NodeCandidateState s) c p =
+  if checkPin p
+    then do
+      logInfo $ "Candidate.handlePin: valid: " <> toS (Prelude.show c) <> " " <> toS (Prelude.show p)
+      tellAction (SendToClient c (CresEnterAcctNumOrQuit "1,2,3"))
+      pure (loggedInResultState CandidateToLoggedIn LoggedInState)
+    else do
+      logInfo $ "Candidate.handlePin invalid: " <> toS (Prelude.show c) <> " " <> toS (Prelude.show p)
+      tellActions [ SendToClient c CresInvalidPin
+                  , SendToClient c CresEnterPin
+                  ]
+      pure (candidateResultState NoChange s)
+ where
+  checkPin _ = True
 
 handleTimeout :: TimeoutHandler 'Candidate sm v
 handleTimeout (NodeCandidateState _s) timeout = do

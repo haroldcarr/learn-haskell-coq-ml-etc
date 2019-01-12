@@ -8,6 +8,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TupleSections         #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -20,7 +21,6 @@ import           XTestUtils
 import qualified Data.Map        as Map
 import qualified Data.Set        as Set
 import           Numeric.Natural
-import qualified Prelude
 import           Protolude
 
 type Var = ByteString
@@ -74,6 +74,21 @@ runScenario scenario =
     , testNodeConfigs          = Map.fromList $ zip (Set.toList nodeIds) testConfigs
     }
 
+updateStateMachine :: NodeId -> Store -> Scenario v ()
+updateStateMachine nodeId sm =
+  modify $ \testState@TestState{..} ->
+    testState { testNodeSMs = Map.insert nodeId sm testNodeSMs }
+
+updatePersistentState :: NodeId -> PersistentState -> Scenario v ()
+updatePersistentState nodeId persistentState =
+  modify $ \testState@TestState{..} ->
+    testState { testNodePersistentStates = Map.insert nodeId persistentState testNodePersistentStates }
+
+updateXNodeState :: NodeId -> XNodeState v -> Scenario v ()
+updateXNodeState nodeId xState =
+  modify $ \testState@TestState{..} ->
+    testState { testNodeXStates = Map.insert nodeId xState testNodeXStates }
+
 getNodeInfo :: NodeId -> Scenario v (NodeConfig, Store, XNodeState v, PersistentState)
 getNodeInfo nId = do
   nodeConfigs          <- gets testNodeConfigs
@@ -100,7 +115,7 @@ testHandleLogs nIdsM f logs = liftIO $
     Just nIds ->
       mapM_ (f . logMsgToText) $ flip filter logs $ \log' ->
         lmdNodeId (lmData log') `elem` nIds
-{-
+
 testHandleActions :: NodeId -> [Action Store StoreCmd] -> Scenario StoreCmd ()
 testHandleActions sender' =
   mapM_ (testHandleAction sender')
@@ -108,58 +123,54 @@ testHandleActions sender' =
 testHandleAction  :: NodeId ->  Action Store StoreCmd  -> Scenario StoreCmd ()
 testHandleAction sender' action =
   case action of
-    SendRPC nId rpcAction -> do
-      msg <- mkRPCfromSendRPCAction sender' rpcAction
-      testHandleEvent nId (MessageEvent (RPCMessageEvent msg))
+    SendRPC _ _ ->
+      panic "should not happen"
+    SendToClient cid resp -> do
+      print (cid, resp)
+      case resp of
+        -- CresStateMachine s
+        CresEnterUsernamePassword ->
+          testHandleEvent sender'
+          (MessageEvent (ClientRequestEvent (CreqUsernamePassword cid (UsernamePassword "foo" "bar"))))
+        CresInvalidUserNamePassword ->
+          testHandleEvent sender'
+          (MessageEvent (ClientRequestEvent (CreqUsernamePassword cid (UsernamePassword "foo" "bar"))))
+        CresEnterPin ->
+          testHandleEvent sender'
+          (MessageEvent (ClientRequestEvent (CreqPin cid (Pin "1234"))))
+        CresInvalidPin ->
+          testHandleEvent sender'
+          (MessageEvent (ClientRequestEvent (CreqPin cid (Pin "1234"))))
+        CresEnterAcctNumOrQuit _t ->
+          testHandleEvent sender'
+          (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit cid (AccNumOrQuit "Q"))))
+        CresInvalidAcctNum ->
+          testHandleEvent sender'
+          (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit cid (AccNumOrQuit "Q"))))
+        CresQuit ->
+          pure ()
+        _ -> panic "fall through"
     ResetTimeoutTimer _ -> pure ()
- where
-  mkRPCfromSendRPCAction :: NodeId -> SendRPCAction StoreCmd -> Scenario v (RPCMessage StoreCmd)
-  mkRPCfromSendRPCAction nId sendRPCAction = do
-        _sc <- get
-        (nodeConfig', _, XNodeState _ns, _) <- getNodeInfo nId
-        RPCMessage (configNodeId nodeConfig') <$>
-          case sendRPCAction of
-            -- messages FROM the server TO client
-            SendEnterUsernamePassword   EnterUsernamePassword   -> panic "not implemented"
-            SendInvalidUsernamePassword InvalidUsernamePassword -> panic "not implemented"
-            SendEnterPin                EnterPin                -> panic "not implemented"
-            SendInvalidPin              InvalidPin              -> panic "not implemented"
-            SendEnterAcctNumOrQuit      EnterAcctNumOrQuit      -> panic "not implemented"
-            SendInvalidAccountNum       InvalidAcctNum          -> panic "not implemented"
-            -- messages FROM the client TO the server
-            x -> panic ("XTestX.testHandleAction : should not happend : " <> toS (Prelude.show x))
--}
+
 testHandleEvent   :: NodeId -> Event StoreCmd          -> Scenario StoreCmd ()
 testHandleEvent nodeId event = do
   (nodeConfig', sm, xState, persistentState) <- getNodeInfo nodeId
   let transitionEnv = TransitionEnv nodeConfig' sm xState
   let (newXState, newPersistentState, actions, logMsgs) =
         handleEvent xState transitionEnv persistentState event
-  print " ----------------------------"
-  print newXState
-  print newPersistentState
-  print actions
-  print logMsgs
-  -- testHandleActions nodeId newXState
-  -- testHandleLogs Nothing (const $ pure ()) logMsgs
+  updatePersistentState nodeId newPersistentState
+  updateXNodeState      nodeId newXState
+  testHandleActions     nodeId actions
+  testHandleLogs (Just [nodeId]) print logMsgs
+  -- applyLogEntries   nodeId sm
   return ()
 
 ----------------
 -- Unit tests --
 ----------------
 
-unit_follower_username_password_valid :: IO ()
-unit_follower_username_password_valid = runScenario $
+unit_logged_out_username_password_valid :: IO ()
+unit_logged_out_username_password_valid = runScenario $
   testHandleEvent node1
   (MessageEvent
    (ClientRequestEvent (CreqUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar"))))
-
-unit_follower_username_password_invalid :: IO ()
-unit_follower_username_password_invalid = runScenario $
-  testHandleEvent node1
-  (MessageEvent
-   (ClientRequestEvent (CreqUsernamePassword (ClientId "client") (UsernamePassword "" ""))))
-
-unit_follower_heartbeat_timeout :: IO ()
-unit_follower_heartbeat_timeout = runScenario $
-  testHandleEvent node1 (TimeoutEvent HeartbeatTimeout)
