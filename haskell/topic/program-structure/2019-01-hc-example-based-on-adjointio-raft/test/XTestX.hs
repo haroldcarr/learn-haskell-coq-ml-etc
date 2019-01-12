@@ -21,6 +21,7 @@ import           XTestUtils
 import qualified Data.Map        as Map
 import qualified Data.Set        as Set
 import           Numeric.Natural
+import qualified Prelude
 import           Protolude
 
 type Var = ByteString
@@ -124,7 +125,7 @@ testHandleAction  :: NodeId ->  Action Store StoreCmd  -> Scenario StoreCmd ()
 testHandleAction sender' action =
   case action of
     SendRPC _ _ ->
-      panic "should not happen"
+      panic $ "testHandleAction: SendRPC should not happen: " <> toS (Prelude.show action)
     SendToClient cid resp -> do
       print (cid, resp)
       case resp of
@@ -149,7 +150,7 @@ testHandleAction sender' action =
           (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit cid (AccNumOrQuit "Q"))))
         CresQuit ->
           pure ()
-        _ -> panic "fall through"
+        _ -> panic "testHandleAction: fall through"
     ResetTimeoutTimer _ -> pure ()
 
 testHandleEvent   :: NodeId -> Event StoreCmd          -> Scenario StoreCmd ()
@@ -170,7 +171,9 @@ testHandleEvent nodeId event = do
 ----------------
 
 unit_logged_out_username_password_valid :: IO ()
-unit_logged_out_username_password_valid = runScenario $
+unit_logged_out_username_password_valid = runScenario $ do
   testHandleEvent node1
-  (MessageEvent
-   (ClientRequestEvent (CreqUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar"))))
+    (TimeoutEvent HeartbeatTimeout)
+  testHandleEvent node1
+    (MessageEvent
+      (ClientRequestEvent (CreqUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar"))))
