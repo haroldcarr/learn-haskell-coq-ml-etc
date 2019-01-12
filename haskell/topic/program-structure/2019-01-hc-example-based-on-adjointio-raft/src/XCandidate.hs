@@ -44,6 +44,14 @@ handlePin (NodeCandidateState s) c p =
  where
   checkPin _ = True
 
+handleAcctNumOrQuit
+  :: forall v sm
+   . Show v
+  => ClientInputHandler 'Candidate sm AccNumOrQuit v
+handleAcctNumOrQuit (NodeCandidateState s) _c _p = do
+  logCritical "Candidate.handleAcctNumOrQuit: should not happend"
+  pure (candidateResultState NoChange s)
+
 handleTimeout :: TimeoutHandler 'Candidate sm v
 handleTimeout (NodeCandidateState _s) timeout = do
   logInfo ("Candidate.handleTimeout: " <> toS (Prelude.show timeout))

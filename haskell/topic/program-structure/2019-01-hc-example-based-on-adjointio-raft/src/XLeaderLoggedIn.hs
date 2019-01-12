@@ -8,6 +8,7 @@
 
 module XLeaderLoggedIn where
 
+import           XAction
 import           XClient
 import           XEvent
 import           XMonad
@@ -31,6 +32,27 @@ handlePin
 handlePin (NodeLoggedInState s) _c _p = do
   logCritical "LoggedIn.handlePin: should not happend"
   pure (loggedInResultState NoChange s)
+
+handleAcctNumOrQuit
+  :: forall v sm
+   . Show v
+  => ClientInputHandler 'LoggedIn sm AccNumOrQuit v
+handleAcctNumOrQuit (NodeLoggedInState s) c a = do
+  logInfo $ "LoggedIn.handleAcctNumOrQuit: " <> toS (Prelude.show c) <> " " <> toS (Prelude.show a)
+  case anoqAcctNumOrQuit a of
+    "Q" -> do
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  -- , SendToClient c (CresAcctBalance _)
+                  -- , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
+                  , SendToClient c CresQuit
+                  ]
+      pure (loggedOutResultState LoggedInToLoggedOut LoggedOutState)
+    _ -> do
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  -- , SendToClient c (CresAcctBalance _)
+                  , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
+                  ]
+      pure (loggedInResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'LoggedIn sm v
 handleTimeout (NodeLoggedInState _s) timeout = do

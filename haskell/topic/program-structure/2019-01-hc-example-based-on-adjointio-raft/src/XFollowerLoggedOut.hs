@@ -6,11 +6,7 @@
 {-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE RecordWildCards   #-}
 
-module XFollowerLoggedOut
-  ( handleUsernamePassword
-  , handlePin
-  , handleTimeout
-  ) where
+module XFollowerLoggedOut where
 
 import           XAction
 import           XClient
@@ -53,6 +49,14 @@ handlePin
   => ClientInputHandler 'LoggedOut sm Pin v
 handlePin (NodeLoggedOutState s) _c _p = do
   logCritical "LoggedOut.handlePin: should not happend"
+  pure (loggedOutResultState NoChange s)
+
+handleAcctNumOrQuit
+  :: forall v sm
+   . Show v
+  => ClientInputHandler 'LoggedOut sm AccNumOrQuit v
+handleAcctNumOrQuit (NodeLoggedOutState s) _c _p = do
+  logCritical "LoggedOut.handleAcctNumOrQuit: should not happend"
   pure (loggedOutResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'LoggedOut sm v
