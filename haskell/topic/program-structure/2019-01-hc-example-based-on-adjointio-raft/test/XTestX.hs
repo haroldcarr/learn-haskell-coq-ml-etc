@@ -20,6 +20,7 @@ import           XTestUtils
 import qualified Data.Map         as Map
 import qualified Data.Set         as Set
 import           Numeric.Natural
+import qualified Prelude
 import           Protolude
 import qualified Test.Tasty.HUnit as HUnit
 
@@ -124,8 +125,8 @@ testHandleEvent nodeId event = do
 -- Unit tests --
 ----------------
 
-unit_logged_out_username_password_valid :: IO ()
-unit_logged_out_username_password_valid = runScenario $ do
+unit_full_cycle :: IO ()
+unit_full_cycle = runScenario $ do
   r1 <- testHandleEvent node1 (TimeoutEvent HeartbeatTimeout)
   liftIO $ assertActions r1
              [ ResetTimeoutTimer HeartbeatTimeout
@@ -133,6 +134,7 @@ unit_logged_out_username_password_valid = runScenario $ do
              ]
   liftIO $ assertLogs r1
              ["LoggedOut.handleTimeout"]
+  -------------------------
   r2 <- testHandleEvent node1
           (MessageEvent
             (ClientRequestEvent (CreqUsernamePassword
@@ -142,6 +144,41 @@ unit_logged_out_username_password_valid = runScenario $ do
              [SendToClient (ClientId "client") CresEnterPin]
   liftIO $ assertLogs r2
              ["LoggedOut.handleUsernamePassword valid: ClientId \"client\" UsernamePassword {upUsername = \"foo\", upPassword = \"bar\"}"]
+  -------------------------
+  r3 <- testHandleEvent node1
+          (MessageEvent
+            (ClientRequestEvent (CreqPin
+                                  (ClientId "client")
+                                  (Pin "1234"))))
+  liftIO $ assertActions r3
+             [SendToClient (ClientId "client") (CresEnterAcctNumOrQuit "1,2,3")]
+  liftIO $ assertLogs r3
+             ["Candidate.handlePin: valid: ClientId \"client\" Pin {pPin = \"1234\"}"]
+  -------------------------
+  r4 <- testHandleEvent node1
+          (MessageEvent
+            (ClientRequestEvent (CreqAcctNumOrQuit
+                                  (ClientId "client")
+                                  (AccNumOrQuit "1"))))
+  liftIO $ assertActions r4
+             [ ResetTimeoutTimer HeartbeatTimeout
+               -- , SendToClient c (CresAcctBalance _)
+             , SendToClient (ClientId "client") (CresEnterAcctNumOrQuit "1,2,3")
+             ]
+  liftIO $ assertLogs r4
+             ["LoggedIn.handleAcctNumOrQuit: ClientId \"client\" AccNumOrQuit {anoqAcctNumOrQuit = \"1\"}"]
+  -------------------------
+  r5 <- testHandleEvent node1
+          (MessageEvent
+            (ClientRequestEvent (CreqAcctNumOrQuit
+                                  (ClientId "client")
+                                  (AccNumOrQuit "Q"))))
+  liftIO $ assertActions r5
+             [ ResetTimeoutTimer HeartbeatTimeout
+             , SendToClient (ClientId "client") CresQuit
+             ]
+  liftIO $ assertLogs r5
+             ["LoggedIn.handleAcctNumOrQuit: ClientId \"client\" AccNumOrQuit {anoqAcctNumOrQuit = \"Q\"}"]
 
 ------------------
 -- Assert utils --
@@ -149,13 +186,21 @@ unit_logged_out_username_password_valid = runScenario $ do
 
 assertActions :: ([Action Store StoreCmd], [LogMsg]) -> [Action Store StoreCmd] -> IO ()
 assertActions (got,_) expected = do
-  HUnit.assertEqual "not the same length" (length expected) (length got)
+  assertEqualLength expected got
   mapM_ (uncurry (HUnit.assertEqual "unexpected Action"))
         (zip expected got)
 
 assertLogs :: ([Action Store StoreCmd], [LogMsg]) -> [Text] -> IO ()
 assertLogs (_,got) expected = do
-  HUnit.assertEqual "not the same length" (length expected) (length got)
+  assertEqualLength expected got
   mapM_ (\(e,g) -> HUnit.assertEqual "unexpected log msg" e (lmdMsg (lmData g)))
         (zip expected got)
 
+assertEqualLength :: (Show a, Show b) => [a] -> [b] -> IO ()
+assertEqualLength expected got =
+  HUnit.assertEqual
+    ( "assertLogs : not the same length : " <>
+      "expected: " <> toS (Prelude.show expected) <>
+      "got: "      <> toS (Prelude.show got) )
+    (length expected)
+    (length got)
