@@ -23,7 +23,7 @@ handleUsernamePassword
    . Show v
   => ClientInputHandler 'LoggedIn sm UsernamePassword v
 handleUsernamePassword _ns@(NodeLoggedInState s) _cid _up = do
-  logCritical "LoggedIn.handleUsernamePassword: should not happend"
+  logCritical ["LoggedIn.handleUsernamePassword: should not happend"]
   pure (loggedInResultState NoChange s)
 
 handlePin
@@ -31,7 +31,7 @@ handlePin
    . Show v
   => ClientInputHandler 'LoggedIn sm Pin v
 handlePin (NodeLoggedInState s) _c _p = do
-  logCritical "LoggedIn.handlePin: should not happend"
+  logCritical ["LoggedIn.handlePin: should not happend"]
   pure (loggedInResultState NoChange s)
 
 handleAcctNumOrQuit
@@ -39,7 +39,7 @@ handleAcctNumOrQuit
    . Show v
   => ClientInputHandler 'LoggedIn sm AccNumOrQuit v
 handleAcctNumOrQuit (NodeLoggedInState s) c a = do
-  logInfo $ "LoggedIn.handleAcctNumOrQuit: " <> toS (Prelude.show c) <> " " <> toS (Prelude.show a)
+  logInfo ["LoggedIn.handleAcctNumOrQuit", toS (Prelude.show c) <> " " <> toS (Prelude.show a)]
   case anoqAcctNumOrQuit a of
     "Q" -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
@@ -57,7 +57,7 @@ handleAcctNumOrQuit (NodeLoggedInState s) c a = do
 
 handleTimeout :: TimeoutHandler 'LoggedIn sm v
 handleTimeout (NodeLoggedInState _s) timeout = do
-  logInfo ("LoggedIn.handleTimeout: " <> " " <> toS (Prelude.show timeout))
+  logInfo ["LoggedIn.handleTimeout", toS (Prelude.show timeout)]
   case timeout of
     HeartbeatTimeout -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout

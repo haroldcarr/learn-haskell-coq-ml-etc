@@ -31,13 +31,13 @@ handleUsernamePassword (NodeLoggedOutState s) cid up = do
   PersistentState{..} <- get
   if checkUsernamePassword up
     then do
-      logInfo $ "LoggedOut.handleUsernamePassword valid: " <> toS (Prelude.show cid) <> " " <> toS (Prelude.show up)
+      logInfo ["LoggedOut.handleUsernamePassword valid", showInfo]
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
                   , SendToClient cid CresEnterPin
                   ]
       pure (candidateResultState LoggedOutToCandidate CandidateState)
     else do
-      logInfo $ "LoggedOut.handleUsernamePassword invalid: " <> toS (Prelude.show cid) <> " " <> toS (Prelude.show up)
+      logInfo ["LoggedOut.handleUsernamePassword invalid", showInfo]
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
                   , SendToClient cid CresInvalidUserNamePassword
                   , SendToClient cid CresEnterUsernamePassword
@@ -45,13 +45,14 @@ handleUsernamePassword (NodeLoggedOutState s) cid up = do
       pure (loggedOutResultState NoChange s)
  where
   checkUsernamePassword _ = True
+  showInfo = toS (Prelude.show cid) <> " " <> toS (Prelude.show up)
 
 handlePin
   :: forall v sm
    . Show v
   => ClientInputHandler 'LoggedOut sm Pin v
 handlePin (NodeLoggedOutState s) _c _p = do
-  logCritical "LoggedOut.handlePin: should not happend"
+  logCritical ["LoggedOut.handlePin: should not happend"]
   pure (loggedOutResultState NoChange s)
 
 handleAcctNumOrQuit
@@ -59,12 +60,12 @@ handleAcctNumOrQuit
    . Show v
   => ClientInputHandler 'LoggedOut sm AccNumOrQuit v
 handleAcctNumOrQuit (NodeLoggedOutState s) _c _p = do
-  logCritical "LoggedOut.handleAcctNumOrQuit: should not happend"
+  logCritical ["LoggedOut.handleAcctNumOrQuit: should not happend"]
   pure (loggedOutResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'LoggedOut sm v
 handleTimeout (NodeLoggedOutState s) timeout = do
-  logInfo ("LoggedOut.handleTimeout" <> " " <> toS (Prelude.show timeout))
+  logInfo ["LoggedOut.handleTimeout", toS (Prelude.show timeout)]
   case timeout of
     HeartbeatTimeout -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout

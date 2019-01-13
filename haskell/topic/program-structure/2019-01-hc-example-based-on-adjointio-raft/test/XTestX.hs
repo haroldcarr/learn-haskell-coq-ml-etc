@@ -133,7 +133,7 @@ unit_full_cycle = runScenario $ do
              , SendToClient (ClientId "client") CresEnterUsernamePassword
              ]
   liftIO $ assertLogs r1
-             ["LoggedOut.handleTimeout HeartbeatTimeout"]
+             ["LoggedOut.handleTimeout; HeartbeatTimeout"]
   -------------------------
   r2 <- testHandleEvent node1
           (MessageEvent
@@ -145,7 +145,7 @@ unit_full_cycle = runScenario $ do
              , SendToClient (ClientId "client") CresEnterPin
              ]
   liftIO $ assertLogs r2
-             ["LoggedOut.handleUsernamePassword valid: ClientId \"client\" UsernamePassword {upUsername = \"foo\", upPassword = \"bar\"}"]
+             ["LoggedOut.handleUsernamePassword valid; ClientId \"client\" UsernamePassword {upUsername = \"foo\", upPassword = \"bar\"}"]
   -------------------------
   r3 <- testHandleEvent node1
           (MessageEvent
@@ -157,7 +157,7 @@ unit_full_cycle = runScenario $ do
              , SendToClient (ClientId "client") (CresEnterAcctNumOrQuit "1,2,3")
              ]
   liftIO $ assertLogs r3
-             ["Candidate.handlePin: valid: ClientId \"client\" Pin {pPin = \"1234\"}"]
+             ["Candidate.handlePin: valid; ClientId \"client\" Pin {pPin = \"1234\"}"]
   -------------------------
   r4 <- testHandleEvent node1
           (MessageEvent
@@ -170,7 +170,7 @@ unit_full_cycle = runScenario $ do
              , SendToClient (ClientId "client") (CresEnterAcctNumOrQuit "1,2,3")
              ]
   liftIO $ assertLogs r4
-             ["LoggedIn.handleAcctNumOrQuit: ClientId \"client\" AccNumOrQuit {anoqAcctNumOrQuit = \"1\"}"]
+             ["LoggedIn.handleAcctNumOrQuit; ClientId \"client\" AccNumOrQuit {anoqAcctNumOrQuit = \"1\"}"]
   -------------------------
   r5 <- testHandleEvent node1
           (MessageEvent
@@ -182,7 +182,7 @@ unit_full_cycle = runScenario $ do
              , SendToClient (ClientId "client") CresQuit
              ]
   liftIO $ assertLogs r5
-             ["LoggedIn.handleAcctNumOrQuit: ClientId \"client\" AccNumOrQuit {anoqAcctNumOrQuit = \"Q\"}"]
+             ["LoggedIn.handleAcctNumOrQuit; ClientId \"client\" AccNumOrQuit {anoqAcctNumOrQuit = \"Q\"}"]
 
 ------------------
 -- Assert utils --

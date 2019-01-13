@@ -12,6 +12,7 @@ dependencies:
 - containers
 - mtl
 - protolude
+- text
 - time
 - transformers
 

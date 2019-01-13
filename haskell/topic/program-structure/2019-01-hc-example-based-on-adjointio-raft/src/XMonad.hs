@@ -127,7 +127,7 @@ type RPCHandler ns sm r v
 -- Logging
 --------------------------------------------------------------------------------
 
-logCritical,logDebug,logInfo :: Text -> TransitionM sm v ()
+logCritical,logDebug,logInfo :: [Text] -> TransitionM sm v ()
 logDebug    = TransitionM . Logging.logDebug
 logInfo     = TransitionM . Logging.logInfo
 logCritical = TransitionM . Logging.logCritical

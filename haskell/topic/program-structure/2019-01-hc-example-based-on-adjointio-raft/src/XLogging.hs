@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -16,6 +17,7 @@ import           XTypes
 ------------------------------------------------------------------------------
 import           Control.Monad.State       (modify')
 import           Control.Monad.Trans.Class (MonadTrans)
+import qualified Data.Text                 as T
 import           Data.Time
 import           Protolude
 
@@ -128,11 +130,14 @@ logWithSeverity s txt = do
   let !logMsg = LogMsg Nothing s logMsgData
   modify' (++ [logMsg])
 
-logInfo :: XLogger v m => Text -> XLoggerT v m ()
-logInfo = logWithSeverity Info
+logInfo     :: XLogger v m => [Text] -> XLoggerT v m ()
+logInfo      = logWithSeverity Info     . fields
 
-logDebug :: XLogger v m => Text -> XLoggerT v m ()
-logDebug = logWithSeverity Debug
+logDebug    :: XLogger v m => [Text] -> XLoggerT v m ()
+logDebug     = logWithSeverity Debug    . fields
 
-logCritical :: XLogger v m => Text -> XLoggerT v m ()
-logCritical = logWithSeverity Critical
+logCritical :: XLogger v m => [Text] -> XLoggerT v m ()
+logCritical  = logWithSeverity Critical . fields
+
+fields :: [Text] -> Text
+fields as = T.intercalate "; " (map toS as)

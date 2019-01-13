@@ -23,7 +23,7 @@ handleUsernamePassword
    . Show v
   => ClientInputHandler 'Candidate sm UsernamePassword v
 handleUsernamePassword (NodeCandidateState s) _cid _up = do
-  logCritical "Candidate.handleUsernamePassword: should not happend"
+  logCritical ["Candidate.handleUsernamePassword: should not happend"]
   pure (candidateResultState NoChange s)
 
 handlePin
@@ -33,13 +33,13 @@ handlePin
 handlePin (NodeCandidateState s) c p =
   if checkPin p
     then do
-      logInfo $ "Candidate.handlePin: valid: " <> showInfo
+      logInfo ["Candidate.handlePin: valid", showInfo]
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
                   , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
                   ]
       pure (loggedInResultState CandidateToLoggedIn LoggedInState)
     else do
-      logInfo $ "Candidate.handlePin invalid: " <> showInfo
+      logInfo ["Candidate.handlePin invalid", showInfo]
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
                   , SendToClient c CresInvalidPin
                   , SendToClient c CresEnterPin
@@ -54,12 +54,12 @@ handleAcctNumOrQuit
    . Show v
   => ClientInputHandler 'Candidate sm AccNumOrQuit v
 handleAcctNumOrQuit (NodeCandidateState s) _c _p = do
-  logCritical "Candidate.handleAcctNumOrQuit: should not happend"
+  logCritical ["Candidate.handleAcctNumOrQuit: should not happend"]
   pure (candidateResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'Candidate sm v
 handleTimeout (NodeCandidateState _s) timeout = do
-  logInfo ("Candidate.handleTimeout: " <> " " <> toS (Prelude.show timeout))
+  logInfo ["Candidate.handleTimeout", toS (Prelude.show timeout)]
   case timeout of
     HeartbeatTimeout -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
