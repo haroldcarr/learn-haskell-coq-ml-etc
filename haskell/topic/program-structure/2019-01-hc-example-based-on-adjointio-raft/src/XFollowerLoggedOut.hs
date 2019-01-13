@@ -32,11 +32,14 @@ handleUsernamePassword (NodeLoggedOutState s) cid up = do
   if checkUsernamePassword up
     then do
       logInfo $ "LoggedOut.handleUsernamePassword valid: " <> toS (Prelude.show cid) <> " " <> toS (Prelude.show up)
-      tellAction (SendToClient cid CresEnterPin)
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  , SendToClient cid CresEnterPin
+                  ]
       pure (candidateResultState LoggedOutToCandidate CandidateState)
     else do
       logInfo $ "LoggedOut.handleUsernamePassword invalid: " <> toS (Prelude.show cid) <> " " <> toS (Prelude.show up)
-      tellActions [ SendToClient cid CresInvalidUserNamePassword
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  , SendToClient cid CresInvalidUserNamePassword
                   , SendToClient cid CresEnterUsernamePassword
                   ]
       pure (loggedOutResultState NoChange s)

@@ -13,6 +13,7 @@ import           XClient
 import           XEvent
 import           XMonad
 import           XNodeState
+import           XTypes
 ------------------------------------------------------------------------------
 import qualified Prelude
 import           Protolude
@@ -32,17 +33,21 @@ handlePin
 handlePin (NodeCandidateState s) c p =
   if checkPin p
     then do
-      logInfo $ "Candidate.handlePin: valid: " <> toS (Prelude.show c) <> " " <> toS (Prelude.show p)
-      tellAction (SendToClient c (CresEnterAcctNumOrQuit "1,2,3"))
+      logInfo $ "Candidate.handlePin: valid: " <> showInfo
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
+                  ]
       pure (loggedInResultState CandidateToLoggedIn LoggedInState)
     else do
-      logInfo $ "Candidate.handlePin invalid: " <> toS (Prelude.show c) <> " " <> toS (Prelude.show p)
-      tellActions [ SendToClient c CresInvalidPin
+      logInfo $ "Candidate.handlePin invalid: " <> showInfo
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  , SendToClient c CresInvalidPin
                   , SendToClient c CresEnterPin
                   ]
       pure (candidateResultState NoChange s)
  where
   checkPin _ = True
+  showInfo = toS (Prelude.show c) <> " " <> toS (Prelude.show p)
 
 handleAcctNumOrQuit
   :: forall v sm
@@ -56,5 +61,8 @@ handleTimeout :: TimeoutHandler 'Candidate sm v
 handleTimeout (NodeCandidateState _s) timeout = do
   logInfo ("Candidate.handleTimeout: " <> toS (Prelude.show timeout))
   case timeout of
-    HeartbeatTimeout ->
+    HeartbeatTimeout -> do
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  , SendToClient (ClientId "client") CresEnterUsernamePassword -- TODO client id
+                  ]
       pure (loggedOutResultState CandidateToLoggedOut LoggedOutState)

@@ -141,7 +141,9 @@ unit_full_cycle = runScenario $ do
                                   (ClientId "client")
                                   (UsernamePassword "foo" "bar"))))
   liftIO $ assertActions r2
-             [SendToClient (ClientId "client") CresEnterPin]
+             [ ResetTimeoutTimer HeartbeatTimeout
+             , SendToClient (ClientId "client") CresEnterPin
+             ]
   liftIO $ assertLogs r2
              ["LoggedOut.handleUsernamePassword valid: ClientId \"client\" UsernamePassword {upUsername = \"foo\", upPassword = \"bar\"}"]
   -------------------------
@@ -151,7 +153,9 @@ unit_full_cycle = runScenario $ do
                                   (ClientId "client")
                                   (Pin "1234"))))
   liftIO $ assertActions r3
-             [SendToClient (ClientId "client") (CresEnterAcctNumOrQuit "1,2,3")]
+             [ ResetTimeoutTimer HeartbeatTimeout
+             , SendToClient (ClientId "client") (CresEnterAcctNumOrQuit "1,2,3")
+             ]
   liftIO $ assertLogs r3
              ["Candidate.handlePin: valid: ClientId \"client\" Pin {pPin = \"1234\"}"]
   -------------------------
@@ -186,21 +190,21 @@ unit_full_cycle = runScenario $ do
 
 assertActions :: ([Action Store StoreCmd], [LogMsg]) -> [Action Store StoreCmd] -> IO ()
 assertActions (got,_) expected = do
-  assertEqualLength expected got
+  assertEqualLength "actions" expected got
   mapM_ (uncurry (HUnit.assertEqual "unexpected Action"))
         (zip expected got)
 
 assertLogs :: ([Action Store StoreCmd], [LogMsg]) -> [Text] -> IO ()
 assertLogs (_,got) expected = do
-  assertEqualLength expected got
+  assertEqualLength "logs" expected got
   mapM_ (\(e,g) -> HUnit.assertEqual "unexpected log msg" e (lmdMsg (lmData g)))
         (zip expected got)
 
-assertEqualLength :: (Show a, Show b) => [a] -> [b] -> IO ()
-assertEqualLength expected got =
+assertEqualLength :: (Show a, Show b) => Text -> [a] -> [b] -> IO ()
+assertEqualLength msg expected got =
   HUnit.assertEqual
-    ( "assertLogs : not the same length : " <>
-      "expected: " <> toS (Prelude.show expected) <>
-      "got: "      <> toS (Prelude.show got) )
+    ( toS msg <> " : not the same length : "
+      <> "expected: " <> toS (Prelude.show expected) <> " "
+      <> "got: "      <> toS (Prelude.show got) )
     (length expected)
     (length got)
