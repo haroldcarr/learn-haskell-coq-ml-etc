@@ -6,6 +6,7 @@
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE OverloadedLists       #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
@@ -158,7 +159,7 @@ testAcctNum c a = do
   r4 <- testHandleEvent node1 (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit c a)))
   liftIO $ assertActions r4
              [ ResetTimeoutTimer HeartbeatTimeout
-               -- , SendToClient c (CresAcctBalance _)
+             , SendToClient c (CresStateMachine [])
              , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
              ]
   liftIO $ assertLogs r4
@@ -183,7 +184,7 @@ unit_full_cycle = runScenario $ do
   testHeartbeat "LoggedOut"
   testUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar")
   testPin              (ClientId "client") (Pin "1234")
-  testAcctNum          (ClientId "client") (AccNumOrQuit "1")
+  testAcctNum          (ClientId "client") (AccNumOrQuit "R")
   testAcctQuit         (ClientId "client") (AccNumOrQuit "Q")
 
 ------------------

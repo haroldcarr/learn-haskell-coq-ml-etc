@@ -41,10 +41,15 @@ handleAcctNumOrQuit
 handleAcctNumOrQuit (NodeLoggedInState s) c a = do
   logInfo ["LoggedIn.handleAcctNumOrQuit", pshow c, pshow a]
   case anoqAcctNumOrQuit a of
+    "R" -> do
+      r <- CresStateMachine <$> asks stateMachine
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  , SendToClient c r
+                  , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
+                  ]
+      pure (loggedInResultState NoChange s)
     "Q" -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  -- , SendToClient c (CresAcctBalance _)
-                  -- , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
                   , SendToClient c CresQuit
                   ]
       pure (loggedOutResultState LoggedInToLoggedOut LoggedOutState)
