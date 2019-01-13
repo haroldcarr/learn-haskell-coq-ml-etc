@@ -15,8 +15,8 @@ import           XMonad
 import           XNodeState
 import           XPersistent
 import           XTypes
+import           XUtil
 ------------------------------------------------------------------------------
-import qualified Prelude
 import           Protolude
 
 --------------------------------------------------------------------------------
@@ -31,13 +31,13 @@ handleUsernamePassword (NodeLoggedOutState s) cid up = do
   PersistentState{..} <- get
   if checkUsernamePassword up
     then do
-      logInfo ["LoggedOut.handleUsernamePassword valid", showInfo]
+      logInfo $ "LoggedOut.handleUsernamePassword valid":showInfo
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
                   , SendToClient cid CresEnterPin
                   ]
       pure (candidateResultState LoggedOutToCandidate CandidateState)
     else do
-      logInfo ["LoggedOut.handleUsernamePassword invalid", showInfo]
+      logInfo $ "LoggedOut.handleUsernamePassword invalid":showInfo
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
                   , SendToClient cid CresInvalidUserNamePassword
                   , SendToClient cid CresEnterUsernamePassword
@@ -45,7 +45,7 @@ handleUsernamePassword (NodeLoggedOutState s) cid up = do
       pure (loggedOutResultState NoChange s)
  where
   checkUsernamePassword _ = True
-  showInfo = toS (Prelude.show cid) <> " " <> toS (Prelude.show up)
+  showInfo = [pshow cid, pshow up]
 
 handlePin
   :: forall v sm
@@ -65,7 +65,7 @@ handleAcctNumOrQuit (NodeLoggedOutState s) _c _p = do
 
 handleTimeout :: TimeoutHandler 'LoggedOut sm v
 handleTimeout (NodeLoggedOutState s) timeout = do
-  logInfo ["LoggedOut.handleTimeout", toS (Prelude.show timeout)]
+  logInfo ["LoggedOut.handleTimeout", pshow timeout]
   case timeout of
     HeartbeatTimeout -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout

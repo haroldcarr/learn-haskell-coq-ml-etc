@@ -14,10 +14,10 @@ module XLogging where
 
 import           XNodeState
 import           XTypes
+import           XUtil
 ------------------------------------------------------------------------------
 import           Control.Monad.State       (modify')
 import           Control.Monad.Trans.Class (MonadTrans)
-import qualified Data.Text                 as T
 import           Data.Time
 import           Protolude
 
@@ -138,6 +138,3 @@ logDebug     = logWithSeverity Debug    . fields
 
 logCritical :: XLogger v m => [Text] -> XLoggerT v m ()
 logCritical  = logWithSeverity Critical . fields
-
-fields :: [Text] -> Text
-fields as = T.intercalate "; " (map toS as)

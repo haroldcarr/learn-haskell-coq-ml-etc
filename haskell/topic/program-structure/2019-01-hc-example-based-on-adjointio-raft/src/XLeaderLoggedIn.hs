@@ -14,8 +14,8 @@ import           XEvent
 import           XMonad
 import           XNodeState
 import           XTypes
+import           XUtil
 ------------------------------------------------------------------------------
-import qualified Prelude
 import           Protolude
 
 handleUsernamePassword
@@ -39,7 +39,7 @@ handleAcctNumOrQuit
    . Show v
   => ClientInputHandler 'LoggedIn sm AccNumOrQuit v
 handleAcctNumOrQuit (NodeLoggedInState s) c a = do
-  logInfo ["LoggedIn.handleAcctNumOrQuit", toS (Prelude.show c) <> " " <> toS (Prelude.show a)]
+  logInfo ["LoggedIn.handleAcctNumOrQuit", pshow c, pshow a]
   case anoqAcctNumOrQuit a of
     "Q" -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
@@ -57,7 +57,7 @@ handleAcctNumOrQuit (NodeLoggedInState s) c a = do
 
 handleTimeout :: TimeoutHandler 'LoggedIn sm v
 handleTimeout (NodeLoggedInState _s) timeout = do
-  logInfo ["LoggedIn.handleTimeout", toS (Prelude.show timeout)]
+  logInfo ["LoggedIn.handleTimeout", pshow timeout]
   case timeout of
     HeartbeatTimeout -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout

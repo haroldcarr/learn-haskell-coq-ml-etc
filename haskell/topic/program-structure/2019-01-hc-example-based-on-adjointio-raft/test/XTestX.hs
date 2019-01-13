@@ -16,11 +16,11 @@ module XTestX where
 
 import           X0
 import           XTestUtils
+import           XUtil
 ------------------------------------------------------------------------------
 import qualified Data.Map         as Map
 import qualified Data.Set         as Set
 import           Numeric.Natural
-import qualified Prelude
 import           Protolude
 import qualified Test.Tasty.HUnit as HUnit
 
@@ -121,68 +121,70 @@ testHandleEvent nodeId event = do
   updateXNodeState      nodeId newXState
   return (actions, logMsgs)
 
-----------------
--- Unit tests --
-----------------
-
-unit_full_cycle :: IO ()
-unit_full_cycle = runScenario $ do
+testHeartbeat :: Text -> Scenario StoreCmd ()
+testHeartbeat mode = do
   r1 <- testHandleEvent node1 (TimeoutEvent HeartbeatTimeout)
   liftIO $ assertActions r1
              [ ResetTimeoutTimer HeartbeatTimeout
              , SendToClient (ClientId "client") CresEnterUsernamePassword
              ]
   liftIO $ assertLogs r1
-             ["LoggedOut.handleTimeout; HeartbeatTimeout"]
-  -------------------------
+             [mode <> ".handleTimeout; HeartbeatTimeout"]
+
+testUsernamePassword :: ClientId -> UsernamePassword -> Scenario StoreCmd ()
+testUsernamePassword c up = do
   r2 <- testHandleEvent node1
-          (MessageEvent
-            (ClientRequestEvent (CreqUsernamePassword
-                                  (ClientId "client")
-                                  (UsernamePassword "foo" "bar"))))
+          (MessageEvent (ClientRequestEvent (CreqUsernamePassword c up)))
   liftIO $ assertActions r2
              [ ResetTimeoutTimer HeartbeatTimeout
-             , SendToClient (ClientId "client") CresEnterPin
+             , SendToClient c CresEnterPin
              ]
   liftIO $ assertLogs r2
-             ["LoggedOut.handleUsernamePassword valid; ClientId \"client\" UsernamePassword {upUsername = \"foo\", upPassword = \"bar\"}"]
-  -------------------------
+             [fields ["LoggedOut.handleUsernamePassword valid", pshow c, pshow up]]
+
+testPin :: ClientId -> Pin -> Scenario StoreCmd ()
+testPin c p = do
   r3 <- testHandleEvent node1
-          (MessageEvent
-            (ClientRequestEvent (CreqPin
-                                  (ClientId "client")
-                                  (Pin "1234"))))
+          (MessageEvent (ClientRequestEvent (CreqPin c p)))
   liftIO $ assertActions r3
              [ ResetTimeoutTimer HeartbeatTimeout
-             , SendToClient (ClientId "client") (CresEnterAcctNumOrQuit "1,2,3")
+             , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
              ]
   liftIO $ assertLogs r3
-             ["Candidate.handlePin: valid; ClientId \"client\" Pin {pPin = \"1234\"}"]
-  -------------------------
-  r4 <- testHandleEvent node1
-          (MessageEvent
-            (ClientRequestEvent (CreqAcctNumOrQuit
-                                  (ClientId "client")
-                                  (AccNumOrQuit "1"))))
+             [fields ["Candidate.handlePin: valid", pshow c, pshow p]]
+
+testAcctNum :: ClientId -> AccNumOrQuit -> Scenario StoreCmd ()
+testAcctNum c a = do
+  r4 <- testHandleEvent node1 (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit c a)))
   liftIO $ assertActions r4
              [ ResetTimeoutTimer HeartbeatTimeout
                -- , SendToClient c (CresAcctBalance _)
-             , SendToClient (ClientId "client") (CresEnterAcctNumOrQuit "1,2,3")
+             , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
              ]
   liftIO $ assertLogs r4
-             ["LoggedIn.handleAcctNumOrQuit; ClientId \"client\" AccNumOrQuit {anoqAcctNumOrQuit = \"1\"}"]
-  -------------------------
-  r5 <- testHandleEvent node1
-          (MessageEvent
-            (ClientRequestEvent (CreqAcctNumOrQuit
-                                  (ClientId "client")
-                                  (AccNumOrQuit "Q"))))
+             [fields ["LoggedIn.handleAcctNumOrQuit", pshow c, pshow a]]
+
+testAcctQuit :: ClientId -> AccNumOrQuit -> Scenario StoreCmd ()
+testAcctQuit c a = do
+  r5 <- testHandleEvent node1 (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit c a)))
   liftIO $ assertActions r5
              [ ResetTimeoutTimer HeartbeatTimeout
-             , SendToClient (ClientId "client") CresQuit
+             , SendToClient c CresQuit
              ]
   liftIO $ assertLogs r5
-             ["LoggedIn.handleAcctNumOrQuit; ClientId \"client\" AccNumOrQuit {anoqAcctNumOrQuit = \"Q\"}"]
+             [fields ["LoggedIn.handleAcctNumOrQuit", pshow c, pshow a]]
+
+----------------
+-- Unit tests --
+----------------
+
+unit_full_cycle :: IO ()
+unit_full_cycle = runScenario $ do
+  testHeartbeat "LoggedOut"
+  testUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar")
+  testPin              (ClientId "client") (Pin "1234")
+  testAcctNum          (ClientId "client") (AccNumOrQuit "1")
+  testAcctQuit         (ClientId "client") (AccNumOrQuit "Q")
 
 ------------------
 -- Assert utils --
@@ -204,7 +206,7 @@ assertEqualLength :: (Show a, Show b) => Text -> [a] -> [b] -> IO ()
 assertEqualLength msg expected got =
   HUnit.assertEqual
     ( toS msg <> " : not the same length : "
-      <> "expected: " <> toS (Prelude.show expected) <> " "
-      <> "got: "      <> toS (Prelude.show got) )
+      <> "expected: " <> pshow expected <> " "
+      <> "got: "      <> pshow got )
     (length expected)
     (length got)
