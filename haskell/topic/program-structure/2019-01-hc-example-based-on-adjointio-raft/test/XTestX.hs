@@ -133,7 +133,7 @@ unit_full_cycle = runScenario $ do
              , SendToClient (ClientId "client") CresEnterUsernamePassword
              ]
   liftIO $ assertLogs r1
-             ["LoggedOut.handleTimeout"]
+             ["LoggedOut.handleTimeout HeartbeatTimeout"]
   -------------------------
   r2 <- testHandleEvent node1
           (MessageEvent

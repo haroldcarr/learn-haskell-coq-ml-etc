@@ -59,7 +59,7 @@ handleAcctNumOrQuit (NodeCandidateState s) _c _p = do
 
 handleTimeout :: TimeoutHandler 'Candidate sm v
 handleTimeout (NodeCandidateState _s) timeout = do
-  logInfo ("Candidate.handleTimeout: " <> toS (Prelude.show timeout))
+  logInfo ("Candidate.handleTimeout: " <> " " <> toS (Prelude.show timeout))
   case timeout of
     HeartbeatTimeout -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout

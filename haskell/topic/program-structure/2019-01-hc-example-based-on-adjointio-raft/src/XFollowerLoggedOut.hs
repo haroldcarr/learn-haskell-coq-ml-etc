@@ -63,12 +63,12 @@ handleAcctNumOrQuit (NodeLoggedOutState s) _c _p = do
   pure (loggedOutResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'LoggedOut sm v
-handleTimeout (NodeLoggedOutState s) timeout =
+handleTimeout (NodeLoggedOutState s) timeout = do
+  logInfo ("LoggedOut.handleTimeout" <> " " <> toS (Prelude.show timeout))
   case timeout of
     HeartbeatTimeout -> do
-      logInfo "LoggedOut.handleTimeout"
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  , SendToClient (ClientId "client") CresEnterUsernamePassword -- TODO - which client?
+                  , SendToClient (ClientId "client") CresEnterUsernamePassword -- TODO client id
                   ]
       pure (loggedOutResultState NoChange s)
 

@@ -13,6 +13,7 @@ import           XClient
 import           XEvent
 import           XMonad
 import           XNodeState
+import           XTypes
 ------------------------------------------------------------------------------
 import qualified Prelude
 import           Protolude
@@ -56,9 +57,12 @@ handleAcctNumOrQuit (NodeLoggedInState s) c a = do
 
 handleTimeout :: TimeoutHandler 'LoggedIn sm v
 handleTimeout (NodeLoggedInState _s) timeout = do
-  logInfo ("LoggedIn.handleTimeout: " <> toS (Prelude.show timeout))
+  logInfo ("LoggedIn.handleTimeout: " <> " " <> toS (Prelude.show timeout))
   case timeout of
-    HeartbeatTimeout ->
+    HeartbeatTimeout -> do
+      tellActions [ ResetTimeoutTimer HeartbeatTimeout
+                  , SendToClient (ClientId "client") CresEnterUsernamePassword -- TODO client id
+                  ]
       pure (loggedOutResultState LoggedInToLoggedOut LoggedOutState)
 
 
