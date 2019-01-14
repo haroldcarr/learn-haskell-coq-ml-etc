@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE OverloadedLists       #-}
@@ -120,7 +121,27 @@ testHandleEvent nodeId event = do
         handleEvent xState transitionEnv persistentState event
   updatePersistentState nodeId newPersistentState
   updateXNodeState      nodeId newXState
+  applyCmds nodeId sm
   return (actions, logMsgs)
+ where
+  getCmd :: NodeState ns v -> Maybe v
+  getCmd = \case
+    NodeLoggedInState s -> lsCmd s
+    _                   -> Nothing
+  _setCmd :: Maybe v -> NodeState ns v -> NodeState ns v
+  _setCmd mv = \case
+    NodeLoggedInState s -> NodeLoggedInState (s { lsCmd = mv })
+    s                   -> s
+  applyCmds :: NodeId -> Store -> Scenario StoreCmd ()
+  applyCmds nid sm  = do
+    (_, _, _xNodeState@(XNodeState nodeState), _) <- getNodeInfo nid
+    case getCmd nodeState of
+      Nothing -> return ()
+      Just v  -> do
+        -- TODO : update nodestate to Nothing
+        let Right newStateMachine = applyCmdRSMP () sm v
+        updateStateMachine nid newStateMachine
+        return ()
 
 testHeartbeat :: Text -> Scenario StoreCmd ()
 testHeartbeat mode = do
@@ -149,30 +170,21 @@ testPin c p = do
           (MessageEvent (ClientRequestEvent (CreqPin c p)))
   liftIO $ assertActions r3
              [ ResetTimeoutTimer HeartbeatTimeout
-             , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
+             , SendToClient c CresEnterAcctNumOrQuit
              ]
   liftIO $ assertLogs r3
              [fields ["Candidate.handlePin: valid", pshow c, pshow p]]
 
-testAcctNum :: ClientId -> AccNumOrQuit -> Scenario StoreCmd ()
-testAcctNum c a = do
+testAcctNumOrQuit :: ClientId -> AcctNumOrQuit StoreCmd -> Scenario StoreCmd ()
+testAcctNumOrQuit c a@(AcctNumOrQuit t _) = do
   r4 <- testHandleEvent node1 (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit c a)))
-  liftIO $ assertActions r4
-             [ ResetTimeoutTimer HeartbeatTimeout
-             , SendToClient c (CresStateMachine [])
-             , SendToClient c (CresEnterAcctNumOrQuit "1,2,3")
-             ]
+  liftIO $ assertActions r4 $
+             [ResetTimeoutTimer HeartbeatTimeout]
+             ++ [SendToClient c (CresStateMachine []) | t == "R"]
+             ++ [ SendToClient c $ if t == "Q"
+                                     then CresQuit
+                                     else CresEnterAcctNumOrQuit ]
   liftIO $ assertLogs r4
-             [fields ["LoggedIn.handleAcctNumOrQuit", pshow c, pshow a]]
-
-testAcctQuit :: ClientId -> AccNumOrQuit -> Scenario StoreCmd ()
-testAcctQuit c a = do
-  r5 <- testHandleEvent node1 (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit c a)))
-  liftIO $ assertActions r5
-             [ ResetTimeoutTimer HeartbeatTimeout
-             , SendToClient c CresQuit
-             ]
-  liftIO $ assertLogs r5
              [fields ["LoggedIn.handleAcctNumOrQuit", pshow c, pshow a]]
 
 ----------------
@@ -184,8 +196,10 @@ unit_full_cycle = runScenario $ do
   testHeartbeat "LoggedOut"
   testUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar")
   testPin              (ClientId "client") (Pin "1234")
-  testAcctNum          (ClientId "client") (AccNumOrQuit "R")
-  testAcctQuit         (ClientId "client") (AccNumOrQuit "Q")
+  testAcctNumOrQuit    (ClientId "client") (AcctNumOrQuit "R" (Set "x" 3))
+  testAcctNumOrQuit    (ClientId "client") (AcctNumOrQuit "W" (Set "x" 3))
+  testAcctNumOrQuit    (ClientId "client") (AcctNumOrQuit "R" (Set "x" 3))
+  testAcctNumOrQuit    (ClientId "client") (AcctNumOrQuit "Q" (Set "x" 3))
 
 ------------------
 -- Assert utils --

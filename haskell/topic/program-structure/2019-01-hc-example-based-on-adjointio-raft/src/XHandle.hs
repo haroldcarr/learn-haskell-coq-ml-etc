@@ -40,10 +40,10 @@ handleEvent (XNodeState initNodeState') transitionEnv persistentState event =
       (XNodeState resultState, persistentState', outputs, logMsgs)
 
 data XHandler ns sm v = XHandler
-  { handleUsernamePassword :: ClientInputHandler ns sm UsernamePassword v
-  , handlePin              :: ClientInputHandler ns sm Pin              v
-  , handleAcctNumOrQuit    :: ClientInputHandler ns sm AccNumOrQuit     v
-  , handleTimeout          :: TimeoutHandler     ns sm                  v
+  { handleUsernamePassword :: ClientInputHandler ns sm UsernamePassword  v
+  , handlePin              :: ClientInputHandler ns sm Pin               v
+  , handleAcctNumOrQuit    :: ClientInputHandler ns sm (AcctNumOrQuit v) v
+  , handleTimeout          :: TimeoutHandler     ns sm                   v
   }
 
 followerXHandler  :: Show v => XHandler 'LoggedOut sm v

@@ -92,8 +92,9 @@ data LoggedOutState v = LoggedOutState
 data CandidateState v = CandidateState
   deriving Show
 
-data LoggedInState v = LoggedInState
-  deriving Show
+newtype LoggedInState v = LoggedInState
+  { lsCmd :: Maybe v
+  } deriving Show
 
 -- | Is node in loggedOut state?
 isLoggedOut :: NodeState s v -> Bool

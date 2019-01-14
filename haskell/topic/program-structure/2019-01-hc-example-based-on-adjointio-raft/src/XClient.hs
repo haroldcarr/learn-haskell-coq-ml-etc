@@ -21,7 +21,7 @@ class Show (XRecvClientError m v) => XRecvClient m v where
 data ClientRequest v
   = CreqUsernamePassword ClientId UsernamePassword
   | CreqPin              ClientId Pin
-  | CreqAcctNumOrQuit    ClientId AccNumOrQuit
+  | CreqAcctNumOrQuit    ClientId (AcctNumOrQuit v)
   deriving Show
 
 data UsernamePassword = UsernamePassword
@@ -33,8 +33,9 @@ newtype Pin = Pin
   { pPin :: Text
   } deriving Show
 
-newtype AccNumOrQuit = AccNumOrQuit
+data AcctNumOrQuit v = AcctNumOrQuit
   { anoqAcctNumOrQuit :: Text
+  , anoqV             :: v
   } deriving Show
 
 data ClientResponse s v
@@ -43,9 +44,8 @@ data ClientResponse s v
   | CresInvalidUserNamePassword
   | CresEnterPin
   | CresInvalidPin
-  | CresEnterAcctNumOrQuit Text
+  | CresEnterAcctNumOrQuit
   | CresInvalidAcctNum
-  | CresAcctBalance v
   | CresQuit
   deriving (Eq, Show)
 
