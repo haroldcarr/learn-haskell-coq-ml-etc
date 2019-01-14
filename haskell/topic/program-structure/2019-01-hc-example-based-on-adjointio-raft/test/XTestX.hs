@@ -31,6 +31,7 @@ type Var = ByteString
 data StoreCmd
   = Set  Var Natural
   | Incr Var
+  | Noop
   deriving (Eq, Show)
 
 type Store = Map Var Natural
@@ -42,6 +43,7 @@ instance RSMP Store StoreCmd where
     Right $ case cmd of
       Set x n -> Map.insert x    n store
       Incr x  -> Map.adjust succ x store
+      Noop    -> store
 
 testVar :: Var
 testVar = "test"
@@ -57,7 +59,6 @@ testIncrCmd = Incr testVar
 
 data TestState v = TestState
   { testNodeIds              :: NodeIds
-  , testNodeLogs             :: Map NodeId (Entries StoreCmd)
   , testNodeSMs              :: Map NodeId Store
   , testNodeXStates          :: Map NodeId (XNodeState v)
   , testNodePersistentStates :: Map NodeId PersistentState
@@ -70,7 +71,6 @@ runScenario :: Scenario v () -> IO ()
 runScenario scenario =
   evalStateT scenario $ TestState
     { testNodeIds              = nodeIds
-    , testNodeLogs             = Map.fromList $ (, mempty)              <$> Set.toList nodeIds
     , testNodeSMs              = Map.fromList $ (, mempty)              <$> Set.toList nodeIds
     , testNodeXStates          = Map.fromList $ (, initXNodeState)      <$> Set.toList nodeIds
     , testNodePersistentStates = Map.fromList $ (, initPersistentState) <$> Set.toList nodeIds
@@ -170,22 +170,22 @@ testPin c p = do
           (MessageEvent (ClientRequestEvent (CreqPin c p)))
   liftIO $ assertActions r3
              [ ResetTimeoutTimer HeartbeatTimeout
-             , SendToClient c CresEnterAcctNumOrQuit
+             , SendToClient c CresEnterCommandOrQuit
              ]
   liftIO $ assertLogs r3
              [fields ["Candidate.handlePin: valid", pshow c, pshow p]]
 
-testAcctNumOrQuit :: ClientId -> AcctNumOrQuit StoreCmd -> Scenario StoreCmd ()
-testAcctNumOrQuit c a@(AcctNumOrQuit t _) = do
-  r4 <- testHandleEvent node1 (MessageEvent (ClientRequestEvent (CreqAcctNumOrQuit c a)))
+testCommandOrQuit :: ClientId -> CommandOrQuit StoreCmd -> Store -> Scenario StoreCmd ()
+testCommandOrQuit c a@(CommandOrQuit t _) store = do
+  r4 <- testHandleEvent node1 (MessageEvent (ClientRequestEvent (CreqCommandOrQuit c a)))
   liftIO $ assertActions r4 $
              [ResetTimeoutTimer HeartbeatTimeout]
-             ++ [SendToClient c (CresStateMachine []) | t == "R"]
+             ++ [SendToClient c (CresStateMachine store) | t == "R"]
              ++ [ SendToClient c $ if t == "Q"
                                      then CresQuit
-                                     else CresEnterAcctNumOrQuit ]
+                                     else CresEnterCommandOrQuit ]
   liftIO $ assertLogs r4
-             [fields ["LoggedIn.handleAcctNumOrQuit", pshow c, pshow a]]
+             [fields ["LoggedIn.handleCommandOrQuit", pshow c, pshow a]]
 
 ----------------
 -- Unit tests --
@@ -196,10 +196,10 @@ unit_full_cycle = runScenario $ do
   testHeartbeat "LoggedOut"
   testUsernamePassword (ClientId "client") (UsernamePassword "foo" "bar")
   testPin              (ClientId "client") (Pin "1234")
-  testAcctNumOrQuit    (ClientId "client") (AcctNumOrQuit "R" (Set "x" 3))
-  testAcctNumOrQuit    (ClientId "client") (AcctNumOrQuit "W" (Set "x" 3))
-  testAcctNumOrQuit    (ClientId "client") (AcctNumOrQuit "R" (Set "x" 3))
-  testAcctNumOrQuit    (ClientId "client") (AcctNumOrQuit "Q" (Set "x" 3))
+  testCommandOrQuit    (ClientId "client") (CommandOrQuit "R" Noop)         []
+  testCommandOrQuit    (ClientId "client") (CommandOrQuit "W" (Set "x" 3))  []
+  testCommandOrQuit    (ClientId "client") (CommandOrQuit "R" Noop)         [("x",3)]
+  testCommandOrQuit    (ClientId "client") (CommandOrQuit "Q" Noop)         []
 
 ------------------
 -- Assert utils --

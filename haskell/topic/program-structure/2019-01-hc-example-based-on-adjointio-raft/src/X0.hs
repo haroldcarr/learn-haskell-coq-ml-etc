@@ -7,7 +7,6 @@ import XClient            as X
 import XConfig            as X
 import XEvent             as X
 import XHandle            as X
-import XLogUserAccounts   as X
 import XLogging           as X hiding (logCritical, logDebug, logInfo)
 import XMonad             as X
 import XNodeState         as X

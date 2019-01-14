@@ -35,7 +35,7 @@ handlePin (NodeCandidateState s) c p =
     then do
       logInfo $ "Candidate.handlePin: valid":showInfo
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  , SendToClient c CresEnterAcctNumOrQuit
+                  , SendToClient c CresEnterCommandOrQuit
                   ]
       pure (loggedInResultState CandidateToLoggedIn (LoggedInState Nothing))
     else do
@@ -49,12 +49,12 @@ handlePin (NodeCandidateState s) c p =
   checkPin _ = True
   showInfo = [pshow c, pshow p]
 
-handleAcctNumOrQuit
+handleCommandOrQuit
   :: forall v sm
    . Show v
-  => ClientInputHandler 'Candidate sm (AcctNumOrQuit v) v
-handleAcctNumOrQuit (NodeCandidateState s) _c _p = do
-  logCritical ["Candidate.handleAcctNumOrQuit: should not happend"]
+  => ClientInputHandler 'Candidate sm (CommandOrQuit v) v
+handleCommandOrQuit (NodeCandidateState s) _c _p = do
+  logCritical ["Candidate.handleCommandOrQuit: should not happend"]
   pure (candidateResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'Candidate sm v

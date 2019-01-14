@@ -42,7 +42,7 @@ handleEvent (XNodeState initNodeState') transitionEnv persistentState event =
 data XHandler ns sm v = XHandler
   { handleUsernamePassword :: ClientInputHandler ns sm UsernamePassword  v
   , handlePin              :: ClientInputHandler ns sm Pin               v
-  , handleAcctNumOrQuit    :: ClientInputHandler ns sm (AcctNumOrQuit v) v
+  , handleCommandOrQuit    :: ClientInputHandler ns sm (CommandOrQuit v) v
   , handleTimeout          :: TimeoutHandler     ns sm                   v
   }
 
@@ -50,7 +50,7 @@ followerXHandler  :: Show v => XHandler 'LoggedOut sm v
 followerXHandler   = XHandler
   { handleUsernamePassword = Follower.handleUsernamePassword
   , handlePin              = Follower.handlePin
-  , handleAcctNumOrQuit    = Follower.handleAcctNumOrQuit
+  , handleCommandOrQuit    = Follower.handleCommandOrQuit
   , handleTimeout          = Follower.handleTimeout
   }
 
@@ -58,7 +58,7 @@ candidateXHandler :: Show v => XHandler 'Candidate sm v
 candidateXHandler  = XHandler
   { handleUsernamePassword = Candidate.handleUsernamePassword
   , handlePin              = Candidate.handlePin
-  , handleAcctNumOrQuit    = Candidate.handleAcctNumOrQuit
+  , handleCommandOrQuit    = Candidate.handleCommandOrQuit
   , handleTimeout          = Candidate.handleTimeout
   }
 
@@ -66,7 +66,7 @@ leaderXHandler    :: Show v => XHandler 'LoggedIn sm v
 leaderXHandler     = XHandler
   { handleUsernamePassword = Leader.handleUsernamePassword
   , handlePin              = Leader.handlePin
-  , handleAcctNumOrQuit    = Leader.handleAcctNumOrQuit
+  , handleCommandOrQuit    = Leader.handleCommandOrQuit
   , handleTimeout          = Leader.handleTimeout
   }
 
@@ -104,4 +104,4 @@ handleEvent' initNodeState' transitionEnv persistentState event =
   handleClientRequestMessage msg = case msg of
     CreqUsernamePassword cid up -> handleUsernamePassword initNodeState' cid up
     CreqPin              cid  p -> handlePin              initNodeState' cid  p
-    CreqAcctNumOrQuit    cid an -> handleAcctNumOrQuit    initNodeState' cid an
+    CreqCommandOrQuit    cid an -> handleCommandOrQuit    initNodeState' cid an

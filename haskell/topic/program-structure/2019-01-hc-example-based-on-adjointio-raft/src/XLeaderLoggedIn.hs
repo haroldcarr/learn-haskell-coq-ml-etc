@@ -34,24 +34,24 @@ handlePin (NodeLoggedInState s) _c _p = do
   logCritical ["LoggedIn.handlePin: should not happend"]
   pure (loggedInResultState NoChange s)
 
-handleAcctNumOrQuit
+handleCommandOrQuit
   :: forall v sm
    . Show v
-  => ClientInputHandler 'LoggedIn sm (AcctNumOrQuit v) v
-handleAcctNumOrQuit (NodeLoggedInState s) c a@(AcctNumOrQuit t v) = do
-  logInfo ["LoggedIn.handleAcctNumOrQuit", pshow c, pshow a]
+  => ClientInputHandler 'LoggedIn sm (CommandOrQuit v) v
+handleCommandOrQuit (NodeLoggedInState s) c a@(CommandOrQuit t v) = do
+  logInfo ["LoggedIn.handleCommandOrQuit", pshow c, pshow a]
   case t of
     "R" -> do
       r <- CresStateMachine <$> asks stateMachine
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
                   , SendToClient c r
-                  , SendToClient c CresEnterAcctNumOrQuit
+                  , SendToClient c CresEnterCommandOrQuit
                   ]
       pure (loggedInResultState NoChange s)
     "W" -> do
       let s' = s { lsCmd = Just v }
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  , SendToClient c CresEnterAcctNumOrQuit
+                  , SendToClient c CresEnterCommandOrQuit
                   ]
       pure (loggedInResultState NoChange s')
     "Q" -> do
@@ -61,7 +61,8 @@ handleAcctNumOrQuit (NodeLoggedInState s) c a@(AcctNumOrQuit t v) = do
       pure (loggedOutResultState LoggedInToLoggedOut LoggedOutState)
     _ -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  , SendToClient c CresEnterAcctNumOrQuit
+                  , SendToClient c CresInvalidCommand
+                  , SendToClient c CresEnterCommandOrQuit
                   ]
       pure (loggedInResultState NoChange s)
 

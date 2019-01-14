@@ -55,12 +55,12 @@ handlePin (NodeLoggedOutState s) _c _p = do
   logCritical ["LoggedOut.handlePin: should not happend"]
   pure (loggedOutResultState NoChange s)
 
-handleAcctNumOrQuit
+handleCommandOrQuit
   :: forall v sm
    . Show v
-  => ClientInputHandler 'LoggedOut sm (AcctNumOrQuit v) v
-handleAcctNumOrQuit (NodeLoggedOutState s) _c _p = do
-  logCritical ["LoggedOut.handleAcctNumOrQuit: should not happend"]
+  => ClientInputHandler 'LoggedOut sm (CommandOrQuit v) v
+handleCommandOrQuit (NodeLoggedOutState s) _c _p = do
+  logCritical ["LoggedOut.handleCommandOrQuit: should not happend"]
   pure (loggedOutResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'LoggedOut sm v
