@@ -39,6 +39,16 @@ class (Monad m, RSMP sm v) => RSM sm v m | m sm -> v where
   validateCmd :: v -> m (Either (RSMPError sm v) ())
   askRSMPCtx  ::      m         (RSMPCtx   sm v)
 
+-- TODO : use this
+applyCmdRSM :: RSM sm v m => sm -> v -> m (Either (RSMPError sm v) sm)
+applyCmdRSM sm v  = do
+  res <- validateCmd v
+  case res of
+    Left err -> pure (Left err)
+    Right () -> do
+      ctx <- askRSMPCtx
+      pure (applyCmdRSMP ctx sm v)
+
 --------------------------------------------------------------------------------
 -- X Monad
 --------------------------------------------------------------------------------

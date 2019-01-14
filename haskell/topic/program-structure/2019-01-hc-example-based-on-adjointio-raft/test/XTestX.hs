@@ -41,21 +41,9 @@ instance RSMP Store StoreCmd where
   type RSMPCtx   Store StoreCmd = ()
   applyCmdRSMP _ store cmd =
     Right $ case cmd of
-      Set x n -> Map.insert x    n store
-      Incr x  -> Map.adjust succ x store
-      Noop    -> store
-
-testVar :: Var
-testVar = "test"
-
-testInitVal :: Natural
-testInitVal = 1
-
-testSetCmd :: StoreCmd
-testSetCmd = Set testVar testInitVal
-
-testIncrCmd :: StoreCmd
-testIncrCmd = Incr testVar
+      Set  x n -> Map.insert x    n store
+      Incr x   -> Map.adjust succ x store
+      Noop     -> store
 
 data TestState v = TestState
   { testNodeIds              :: NodeIds
@@ -134,13 +122,13 @@ testHandleEvent nodeId event = do
     s                   -> s
   applyCmds :: NodeId -> Store -> Scenario StoreCmd ()
   applyCmds nid sm  = do
-    (_, _, _xNodeState@(XNodeState nodeState), _) <- getNodeInfo nid
+    (_, _, XNodeState nodeState, _) <- getNodeInfo nid
     case getCmd nodeState of
       Nothing -> return ()
       Just v  -> do
-        -- TODO : update nodestate to Nothing
-        let Right newStateMachine = applyCmdRSMP () sm v
-        updateStateMachine nid newStateMachine
+        let Right newSm = applyCmdRSMP () sm v
+        updateStateMachine nid newSm
+        -- TODO update : updateXNodeState (XNodeState (setCmd Nothing nodeState))
         return ()
 
 testHeartbeat :: Text -> Scenario StoreCmd ()
