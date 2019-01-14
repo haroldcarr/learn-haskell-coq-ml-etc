@@ -109,27 +109,31 @@ testHandleEvent nodeId event = do
         handleEvent xState transitionEnv persistentState event
   updatePersistentState nodeId newPersistentState
   updateXNodeState      nodeId newXState
-  applyCmds nodeId sm
+  xns <- applyCmds nodeId sm
+  updateXNodeState      nodeId xns
   return (actions, logMsgs)
  where
+  applyCmds :: NodeId -> Store -> Scenario StoreCmd (XNodeState StoreCmd)
+  applyCmds nid sm  = do
+    (_, _, xns@(XNodeState nodeState), _) <- getNodeInfo nid
+    case getCmd nodeState of
+      Nothing -> return xns
+      Just v  ->
+        case applyCmdRSMP () sm v of
+          Left _ -> return xns
+          Right newSm -> do
+            updateStateMachine nid newSm
+            return (XNodeState (setCmd Nothing nodeState))
+
   getCmd :: NodeState ns v -> Maybe v
   getCmd = \case
     NodeLoggedInState s -> lsCmd s
     _                   -> Nothing
-  _setCmd :: Maybe v -> NodeState ns v -> NodeState ns v
-  _setCmd mv = \case
+
+  setCmd :: Maybe v -> NodeState ns v -> NodeState ns v
+  setCmd mv = \case
     NodeLoggedInState s -> NodeLoggedInState (s { lsCmd = mv })
     s                   -> s
-  applyCmds :: NodeId -> Store -> Scenario StoreCmd ()
-  applyCmds nid sm  = do
-    (_, _, XNodeState nodeState, _) <- getNodeInfo nid
-    case getCmd nodeState of
-      Nothing -> return ()
-      Just v  -> do
-        let Right newSm = applyCmdRSMP () sm v
-        updateStateMachine nid newSm
-        -- TODO update : updateXNodeState (XNodeState (setCmd Nothing nodeState))
-        return ()
 
 testHeartbeat :: Text -> Scenario StoreCmd ()
 testHeartbeat mode = do
