@@ -11,5 +11,4 @@ import XLogging           as X hiding (logCritical, logDebug, logInfo)
 import XMonad             as X
 import XNodeState         as X
 import XPersistent        as X
-import XRPC               as X
 import XTypes             as X

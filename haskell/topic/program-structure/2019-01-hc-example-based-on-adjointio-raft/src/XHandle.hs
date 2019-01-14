@@ -21,7 +21,6 @@ import           XLogging           (LogMsg)
 import           XMonad
 import           XNodeState
 import           XPersistent
-import           XRPC
 ------------------------------------------------------------------------------
 import           Protolude
 
@@ -90,15 +89,11 @@ handleEvent' initNodeState' transitionEnv persistentState event =
     case event of
       MessageEvent mev ->
         case mev of
-          RPCMessageEvent    e -> handleRPCMessage           e
           ClientRequestEvent e -> handleClientRequestMessage e
       TimeoutEvent tout ->
         handleTimeout initNodeState' tout
  where
   XHandler{..} = mkXHandler initNodeState'
-
-  handleRPCMessage :: RPCMessage v -> TransitionM sm v (ResultState ns v)
-  handleRPCMessage (RPCMessage _sender _rpc) = panic "there are no RPC messages defined"
 
   handleClientRequestMessage :: ClientRequest v -> TransitionM sm v (ResultState ns v)
   handleClientRequestMessage msg = case msg of

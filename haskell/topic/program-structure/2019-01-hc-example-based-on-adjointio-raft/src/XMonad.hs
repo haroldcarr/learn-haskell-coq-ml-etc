@@ -17,7 +17,6 @@ import           XLogging          (LogMsg, XLogger, XLoggerT (..), runXLoggerT)
 import qualified XLogging          as Logging
 import           XNodeState
 import           XPersistent
-import           XRPC
 import           XTypes
 ------------------------------------------------------------------------------
 import           Control.Arrow     ((&&&))
@@ -102,13 +101,6 @@ type TimeoutHandler ns sm v
   =  Show v
   => NodeState ns v
   -> Timeout
-  -> TransitionM sm v (ResultState ns v)
-
-type RPCHandler ns sm r v
-  =  (RPCType r v, Show v) -- TODO : RPCType : what does it serve?
-  => NodeState ns v
-  -> NodeId
-  -> r
   -> TransitionM sm v (ResultState ns v)
 
 --------------------------------------------------------------------------------
