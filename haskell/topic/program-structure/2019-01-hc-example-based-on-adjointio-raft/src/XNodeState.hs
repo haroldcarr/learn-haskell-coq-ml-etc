@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE GADTs              #-}
 {-# LANGUAGE KindSignatures     #-}
-{-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE NoImplicitPrelude  #-}
 {-# LANGUAGE RankNTypes         #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -96,20 +95,3 @@ newtype LoggedInState v = LoggedInState
   { lsCmd :: Maybe v
   } deriving Show
 
--- | Is node in loggedOut state?
-isLoggedOut :: NodeState s v -> Bool
-isLoggedOut = \case
-  NodeLoggedOutState _ -> True
-  _                    -> False
-
--- | Is node in candidate state?
-isCandidate :: NodeState s v -> Bool
-isCandidate = \case
-  NodeCandidateState _ -> True
-  _                    -> False
-
--- | Is node in loggedIn state?
-isLoggedIn :: NodeState s v -> Bool
-isLoggedIn = \case
-  NodeLoggedInState _ -> True
-  _                   -> False

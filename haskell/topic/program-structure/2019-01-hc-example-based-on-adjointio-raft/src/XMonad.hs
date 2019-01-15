@@ -53,9 +53,6 @@ applyCmdRSM sm v  = do
 -- X Monad
 --------------------------------------------------------------------------------
 
-tellAction  :: Action sm v -> TransitionM sm v ()
-tellAction a = tell [a]
-
 tellActions :: [Action sm v] -> TransitionM sm v ()
 tellActions  = tell
 
@@ -92,9 +89,6 @@ runTransitionM
   -> ((a, [LogMsg]), PersistentState, [Action sm v])
 runTransitionM transEnv persistentState transitionM =
   runRWS (runXLoggerT (unTransitionM transitionM)) transEnv persistentState
-
-askNodeId :: TransitionM sm v NodeId
-askNodeId = asks (configNodeId . nodeConfig)
 
 --------------------------------------------------------------------------------
 -- Handlers
