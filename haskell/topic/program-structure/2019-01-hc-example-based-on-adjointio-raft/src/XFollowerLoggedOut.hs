@@ -27,31 +27,31 @@ handleUsernamePassword
   :: forall v sm
    . Show v
   => ClientInputHandler 'LoggedOut sm UsernamePassword v
-handleUsernamePassword (NodeLoggedOutState s) cid up = do
+handleUsernamePassword (NodeLoggedOutState s) c up = do
   PersistentState{..} <- get
   if checkUsernamePassword up
     then do
       logInfo $ "LoggedOut.handleUsernamePassword valid":showInfo
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  , SendToClient cid CresEnterPin
+                  , SendToClient c CresEnterPin
                   ]
       pure (candidateResultState LoggedOutToCandidate CandidateState)
     else do
       logInfo $ "LoggedOut.handleUsernamePassword invalid":showInfo
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
-                  , SendToClient cid CresInvalidUserNamePassword
-                  , SendToClient cid CresEnterUsernamePassword
+                  , SendToClient c CresInvalidUserNamePassword
+                  , SendToClient c CresEnterUsernamePassword
                   ]
       pure (loggedOutResultState NoChange s)
  where
   checkUsernamePassword _ = True
-  showInfo = [pshow cid, pshow up]
+  showInfo = [pshow c, pshow up]
 
 handlePin
   :: forall v sm
    . Show v
   => ClientInputHandler 'LoggedOut sm Pin v
-handlePin (NodeLoggedOutState s) _c _p = do
+handlePin (NodeLoggedOutState s) _ _ = do
   logCritical ["LoggedOut.handlePin: should not happend"]
   pure (loggedOutResultState NoChange s)
 
@@ -59,7 +59,7 @@ handleCommandOrQuit
   :: forall v sm
    . Show v
   => ClientInputHandler 'LoggedOut sm (CommandOrQuit v) v
-handleCommandOrQuit (NodeLoggedOutState s) _c _p = do
+handleCommandOrQuit (NodeLoggedOutState s) _ _ = do
   logCritical ["LoggedOut.handleCommandOrQuit: should not happend"]
   pure (loggedOutResultState NoChange s)
 

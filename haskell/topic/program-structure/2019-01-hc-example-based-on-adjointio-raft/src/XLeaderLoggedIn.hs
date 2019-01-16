@@ -22,7 +22,7 @@ handleUsernamePassword
   :: forall v sm
    . Show v
   => ClientInputHandler 'LoggedIn sm UsernamePassword v
-handleUsernamePassword _ns@(NodeLoggedInState s) _cid _up = do
+handleUsernamePassword _ns@(NodeLoggedInState s) _ _ = do
   logCritical ["LoggedIn.handleUsernamePassword: should not happend"]
   pure (loggedInResultState NoChange s)
 
@@ -67,13 +67,13 @@ handleCommandOrQuit (NodeLoggedInState s) c a@(CommandOrQuit t v) = do
       pure (loggedInResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'LoggedIn sm v
-handleTimeout (NodeLoggedInState _s) timeout = do
+handleTimeout (NodeLoggedInState _) timeout = do
   logInfo ["LoggedIn.handleTimeout", pshow timeout]
   case timeout of
     HeartbeatTimeout -> do
       tellActions [ ResetTimeoutTimer HeartbeatTimeout
                   , SendToClient (ClientId "client") CresEnterUsernamePassword -- TODO client id
                   ]
-      pure (loggedOutResultState LoggedInToLoggedOut LoggedOutState)
+      pure (loggedOutResultState LoggedInToLoggedOut LoggedOutState) -- TODO ??
 
 

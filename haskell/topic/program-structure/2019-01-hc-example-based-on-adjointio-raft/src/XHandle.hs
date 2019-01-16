@@ -8,7 +8,9 @@
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 
-module XHandle where
+module XHandle
+  ( handleEvent
+  ) where
 
 import           XAction
 import           XClient
@@ -32,10 +34,10 @@ handleEvent
   -> PersistentState
   -> Event v
   -> (XNodeState v, PersistentState, [Action sm v], [LogMsg])
-handleEvent (XNodeState initNodeState') transitionEnv persistentState event =
-  case handleEvent' initNodeState' transitionEnv persistentState event of
-    ((ResultState _ resultState, logMsgs), persistentState', outputs) ->
-      (XNodeState resultState, persistentState', outputs, logMsgs)
+handleEvent (XNodeState inNodeState) transitionEnv inPersistentState event =
+  case handleEvent' inNodeState transitionEnv inPersistentState event of
+    ((ResultState _ outNodeState, logMsgs), outPersistentState, outputs) ->
+      (XNodeState outNodeState, outPersistentState, outputs, logMsgs)
 
 handleEvent'
   :: forall ns sm v
@@ -45,26 +47,18 @@ handleEvent'
   -> PersistentState
   -> Event v
   -> ((ResultState ns v, [LogMsg]), PersistentState, [Action sm v])
-handleEvent' initNodeState' transitionEnv persistentState event =
+handleEvent' inNodeState transitionEnv persistentState event =
   runTransitionM transitionEnv persistentState $
     case event of
-      MessageEvent mev ->
-        case mev of
-          ClientRequestEvent e -> handleClientRequestMessage e
-      TimeoutEvent tout ->
-        handleTimeout initNodeState' tout
+      MessageEvent me -> case me of
+        ClientRequestEvent e -> case e of
+          CreqUsernamePassword cid up -> handleUsernamePassword inNodeState cid up
+          CreqPin              cid  p -> handlePin              inNodeState cid  p
+          CreqCommandOrQuit    cid an -> handleCommandOrQuit    inNodeState cid an
+      TimeoutEvent te ->
+        handleTimeout inNodeState te
  where
-  XHandler{..} = mkXHandler initNodeState'
-
-  handleClientRequestMessage :: ClientRequest v -> TransitionM sm v (ResultState ns v)
-  handleClientRequestMessage msg = case msg of
-    CreqUsernamePassword cid up -> handleUsernamePassword initNodeState' cid up
-    CreqPin              cid  p -> handlePin              initNodeState' cid  p
-    CreqCommandOrQuit    cid an -> handleCommandOrQuit    initNodeState' cid an
-
-mkXHandler :: forall ns sm v. Show v => NodeState ns v -> XHandler ns sm v
-mkXHandler nodeState =
-  case nodeState of
+  XHandler{..} = case inNodeState of
     NodeLoggedOutState _ -> followerXHandler
     NodeCandidateState _ -> candidateXHandler
     NodeLoggedInState  _ -> leaderXHandler

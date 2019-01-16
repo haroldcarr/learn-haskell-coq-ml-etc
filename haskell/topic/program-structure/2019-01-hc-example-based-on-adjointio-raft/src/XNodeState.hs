@@ -72,7 +72,11 @@ loggedInResultState
 loggedInResultState transition state' =
   ResultState transition (NodeLoggedInState state')
 
--- | Existential type `s` hides internal node state.
+-- | This type is given to and returned from `handleEvent`.
+-- It is the from/to to `handleEvent`.
+-- The existential type `s` hides internal node state
+-- so that it only useful inside `handleEvent`.
+-- Outside of `handleEvent` there is no way to see or change the state.
 data XNodeState v where
   XNodeState :: { unXNodeState :: NodeState s v } -> XNodeState v
 
@@ -86,9 +90,7 @@ nodeMode (XNodeState rns) =
     NodeLoggedInState  _ -> LoggedIn
 
 initXNodeState :: XNodeState v
-initXNodeState =
-  XNodeState $
-    NodeLoggedOutState LoggedOutState
+initXNodeState = XNodeState $ NodeLoggedOutState LoggedOutState
 
 -- | The volatile state of a node may vary depending on its mode.
 -- DataKinds/ GADTs used to enforce that

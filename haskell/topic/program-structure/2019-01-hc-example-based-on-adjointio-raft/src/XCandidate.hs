@@ -22,7 +22,7 @@ handleUsernamePassword
   :: forall v sm
    . Show v
   => ClientInputHandler 'Candidate sm UsernamePassword v
-handleUsernamePassword (NodeCandidateState s) _cid _up = do
+handleUsernamePassword (NodeCandidateState s) _ _ = do
   logCritical ["Candidate.handleUsernamePassword: should not happend"]
   pure (candidateResultState NoChange s)
 
@@ -53,12 +53,12 @@ handleCommandOrQuit
   :: forall v sm
    . Show v
   => ClientInputHandler 'Candidate sm (CommandOrQuit v) v
-handleCommandOrQuit (NodeCandidateState s) _c _p = do
+handleCommandOrQuit (NodeCandidateState s) _ _ = do
   logCritical ["Candidate.handleCommandOrQuit: should not happend"]
   pure (candidateResultState NoChange s)
 
 handleTimeout :: TimeoutHandler 'Candidate sm v
-handleTimeout (NodeCandidateState _s) timeout = do
+handleTimeout (NodeCandidateState _) timeout = do
   logInfo ["Candidate.handleTimeout", pshow timeout]
   case timeout of
     HeartbeatTimeout -> do

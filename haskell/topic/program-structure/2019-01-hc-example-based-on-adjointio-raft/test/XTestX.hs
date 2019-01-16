@@ -103,26 +103,26 @@ testHandleEvent
   -> Event StoreCmd
   -> Scenario StoreCmd ([Action Store StoreCmd], [LogMsg])
 testHandleEvent nodeId event = do
-  (nodeConfig', sm, xState, persistentState) <- getNodeInfo nodeId
-  let transitionEnv = TransitionEnv nodeConfig' sm xState
-  let (newXState, newPersistentState, actions, logMsgs) =
-        handleEvent xState transitionEnv persistentState event
-  updatePersistentState nodeId newPersistentState
-  updateXNodeState      nodeId newXState
+  (nodeConfig', sm, inXNodeState, inPersistentState) <- getNodeInfo nodeId
+  let transitionEnv = TransitionEnv nodeConfig' sm inXNodeState
+  let (outXNodeState, outPersistentState, actions, logMsgs) =
+        handleEvent inXNodeState transitionEnv inPersistentState event
+  updatePersistentState nodeId outPersistentState
+  updateXNodeState      nodeId outXNodeState
   xns <- applyCmds nodeId sm
   updateXNodeState      nodeId xns
   return (actions, logMsgs)
  where
   applyCmds :: NodeId -> Store -> Scenario StoreCmd (XNodeState StoreCmd)
-  applyCmds nid sm  = do
+  applyCmds nid inSm  = do
     (_, _, xns@(XNodeState nodeState), _) <- getNodeInfo nid
     case getCmd nodeState of
       Nothing -> return xns
       Just v  ->
-        case applyCmdRSMP () sm v of
-          Left _ -> return xns
-          Right newSm -> do
-            updateStateMachine nid newSm
+        case applyCmdRSMP () inSm v of
+          Left      _ -> return xns
+          Right outSm -> do
+            updateStateMachine nid outSm
             return (XNodeState (setCmd Nothing nodeState))
 
   getCmd :: NodeState ns v -> Maybe v
