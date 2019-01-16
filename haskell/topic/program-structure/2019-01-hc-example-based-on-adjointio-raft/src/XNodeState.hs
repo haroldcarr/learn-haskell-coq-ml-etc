@@ -15,7 +15,7 @@ data Mode
   | LoggedIn
   deriving (Show)
 
--- | Valid state transitions.
+-- | Ensures that only valid transitions happen between node states.
 data Transition (init :: Mode) (res :: Mode) where
   LoggedOutToCandidate :: Transition 'LoggedOut 'Candidate
   CandidateToLoggedIn  :: Transition 'Candidate 'LoggedIn
@@ -25,7 +25,20 @@ data Transition (init :: Mode) (res :: Mode) where
 
 deriving instance Show (Transition init res)
 
--- | Existential type `res` hide result type of transition.
+-- | Used to combine a `Transition` with an event handler's resulting state.
+-- It makes the `ResultState` type to be dependent on the transition that occurred,
+-- therefore only valid transitions can be specified by the ResultState
+-- (N.B.: make sure hand-written `Transition` is correct.
+--
+-- Event handlers have signatures:
+--   handler :: NodeState init -> ... relevant handler data ... -> ResultState init
+-- `NodeState`   : typed by the `Mode` entering a handler.
+-- `ResultState` : typed by the `Mode` existing a handler.
+-- So `ResultState` statically enforces that only valid transitions happen.
+--
+-- TODO: Use this approach to limit the actions a node can emit dependent on its current mode.
+--
+-- Existential type `res` hides the result type of transition (accessed via pattern matching).
 data ResultState init v where
   ResultState
     :: Show v
@@ -77,7 +90,9 @@ initXNodeState =
   XNodeState $
     NodeLoggedOutState LoggedOutState
 
--- | The volatile state of a Node.
+-- | The volatile state of a node may vary depending on its mode.
+-- DataKinds/ GADTs used to enforce that
+-- volatile state carried by a node matches its mode.
 data NodeState (a :: Mode) v where
   NodeLoggedOutState :: LoggedOutState v -> NodeState 'LoggedOut v
   NodeCandidateState :: CandidateState v -> NodeState 'Candidate v

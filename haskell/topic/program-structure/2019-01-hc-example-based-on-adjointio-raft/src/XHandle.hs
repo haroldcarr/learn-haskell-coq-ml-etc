@@ -4,7 +4,6 @@
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
-{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
@@ -24,7 +23,7 @@ import           XPersistent
 ------------------------------------------------------------------------------
 import           Protolude
 
--- | Entry point for handling events.
+-- | Entry point for handling incoming events.
 handleEvent
   :: forall sm v
    . (RSMP sm v, Show v)
@@ -37,6 +36,38 @@ handleEvent (XNodeState initNodeState') transitionEnv persistentState event =
   case handleEvent' initNodeState' transitionEnv persistentState event of
     ((ResultState _ resultState, logMsgs), persistentState', outputs) ->
       (XNodeState resultState, persistentState', outputs, logMsgs)
+
+handleEvent'
+  :: forall ns sm v
+   . (RSMP sm v, Show v)
+  => NodeState ns v
+  -> TransitionEnv sm v
+  -> PersistentState
+  -> Event v
+  -> ((ResultState ns v, [LogMsg]), PersistentState, [Action sm v])
+handleEvent' initNodeState' transitionEnv persistentState event =
+  runTransitionM transitionEnv persistentState $
+    case event of
+      MessageEvent mev ->
+        case mev of
+          ClientRequestEvent e -> handleClientRequestMessage e
+      TimeoutEvent tout ->
+        handleTimeout initNodeState' tout
+ where
+  XHandler{..} = mkXHandler initNodeState'
+
+  handleClientRequestMessage :: ClientRequest v -> TransitionM sm v (ResultState ns v)
+  handleClientRequestMessage msg = case msg of
+    CreqUsernamePassword cid up -> handleUsernamePassword initNodeState' cid up
+    CreqPin              cid  p -> handlePin              initNodeState' cid  p
+    CreqCommandOrQuit    cid an -> handleCommandOrQuit    initNodeState' cid an
+
+mkXHandler :: forall ns sm v. Show v => NodeState ns v -> XHandler ns sm v
+mkXHandler nodeState =
+  case nodeState of
+    NodeLoggedOutState _ -> followerXHandler
+    NodeCandidateState _ -> candidateXHandler
+    NodeLoggedInState  _ -> leaderXHandler
 
 data XHandler ns sm v = XHandler
   { handleUsernamePassword :: ClientInputHandler ns sm UsernamePassword  v
@@ -69,34 +100,3 @@ leaderXHandler     = XHandler
   , handleTimeout          = Leader.handleTimeout
   }
 
-mkXHandler :: forall ns sm v. Show v => NodeState ns v -> XHandler ns sm v
-mkXHandler nodeState =
-  case nodeState of
-    NodeLoggedOutState _ -> followerXHandler
-    NodeCandidateState _ -> candidateXHandler
-    NodeLoggedInState  _ -> leaderXHandler
-
-handleEvent'
-  :: forall ns sm v
-   . (RSMP sm v, Show v)
-  => NodeState ns v
-  -> TransitionEnv sm v
-  -> PersistentState
-  -> Event v
-  -> ((ResultState ns v, [LogMsg]), PersistentState, [Action sm v])
-handleEvent' initNodeState' transitionEnv persistentState event =
-  runTransitionM transitionEnv persistentState $
-    case event of
-      MessageEvent mev ->
-        case mev of
-          ClientRequestEvent e -> handleClientRequestMessage e
-      TimeoutEvent tout ->
-        handleTimeout initNodeState' tout
- where
-  XHandler{..} = mkXHandler initNodeState'
-
-  handleClientRequestMessage :: ClientRequest v -> TransitionM sm v (ResultState ns v)
-  handleClientRequestMessage msg = case msg of
-    CreqUsernamePassword cid up -> handleUsernamePassword initNodeState' cid up
-    CreqPin              cid  p -> handlePin              initNodeState' cid  p
-    CreqCommandOrQuit    cid an -> handleCommandOrQuit    initNodeState' cid an

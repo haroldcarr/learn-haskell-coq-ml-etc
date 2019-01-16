@@ -21,13 +21,11 @@ import           Control.Monad.Trans.Class (MonadTrans)
 import           Data.Time
 import           Protolude
 
--- | Representation of the logs' destination.
 data LogDest
   = LogFile FilePath
   | LogStdout
   | NoLogs
 
--- | Representation of the severity of the logs.
 data Severity
   = Info
   | Debug
