@@ -1,0 +1,13 @@
+name:                vasiliy-kevroletin-tagless-final
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+- protolude
+
+ghc-options:
+- -Wall
+
+library:
+  source-dirs: src
+
