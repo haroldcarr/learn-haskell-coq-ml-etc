@@ -8,9 +8,9 @@
 
 module XCandidate where
 
-import           XAction
+import           XActionOutput
 import           XClient
-import           XEvent
+import           XEventInput
 import           XMonad
 import           XNodeState
 import           XTypes

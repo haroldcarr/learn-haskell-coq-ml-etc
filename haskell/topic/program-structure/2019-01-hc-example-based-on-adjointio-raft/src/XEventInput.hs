@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module XEvent where
+module XEventInput where
 
 import           XClient
 ------------------------------------------------------------------------------

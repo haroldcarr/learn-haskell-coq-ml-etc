@@ -1,0 +1,50 @@
+I looked around at my bookmarks and then did some new searches.
+
+Here is what I would recommend:
+
+-------------------------
+1 https://leanprover.github.io/logic_and_proof/introduction.html
+
+This book uses a new theorem prover called "Lean" from Microsoft Research.
+
+I like the fact that it gives good background and proceeds in a step-by-step manner and the entire thing can be run online (so nothing to install --- although you can run it on your own computer, which is what I would do --- I don't like online stuff, I like my emacs keybindings).
+
+The only disappointment is that it is yet another language/system --- but the system looks very clean and the presentation is excellent.
+
+-------------------------
+2 http://www.dcs.gla.ac.uk/~jtod/discrete-mathematics/
+
+This uses Haskell.
+You end up writing Haskell code explicitly.
+It is NOT a theorem prover.
+
+I have attached a PDF of the book.
+
+-------------------------
+3 https://homepages.cwi.nl/~jve/HR/
+
+This also uses Haskell with explicit code (no theorem prover).
+
+I have attached a PDF copy of the book.
+The solutions to exercise is available at: https://homepages.cwi.nl/~jve/HR/JustSOL.pdf
+
+-------------------------
+4. https://plfa.github.io/
+
+Just Part 1.
+
+I uses the language/theorem prover Agda.
+
+Agda is a theorem prover, but borrows a lot from Haskell.
+(aside: another language that borrows from Haskell and is the "next generation" of Haskell
+is Idris, but Idris is not ready for production use : https://www.idris-lang.org/)
+
+I would like to learn Agda. But I doubt you want to use this.
+
+-------------------------
+
+There is also : https://www3.cs.stonybrook.edu/~skiena/combinatorica/
+
+but it uses a proprietary language and system that costs $$.
+
+

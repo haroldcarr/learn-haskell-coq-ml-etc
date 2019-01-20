@@ -12,10 +12,10 @@ module XHandle
   ( handleEvent
   ) where
 
-import           XAction
+import           XActionOutput
 import           XClient
 import qualified XCandidate         as Candidate
-import           XEvent
+import           XEventInput
 import qualified XFollowerLoggedOut as Follower
 import qualified XLeaderLoggedIn    as Leader
 import           XLogging           (LogMsg)
@@ -28,7 +28,7 @@ import           Protolude
 -- | Entry point for handling incoming events.
 handleEvent
   :: forall sm v
-   . (RSMP sm v, Show v)
+   . (XSMP sm v, Show v)
   => XNodeState v
   -> TransitionEnv sm v
   -> PersistentState
@@ -41,7 +41,7 @@ handleEvent (XNodeState inNodeState) transitionEnv inPersistentState event =
 
 handleEvent'
   :: forall ns sm v
-   . (RSMP sm v, Show v)
+   . (XSMP sm v, Show v)
   => NodeState ns v
   -> TransitionEnv sm v
   -> PersistentState

@@ -1,9 +1,9 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module XAction where
+module XActionOutput where
 
 import           XClient
-import           XEvent
+import           XEventInput
 import           XTypes
 ------------------------------------------------------------------------------
 import           Protolude

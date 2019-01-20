@@ -10,9 +10,9 @@
 
 module XMonad where
 
-import           XAction
+import           XActionOutput
 import           XConfig
-import           XEvent
+import           XEventInput
 import           XLogging          (LogMsg, XLogger, XLoggerT (..), runXLoggerT)
 import qualified XLogging          as Logging
 import           XNodeState
@@ -28,26 +28,29 @@ import           Protolude         hiding (pass)
 --------------------------------------------------------------------------------
 
 -- | Interface to handle commands in the underlying state machine.
--- Functional dependency permits only a single state machine command to be defined
--- to update the state machine.
-class RSMP sm v | sm -> v where
-  data RSMPError sm v
-  type RSMPCtx   sm v = ctx | ctx -> sm v
-  applyCmdRSMP :: RSMPCtx sm v -> sm -> v -> Either (RSMPError sm v) sm
+-- Relates a state machine type (`sm`) to a command type (`v`).
+-- Provides pure function to applying command to a state machine.
+--
+-- Functional dependency ensures only a single state machine command
+-- to be defined to update the state machine.
+class XSMP sm v | sm -> v where
+  data XSMPError sm v
+  type XSMPCtx   sm v = ctx | ctx -> sm v
+  applyCmdXSMP :: XSMPCtx sm v -> sm -> v -> Either (XSMPError sm v) sm
 
-class (Monad m, RSMP sm v) => RSM sm v m | m sm -> v where
-  validateCmd :: v -> m (Either (RSMPError sm v) ())
-  askRSMPCtx  ::      m         (RSMPCtx   sm v)
+class (Monad m, XSMP sm v) => XSM sm v m | m sm -> v where
+  validateCmd :: v -> m (Either (XSMPError sm v) ())
+  askXSMPCtx  ::      m         (XSMPCtx   sm v)
 
 -- TODO : use this
-applyCmdRSM :: RSM sm v m => sm -> v -> m (Either (RSMPError sm v) sm)
-applyCmdRSM sm v  = do
+applyCmdXSM :: XSM sm v m => sm -> v -> m (Either (XSMPError sm v) sm)
+applyCmdXSM sm v  = do
   res <- validateCmd v
   case res of
     Left err -> pure (Left err)
     Right () -> do
-      ctx <- askRSMPCtx
-      pure (applyCmdRSMP ctx sm v)
+      ctx <- askXSMPCtx
+      pure (applyCmdXSMP ctx sm v)
 
 --------------------------------------------------------------------------------
 -- X Monad

@@ -7,7 +7,7 @@ module XPersistent where
 
 import           Protolude
 
--- | Interface to read and write the persistent state to disk.
+-- | Read/write persistent state to disk.
 class Monad m => Persist m where
   type PersistError m
   readPersistentState
@@ -15,7 +15,8 @@ class Monad m => Persist m where
     => m (Either (PersistError m) PersistentState)
   writePersistentState
     :: Exception (PersistError m)
-    => PersistentState -> m (Either (PersistError m) ())
+    => PersistentState
+    -> m (Either (PersistError m) ())
 
 newtype PersistentState = PersistentState
   { psX :: Int

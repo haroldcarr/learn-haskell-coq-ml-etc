@@ -36,10 +36,10 @@ data StoreCmd
 
 type Store = Map Var Natural
 
-instance RSMP Store StoreCmd where
-  data RSMPError Store StoreCmd = StoreError Text deriving (Show)
-  type RSMPCtx   Store StoreCmd = ()
-  applyCmdRSMP _ store cmd =
+instance XSMP Store StoreCmd where
+  data XSMPError Store StoreCmd = StoreError Text deriving (Show)
+  type XSMPCtx   Store StoreCmd = ()
+  applyCmdXSMP _ store cmd =
     Right $ case cmd of
       Set  x n -> Map.insert x    n store
       Incr x   -> Map.adjust succ x store
@@ -119,7 +119,7 @@ testHandleEvent nodeId event = do
     case getCmd nodeState of
       Nothing -> return xns
       Just v  ->
-        case applyCmdRSMP () inSm v of
+        case applyCmdXSMP () inSm v of
           Left      _ -> return xns
           Right outSm -> do
             updateStateMachine nid outSm
