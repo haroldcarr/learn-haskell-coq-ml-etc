@@ -1,0 +1,72 @@
+------------------------------------------------------------------------------
+Title
+
+------------------------------------------------------------------------------
+Talk Format
+
+------------------------------------------------------------------------------
+Audience Level
+
+------------------------------------------------------------------------------
+Elevator Pitch (300)
+
+------------------------------------------------------------------------------
+Description (in Markdown)
+
+------------------------------------------------------------------------------
+Notes (in Markdown - only seen by reviewers)
+
+------------------------------------------------------------------------------
+Tags (comma separated)
+
+==============================================================================
+Profile Details (seen if your talk is selected)
+
+------------------------------------------------------------------------------
+Name
+Harold Carr
+------------------------------------------------------------------------------
+URL
+http://haroldcarr.com/
+------------------------------------------------------------------------------
+Organization or Affiliation
+Oracle
+------------------------------------------------------------------------------
+Twitter Handle
+haroldcarr
+------------------------------------------------------------------------------
+Shirt Size
+Large
+------------------------------------------------------------------------------
+Bio
+*TODO*
+
+==============================================================================
+Additional Information
+
+Which country, city, and airport you will be flying into and out of
+Salt Lake City, Utah
+
+How many days of accommodation you would like, if any
+entire conference
+
+What level of travel assistance you would require, up to our maximums
+0
+
+What special dietary requirements you may have
+none
+
+Whether or not you will be bringing a significant other
+I will be alone.
+
+Any special needs you would like us to meet
+none
+
+Whether you plan to attend the speaker dinner
+yes
+
+Your level of experience as a speaker and your willingness to work with a speaker coach
+I have given many talks and taken public speaking courses.  I'll skip the speaker coach (but thanks for the offer).
+
+
+
