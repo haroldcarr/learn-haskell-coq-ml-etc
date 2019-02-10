@@ -4,7 +4,6 @@
 module ReaderFun where
 
 import           Data.Map    as Map
-import           Data.Maybe  (fromJust)
 import           Data.Text   as T
 import           Protolude
 
@@ -13,20 +12,18 @@ doit = runReader f (Map.fromList [("count",3)])
 
 f :: Reader (Map Text Int) (Maybe Int, [(Text,Int)])
 f = do
-  count <- asks (Map.lookup "count")
+  count' <- asks (Map.lookup "count")
   bindings <- ask
-  return (count, Map.toList bindings)
+  return (count', Map.toList bindings)
 
 len :: Reader Text Int
-len = do
-  content <- ask
-  return (T.length content);
+len =
+  T.length <$> ask
 
 localLen :: Reader Text Int
 localLen =
-  local ("AS"<>) $ do
-    content <- ask
-    return (T.length content);
+  local ("AS"<>) $
+    T.length <$> ask
 
 main :: IO ()
 main = do

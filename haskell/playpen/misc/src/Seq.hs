@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 module Seq where
 
 import           Control.Arrow        ((&&&))
@@ -5,8 +6,13 @@ import           Data.Foldable
 import           Data.Sequence as Seq
 import qualified Data.Map      as Map (Map, delete, update, fromList)
 
+x :: Seq Integer
 x = Seq.fromList [1,2,3]
+
+y :: (Seq Integer, Seq Integer)
 y = Seq.splitAt  1 x
+
+z :: Seq Integer
 z = Seq.take  1 x
 
 -- | Add entries at specified index.
@@ -18,15 +24,13 @@ type Signature = Int
 type CommandResult = Int
 type ReplayMap = Map.Map (NodeID, Signature) (Maybe CommandResult)
 
-data Command = Command
-  { _cmdClientId   :: !NodeID
-  }
-  deriving (Show, Eq)
+newtype Command = Command
+  { _cmdClientId :: NodeID
+  } deriving (Show, Eq)
 
-data LogEntry = LogEntry
-  { _leCommand :: !Command
-  }
-  deriving (Show, Eq)
+newtype LogEntry = LogEntry
+  { _leCommand :: Command
+  } deriving (Show, Eq)
 
 removeUnfinishedReplaysM :: Seq LogEntry
                          -> ReplayMap
@@ -56,6 +60,7 @@ removeUnfinishedReplays removedEntries replays =
                removedEntries
     in foldr' Map.delete replays replayKeys
 
+getCmdSigOrInvariantError :: Num p1 => p2 -> p3 -> p1
 getCmdSigOrInvariantError _ _ = 3
 
 replayMap :: ReplayMap
@@ -64,6 +69,7 @@ replayMap = Map.fromList [ ((1,3),Just 1)
                          , ((4,3),Just 4)
                          ]
 
+seqLE :: Seq LogEntry
 seqLE = Seq.fromList [ LogEntry (Command 1)
                      , LogEntry (Command 2)
                      , LogEntry (Command 3)

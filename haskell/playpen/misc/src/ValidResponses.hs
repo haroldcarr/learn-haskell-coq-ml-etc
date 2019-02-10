@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+
 module ValidResponses where
 
 useIt :: (Eq a, Show a) => [a] -> [a] -> IO ()
@@ -8,25 +10,31 @@ useIt xs ys =
 
 invalidResponses :: Eq a => [a] -> [a] -> [(a,a)]
 invalidResponses xs ys =
-  filter (\(x,y) -> x /= y) (zip xs ys)
+  filter (uncurry (/=)) (zip xs ys)
 
 complain :: (Eq a, Show a) => [(a,a)] -> IO ()
-complain = do
-  mapM_ debugFn .
-    map (\(x,y) ->
+complain =
+  mapM_ (debugFn .
+         (\(x,y) ->
             "CONFLICTING RESPONSES: " ++
             "leader: '" ++ show x ++ "' " ++
-            "follower: '" ++ show y)
+            "follower: '" ++ show y))
 
 ------
 
 -- example usage:
 
 debugFn :: Show a => a -> IO ()
-debugFn = putStrLn . show
+debugFn = print
 
+cmds1 :: [Integer]
 cmds1 = [1,2,3]
+
+cmds2 :: [Integer]
 cmds2 = [1,3,2]
 
+tryIt1 :: IO ()
 tryIt1 = useIt cmds1 cmds1
+
+tryIt2 :: IO ()
 tryIt2 = useIt cmds1 cmds2
