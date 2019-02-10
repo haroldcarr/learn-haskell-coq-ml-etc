@@ -11,9 +11,23 @@ library
                      , RebindableSyntax
                      , Seq
                      , ValidResponses
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base >=4.7 && <5
                      , containers
                      , protolude
                      , text
   default-language:    Haskell2010
   ghc-options:         -Wall
+
+test-suite test
+  other-modules:       XXSpec
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             hspec.hs
+  ghc-options:         -Wall
+  default-language:    Haskell2010
+  build-depends:       base >=4.7 && <5
+                     , containers
+                     , cryptonite
+                     , misc
+                     , hspec
+                     , hspec-expectations
