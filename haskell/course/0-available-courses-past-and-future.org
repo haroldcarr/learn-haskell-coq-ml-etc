@@ -14,11 +14,6 @@ Last Modified : 2017 Jul 09 (Sun) 07:04:32 by Harold Carr.
 - http://compsciclub.ru/en/schools/
 
 ------------------------------------------------------------------------------
-* source code
-
-- pipes, mtl, lens-family
-
-------------------------------------------------------------------------------
 * summer schools
 
 - list: [[http://user.it.uu.se/~bengt/Info/summer-schools.shtml]]
@@ -53,12 +48,14 @@ Last Modified : 2017 Jul 09 (Sun) 07:04:32 by Harold Carr.
   - OPLSS: Oregon: [[http://www.cs.uoregon.edu/research/summerschool]]
 - July
   - Salt Lake
-    - The Racket School of Languages and Semantics: 2017 Summer School : Salt Lake City
-      - http://summer-school.racket-lang.org/2017/
+    - The Racket School of Languages and Semantics: Summer School : Salt Lake City
+      - https://summer-school.racket-lang.org/2018/
+      - https://summer-school.racket-lang.org/2017/
+      - http://www.cs.utah.edu/~mflatt/plt-redex/ (2015)
   - Philadelphia
     - DeepSpec Summer School on Verified Systems, 2nd half of July
-      - https://deepspec.org/event/dsss17/
       - https://deepspec.org/event/dsss18/
+      - https://deepspec.org/event/dsss17/
       - https://sympa.inria.fr/sympa/arc/coq-club/2016-12/msg00127.html
       - http://lambda.jstolarek.com/2017/07/deepspec-summer-school-2017-a-summary/
       - July 13-15 : Coq intensive
@@ -71,6 +68,7 @@ Last Modified : 2017 Jul 09 (Sun) 07:04:32 by Harold Carr.
     - Dependently Typed Programming 2014, Vienna, Austria http://eb.host.cs.st-andrews.ac.uk/DTP2014/
       - Affiliated with July 14-18: CS Logic / Logic in CS: http://lics.rwth-aachen.de/csl-lics14/
 - August
+  - Munich https://www2.in.tum.de/mod19/
   - Cambridge : http://www.cl.cam.ac.uk/events/metaprog2016/ (International summer school on metaprogramming)
   - Edinburgh: http://www.macs.hw.ac.uk/~dsg/events/ISS-AiPL-2014/ (Advances in Programming Languages)
   - St. Andrews : http://eb.host.cs.st-andrews.ac.uk/PracticalTypes/ (Practical Types)
