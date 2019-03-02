@@ -21,28 +21,3 @@ library:
   source-dirs: src
   ghc-options:
   - -Wall
-
-executables:
-  harold-carr-program-structure-exe:
-    source-dirs:         app
-    main:                Main.hs
-    dependencies:
-    - harold-carr-program-structure
-    ghc-options:
-    - -Wall
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-
-tests:
-  harold-carr-program-structure-test:
-    source-dirs:         test
-    main:                Spec.hs
-    dependencies:
-    - harold-carr-program-structure
-    ghc-options:
-    - -Wall
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-

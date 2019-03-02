@@ -1,8 +1,10 @@
--- This file has been generated from package.yaml by hpack version 0.20.0.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4dc67cb27939d47c6d7212fa850fca46107b23cb06f40fc92573c4d11edffbbd
+-- hash: 73324f42a0be0271a1b28d1b2a1fa524f1016632fb5233027d2895f8da69874a
 
 name:           harold-carr-program-structure
 version:        0.1.0.0
@@ -14,7 +16,6 @@ maintainer:     example@example.com
 copyright:      2018 Author name here
 license:        BSD3
 build-type:     Simple
-cabal-version:  >= 1.10
 
 source-repository head
   type: git
