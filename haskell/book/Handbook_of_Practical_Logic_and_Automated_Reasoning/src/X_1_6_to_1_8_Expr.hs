@@ -13,11 +13,14 @@ import           Test.HUnit                   (Counts, Test (TestList),
 import qualified Test.HUnit.Util              as U (t, tt)
 import qualified Text.Earley                  as TE (Grammar, Prod, Report,
                                                      fullParses, parser, rule,
-                                                     satisfy, symbol, (<?>))
+                                                     satisfy, (<?>))
 import           Text.PrettyPrint.ANSI.Leijen as PP
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
+
+symbol :: Eq t => t -> TE.Prod r e t t
+symbol x = TE.satisfy (== x)
 
 -- 1.6
 
@@ -78,7 +81,7 @@ exprGrammar = mdo
     whitespace <- TE.rule $ A.many $ TE.satisfy isSpace
     let token :: TE.Prod r String Char a -> TE.Prod r String Char a
         token p = whitespace *> p
-        sym x   = token $ TE.symbol x TE.<?> [x]
+        sym x   = token $ symbol x TE.<?> [x]
         ident   = token $ (:) P.<$> TE.satisfy isAlpha <*> A.many (TE.satisfy isAlphaNum) TE.<?> "identifier"
         num     = token $ some (TE.satisfy isDigit) TE.<?> "number"
     expr0 <- TE.rule
