@@ -1,7 +1,9 @@
 let makeUser = ./makeUser.dhall
 
-in let makeBuildUser = \(index : Natural) -> makeUser "build${Natural/show index}"
+-- HC: not used
+-- in let makeBuildUser = \(index : Natural) -> makeUser "build${Natural/show index}"
 
+{- HC: not used
 in let generate =
         https://prelude.dhall-lang.org/List/generate
             -- ... and optionally protect them with integrity checks
@@ -12,8 +14,10 @@ in let generate =
 
         -- 2nd fallback
       ? /usr/local/share/dhall/Prelude/List/generate
+-}
 
-in let User = ./User.dhall
+-- HC: not used (directly)
+-- in let User = ./User.dhall
 
 in    [ -- inline config for special cases
         { homeDirectory  = "/home/jenkins"
