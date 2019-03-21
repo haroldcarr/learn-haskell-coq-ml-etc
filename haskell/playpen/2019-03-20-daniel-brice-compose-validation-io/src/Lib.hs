@@ -2,9 +2,7 @@ module Lib where
 
 import Control.Monad (join, void)
 import Data.Functor (($>))
--- import Control.Monad.Except
--- import Data.Either.Validation
--- import Data.Functor.Compose
+import Data.Either.Validation
 
 {-
 Phil Freeman
@@ -34,51 +32,35 @@ and so on :)
 doIt :: IO ()
 doIt = do
   putStrLn "\n\nDOING"
-  void $ sudoMakeSandwich Person
+  void (sudoMakeSandwich Person)
   putStrLn "DONE"
 
 ----
 -- Validation (Imagine this comes from a library.)
 ----
 
-data Validation e a = Errors [e] | Ok a
-    deriving (Eq, Ord, Read, Show)
+runValidation :: (e -> b) -> (a -> b) -> Validation e a -> b
+runValidation f _ (Failure e) = f e
+runValidation _ g (Success x) = g x
 
-runValidation :: ([e] -> b) -> (a -> b) -> Validation e a -> b
-runValidation f _ (Errors errs) = f errs
-runValidation _ g (Ok x) = g x
+assert :: Semigroup e => e -> Bool -> Validation e ()
+assert e p = if p then pure () else Failure e
 
-assert :: e -> Bool -> Validation e ()
-assert e p = if p then pure () else Errors [e]
-
-instance Functor (Validation e) where
-    fmap _ (Errors errs) = Errors errs
-    fmap f (Ok a) = Ok (f a)
-
--- Whereas `Either` holds up to one error, `Validation` can hold many.
--- For example:
---     assert "This" False *> assert "That" False == Errors ["This", "That"]
-instance Applicative (Validation e) where
-    pure = Ok
-
-    Errors errs <*> Errors errs' = Errors (errs <> errs')
-    Errors errs <*> _            = Errors errs
-    _           <*> Errors errs  = Errors errs
-    Ok f        <*> Ok x         = Ok (f x)
+-- Whereas `Either` holds up to one error, `Validation` can hold many, because "Left" is a Monoid.
 
 ----
 -- Data Layer (Imagine this talks to your database, or an API.)
 ----
 
-data Person = Person
-newtype Pickles = Pickles { numPickles :: Int }
-newtype Mustard = Mustard { isSpicy :: Bool }
-data Turkey = Turkey { freshness :: Double, numTurkey :: Int }
-data Bread = Bread { moldy :: Bool, sliced :: Bool }
-data Sandwich = Sandwich
+data    Person   = Person deriving Show
+newtype Pickles  = Pickles  { numPickles :: Int } deriving Show
+newtype Mustard  = Mustard  { isSpicy    :: Bool } deriving Show
+data    Turkey   = Turkey   { freshness  :: Double, numTurkey :: Int  } deriving Show
+data    Bread    = Bread    { moldy      :: Bool  , sliced    :: Bool } deriving Show
+data    Sandwich = Sandwich
 
-lookupPickles :: Person -> IO Pickles
-lookupPickles _ = return $ Pickles 1
+lookupBread :: Person -> IO Bread
+lookupBread _ = return $ Bread False False
 
 lookupMustard :: Person -> IO Mustard
 lookupMustard _ = return $ Mustard True
@@ -86,20 +68,25 @@ lookupMustard _ = return $ Mustard True
 lookupTurkey :: Person -> IO Turkey
 lookupTurkey _ = return $ Turkey 0.9 3
 
-lookupBread :: Person -> IO Bread
-lookupBread _ = return $ Bread False True
+lookupPickles :: Person -> IO Pickles
+lookupPickles _ = return $ Pickles 2
 
+-- These get called if values returned from lookup* are valid.
+-- They charge the person and update the inventory.
 sliceBread :: Person -> Bread -> IO ()
-sliceBread  _ _ = return ()
-
-updateTurkey :: Person -> Turkey -> IO ()
-updateTurkey _ _ = return ()
+sliceBread  = say
 
 updateMustard :: Person -> Mustard -> IO ()
-updateMustard _ _ = return ()
+updateMustard  = say
+
+updateTurkey :: Person -> Turkey -> IO ()
+updateTurkey  = say
 
 updatePickles :: Person -> Pickles -> IO ()
-updatePickles _ _  = return ()
+updatePickles  = say
+
+say :: (Show a, Show b) => a -> b -> IO ()
+say a b = do putStr (show a); putStr " "; print b; return ()
 
 ----
 -- Application Layer (Here's the stuff your program does!)
@@ -110,64 +97,48 @@ updatePickles _ _  = return ()
 -- will print the errors listed by `makeSandwich`.
 sudoMakeSandwich :: Person -> IO Sandwich
 sudoMakeSandwich person = do
-    pickles <- lookupPickles person
-    mustard <- lookupMustard person
-    turkey  <- lookupTurkey person
-    bread   <- lookupBread person
-
-    join (runValidation logErrorsAndPanic pure $
-          makeSandwich person pickles mustard turkey bread)
+  bread   <- lookupBread person
+  mustard <- lookupMustard person
+  turkey  <- lookupTurkey person
+  pickles <- lookupPickles person
+  join (runValidation logErrorsAndPanic pure
+        (makeSandwich person pickles mustard turkey bread))
 
 -- `makeSandwich` describes making a sandwich (or lists the reasons we can't)
 makeSandwich :: Person -> Pickles -> Mustard -> Turkey -> Bread
-             -> Validation String (IO Sandwich)
+             -> Validation [String] (IO Sandwich)
 makeSandwich person pickles mustard turkey bread =
-    (assert
-        "Must have at least 2 pickles"
-        (numPickles pickles >= 2)
-    *> assert
-        "Mustard must be spicy"
-        (isSpicy mustard)
-    *> assert
-        "Turkey must be fresh"
-        (freshness turkey >= 0.7)
-    *> assert
-        "Must have at least 2 slices of turkey"
-        (numTurkey turkey >= 2)
-    *> assert
-        "Bread must not be moldy"
-        (not . moldy $ bread))
-    $> (do
-        -- We must have sliced bread to make a sandwich, but it's not
-        -- a validation because we can slice it ourselves if necessary.
-        if sliced bread
-            then pure ()
-            else sliceBread person bread
-
-        -- Spread the mustard.
-        updateMustard person mustard
-
-        -- Use up the pickles.
-        updatePickles
-            person
-            pickles
-                { numPickles = numPickles pickles - 2
-                }
-
-        -- Use up the turkey.
-        updateTurkey
-            person
-            turkey
-                { numTurkey = numTurkey turkey - 2
-                , freshness = freshness turkey - 0.05
-                }
-
-        pure Sandwich
-        )
+  (  assert
+      ["Bread must not be moldy"]
+      (not . moldy $ bread)
+  *> assert
+      ["Mustard must be spicy"]
+      (isSpicy mustard)
+  *> assert
+      ["Turkey must be fresh"]
+      (freshness turkey >= 0.7)
+  *> assert
+      ["Must have at least 2 slices of turkey"]
+      (numTurkey turkey >= 2)
+  *> assert
+      ["Must have at least 2 pickles"]
+      (numPickles pickles >= 2)
+  )
+  $>
+  (do
+    if not (sliced bread)
+      then sliceBread person bread -- if not already sliced, slice it
+      else pure ()
+    updateMustard person mustard -- TODO needs an amount
+    updateTurkey  person turkey { numTurkey = numTurkey turkey - 2
+                                , freshness = freshness turkey - 0.05  }
+    updatePickles person pickles { numPickles = numPickles pickles - 2 }
+    pure Sandwich
+  )
 
 -- Don't do this part in real life!
 logErrorsAndPanic :: [String] -> IO a
 logErrorsAndPanic errs = do
-    putStrLn ""
-    mapM_ putStrLn errs
-    error "I was made to understand there were sandwiches here."
+  putStrLn ""
+  mapM_ putStrLn errs
+  error "I was made to understand there were sandwiches here."
