@@ -1,0 +1,16 @@
+-- https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Iso.html#v:non
+insertTwoLevel
+  :: (Ord a, Ord b, Eq b, Eq c)
+  => Index (Map a (Map b c))
+  -> Index (Map b c)
+  -> c
+  -> Map a (Map b c)
+  -> Map a (Map b c)
+insertTwoLevel ia ib c m = m & at ia . non Map.empty . at ib ?~ c
+
+lookupTwoLevel
+  :: (Ord a, Ord b)
+  => a -> b -> Map a (Map b c)
+  -> Maybe c
+lookupTwoLevel one two m = Map.lookup one m >>= Map.lookup two
+
