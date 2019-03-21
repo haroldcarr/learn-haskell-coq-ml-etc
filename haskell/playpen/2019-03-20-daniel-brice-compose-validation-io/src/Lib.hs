@@ -20,7 +20,15 @@ it to be everything-or-nothing. Absent a transaction coordinator, you
 can at least do some initial verification and prepare as much work as
 possible, if you push the Either outside the IO.
 
+Daniel Brice:
 https://gist.github.com/friedbrice/18f15dad17b8fbe524c1c994823d8aeb
+
+Phil Freeman
+And if you used newtypes for refinements you could use Applicative to compose them:
+checkPickles :: Pickles -> Compose _ _ AdequatePickles
+checkTurkey :: Turkey -> Compose _ _ FreshTurkey
+... <$> checkPickles pickles <*> checkTurkey turkey
+and so on :)
 -}
 
 doIt :: IO ()
