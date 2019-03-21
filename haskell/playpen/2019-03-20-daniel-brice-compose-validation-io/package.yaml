@@ -1,0 +1,24 @@
+name:                daniel-brice-compose-validation-io
+version:             0.1.0.0
+
+description:         https://twitter.com/paf31/status/1108518386877628416 https://gist.github.com/friedbrice/18f15dad17b8fbe524c1c994823d8aeb
+
+ghc-options:
+- -Wall
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+
+tests:
+  test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - daniel-brice-compose-validation-io

@@ -1,0 +1,14 @@
+resolver: lts-13.13
+packages:
+- .
+# extra-deps: []
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=1.9"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor
