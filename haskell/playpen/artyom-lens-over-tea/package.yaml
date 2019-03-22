@@ -6,6 +6,7 @@ dependencies:
 - cereal
 - containers
 - lens
+- mtl
 
 library:
   source-dirs: src
