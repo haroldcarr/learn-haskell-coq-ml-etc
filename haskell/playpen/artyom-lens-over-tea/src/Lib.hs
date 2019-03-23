@@ -22,26 +22,6 @@ import           Data.Word                   (Word64)
 import           GHC.Generics
 import           GHC.Int                     (Int64)
 
-newtype Being = Being
-  { _age :: Double }
-
-data Person = Person
-  { _personBeing :: Being
-  , _name        :: String }
-
-data Worker = Worker
-  { _workerPerson :: Person
-  , _job          :: String  }
-
-makeClassy ''Being
-makeClassy ''Person
-makeClassy ''Worker
-
-instance HasBeing Person where being = personBeing
-instance HasPerson Worker where person = workerPerson
-
-instance HasBeing Worker where being = person.being
-
 ------------------------------------------------------------------------------
 type ShardId = Int64
 type MsgNum  = Int
@@ -79,7 +59,7 @@ data RaftState a = RaftState
   , _nextMsgNum       :: !MsgNum
   , _logSenderSend    :: !Bool
   } deriving Show
-makeClassy ''RaftState
+makeLenses ''RaftState
 
 class RNodeRole a where
   rNodeRole :: a -> Role
@@ -90,19 +70,18 @@ class RTerm a where
   rTerm :: a -> Term
 instance RTerm (RaftState a) where
   rTerm s = s^.term
-class WTerm a where
+class RTerm a => WTerm a where
   wTerm :: Term -> a -> a
 instance WTerm (RaftState a) where
-  wTerm a s = s {_term = a}
+  wTerm t s = s {_term = t}
+
+wTerm' :: (RTerm t, WTerm t, MonadState t m) => Term -> m ()
+wTerm' t = get >>= put . wTerm t
 
 ------------------------------------------------------------------------------
 
 someFunc :: IO ()
 someFunc = do
-  let b = Being 23
-      p = Person (Being 24) "HC"
-      w = Worker (Person (Being 25) "FCW") "Acadmic"
-  foo b p w
   let r = RaftState
             Follower
             (Term 0)
@@ -119,19 +98,15 @@ someFunc = do
             0
             True
   bar r
-  x <- runStateT (runReaderT (runWriterT xxx) r) r
-  print x
+  -- (((Role, Term, RaftState Int), [String]), RaftState Int)
+  (((r, t, s0), msgs), s1) <- runStateT (runReaderT (runWriterT xxx) r) r
+  print r
+  print t
+  print s0
+  print msgs
+  print s1
 
-foo :: (HasBeing b, HasBeing p, HasBeing w)
-    => b -> p -> w
-    -> IO ()
-foo b p w = do
-  putStrLn "\n"
-  print (b^.age, p^.age, w^.age)
-
-bar :: RNodeRole r
-    => r
-    -> IO ()
+bar :: RNodeRole r => r -> IO ()
 bar r = do
   putStrLn "\n"
   print (rNodeRole r)
@@ -144,8 +119,12 @@ xxx = do
   tell [show r]
   t <- gets rTerm
   tell [show t]
-  x <- get
-  let x' = wTerm (Term 45) x
-  put x'
-  return (r, t, x)
+  s <- get
+  put $ wTerm (t + 1) s
+  t' <- gets rTerm
+  tell [show t']
+  wTerm' (t' + 1)
+  t'' <- gets rTerm
+  tell [show t'']
+  return (r, t, s)
 
