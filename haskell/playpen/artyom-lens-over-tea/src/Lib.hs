@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
@@ -65,6 +66,13 @@ class RNodeRole a where
   rNodeRole :: a -> Role
 instance RNodeRole (RaftState a) where
   rNodeRole s = s^.nodeRole
+class WNodeRole a where
+  wNodeRole :: Role -> a -> a
+instance WNodeRole (RaftState a) where
+  wNodeRole r s = s {_nodeRole = r}
+
+wNodeRole' :: (RNodeRole a, WNodeRole a, MonadState a m) => Role -> m ()
+wNodeRole' r = get >>= put . wNodeRole r
 
 class RTerm a where
   rTerm :: a -> Term
@@ -77,6 +85,8 @@ instance WTerm (RaftState a) where
 
 wTerm' :: (RTerm t, WTerm t, MonadState t m) => Term -> m ()
 wTerm' t = get >>= put . wTerm t
+
+type RNodeRoleRWTerm x = (RNodeRole x, RTerm x, WTerm x)
 
 ------------------------------------------------------------------------------
 
@@ -112,8 +122,10 @@ bar r = do
   print (rNodeRole r)
 
 xxx
-  :: (RNodeRole r, RTerm t, WTerm t, MonadWriter [String] m, MonadReader r m, MonadState t m)
-  => m (Role, Term, t)
+  ::
+  -- (RNodeRole r, RTerm t, WTerm t, MonadWriter [String] m, MonadReader r m, MonadState t m)
+     (RNodeRoleRWTerm x            , MonadWriter [String] m, MonadReader x m, MonadState x m)
+  => m (Role, Term, x)
 xxx = do
   r <- asks rNodeRole
   tell [show r]

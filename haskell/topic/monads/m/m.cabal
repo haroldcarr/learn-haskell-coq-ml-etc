@@ -15,6 +15,7 @@ library
                      , UseReaderState
                      , UseState
                      , UseWriter
+                     , UseWriterTwo
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , HUnit
