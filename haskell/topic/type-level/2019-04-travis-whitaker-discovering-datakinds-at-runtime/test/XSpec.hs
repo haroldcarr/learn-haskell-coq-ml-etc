@@ -7,6 +7,7 @@ import           Test.Hspec
 spec :: Spec
 spec = describe "X" $ do
   t1
+  t2
   t3
   t4
   t5

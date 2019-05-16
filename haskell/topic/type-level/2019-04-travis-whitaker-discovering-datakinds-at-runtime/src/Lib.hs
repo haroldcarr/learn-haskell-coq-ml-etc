@@ -94,6 +94,8 @@ data SomeSizedVectorF a
   .  KnownNat n
   => SomeSizedVectorF (SVec n a)
 
+instance Eq a => Eq (SomeSizedVectorF a) where
+  SomeSizedVectorF (SVec vl) == SomeSizedVectorF (SVec vr) = vl == vr
 deriving instance Show a => Show (SomeSizedVectorF a)
 
 -- Definition with GADT syntax:
@@ -113,10 +115,13 @@ someSizedVectorVal x =
    Just (SomeNat (_ :: Proxy n)) ->
      SomeSizedVectorF (SVec x :: SVec n a)
 
-{-
 -- this works
-someSizedVectorVal (V.fromList [1::Int])
-
+t2 :: Spec
+t2  = it "t2" $
+  someSizedVectorVal (V.fromList [1::Int])
+  `shouldBe`
+  someSizedVectorVal (V.fromList [1::Int])
+{-
 -- this does not
 case someSizedVectorVal (V.fromList [1::Int]) of SomeSizedVectorF sv -> map (+1) sv
 
