@@ -1,0 +1,23 @@
+name:                travis-whitaker-discovering-datakinds-at-runtime
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+- hspec
+- hspec-expectations
+- protolude
+- vector
+
+library:
+  source-dirs: src
+
+tests:
+  t:
+    source-dirs:         test
+    main:                hspec.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - travis-whitaker-discovering-datakinds-at-runtime
