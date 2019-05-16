@@ -48,3 +48,29 @@ There is also : https://www3.cs.stonybrook.edu/~skiena/combinatorica/
 but it uses a proprietary language and system that costs $$.
 
 
+==============================================================================
+
+This book looks great:
+    https://www.amazon.com/Elements-Computing-Systems-Building-Principles/dp/0262640686
+
+There is a free online version:
+    http://f.javier.io/rep/books/The%20Elements%20of%20Computing%20Systems.pdf
+
+And a web site to get the software materials:
+    https://www.nand2tetris.org/
+
+And free courses that use it.
+
+This one does the first half of the book:
+    https://www.coursera.org/learn/build-a-computer
+
+THis one does the second half of the book:
+    https://www.coursera.org/learn/nand2tetris2
+
+I skimmed though it and it seems you will really understand computers from the hardware up to the languages and operating systems.
+
+It doesn't cover networking or databases or security, etc.  But it seems like a great place to start.
+
+==============================================================================
+
+https://teachyourselfcs.com/

@@ -1,0 +1,2 @@
+add extra library packages
+https://community.hfm.io/hc/en-us/articles/213702017-Can-I-add-extra-Haskell-library-packages-to-Haskell-for-Mac-
