@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b2ad6c906f9932d2d26d5344fba6e0cbda9d59a7465b51050d4f45ca958b5337
+-- hash: 10e657b0c6bbd55613d9076ae5028204d3f0bcdfc79836290c53576b8c678e03
 
 name:           travis-whitaker-discovering-datakinds-at-runtime
 version:        0.1.0.0
@@ -12,6 +12,8 @@ build-type:     Simple
 
 library
   exposed-modules:
+      HC1
+      HC2
       Lib
   other-modules:
       Paths_travis_whitaker_discovering_datakinds_at_runtime

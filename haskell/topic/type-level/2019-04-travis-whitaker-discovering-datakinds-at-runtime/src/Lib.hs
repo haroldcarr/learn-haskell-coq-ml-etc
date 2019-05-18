@@ -20,183 +20,208 @@ import           Test.Hspec
 
 -- https://programmable.computer/posts/datakinds_runtime.html
 
+-- | Sized vector.
 newtype SVec (n :: Nat) a =
         SVec (V.Vector a)
   deriving (Eq, Foldable, Functor, Show)
 
-tryMkSVec
+-- | Given a regular Vector of length n,
+-- return a sized vector that includes type n.
+-- 'n' is unknown at compiletime.
+-- This means it can "create" the 'n' at runtime.
+mkSVec
   :: forall n a
    . KnownNat n
   => V.Vector a
-  -> Maybe (SVec n a)
-tryMkSVec x =
-  if V.length x == fromIntegral (natVal (Proxy :: Proxy n))
-    then Just (SVec x)
-    else Nothing
-
+  -> Either Text (SVec n a)
+mkSVec x =
+  if vl == n'
+    then Right (SVec x)
+    else Left (show vl <> " /= " <> show n')
+ where
+  vl = V.length x
+  n' = fromIntegral (natVal (Proxy :: Proxy n))
 {-
-do not know size
-
 import qualified Data.Vector as V
 :set -XDataKinds
 
-n in    map :: forall n a b. (a -> b) -> SVec n a -> SVec n b
-- expresses relationship between type of its SVec arg and type of result
+But this does not work:
 
-n in :t tryMkSVec (V.fromList [1::Int])
-               :: GHC.TypeNats.KnownNat n => Maybe (SVec n Int)
-different
-- only have info about a from the arg
-- n has NOT relationship to other terms
-
-tryMkSVec (V.fromList [1::Int])
+mkSVec (V.fromList [1::Int])
 • No instance for (GHC.TypeNats.KnownNat n0)
 
-problem is: need access to length of arg vector at type level (the opposite of what natVal does)
+problem is
+- TERM-to-TYPE: need access to term level length of arg vector at type level
+- TYPE-to-TERM: the opposite of what natVal does : access to type level value at term level
 -}
-
--- this works - because size 1 is given
-
+-- This works
+-- - because size 1 is given at the type level, and
+-- - because the type level is converted to term and checked.
 t1 :: Spec
 t1  = it "t1" $
-  (tryMkSVec (V.fromList [1]) :: Maybe (SVec 1 Int))
-  `shouldBe` Just (SVec (V.fromList [1]))
+  (mkSVec (V.fromList [1]) :: Either Text (SVec 1 Int))
+  `shouldBe` Right (SVec (V.fromList [1]))
+t1' :: Spec
+t1'  = it "t1'" $
+  (mkSVec (V.fromList []) :: Either Text (SVec 1 Int))
+  `shouldBe` Left "0 /= 1"
+{-
+note, this works:
 
+n in map :: forall n a b. (a -> b) -> SVec n a -> SVec n b
+- expresses relationship between type of its INPUT SVec arg and type of result
+
+but
+n in :t mkSVec (V.fromList [1::Int])
+               :: GHC.TypeNats.KnownNat n => Maybe (SVec n Int)
+different
+- only have info about a from the INPUT arg
+- n has NO relationship to other terms
+-}
 ------------------------------------------------------------------------------
 -- Existential Quantification
-
 {-
 GHC.TypeNats contains
 
 data SomeNat = forall n. KnownNat n => SomeNat (Proxy n)
 
-type var to right or fat (instead of in type constructor on left): hides the type
+type var on fat right (instead of in type constructor on left): hides the type
 - a fun passed a SomeNat value cannot learn the n hidden inside
 
-same as GADT
+note similarity to (except n on both sides)
+
+mkSVec :: forall n a. KnownNat n => V.Vector a -> Maybe (SVec n a)
+
+side node: SomeNat defined as GADT
 
 data SomeNat where
   SomeNat :: forall n. KnownNat n => Proxy n -> SomeNat
 
-not similarity to (except n on both sides)
-
-tryMkSVec :: forall n a. KnownNat n => V.Vector a -> Maybe (SVec n a)
-
 GHC.TypeLits contains
 
--- lift an positive Integer to type leve
+-- TERM-TO-TYPE
 someNatVal :: Integer -> Maybe SomeNat
--}
 
+Use ideas from the above two functions below:
+-}
 -- Definition with forall:
-data SomeSizedVectorF a
+data SomeSVecF a
   =  forall n
   .  KnownNat n
-  => SomeSizedVectorF (SVec n a)
+  => SomeSVecF (SVec n a)
 
-instance Eq a => Eq (SomeSizedVectorF a) where
-  SomeSizedVectorF (SVec vl) == SomeSizedVectorF (SVec vr) = vl == vr
-deriving instance Show a => Show (SomeSizedVectorF a)
+instance Eq a => Eq (SomeSVecF a) where SomeSVecF (SVec vl) == SomeSVecF (SVec vr) = vl == vr
+deriving instance Show a => Show (SomeSVecF a)
 
 -- Definition with GADT syntax:
-data SomeSizedVectorG a where
-  SomeSizedVectorG
+data SomeSVecG a where
+  SomeSVecG
     :: KnownNat n
     => SVec n a
-    -> SomeSizedVectorG a
+    -> SomeSVecG a
 
-someSizedVectorVal
+-- TERM-TO-TYPE
+-- Create sized vector from a regular vector at runtime.
+someSVecVal
   :: forall a
    . V.Vector a
-  -> SomeSizedVectorF a
-someSizedVectorVal x =
+  -> SomeSVecF a
+someSVecVal x =
  case someNatVal (fromIntegral (V.length x)) of
-   Nothing -> panic "negative length?!"
+   Nothing -> panic "negative length"
    Just (SomeNat (_ :: Proxy n)) ->
-     SomeSizedVectorF (SVec x :: SVec n a)
+     SomeSVecF (SVec x :: SVec n a)
 
--- this works
 t2 :: Spec
 t2  = it "t2" $
-  someSizedVectorVal (V.fromList [1::Int])
+  someSVecVal (V.fromList [1::Int])
   `shouldBe`
-  someSizedVectorVal (V.fromList [1::Int])
+  someSVecVal (V.fromList [1::Int])
+
+t2' :: Spec
+t2'  = it "t2'" $ do
+  let SomeSVecF (SVec v) = someSVecVal (V.fromList [1::Int])
+  v `shouldBe` V.fromList [1::Int]
 {-
--- this does not
-case someSizedVectorVal (V.fromList [1::Int]) of SomeSizedVectorF sv -> map (+1) sv
+but
+case someSVecVal (V.fromList [1::Int]) of SomeSVecF sv -> fmap (+1) sv
+  • Couldn't match expected type ‘p’ with actual type ‘SVec n Int’
+        because type variable ‘n’ would escape its scope
+      This (rigid, skolem) type variable is bound by
+        a pattern with constructor:
+          SomeSVecF :: ...
 
-type of someSizedVectorVal (V.fromList [1, 2, 3]) is Num a => SomeSizedVector a
+:t someSVecVal (V.fromList [1::Int])
+                                     :: SomeSVecF Int
 
-pattern match SomeSizedVector sv gives sv with type forall n. KnownNat n => SizedVector n a
+SomeSVec sv gives sv with type forall n. KnownNat n => SVec n a
 
-n is hidden by SomeSizedVector constructor
+n is hidden by SomeSVec constructor
 
 map will leak it
-type of map (+1) sv would be like : exists n. KnownNat n => SizedVector n a
+type of map (+1) sv would be like : exists n. KnownNat n => SVec n a
 
-know some n existed when SomeSizedVector constructed
+know some n existed when SomeSVec constructed
 
-no way to recover the type-level information; using the SomeSizedVector destroys the type
+no way to recover the type-level information; using the SomeSVec destroys the type
 
-type n needs to be "consumed" by something with a type like
-  forall n. KnownNat n => (forall r. SizedVector n a -> r)
-where r is not allowed to reference n (so map does not work)
+type n needs to be the INPUT to something with a type like
+    forall n. KnownNat n => (forall r. SVec n a -> r)
+where r is not allowed to reference n
 
-foldl meets requirements
+map does not work that requirement since the n appears in the output
+foldl meets the requirement
 -}
-
 {-# ANN t3 ("HLint: ignore Use sum"::Prelude.String) #-}
 t3 :: Spec
 t3  = it "t3" $
-  case someSizedVectorVal (V.fromList [1, 2, 3]) of
-    SomeSizedVectorF sv -> foldl (+) 0 (map (*5) sv)
+  case someSVecVal (V.fromList [1, 2, 3]) of
+    SomeSVecF sv -> foldl (+) 0 (map (*5) sv)
   `shouldBe`
   30
 
 ------------------------------------------------------------------------------
 -- Quantified Continuations
-
 {-
-To use a SVec whose size is not known will need to use this:
+TYPE-TO-TERM
 
-\f x -> case someSizedVectorVal x of SomeSizedVector sv -> f sv
+generalize t3 pattern:
 
-If the type of x is V.Vector a
-then by applying the type of the SomeSizedVector constructor
-we know that the type of f must be something like
-  forall r. (forall n. KnownNat n => SizedVector n a) -> r
+\x f -> case someSVecVal x of SomeSVecF sv -> f sv
 
-using RankNTypes can write helper
+- x  :: V.Vector a
+- SomeSVecF (SVec n a)
+- sv :: SVec n a
+- f  :: forall r. (forall n. KnownNat n => SVec n a) -> r
+
+using RankNTypes to write helper
 -}
-
-withSizedVector
+withSVec
   :: forall a r
    . V.Vector a
   -> (forall n. KnownNat n => SVec n a -> r)
   -> r
-withSizedVector x f =
+withSVec x f =
   case someNatVal (fromIntegral (V.length x)) of
-    Nothing -> panic "negative length?!"
+    Nothing -> panic "negative length"
     Just (SomeNat (Proxy :: Proxy n)) ->
       f (SVec x :: SVec n a)
-
 {-
-type of withSizedVector shows
+type of withSVec
 - enables any vector to be injected into a type-safe bubble
-- if expr in bubble can handle a sized vector of any length
-- and type of result does not leak the vector length
+- if expr in bubble can handle a sized vector of any length, and
+- type of result does not leak the vector length
 -}
-
 t4 :: Spec
 t4  = it "t4" $
-  withSizedVector (V.fromList [1, 2, 3]) (foldl (+) 0 . map (*5))
+  withSVec (V.fromList [1, 2, 3]) (foldl (+) 0 . map (*5))
   `shouldBe`
   30
 
 -- convert type level length to term level
 t5 :: Spec
 t5  = it "t5" $
-  withSizedVector (V.fromList [1, 2, 3, 4, 5]) (foldl (\i _ -> i+1) 0)
+  withSVec (V.fromList [1, 2, 3, 4, 5]) (foldl (\i _ -> i+1) 0)
   `shouldBe`
   5
 
