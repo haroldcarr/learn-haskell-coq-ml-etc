@@ -1,0 +1,24 @@
+
+------------------------------------------------------------------------------
+https://twitter.com/Iceland_jack/status/1129747766056488961
+
+Functors for programming should be taught from kind signatures
+
+  Either :: Type -> Type -> Type
+
+each kind gets assigned a compatible arrow
+
+  Either :: Type -> Type -> Type
+                 (->)       (->)       (->)
+
+Lists act the same
+
+  [] :: Type -> Type
+         (->)        (->)
+
+This is why we write
+
+  map   :: (a -> a') -> ([a] -> [a'])
+
+...
+------------------------------------------------------------------------------
