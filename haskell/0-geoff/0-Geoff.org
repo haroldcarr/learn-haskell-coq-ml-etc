@@ -74,3 +74,40 @@ It doesn't cover networking or databases or security, etc.  But it seems like a 
 ==============================================================================
 
 https://teachyourselfcs.com/
+
+
+==============================================================================
+data61 fp-course
+
+Besides studying Course.ExactlyOne and Course.Validation, the first
+one with exercises is Course.Optional
+
+In the src/Course/Optional.hs file you replace the function definition
+bodies that containt : error "todo:..." with the definition you come
+up with.
+
+Then you can test via:
+
+> cd ~
+> cd fp-course
+> stack ghci
+
+...
+[ 1 of 26] Compiling Course.Core      ( src/Course/Core.hs, interpreted )
+...
+[26 of 26] Compiling Course           ( src/Course.hs, interpreted )
+...
+λ: :l test/Course/OptionalTest.hs
+[1 of 5] Compiling Course.Core      ( src/Course/Core.hs, interpreted )
+...
+[5 of 5] Compiling Course.OptionalTest ( test/Course/OptionalTest.hs, interpreted )
+Ok, five modules loaded.
+λ: courseTest test_Optional
+
+FAILED: 'Optional.mapOptional.Empty'
+  todo: Course.Optional#mapOptional
+  CallStack (from HasCallStack):
+    error, called at src/Course/Optional.hs:31:3 in main:Course.Optional
+...
+WARNING: No properties tested
+λ:

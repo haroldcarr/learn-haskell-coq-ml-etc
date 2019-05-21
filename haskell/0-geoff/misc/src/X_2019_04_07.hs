@@ -1,9 +1,12 @@
+module X_2019_04_07 where
+
 import Control.Arrow
 
 z1 :: Num b => [a] -> [(a,b)]
 z1 as = zip (as++as) (cycle [0,1])
 {-
 z1 ["a","b","c"]
+import Data.List (sort)
 sort (z1 ["a","b","c"])
 -}
 z2 :: Num b => [a] -> [(a,b)]
