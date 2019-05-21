@@ -1,0 +1,4 @@
+------------------------------------------------------------------------------
+Refactoring Recursion
+
+Recursion is the fundamental looping mechanism in functional programming. This talk shows patterns of recursion using Haskell. It shows those patterns for list structure only.  This makes it easier for beginners to understand recursion schemes by focusing on their operation with lists. We start by writing explicit recursive versions of `sum`, `product` and `length` of lists, then factor them into `fold` functions.  We proceed in a similar manner with other folds, unfolds and refolds with many examples of the patterns in operation. We end by mentioning factoring recursion out of data.
