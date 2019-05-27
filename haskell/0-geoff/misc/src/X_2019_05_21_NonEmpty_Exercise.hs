@@ -1,7 +1,9 @@
 module X_2019_05_21_NonEmpty_Exercise where
 
-import Prelude            as P
-import Data.List.NonEmpty as NE
+import           Prelude            as P
+import qualified Data.List.NonEmpty as NE
+
+{-# ANN module ("HLint: ignore Eta reduce"::String) #-}
 
 -- Below, whereever it uses 'undefined' means
 -- there is no 'a' to create a 'NonEmpty a' with - so the function is not TOTAL.
@@ -19,59 +21,90 @@ import Data.List.NonEmpty as NE
 a :: [[a]] -> [a]
 a xs = concat xs
 
+a' :: [[a]] -> [a]
+a'  []  = []
+a' [[]] = []
+a' ([]:_ :_) = []
+a' ((x:_):_) = [x]
+
 --------------------------------------------------
 
 -- I think you called this one 'toNonEmpty' - but your version has an incorrect type.
-b :: [[a]] -> NonEmpty a
+b :: [[a]] -> NE.NonEmpty a
 b xs = case concat xs of
-  []  -> undefined
+  []  -> undefined        -- *****
   xs' -> NE.fromList xs'
 
-b' :: [[a]] -> Maybe (NonEmpty a)
+b' :: [[a]] -> Maybe (NE.NonEmpty a)
 b' xs = case concat xs of
   []  -> Nothing
   xs' -> Just (NE.fromList xs')
 
+b'' :: [[a]] -> Maybe (NE.NonEmpty a)
+b'' xs = NE.nonEmpty (concat xs)
+
 --------------------------------------------------
 
-c :: [NonEmpty a] -> [a]
+c :: [NE.NonEmpty a] -> [a]
 c xs = concatMap NE.toList xs
 
+c' :: [NE.NonEmpty a] -> [a]
+c'   []  = []
+c' (x:_) = NE.toList x
+
 --------------------------------------------------
 
-d :: [NonEmpty a] -> NonEmpty a
+d :: [NE.NonEmpty a] -> NE.NonEmpty a
 d xs = case c xs of
-  []  -> undefined
+  []  -> undefined        -- *****
   xs' -> NE.fromList xs'
 
-d' :: [NonEmpty a] -> Maybe (NonEmpty a)
+d' :: [NE.NonEmpty a] -> Maybe (NE.NonEmpty a)
 d' xs = case c xs of
   []  -> Nothing
   xs' -> Just (NE.fromList xs')
 
+d'' :: [NE.NonEmpty a] -> Maybe (NE.NonEmpty a)
+d'' xs = NE.nonEmpty (c xs)
+
+-- eta reduction
+d''' :: [NE.NonEmpty a] -> Maybe (NE.NonEmpty a)
+d'''  = NE.nonEmpty . c
+
 --------------------------------------------------
 
-e :: NonEmpty [a] -> [a]
+e :: NE.NonEmpty [a] -> [a]
 e xs = concat (NE.toList xs)
 
 --------------------------------------------------
 
-f :: NonEmpty [a] -> NonEmpty a
+f :: NE.NonEmpty [a] -> NE.NonEmpty a
 f xs = case concat (NE.toList xs) of
-  []  -> undefined
+  []  -> undefined        -- *****
   xs' -> NE.fromList xs'
 
-f' :: NonEmpty [a] -> Maybe (NonEmpty a)
+f' :: NE.NonEmpty [a] -> Maybe (NE.NonEmpty a)
 f' xs = case concat (NE.toList xs) of
   []  -> Nothing
   xs' -> Just (NE.fromList xs')
 
 --------------------------------------------------
 
-g :: NonEmpty (NonEmpty a) -> [a]
+g :: NE.NonEmpty (NE.NonEmpty a) -> [a]
 g xs = concatMap NE.toList (NE.toList xs)
 
 --------------------------------------------------
 
-h :: NonEmpty (NonEmpty a) -> NonEmpty a
+h :: NE.NonEmpty (NE.NonEmpty a) -> NE.NonEmpty a
 h xs = NE.fromList (g xs)
+
+{-
+a :: [           [            a]] -> [a]
+b :: [           [            a]] -> NE.NonEmpty a
+c :: [           NE.NonEmpty  a ] -> [a]
+d :: [           NE.NonEmpty  a ] -> NE.NonEmpty a
+e :: NE.NonEmpty [            a]  -> [a]
+f :: NE.NonEmpty [            a]  -> NE.NonEmpty a
+g :: NE.NonEmpty (NE.NonEmpty a)  -> [a]
+h :: NE.NonEmpty (NE.NonEmpty a)  -> NE.NonEmpty a
+-}
