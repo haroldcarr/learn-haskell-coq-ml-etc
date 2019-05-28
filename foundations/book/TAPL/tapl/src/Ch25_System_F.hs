@@ -2,7 +2,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 -- {-# LANGUAGE OverloadedStrings #-}
 
-module Ch25_System where
+module Ch25_System_F where
 
 import           Protolude
 
