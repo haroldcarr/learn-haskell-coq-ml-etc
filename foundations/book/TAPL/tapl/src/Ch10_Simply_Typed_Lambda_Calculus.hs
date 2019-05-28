@@ -34,9 +34,9 @@ data Ty
 data Term
   = TmTrue
   | TmFalse
-  | TmIf Term Term Term
+  | TmIf  Term Term Term
   | TmVar Var
-  | TmAbs Var Ty Term
+  | TmAbs Var  Ty Term
   | TmApp Term Term
   deriving (Eq, Show)
 
@@ -53,12 +53,15 @@ typeOf ctx = \case
     else do
       tyT <- typeOf ctx t
       tyF <- typeOf ctx f
-      if tyT /= tyF then Left $ "if arms have different types " <> show tif
-      else pure tyT
-  t@(TmApp t1 t2)    -> typeOf ctx t1 >>= \case
-    TyArr tyT11 tyT12 -> do
-      tyT2 <- typeOf ctx t2
-      if tyT2 /= tyT11 then Left $ "param type mismatch " <> show t
-      else pure tyT12
-    _ ->
-      Left $ "arrow type expected " <> show t
+      if tyT /= tyF
+        then Left $ "if arms have different types " <> show tif
+        else pure tyT
+  t@(TmApp t1 t2)    ->
+    typeOf ctx t1 >>= \case
+      TyArr tyT11 tyT12 -> do
+        tyT2 <- typeOf ctx t2
+        if tyT2 /= tyT11
+          then Left $ "param type mismatch " <> show t
+          else pure tyT12
+      _ ->
+        Left $ "arrow type expected " <> show t

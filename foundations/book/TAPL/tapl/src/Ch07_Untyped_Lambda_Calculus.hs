@@ -42,6 +42,7 @@ eval1 = \case
   TmApp t1 t2                            -> flip TmApp t2 <$> eval1 t1
   _                                      -> Left Eval1NoMatch
 
+-- Used in place of de Bruijn indices.  But only looks in immediate body, no deeper.
 applyOneLevel :: Var -> Term -> Term -> Term
 applyOneLevel var val = \case
   TmVar v | v == var -> val
