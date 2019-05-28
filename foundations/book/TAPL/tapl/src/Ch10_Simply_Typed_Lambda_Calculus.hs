@@ -18,13 +18,13 @@ type Context = [(Var, Binding)]
 addBinding :: Context -> Var -> Binding -> Context
 addBinding ctx x bind = (x,bind) : ctx
 
-getBinding :: Context -> Var -> Binding
-getBinding ctx var = foldr go (panic $ show var <> " not found") ctx
- where go (v,b) r = if v == var then b else r
+getBinding :: Context -> Var -> Either Text Binding
+getBinding ctx var = foldr go (Left $ show var <> " not found") ctx
+ where go (v,b) r = if v == var then Right b else r
 
-getTypeFromContext :: Context -> Var -> Ty
-getTypeFromContext ctx var = go $ getBinding ctx var
- where go = \case VarBind ty -> ty; x -> panic $ show var <> " wrong binding " <> show x
+getTypeFromContext :: Context -> Var -> Either Text Ty
+getTypeFromContext ctx var = getBinding ctx var >>= go
+ where go = \case VarBind ty -> Right ty; x -> Left $ show var <> " wrong binding " <> show x
 
 data Ty
   = TyBool
@@ -42,21 +42,23 @@ data Term
 
 ------------------------------------------------------------------------------
 
-typeOf :: Context -> Term -> Ty
+typeOf :: Context -> Term -> Either Text Ty
 typeOf ctx = \case
-  TmTrue             -> TyBool
-  TmFalse            -> TyBool
+  TmTrue             -> pure TyBool
+  TmFalse            -> pure TyBool
   TmVar var          -> getTypeFromContext ctx var
-  TmAbs var typ body -> TyArr typ (typeOf (addBinding ctx var (VarBind typ)) body)
+  TmAbs var typ body -> TyArr typ <$> typeOf (addBinding ctx var (VarBind typ)) body
   tif@(TmIf c t f)   ->
-    if typeOf ctx c /= TyBool then panic $ "if guard not given TyBool " <> show tif
-    else
-      let tyT = typeOf ctx t
-       in if typeOf ctx f /= tyT then panic $ "if arms have different types " <> show tif
-          else tyT
-  t@(TmApp t1 t2)    -> case typeOf ctx t1 of
-    TyArr tyT11 tyT12 ->
-      if typeOf ctx t2 /= tyT11 then panic $ "param type mismatch " <> show t
-      else tyT12
+    typeOf ctx c >>= \tc -> if tc /= TyBool then Left $ "if guard not given TyBool " <> show tif
+    else do
+      tyT <- typeOf ctx t
+      tyF <- typeOf ctx f
+      if tyT /= tyF then Left $ "if arms have different types " <> show tif
+      else pure tyT
+  t@(TmApp t1 t2)    -> typeOf ctx t1 >>= \case
+    TyArr tyT11 tyT12 -> do
+      tyT2 <- typeOf ctx t2
+      if tyT2 /= tyT11 then Left $ "param type mismatch " <> show t
+      else pure tyT12
     _ ->
-      panic $ "arrow type expected " <> show t
+      Left $ "arrow type expected " <> show t

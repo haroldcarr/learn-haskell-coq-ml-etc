@@ -1,14 +1,14 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module TaplSpec where
+module Ch07Spec where
 
 import           Ch07_Untyped_Lambda_Calculus
 import           Protolude
 import           Test.Hspec
 
 spec :: Spec
-spec = describe "tapl" $ do
+spec = describe "ch07" $ do
 
   it "print" $
     printTm [] (TmApp (TmAbs "x" (TmVar "x"))
