@@ -24,14 +24,17 @@ data Binding
   | TyVarBind
   deriving (Eq, Show)
 
+------------------------------------------------------------------------------
+-- shifting and substiturion
+
 tyMap :: (Int -> Int -> Int -> Ty) -> Int -> Ty -> Ty
 tyMap onVar = walk
  where
   walk c = \case
-    TyArr  tyT1 tyT2 -> TyArr (walk c tyT1) (walk c tyT2)
     TyVar  x    n    -> onVar c x n
-    TyAll  tyX  tyT2 -> TyAll  tyX (walk (c+1) tyT2)
-    TySome tyX  tyT2 -> TySome tyX (walk (c+1) tyT2)
+    TyArr  tyT1 tyT2 -> TyArr  (walk c tyT1) (walk c tyT2)
+    TyAll  tyX  tyT2 -> TyAll  tyX           (walk (c+1) tyT2)
+    TySome tyX  tyT2 -> TySome tyX           (walk (c+1) tyT2)
 
 typeShiftAbove :: Int -> Int -> Ty -> Ty
 typeShiftAbove d = tyMap (\c x n -> if x >= c then TyVar (x+d) (n+d) else TyVar x (n+d))
@@ -68,13 +71,12 @@ tmMap onVar onType = walk
  where
   walk c = \case
     TmVar    x    n            -> onVar    c x n
-    TmAbs    x    tyT1 t2      -> TmAbs    x (onType c tyT1) (walk (c+1) t2)
-    TmApp    t1   t2           -> TmApp    (walk c t1) (walk c t2)
-    TmTAbs   tyX  t2           -> TmTAbs   tyX (walk (c+1) t2)
-    TmTApp   t1   tyT2         -> TmTApp   (walk c t1) (onType c tyT2)
-    TmPack   tyT1 t2   tyT3    -> TmPack   (onType c tyT1) (walk c t2) (onType c tyT3)
-    TmUnpack tyX  x    t1   t2 -> TmUnpack tyX x (walk c t1) (walk (c+2) t2)
-
+    TmAbs    x    tyT1 t2      -> TmAbs    x               (onType c tyT1) (walk (c+1) t2)
+    TmApp    t1   t2           -> TmApp    (walk c t1)     (walk c t2)
+    TmTAbs   tyX  t2           -> TmTAbs   tyX             (walk (c+1) t2)
+    TmTApp   t1   tyT2         -> TmTApp   (walk c t1)     (onType c tyT2)
+    TmPack   tyT1 t2   tyT3    -> TmPack   (onType c tyT1) (walk c t2)     (onType c tyT3)
+    TmUnpack tyX  x    t1   t2 -> TmUnpack tyX             x               (walk c t1) (walk (c+2) t2)
 
 termShiftAbove :: Int -> Int -> Term -> Term
 termShiftAbove d =
