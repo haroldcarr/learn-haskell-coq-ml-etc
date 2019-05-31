@@ -29,7 +29,7 @@ doNames onVar c = \case
   TmIf cond t f -> TmIf <$> doNames onVar c cond <*> doNames onVar c t <*> doNames onVar c f
   TmVar v n     -> onVar 0 v n c >>= \(v',n') -> pure $ TmVar v' n'
   TmAbs v t     -> TmAbs v <$> doNames onVar (v:c) t
-  TmApp f v     -> TmApp <$> doNames onVar c f <*> doNames onVar c v
+  TmApp f v     -> TmApp   <$> doNames onVar c f <*> doNames onVar c v
 
 -- This does NOT remove existing names from Var nor Abs.
 -- The Var name is left for debugging.
