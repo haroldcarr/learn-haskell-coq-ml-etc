@@ -68,29 +68,61 @@ termShiftTest  = describe "termShift" $ do
 termSubstTopTest :: Spec
 termSubstTopTest  = describe "termSubstTopTest" $ do
   it "termSubstTop 1" $
-    termSubstTop (TmAbs "y" (TmVar "y" 0))
+    -- eval1 given (TmApp (TmAbs "x" (TmVar "x" 0))
+    --                    (TmAbs "z" (TmVar "z" 0)))
+    -- calls:
+    termSubstTop (TmAbs "z" (TmVar "z" 0))
                  (TmVar "x" 0)
-    `shouldBe`    TmAbs "y" (TmVar "y" 0)
+    `shouldBe`    TmAbs "z" (TmVar "z" 0)
 
   it "termSubstTop 2" $
+    -- eval1 given (TmApp (TmAbs "x" (TmAbs "a" (TmVar "x" 1)))
+    --                    (TmAbs "z" (TmVar "z" 0)))
+    -- calls:
     termSubstTop (TmAbs "z" (TmVar "z" 0))
-                 (TmAbs "a" (TmVar "a" 1))
+                 (TmAbs "a" (TmVar "x" 1))
     `shouldBe`    TmAbs "a" (TmAbs "z" (TmVar "z" 0))
 
 ------------------------------------------------------------------------------
 
 evalTest :: Spec
 evalTest  = describe "eval" $ do
-  it "eval1" $
-    eval1        (TmApp (TmAbs "x" (TmVar "x" 0))
-                        (TmAbs "y" (TmVar "y" 0)))
+  it "eval1 1" $
+    eval1    (TmApp (TmAbs "x" (TmVar "x" 0))  -- same a termSubstTop 1 above
+                    (TmAbs "z" (TmVar "z" 0)))
     `shouldBe`
-    (Right $             TmAbs "y" (TmVar "y" 0))
+    (Right $         TmAbs "z" (TmVar "z" 0))
 
-  it "eval" $
-    eval (TmApp (TmAbs "x" (TmVar "x" 0))
-                (TmApp (TmAbs "y" (TmVar "y" 0))
-                       (TmAbs "z" (TmVar "z" 0))))
+  it "eval1 2" $
+    eval1    (TmApp (TmAbs "x" (TmAbs "a" (TmVar "x" 1)))   -- same a termSubstTop 2 above
+                               (TmAbs "z" (TmVar "z" 0)))
     `shouldBe`
-    TmAbs "z" (TmVar "z" 0)
+    (Right $                    TmAbs "a" (TmAbs "z" (TmVar "z" 0)))
+
+  it "eval1 3" $
+    eval1    (TmApp (TmAbs "x" (TmVar "x" 0))
+                    (TmApp (TmAbs "y" (TmVar "y" 0))
+                           (TmAbs "z" (TmVar "z" 0))))
+    `shouldBe`
+    (Right $  TmApp (TmAbs "x" (TmVar "x" 0))  -- Note: it reduced inner application
+                    (TmAbs "z" (TmVar "z" 0)))
+
+  it "eval1 4" $
+    eval1    (TmApp (TmAbs "x" (TmVar "x" 0))
+                    (TmAbs "z" (TmVar "z" 0)))
+    `shouldBe`
+    (Right $         TmAbs "z" (TmVar "z" 0))
+
+
+  it "eval1 5" $
+    eval1           (TmAbs "z" (TmVar "z" 0))
+    `shouldBe`
+    Left Eval1NoMatch
+
+  it "eval 1" $
+    eval     (TmApp (TmAbs "x" (TmVar "x" 0))
+                    (TmApp (TmAbs "y" (TmVar "y" 0))
+                           (TmAbs "z" (TmVar "z" 0))))
+    `shouldBe`
+                     TmAbs "z" (TmVar "z" 0)
 
