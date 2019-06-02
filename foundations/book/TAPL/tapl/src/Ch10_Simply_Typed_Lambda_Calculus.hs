@@ -19,12 +19,12 @@ addBinding :: Context -> Var -> Binding -> Context
 addBinding ctx x bind = (x,bind) : ctx
 
 getBinding :: Context -> Var -> Either Text Binding
-getBinding ctx var = foldr go (Left $ show var <> " not found") ctx
+getBinding ctx var = foldr go (Left $ "'" <> var <> "' not found") ctx
  where go (v,b) r = if v == var then Right b else r
 
 getTypeFromContext :: Context -> Var -> Either Text Ty
 getTypeFromContext ctx var = getBinding ctx var >>= go
- where go = \case VarBind ty -> Right ty; x -> Left $ show var <> " wrong binding " <> show x
+ where go = \case VarBind ty -> Right ty; x -> Left $ "'" <> var <> "' wrong binding " <> show x
 
 data Ty
   = TyBool
