@@ -74,17 +74,16 @@ pickFreshName ctx x =
   if isNamebound ctx x then pickFreshName ctx (x<>"'")
   else ((x,NameBind):ctx), x
 -}
-indexToName :: Context -> Int -> Var
+indexToName :: Context -> Int -> Either Text Var
 indexToName ctx x =
-  if x < ctxLength ctx then fst $ ctx Prelude.!! x
-  else panic $
-    "Variable lookup failure: offset: " <> show x <> " , ctx size: " <> show (ctxLength ctx)
+  if x < ctxLength ctx then pure $ fst $ ctx Prelude.!! x
+  else Left $ "Variable lookup failure: offset: " <> show x <> " , ctx size: " <> show (ctxLength ctx)
 
-nameToIndex :: Context -> Text -> Int
+nameToIndex :: Context -> Text -> Either Text Int
 nameToIndex ctx x =
   case ctx of
-    []           -> panic ("Identifier " <> x <> " is unbound")
-    ((y,_):rest) -> if y==x then 0 else 1 + nameToIndex rest x
+    []           -> Left $ "Identifier " <> x <> " is unbound"
+    ((y,_):rest) -> if y==x then pure 0 else (+1) <$> nameToIndex rest x
 
 ----------------------------------------------------------------------
 -- Shifting
@@ -181,19 +180,21 @@ tyTermSubstTop tyS t =
 ----------------------------------------------------------------------
 -- Context management (continued)
 
-getBinding :: Context -> Int -> Binding
+getBinding :: Context -> Int -> Either Text Binding
 getBinding ctx i =
   if i < ctxLength ctx
     then let (_,bind) = ctx Prelude.!! i
-          in bindingShift (i+1) bind
+          in pure $ bindingShift (i+1) bind
   else
-    panic ("Variable lookup failure: offset: " <> show i <> ", ctx size: " <> show (ctxLength ctx))
+    Left $ "Variable lookup failure: offset: " <> show i <> ", ctx size: " <> show (ctxLength ctx)
 
-getTypeFromContext :: Context -> Int -> Ty
-getTypeFromContext ctx i =
-  case getBinding ctx i of
-    VarBind tyT            -> tyT
-    TmAbbBind _ (Just tyT) -> tyT
-    TmAbbBind _ Nothing    -> panic ("No type recorded for variable " <> indexToName ctx i)
-    _                      -> panic ("getTypeFromContext: Wrong kind of binding for variable "
-                                    <> indexToName ctx i)
+getTypeFromContext :: Context -> Int -> Either Text Ty
+getTypeFromContext ctx i = getBinding ctx i >>= \case
+    VarBind tyT            -> pure tyT
+    TmAbbBind _ (Just tyT) -> pure tyT
+    TmAbbBind _ Nothing    -> do
+      n <- indexToName ctx i
+      Left $ "No type recorded for variable " <> n
+    _                      -> do
+      n <- indexToName ctx i
+      Left $ "getTypeFromContext: Wrong kind of binding for variable " <> n

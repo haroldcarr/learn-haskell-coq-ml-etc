@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE NoImplicitPrelude #-}
--- {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Z_FullPoly.Core where
 
@@ -20,7 +20,7 @@ isVal ctx = \case
   TmTAbs {}                    -> True
   _                            -> False
 
-eval1 :: Context -> Term -> Either NoRuleApplies Term
+eval1 :: Context -> Term -> Either Text Term
 eval1 ctx = \case
   TmApp (TmAbs _x _tyT11 t12) v2 | isVal ctx v2 ->
     pure $ termSubstTop v2 t12
@@ -45,22 +45,22 @@ eval1 ctx = \case
   TmPack tyT1 t2 tyT3 -> do
     t2' <- eval1 ctx t2
     pure $ TmPack tyT1 t2' tyT3
-  TmVar _ n _ ->
-    case getBinding ctx n of
+  TmVar _ n _ -> getBinding ctx n >>= \case
       TmAbbBind t _ -> pure t
-      _ -> Left NoRuleApplies
+      _             -> Left $ show NoRuleApplies
   TmTApp (TmTAbs _x t11) tyT2 ->
     pure $ tyTermSubstTop tyT2 t11
   TmTApp t1 tyT2 -> do
     t1' <- eval1 ctx t1
     pure $ TmTApp t1' tyT2
   _ ->
-    Left NoRuleApplies
+    Left $ show NoRuleApplies
 
 eval :: Context -> Term -> Term
 eval ctx t = case eval1 ctx t of
-  Left NoRuleApplies -> t
-  Right t'           -> eval ctx t'
+  Right t'             -> eval ctx t'
+  Left "NoRuleApplies" -> t
+  Left txt             -> panic txt
 
 {-
 let istyabb ctx i =
