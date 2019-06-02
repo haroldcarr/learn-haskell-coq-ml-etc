@@ -1,6 +1,5 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Z_FullPoly.Syntax where
 
@@ -8,6 +7,14 @@ import qualified Prelude
 import           Protolude
 
 type Var = Text
+
+data Err
+  = NoRuleApplies
+  | VarLookupFailure   Int Int
+  | UnboundVar         Var
+  | NoTypeRecorded     Var
+  | WrongKindOfBinding Var
+  deriving (Eq, Show)
 
 ----------------------------------------------------------------------
 -- Datatypes
@@ -74,15 +81,15 @@ pickFreshName ctx x =
   if isNamebound ctx x then pickFreshName ctx (x<>"'")
   else ((x,NameBind):ctx), x
 -}
-indexToName :: Context -> Int -> Either Text Var
+indexToName :: Context -> Int -> Either Err Var
 indexToName ctx x =
   if x < ctxLength ctx then pure $ fst $ ctx Prelude.!! x
-  else Left $ "Variable lookup failure: offset: " <> show x <> " , ctx size: " <> show (ctxLength ctx)
+  else Left $ VarLookupFailure x (ctxLength ctx)
 
-nameToIndex :: Context -> Text -> Either Text Int
+nameToIndex :: Context -> Text -> Either Err Int
 nameToIndex ctx x =
   case ctx of
-    []           -> Left $ "Identifier " <> x <> " is unbound"
+    []           -> Left $ UnboundVar x
     ((y,_):rest) -> if y==x then pure 0 else (+1) <$> nameToIndex rest x
 
 ----------------------------------------------------------------------
@@ -180,21 +187,21 @@ tyTermSubstTop tyS t =
 ----------------------------------------------------------------------
 -- Context management (continued)
 
-getBinding :: Context -> Int -> Either Text Binding
+getBinding :: Context -> Int -> Either Err Binding
 getBinding ctx i =
   if i < ctxLength ctx
     then let (_,bind) = ctx Prelude.!! i
           in pure $ bindingShift (i+1) bind
   else
-    Left $ "Variable lookup failure: offset: " <> show i <> ", ctx size: " <> show (ctxLength ctx)
+    Left $ VarLookupFailure i (ctxLength ctx)
 
-getTypeFromContext :: Context -> Int -> Either Text Ty
+getTypeFromContext :: Context -> Int -> Either Err Ty
 getTypeFromContext ctx i = getBinding ctx i >>= \case
     VarBind tyT            -> pure tyT
     TmAbbBind _ (Just tyT) -> pure tyT
     TmAbbBind _ Nothing    -> do
       n <- indexToName ctx i
-      Left $ "No type recorded for variable " <> n
+      Left $ NoTypeRecorded n
     _                      -> do
       n <- indexToName ctx i
-      Left $ "getTypeFromContext: Wrong kind of binding for variable " <> n
+      Left $ WrongKindOfBinding n

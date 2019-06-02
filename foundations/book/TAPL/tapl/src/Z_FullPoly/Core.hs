@@ -1,6 +1,5 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Z_FullPoly.Core where
 
@@ -8,8 +7,6 @@ import           Protolude
 import           Z_FullPoly.Syntax
 
 ------------------------   EVALUATION  ------------------------
-
-data NoRuleApplies = NoRuleApplies deriving (Eq, Show)
 
 isVal :: Context -> Term -> Bool
 isVal ctx = \case
@@ -20,7 +17,7 @@ isVal ctx = \case
   TmTAbs {}                    -> True
   _                            -> False
 
-eval1 :: Context -> Term -> Either Text Term
+eval1 :: Context -> Term -> Either Err Term
 eval1 ctx = \case
   TmApp (TmAbs _x _tyT11 t12) v2 | isVal ctx v2 ->
     pure $ termSubstTop v2 t12
@@ -47,32 +44,33 @@ eval1 ctx = \case
     pure $ TmPack tyT1 t2' tyT3
   TmVar _ n _ -> getBinding ctx n >>= \case
       TmAbbBind t _ -> pure t
-      _             -> Left $ show NoRuleApplies
+      _             -> Left NoRuleApplies
   TmTApp (TmTAbs _x t11) tyT2 ->
     pure $ tyTermSubstTop tyT2 t11
   TmTApp t1 tyT2 -> do
     t1' <- eval1 ctx t1
     pure $ TmTApp t1' tyT2
   _ ->
-    Left $ show NoRuleApplies
+    Left NoRuleApplies
 
-eval :: Context -> Term -> Term
+eval :: Context -> Term -> Either Err Term
 eval ctx t = case eval1 ctx t of
-  Right t'             -> eval ctx t'
-  Left "NoRuleApplies" -> t
-  Left txt             -> panic txt
+  Right t'                    -> eval ctx t'
+  Left NoRuleApplies          -> pure t
+  l@Left {}                   -> l
 
+------------------------------------------------------------------------------
+
+isTyAbb :: Context -> Int -> Either Err Bool
+isTyAbb ctx i = getBinding ctx i >>= \case
+  TyAbbBind _ -> pure True
+  _           -> pure False
+
+getTyAbb :: Context -> Int -> Either Err Ty
+getTyAbb ctx i = getBinding ctx i >>= \case
+  TyAbbBind tyT -> pure tyT
+  _             -> Left NoRuleApplies
 {-
-let istyabb ctx i =
-  match getbinding dummyinfo ctx i with
-    TyAbbBind(tyT) -> true
-  | _ -> false
-
-let gettyabb ctx i =
-  match getbinding dummyinfo ctx i with
-    TyAbbBind(tyT) -> tyT
-  | _ -> raise NoRuleApplies
-
 let rec computety ctx tyT = match tyT with
     TyVar(i,_) when istyabb ctx i -> gettyabb ctx i
   | _ -> raise NoRuleApplies
