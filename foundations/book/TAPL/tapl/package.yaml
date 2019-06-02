@@ -3,6 +3,8 @@ version:             0.1.0.0
 
 dependencies:
 - base >= 4.7 && < 5
+- hspec
+- hspec-expectations
 - protolude
 
 ghc-options:
@@ -21,6 +23,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - hspec
-    - hspec-expectations
     - tapl
