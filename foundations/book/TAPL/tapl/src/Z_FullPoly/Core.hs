@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
+-- {-# LANGUAGE OverloadedStrings #-}
 
 module Z_FullPoly.Core where
 
@@ -9,7 +9,7 @@ import           Z_FullPoly.Syntax
 
 ------------------------   EVALUATION  ------------------------
 
-data NoRuleApplies = NoRuleApplies
+data NoRuleApplies = NoRuleApplies deriving (Eq, Show)
 
 isVal :: Context -> Term -> Bool
 isVal ctx = \case
@@ -20,109 +20,49 @@ isVal ctx = \case
   TmTAbs {}                    -> True
   _                            -> False
 
-eval1 :: Context -> Term -> Term
+eval1 :: Context -> Term -> Either NoRuleApplies Term
 eval1 ctx = \case
   TmApp (TmAbs _x _tyT11 t12) v2 | isVal ctx v2 ->
-      termSubstTop v2 t12
-  x -> panic ("not implemented: " <> show x)
+    pure $ termSubstTop v2 t12
+  TmApp v1 t2 | isVal ctx v1 -> do
+    t2' <- eval1 ctx t2
+    pure $ TmApp v1 t2'
+  TmApp t1 t2 -> do
+     t1' <- eval1 ctx t1
+     pure $ TmApp t1' t2
+  TmIf TmTrue  t2 _t3 ->
+    pure t2
+  TmIf TmFalse _t2 t3 ->
+    pure t3
+  TmIf t1 t2 t3 -> do
+    t1' <- eval1 ctx t1
+    pure $ TmIf t1' t2 t3
+  TmUnpack _ _ (TmPack tyT11 v12 _) t2 | isVal ctx v12 ->
+    pure $ tyTermSubstTop tyT11 (termSubstTop (termShift 1 v12) t2)
+  TmUnpack tyX x t1 t2 -> do
+    t1' <- eval1 ctx t1
+    pure $ TmUnpack tyX x t1' t2
+  TmPack tyT1 t2 tyT3 -> do
+    t2' <- eval1 ctx t2
+    pure $ TmPack tyT1 t2' tyT3
+  TmVar _ n _ ->
+    case getBinding ctx n of
+      TmAbbBind t _ -> pure t
+      _ -> Left NoRuleApplies
+  TmTApp (TmTAbs _x t11) tyT2 ->
+    pure $ tyTermSubstTop tyT2 t11
+  TmTApp t1 tyT2 -> do
+    t1' <- eval1 ctx t1
+    pure $ TmTApp t1' tyT2
+  _ ->
+    Left NoRuleApplies
+
+eval :: Context -> Term -> Term
+eval ctx t = case eval1 ctx t of
+  Left NoRuleApplies -> t
+  Right t'           -> eval ctx t'
+
 {-
-  | TmApp(fi,v1,t2) when isval ctx v1 ->
-      let t2' = eval1 ctx t2 in
-      TmApp(fi, v1, t2')
-  | TmApp(fi,t1,t2) ->
-      let t1' = eval1 ctx t1 in
-      TmApp(fi, t1', t2)
-  | TmLet(fi,x,v1,t2) when isval ctx v1 ->
-      termSubstTop v1 t2
-  | TmLet(fi,x,t1,t2) ->
-      let t1' = eval1 ctx t1 in
-      TmLet(fi, x, t1', t2)
-  | TmFix(fi,v1) as t when isval ctx v1 ->
-      (match v1 with
-         TmAbs(_,_,_,t12) -> termSubstTop t t12
-       | _ -> raise NoRuleApplies)
-  | TmFix(fi,t1) ->
-      let t1' = eval1 ctx t1
-      in TmFix(fi,t1')
-  | TmAscribe(fi,v1,tyT) when isval ctx v1 ->
-      v1
-  | TmAscribe(fi,t1,tyT) ->
-      let t1' = eval1 ctx t1 in
-      TmAscribe(fi,t1',tyT)
-  | TmRecord(fi,fields) ->
-      let rec evalafield l = match l with
-        [] -> raise NoRuleApplies
-      | (l,vi)::rest when isval ctx vi ->
-          let rest' = evalafield rest in
-          (l,vi)::rest'
-      | (l,ti)::rest ->
-          let ti' = eval1 ctx ti in
-          (l, ti')::rest
-      in let fields' = evalafield fields in
-      TmRecord(fi, fields')
-  | TmProj(fi, (TmRecord(_, fields) as v1), l) when isval ctx v1 ->
-      (try List.assoc l fields
-       with Not_found -> raise NoRuleApplies)
-  | TmProj(fi, t1, l) ->
-      let t1' = eval1 ctx t1 in
-      TmProj(fi, t1', l)
-  | TmIf(_,TmTrue(_),t2,t3) ->
-      t2
-  | TmIf(_,TmFalse(_),t2,t3) ->
-      t3
-  | TmIf(fi,t1,t2,t3) ->
-      let t1' = eval1 ctx t1 in
-      TmIf(fi, t1', t2, t3)
-  | TmTimesfloat(fi,TmFloat(_,f1),TmFloat(_,f2)) ->
-      TmFloat(fi, f1 *. f2)
-  | TmTimesfloat(fi,(TmFloat(_,f1) as t1),t2) ->
-      let t2' = eval1 ctx t2 in
-      TmTimesfloat(fi,t1,t2')
-  | TmTimesfloat(fi,t1,t2) ->
-      let t1' = eval1 ctx t1 in
-      TmTimesfloat(fi,t1',t2)
-  | TmSucc(fi,t1) ->
-      let t1' = eval1 ctx t1 in
-      TmSucc(fi, t1')
-  | TmPred(_,TmZero(_)) ->
-      TmZero(dummyinfo)
-  | TmPred(_,TmSucc(_,nv1)) when (isnumericval ctx nv1) ->
-      nv1
-  | TmPred(fi,t1) ->
-      let t1' = eval1 ctx t1 in
-      TmPred(fi, t1')
-  | TmIsZero(_,TmZero(_)) ->
-      TmTrue(dummyinfo)
-  | TmIsZero(_,TmSucc(_,nv1)) when (isnumericval ctx nv1) ->
-      TmFalse(dummyinfo)
-  | TmIsZero(fi,t1) ->
-      let t1' = eval1 ctx t1 in
-      TmIsZero(fi, t1')
-  | TmUnpack(fi,_,_,TmPack(_,tyT11,v12,_),t2) when isval ctx v12 ->
-      tytermSubstTop tyT11 (termSubstTop (termShift 1 v12) t2)
-  | TmUnpack(fi,tyX,x,t1,t2) ->
-      let t1' = eval1 ctx t1 in
-      TmUnpack(fi,tyX,x,t1',t2)
-  | TmPack(fi,tyT1,t2,tyT3) ->
-      let t2' = eval1 ctx t2 in
-      TmPack(fi,tyT1,t2',tyT3)
-  | TmVar(fi,n,_) ->
-      (match getbinding fi ctx n with
-          TmAbbBind(t,_) -> t
-        | _ -> raise NoRuleApplies)
-  | TmTApp(fi,TmTAbs(_,x,t11),tyT2) ->
-      tytermSubstTop tyT2 t11
-  | TmTApp(fi,t1,tyT2) ->
-      let t1' = eval1 ctx t1 in
-      TmTApp(fi, t1', tyT2)
-  | _ ->
-      raise NoRuleApplies
-
-let rec eval ctx t =
-  try let t' = eval1 ctx t
-      in eval ctx t'
-  with NoRuleApplies -> t
-
 let istyabb ctx i =
   match getbinding dummyinfo ctx i with
     TyAbbBind(tyT) -> true

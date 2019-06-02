@@ -132,8 +132,8 @@ termShift d = termShiftAbove d 0
 typeShift :: Int -> Ty -> Ty
 typeShift d = typeShiftAbove d 0
 
-bindingshift :: Int -> Binding -> Binding
-bindingshift d = \case
+bindingShift :: Int -> Binding -> Binding
+bindingShift d = \case
   NameBind              -> NameBind
   TyVarBind             -> TyVarBind
   TyAbbBind tyT         -> TyAbbBind (typeShift d tyT)
@@ -177,270 +177,23 @@ tyTermSubst tyS =
 tyTermSubstTop :: Ty -> Term -> Term
 tyTermSubstTop tyS t =
   termShift (-1) (tyTermSubst (typeShift 1 tyS) 0 t)
-{-
-(* ---------------------------------------------------------------------- *)
-(* Context management (continued) *)
 
-let rec getbinding fi ctx i =
-  try
-    let (_,bind) = List.nth ctx i in
-    bindingshift (i+1) bind
-  with Failure _ ->
-    let msg =
-      Printf.sprintf "Variable lookup failure: offset: %d, ctx size: %d" in
-    error fi (msg i (List.length ctx))
- let getTypeFromContext fi ctx i =
-   match getbinding fi ctx i with
-         VarBind(tyT) -> tyT
-     | TmAbbBind(_,Some(tyT)) -> tyT
-     | TmAbbBind(_,None) -> error fi ("No type recorded for variable "
-                                        ^ (index2name fi ctx i))
-     | _ -> error fi
-       ("getTypeFromContext: Wrong kind of binding for variable "
-         ^ (index2name fi ctx i))
-(* ---------------------------------------------------------------------- *)
-(* Extracting file info *)
+----------------------------------------------------------------------
+-- Context management (continued)
 
-let tmInfo t = match t with
-    TmInert(fi,_) -> fi
-  | TmVar(fi,_,_) -> fi
-  | TmAbs(fi,_,_,_) -> fi
-  | TmApp(fi, _, _) -> fi
-  | TmLet(fi,_,_,_) -> fi
-  | TmFix(fi,_) -> fi
-  | TmString(fi,_) -> fi
-  | TmUnit(fi) -> fi
-  | TmAscribe(fi,_,_) -> fi
-  | TmProj(fi,_,_) -> fi
-  | TmRecord(fi,_) -> fi
-  | TmTrue(fi) -> fi
-  | TmFalse(fi) -> fi
-  | TmIf(fi,_,_,_) -> fi
-  | TmFloat(fi,_) -> fi
-  | TmTimesfloat(fi,_,_) -> fi
-  | TmZero(fi) -> fi
-  | TmSucc(fi,_) -> fi
-  | TmPred(fi,_) -> fi
-  | TmIsZero(fi,_) -> fi
-  | TmPack(fi,_,_,_) -> fi
-  | TmUnpack(fi,_,_,_,_) -> fi
-  | TmTAbs(fi,_,_) -> fi
-  | TmTApp(fi,_, _) -> fi
+getBinding :: Context -> Int -> Binding
+getBinding ctx i =
+  if i < ctxLength ctx
+    then let (_,bind) = ctx Prelude.!! i
+          in bindingShift (i+1) bind
+  else
+    panic ("Variable lookup failure: offset: " <> show i <> ", ctx size: " <> show (ctxLength ctx))
 
-(* ---------------------------------------------------------------------- *)
-(* Printing *)
-
-(* The printing functions call these utility functions to insert grouping
-  information and line-breaking hints for the pretty-printing library:
-     obox   Open a "box" whose contents will be indented by two spaces if
-            the whole box cannot fit on the current line
-     obox0  Same but indent continuation lines to the same column as the
-            beginning of the box rather than 2 more columns to the right
-     cbox   Close the current box
-     break  Insert a breakpoint indicating where the line maybe broken if
-            necessary.
-  See the documentation for the Format module in the OCaml library for
-  more details.
-*)
-
-let obox0() = open_hvbox 0
-let obox() = open_hvbox 2
-let cbox() = close_box()
-let break() = print_break 0 0
-
-let small t =
-  match t with
-    TmVar(_,_,_) -> true
-  | _ -> false
-
-let rec printty_Type outer ctx tyT = match tyT with
-    TyAll(tyX,tyT2) ->
-      let (ctx1,tyX) = (pickfreshname ctx tyX) in
-      obox(); pr "All "; pr tyX; pr ".";
-      print_space ();
-      printty_Type outer ctx1 tyT2;
-      cbox()
-  | tyT -> printty_ArrowType outer ctx tyT
-
-and printty_ArrowType outer ctx  tyT = match tyT with
-    TyArr(tyT1,tyT2) ->
-      obox0();
-      printty_AType false ctx tyT1;
-      if outer then pr " ";
-      pr "->";
-      if outer then print_space() else break();
-      printty_ArrowType outer ctx tyT2;
-      cbox()
-  | tyT -> printty_AType outer ctx tyT
-
-and printty_AType outer ctx tyT = match tyT with
-    TyVar(x,n) ->
-      if ctxlength ctx = n then
-        pr (index2name dummyinfo ctx x)
-      else
-        pr ("[bad index: " ^ (string_of_int x) ^ "/" ^ (string_of_int n)
-            ^ " in {"
-            ^ (List.fold_left (fun s (x,_) -> s ^ " " ^ x) "" ctx)
-            ^ " }]")
-  | TyId(b) -> pr b
-  | TyString -> pr "String"
-  | TyUnit -> pr "Unit"
-  | TyRecord(fields) ->
-        let pf i (li,tyTi) =
-          if (li <> ((string_of_int i))) then (pr li; pr ":");
-          printty_Type false ctx tyTi
-        in let rec p i l = match l with
-            [] -> ()
-          | [f] -> pf i f
-          | f::rest ->
-              pf i f; pr","; if outer then print_space() else break();
-              p (i+1) rest
-        in pr "{"; open_hovbox 0; p 1 fields; pr "}"; cbox()
-  | TyBool -> pr "Bool"
-  | TyFloat -> pr "Float"
-  | TyNat -> pr "Nat"
-  | TySome(tyX,tyT2) ->
-      let (ctx1,tyX) = pickfreshname ctx tyX in
-      obox();
-      pr "{Some "; pr tyX; pr ",";
-      if outer then print_space() else break();
-      printty_Type false ctx1 tyT2; pr "}";
-      cbox()
-  | tyT -> pr "("; printty_Type outer ctx tyT; pr ")"
-
-let printty ctx tyT = printty_Type true ctx tyT
-
-let rec printtm_Term outer ctx t = match t with
-    TmAbs(fi,x,tyT1,t2) ->
-      (let (ctx',x') = (pickfreshname ctx x) in
-         obox(); pr "lambda ";
-         pr x'; pr ":"; printty_Type false ctx tyT1; pr ".";
-         if (small t2) && not outer then break() else print_space();
-         printtm_Term outer ctx' t2;
-         cbox())
-  | TmLet(fi, x, t1, t2) ->
-       obox0();
-       pr "let "; pr x; pr " = ";
-       printtm_Term false ctx t1;
-       print_space(); pr "in"; print_space();
-       printtm_Term false (addname ctx x) t2;
-       cbox()
-  | TmFix(fi, t1) ->
-       obox();
-       pr "fix ";
-       printtm_Term false ctx t1;
-       cbox()
-  | TmIf(fi, t1, t2, t3) ->
-       obox0();
-       pr "if ";
-       printtm_Term false ctx t1;
-       print_space();
-       pr "then ";
-       printtm_Term false ctx t2;
-       print_space();
-       pr "else ";
-       printtm_Term false ctx t3;
-       cbox()
-  | TmUnpack(fi,tyX,x,t1,t2) ->
-      (let (ctx',tyX) = (pickfreshname ctx tyX) in
-      let (ctx',x) = (pickfreshname ctx' x) in
-      obox(); pr "let {"; pr tyX; pr ","; pr x; pr "} ="; print_space();
-      printtm_Term false ctx t1; pr " in ";
-      printtm_Term outer ctx' t2; cbox())
-  | TmTAbs(fi,x,t) ->
-      (let (ctx1,x) = (pickfreshname ctx x) in
-            obox(); pr "lambda "; pr x; pr ".";
-            if (small t) && not outer then break() else print_space();
-            printtm_Term outer ctx1 t;
-            cbox())
-  | t -> printtm_AppTerm outer ctx t
-
-and printtm_AppTerm outer ctx t = match t with
-    TmApp(fi, t1, t2) ->
-      obox0();
-      printtm_AppTerm false ctx t1;
-      print_space();
-      printtm_ATerm false ctx t2;
-      cbox()
-  | TmTimesfloat(_,t1,t2) ->
-       pr "timesfloat "; printtm_ATerm false ctx t2;
-       pr " "; printtm_ATerm false ctx t2
-  | TmPred(_,t1) ->
-       pr "pred "; printtm_ATerm false ctx t1
-  | TmIsZero(_,t1) ->
-       pr "iszero "; printtm_ATerm false ctx t1
-  | TmTApp(fi,t,tyS) ->
-      obox0();
-      printtm_AppTerm false ctx t;
-      print_space();
-      pr "["; printty_Type false ctx tyS; pr "]";
-      cbox()
-  | t -> printtm_PathTerm outer ctx t
-
-and printtm_AscribeTerm outer ctx t = match t with
-    TmAscribe(_,t1,tyT1) ->
-      obox0();
-      printtm_AppTerm false ctx t1;
-      print_space(); pr "as ";
-      printty_Type false ctx tyT1;
-      cbox()
-  | t -> printtm_ATerm outer ctx t
-
-and printtm_PathTerm outer ctx t = match t with
-    TmProj(_, t1, l) ->
-      printtm_ATerm false ctx t1; pr "."; pr l
-  | t -> printtm_AscribeTerm outer ctx t
-
-and printtm_ATerm outer ctx t = match t with
-    TmInert(_,tyT) -> pr "inert["; printty_Type false ctx tyT; pr "]"
-  | TmVar(fi,x,n) ->
-      if ctxlength ctx = n then
-        pr (index2name fi ctx x)
-      else
-        pr ("[bad index: " ^ (string_of_int x) ^ "/" ^ (string_of_int n)
-            ^ " in {"
-            ^ (List.fold_left (fun s (x,_) -> s ^ " " ^ x) "" ctx)
-            ^ " }]")
-  | TmString(_,s) -> pr ("\"" ^ s ^ "\"")
-  | TmUnit(_) -> pr "unit"
-  | TmRecord(fi, fields) ->
-       let pf i (li,ti) =
-         if (li <> ((string_of_int i))) then (pr li; pr "=");
-         printtm_Term false ctx ti
-       in let rec p i l = match l with
-           [] -> ()
-         | [f] -> pf i f
-         | f::rest ->
-             pf i f; pr","; if outer then print_space() else break();
-             p (i+1) rest
-       in pr "{"; open_hovbox 0; p 1 fields; pr "}"; cbox()
-  | TmTrue(_) -> pr "true"
-  | TmFalse(_) -> pr "false"
-  | TmFloat(_,s) -> pr (string_of_float s)
-  | TmZero(fi) ->
-       pr "0"
-  | TmSucc(_,t1) ->
-     let rec f n t = match t with
-         TmZero(_) -> pr (string_of_int n)
-       | TmSucc(_,s) -> f (n+1) s
-       | _ -> (pr "(succ "; printtm_ATerm false ctx t1; pr ")")
-     in f 1 t1
-  | TmPack(fi,tyT1,t2,tyT3) ->
-      obox(); pr "{*"; printty_Type false ctx tyT1;
-      pr ","; if outer then print_space() else break();
-      printtm_Term false ctx t2;
-      pr "}"; print_space(); pr "as ";
-      printty_Type outer ctx tyT3;
-      cbox()
-  | t -> pr "("; printtm_Term outer ctx t; pr ")"
-
-let printtm ctx t = printtm_Term true ctx t
-
-let prbinding ctx b = match b with
-    NameBind -> ()
-  | TyVarBind -> ()
-  | VarBind(tyT) -> pr ": "; printty ctx tyT
-  | TyAbbBind(tyT) -> pr "= "; printty ctx tyT
-  | TmAbbBind(t,tyT) -> pr "= "; printtm ctx t
-
--}
+getTypeFromContext :: Context -> Int -> Ty
+getTypeFromContext ctx i =
+  case getBinding ctx i of
+    VarBind tyT            -> tyT
+    TmAbbBind _ (Just tyT) -> tyT
+    TmAbbBind _ Nothing    -> panic ("No type recorded for variable " <> indexToName ctx i)
+    _                      -> panic ("getTypeFromContext: Wrong kind of binding for variable "
+                                    <> indexToName ctx i)

@@ -19,5 +19,5 @@ eval1Test  = describe "eval1" $
     eval1 [] (TmApp (TmAbs "x" TyBool (TmVar "x" 0 0))  -- same a termSubstTop 1 above
                     (TmAbs "z" TyBool (TmVar "z" 0 0)))
     `shouldBe`
-                     TmAbs "z" TyBool (TmVar "z" 0 0)
+    (Right $         TmAbs "z" TyBool (TmVar "z" 0 0))
 
