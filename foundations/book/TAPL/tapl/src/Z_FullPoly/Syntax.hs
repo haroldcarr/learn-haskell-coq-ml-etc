@@ -10,10 +10,17 @@ type Var = Text
 
 data Err
   = NoRuleApplies
-  | VarLookupFailure   Int Int
-  | UnboundVar         Var
-  | NoTypeRecorded     Var
-  | WrongKindOfBinding Var
+  | VarLookupFailure      Int Int
+  | UnboundVar            Var
+  | NoTypeRecorded        Var
+  | WrongKindOfBinding    Var
+  | ParameterTypeMismatch
+  | ArrowTypeExpected
+  | ArmsOfConditionalHaveDifferentTypes
+  | GuardOfConditionalNotABoolean
+  | DoesNotMatchDeclaredType
+  | ExistentialTypeExpected
+  | UniversalTypeExpected
   deriving (Eq, Show)
 
 ----------------------------------------------------------------------
