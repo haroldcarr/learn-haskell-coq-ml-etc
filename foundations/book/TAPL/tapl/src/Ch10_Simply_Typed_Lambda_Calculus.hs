@@ -18,13 +18,13 @@ type Context = [(Var, Binding)]
 addBinding :: Context -> Var -> Binding -> Context
 addBinding ctx x bind = (x,bind) : ctx
 
-getBinding :: Context -> Var -> Either Text Binding
-getBinding ctx var = foldr go (Left $ "'" <> var <> "' not found") ctx
- where go (v,b) r = if v == var then Right b else r
+getBinding :: Context -> Int -> Either Text Binding
+getBinding ctx idx = foldr go (Left $ show idx <> " not found") (zip [0 ..] ctx)
+ where go (i,(_,b)) r = if i == idx then Right b else r
 
-getTypeFromContext :: Context -> Var -> Either Text Ty
-getTypeFromContext ctx var = getBinding ctx var >>= go
- where go = \case VarBind ty -> Right ty; x -> Left $ "'" <> var <> "' wrong binding " <> show x
+getTypeFromContext :: Context -> Int -> Either Text Ty
+getTypeFromContext ctx idx = getBinding ctx idx >>= go
+ where go = \case VarBind ty -> Right ty; x -> Left $ show idx <> " wrong binding " <> show x
 
 data Ty
   = TyBool
@@ -35,8 +35,8 @@ data Term
   = TmTrue
   | TmFalse
   | TmIf  Term Term Term
-  | TmVar Var
-  | TmAbs Var  Ty Term
+  | TmVar Var  Int
+  | TmAbs Var  Ty   Term
   | TmApp Term Term
   deriving (Eq, Show)
 
@@ -46,16 +46,17 @@ typeOf :: Context -> Term -> Either Text Ty
 typeOf ctx = \case
   TmTrue             -> pure TyBool
   TmFalse            -> pure TyBool
-  TmVar var          -> getTypeFromContext ctx var
+  TmVar _v  idx      -> getTypeFromContext ctx idx
+  -- Note: Abs are input with ONLY their input type.  This branch fills in the output type.
   TmAbs var typ body -> TyArr typ <$> typeOf (addBinding ctx var (VarBind typ)) body
-  tif@(TmIf c t f)   ->
-    typeOf ctx c >>= \tc -> if tc /= TyBool then Left $ "if guard not given TyBool " <> show tif
+  tif@(TmIf c t f)   -> do
+    tc <- typeOf ctx c
+    if tc /= TyBool then Left $ "if guard not given TyBool " <> show tif
     else do
       tyT <- typeOf ctx t
       tyF <- typeOf ctx f
-      if tyT /= tyF
-        then Left $ "if arms have different types " <> show tif
-        else pure tyT
+      if tyT /= tyF then Left $ "if arms have different types " <> show tif
+      else pure tyT
   t@(TmApp t1 t2)    ->
     typeOf ctx t1 >>= \case
       TyArr tyT11 tyT12 -> do
