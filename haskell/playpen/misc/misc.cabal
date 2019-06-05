@@ -1,34 +1,55 @@
-name:                  misc
-version:               0.1.0.0
-build-type:            Simple
-cabal-version:         >=1.10
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 1bd0b8a9725a56920e8d2c774c77864a294ce69d874065d022dcd98060d16987
+
+name:           misc
+version:        0.1.0.0
+build-type:     Simple
 
 library
-  hs-source-dirs:      src
-  exposed-modules:     Interleave
-                     , ListComprehension
-                     , ReaderFun
-                     , RebindableSyntax
-                     , Seq
-                     , ValidResponses
-  build-depends:       base >=4.7 && <5
-                     , containers
-                     , protolude
-                     , text
-  default-language:    Haskell2010
-  ghc-options:         -Wall
+  exposed-modules:
+      Interleave
+      ListComprehension
+      Misc
+      Phantom_GADT
+      ReaderFun
+      RebindableSyntax
+      Seq
+      ValidResponses
+      Yoneda
+  other-modules:
+      Paths_misc
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , protolude
+    , text
+  default-language: Haskell2010
 
-test-suite test
-  other-modules:       XXSpec
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             hspec.hs
-  ghc-options:         -Wall
-  default-language:    Haskell2010
-  build-depends:       base >=4.7 && <5
-                     , bytestring
-                     , containers
-                     , cryptonite
-                     , misc
-                     , hspec
-                     , hspec-expectations
+test-suite t
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      XXSpec
+      Paths_misc
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , containers
+    , cryptonite
+    , hspec
+    , hspec-expectations
+    , misc
+    , protolude
+    , text
+  default-language: Haskell2010

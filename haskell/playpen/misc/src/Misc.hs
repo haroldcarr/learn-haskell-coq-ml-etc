@@ -1,3 +1,5 @@
+module Misc where
+
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 data ExprL a
   = Const a
