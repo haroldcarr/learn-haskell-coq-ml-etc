@@ -1,0 +1,119 @@
+https://lambdaconf.zohobackstage.com/LambdaConf2019
+
+------------------------------------------------------------------------------
+
+Category Theory as a Tool for Thought
+
+Daniel Beskin
+
+https://github.com/ncreep/category-theory-as-a-tool-for-thought
+
+------------------------------------------------------------------------------
+
+Specifying Distributed Systems with TLA+
+
+Pawel Szulc
+
+------------------------------------------------------------------------------
+
+Isomorphic Reasoning: Counting with Types
+
+Emily Pillmore
+
+Alexander Konovalov
+
+https://github.com/cohomolo-gy/Isomorphic-Reasoning/blob/master/main.pdf
+
+------------------------------------------------------------------------------
+
+Types as Program Specifications: An Introduction to Type-Level Programming in Haskell
+
+Thomas Dietert
+
+https://github.com/tdietert/types-as-specifications
+
+------------------------------------------------------------------------------
+
+Pluggable, Stackable API Implementations
+
+Harold Carr
+
+https://github.com/haroldcarr/pluggable-stackable-api-impl-example
+
+------------------------------------------------------------------------------
+
+Overlapping and Undecidable and Incoherent, Oh My!
+
+Jake Keuhlen
+
+------------------------------------------------------------------------------
+
+An Introduction to Natural Deduction
+
+Lyle Kopnicky
+
+https://github.com/lylek/proof-verifier.git
+
+Natural Deduction cheatsheet:
+ https://drive.google.com/file/d/13j8_mLuFS13dx6ISSuVKTPi9kd9ojKwn/view?usp=sharing
+
+Curry Howard cheatsheet: https://drive.google.com/file/d/1KKsYVJowkr_N6n4wCnurnZaG4oi5CjsG/view?usp=sharing
+
+slides:
+ https://drive.google.com/file/d/1YtdcuCO_22WVSfJBSxFA-tWImVWvkow3/view?usp=sharing
+
+------------------------------------------------------------------------------
+
+The CDelta Cryptocurrency Platform
+
+Michael Stay
+
+------------------------------------------------------------------------------
+
+Using Dependent Types in Mathematical Optimization Algorithms
+
+Ryan Orendorff
+
+------------------------------------------------------------------------------
+
+Records in Haskell: Past, Present, and Future
+
+Simon Hafner
+
+------------------------------------------------------------------------------
+
+Write You Some Proofs for Great Good
+
+Robert Peszek
+
+https://github.com/rpeszek/present-proofs-lc19
+
+------------------------------------------------------------------------------
+
+Haskell in Production: Adventures in Blockchain Building
+
+Colin Woodbury
+
+https://gist.github.com/fosskers/a06ba51223e37ee560a2bf27ef288055
+
+------------------------------------------------------------------------------
+
+Practical Introduction to Eff in Haskell
+
+Keagan McClelland
+
+https://captjakk.com/posts/2019-05-12-practical-intro-eff.html
+
+------------------------------------------------------------------------------
+
+Free vs Tagless Final: What, Why, When?
+
+Markus Hauck
+
+https://github.com/markus1189/free-vs-tagless/blob/master/result/slides.pdf
+
+------------------------------------------------------------------------------
+
+Perception and Persuasion
+
+John Petty
