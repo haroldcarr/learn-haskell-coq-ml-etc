@@ -1,0 +1,9 @@
+name:                justin-le-functor-combinatorpedia
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+- functor-combinators
+
+library:
+  source-dirs: src

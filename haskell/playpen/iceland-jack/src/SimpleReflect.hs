@@ -3,7 +3,7 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE TypeApplications      #-}
 
-module Lib where
+module SimpleReflect where
 
 import Debug.SimpleReflect
 

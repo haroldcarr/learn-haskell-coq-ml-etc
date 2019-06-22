@@ -1,0 +1,20 @@
+resolver: lts-13.25
+
+packages:
+- .
+
+extra-deps:
+- git: git@github.com:mstksg/functor-combinators.git
+  commit: 4635c2aa526a971b9cbc42e4185e34d422b0f1f6
+- trivial-constraint-0.5.1.0@sha256:80f052aa9527ed23fe4bf5066535d5a393a1573b9c193a4cddd2c51ab12b310f,1767
+
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=2.1"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor

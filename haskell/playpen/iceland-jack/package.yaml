@@ -6,6 +6,7 @@ ghc-options:
 
 dependencies:
 - base >= 4.7 && < 5
+- kan-extensions
 - simple-reflect
 
 library:

@@ -1,5 +1,5 @@
 Created       : 2015 Jul 18 (Sat) 22:05:26 by Harold Carr.
-Last Modified : 2018 Nov 07 (Wed) 12:07:31 by Harold Carr.
+Last Modified : 2019 Jun 13 (Thu) 15:21:52 by Harold Carr.
 
 ** test
 
@@ -7,6 +7,7 @@ Last Modified : 2018 Nov 07 (Wed) 12:07:31 by Harold Carr.
 stack repl --test
 
 # selectively run tests
+stack test juno:test:tests-unit --test-arguments "-m AuthMapMeasureViaJcs"
 stack test --test-arguments "-m AuthMapMeasureViaJcs"
 stack test --test-arguments "-m BC.GoofyCoin"
 stack test --test-arguments "-m GCoin.GoofyCoin"
