@@ -73,7 +73,7 @@ Instead of EP container, can use multiparameter type-class with functional depen
 > ch07_03_e3  = from (Cons' 1 (Cons' 2 Nil'))
 >
 > -- this type signature necessary to compile
-> ch07_03_e4 :: GenericFD (List' Integer) (RList Integer) => (List' Integer)
+> ch07_03_e4 :: {-GenericFD (List' Integer) (RList Integer) =>-} (List' Integer)
 > ch07_03_e4  = to ch07_03_e3
 
 `from` constrained to functionally-related types d and r.

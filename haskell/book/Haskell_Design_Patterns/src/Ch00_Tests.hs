@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
+
 module Ch00_Tests where
 
 import Ch05_02_rank_n_types

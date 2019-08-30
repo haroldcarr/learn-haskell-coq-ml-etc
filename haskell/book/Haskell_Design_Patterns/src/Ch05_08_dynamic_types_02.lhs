@@ -23,7 +23,7 @@ from Ch05_07
 > showT RInt  i            = show i ++ " :: INT"
 > showT RChar i            = show i ++ " :: Char"
 >
-> showT (RList rep) []     = "THE END"
+> showT (RList   _)    []  = "THE END"
 > showT (RList rep) (x:xs) = showT rep x ++ ", " ++ showT (RList rep) xs
 >
 > showT RDyn (Dyn rep v)   = showT rep v -- added compared to Ch05_07

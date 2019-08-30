@@ -29,8 +29,7 @@ Enables `tf` to accept a polymorphic function:
 >   (tf show (True, 2))
 >   ("True", "2")
 
-> tfl :: (Foldable t)
->     => (forall a . t a -> b)
+> tfl :: (forall a . t a -> b)
 >     -> (t a1, t a2) -> (b, b)
 > tfl f (x, y) = (f x, f y)
 

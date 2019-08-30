@@ -30,12 +30,12 @@ Add is type level function
 
 Instances use pattern matching on types instead of pattern matching on data-constructors:
 
-> type instance Add  Z    m = m
-> type instance Add (S n) m = S (Add n m)
+> type instance Add  'Z    m = m
+> type instance Add ('S n) m = 'S (Add n m)
 
-> -- xs :: VecD Integer ('S ('S ('S 'Z)))
-> xs = vappend (ConsD 3 (ConsD 5 NilD))
->              (ConsD 7 NilD)
+> -- xs0 :: VecD Integer ('S ('S ('S 'Z)))
+> xs0 = vappend (ConsD 3 (ConsD 5 NilD))
+>               (ConsD 7 NilD)
 
 Add : type-level arithmetic (executed during type-checking)
 
