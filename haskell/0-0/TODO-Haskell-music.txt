@@ -1,0 +1,64 @@
+From: Evan Laforge <qdunkan@gmail.com>
+Subject: [ANN] karya, music editor
+Newsgroups: gmane.comp.lang.haskell.cafe, gmane.comp.lang.haskell.art
+To: haskell <haskell-cafe@haskell.org>, haskell-art@group.lurk.org
+Date: Sun, 27 May 2018 20:22:09 -0700 (1 day, 20 hours, 20 minutes ago)
+
+This is an announcement for Karya, which is a music editor written in Haskell.
+
+There are more details at:
+http://ofb.net/~elaforge/karya/doc/overview.md.html
+
+or if you just want to listen to music:
+http://ofb.net/~elaforge/karya/doc/examples.md.html
+
+Source is at: https://github.com/elaforge/karya
+
+Even if you're not interested in the music part, it's an example of a
+haskell program with a GUI, REPL based interface, tests, profiling,
+and a shake-based build system, although probably idiosyncratic
+implementations of all of the above.  It should run on OS X (well
+tested) and X11 (poorly tested).
+
+If you are interested in the music part, this is basically in the
+"score writing" genre of software, in that it's suitable for writing a
+score in a textual non-realtime way.  But though non-realtime, it's
+still interactive, so you can hear what you just wrote.  And though
+textual and language-oriented, it's also semi-graphical, so it's
+closer to the sequencer / music editor type application than a
+music-oriented DSL like Haskore.  It's hard to describe because as far
+as I know there's nothing else similar.  If you have used a DAW but
+wanted to define higher level abstractions, or if you used Haskore (or
+similar) but found it difficult to write music purely textually, you
+might be interested in this.  Or if you want to use your own tunings
+or scales, or do expressive control of pitch and dynamics.  You'll
+need an external MIDI synthesizer though.  There is a direct synthesis
+backend, but it's not practically usable yet.
+
+It's somewhat mature, in that I've been using for all my own music for
+the last 5 years or so, but of course also has many areas of active
+development, from graphics, to language design and interpretation, to
+music notation design, to audio synthesis and numerics.
+
+There is some documentation, but it's undoubtedly sparse since I'm the
+only user.  Ask if you have questions!  Details will be materialized
+on demand.
+
+Some things not mentioned on the "official" page since they're in progress:
+
+- A DSL to notate solkattu, which is Carnatic percussion syllables,
+and is a sort of instrument-independent notation for rhythmic
+structures, along with rules for realizing on various instruments.
+This is closer to a traditional music DSL like Haskore, but winds up
+different since it's rhythmically oriented.  There's a small library
+of compositions.
+
+- An offline synthesis framework, including a sampler and FAUST-based
+synthesizer, built on a streaming audio library.  I'm currently
+working on implementing off-line incremental audio rendering, which as
+far as I know is unique.
+_______________________________________________
+Haskell-Cafe mailing list
+To (un)subscribe, modify options or view archives go to:
+http://mail.haskell.org/cgi-bin/mailman/listinfo/haskell-cafe
+Only members subscribed via the mailman list are allowed to post.

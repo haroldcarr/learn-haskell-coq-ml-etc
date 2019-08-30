@@ -1,5 +1,5 @@
 Created       : 2015 Jul 18 (Sat) 22:05:26 by Harold Carr.
-Last Modified : 2019 Jun 13 (Thu) 15:21:52 by Harold Carr.
+Last Modified : 2019 Aug 06 (Tue) 14:42:02 by Harold Carr.
 
 ** test
 
@@ -13,6 +13,9 @@ stack test --test-arguments "-m BC.GoofyCoin"
 stack test --test-arguments "-m GCoin.GoofyCoin"
 stack test juno:test:tests-unit
 stack test juno:test:tests-raft
+
+# selectively run test - tasty
+stack test --test-arguments "-p Libra"
 
 ------------------------------------------------------------------------------
 latest LTS
