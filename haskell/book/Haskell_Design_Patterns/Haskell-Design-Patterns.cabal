@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e233d910ee23d12c3c4ec5692a37d2a6646c8af77ef521180aadac466d1ffbe9
+-- hash: 231857903b88df434883f10748534715b6664d62903bcedea6f9e4d5432ee5a2
 
 name:           Haskell-Design-Patterns
 version:        0.1.0.0
@@ -26,6 +26,7 @@ library
       Ch05_10_hlists_via_gadts
       Ch05_11_multiparam_type_classes
       Ch05_12_functional_dependencies
+      Ch06_01_generics_sum_of_products
       Ch07_01_higher_order_kinds
       Ch07_02_higher_kinded_polymorphism
       Ch07_03_associated_type_synonyms
@@ -42,6 +43,8 @@ library
   build-depends:
       HUnit
     , base >=4.7 && <5
+    , hspec
+    , hspec-expectations
     , test-hunit-util
   default-language: Haskell2010
 
