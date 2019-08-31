@@ -1,0 +1,41 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: d7195df3c4e1b3653669ad023a40cff3f4c00246f03f97995d31f51c2cb74384
+
+name:           generics-playground
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Req
+      Uni
+      Uni2
+  other-modules:
+      Paths_generics_playground
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -fwarn-redundant-constraints
+  build-depends:
+      HTTP
+    , HUnit
+    , MissingH
+    , aeson
+    , attoparsec
+    , base >=4.7 && <5
+    , bytestring
+    , ghc-prim
+    , haskell-src-exts
+    , http-conduit
+    , network
+    , syb
+    , template-haskell
+    , text
+    , transformers
+    , uniplate
+    , unordered-containers
+  default-language: Haskell2010

@@ -5,6 +5,8 @@ Last Modified : 2014 Mar 16 (Sun) 12:41:23 by Harold Carr.
 
 {-# LANGUAGE DeriveDataTypeable #-}
 
+module Uni2 where
+
 import           Data.Data
 import           Data.Generics.Uniplate.Data
 import           Data.Typeable

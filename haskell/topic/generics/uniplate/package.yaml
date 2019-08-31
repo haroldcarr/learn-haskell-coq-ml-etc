@@ -1,0 +1,28 @@
+name:                generics-playground
+version:             0.1.0.0
+
+ghc-options:
+- -Wall
+- -fwarn-redundant-constraints
+
+dependencies:
+- aeson
+- attoparsec
+- base >=4.7 && <5
+- bytestring
+- ghc-prim
+- haskell-src-exts
+- HTTP
+- http-conduit
+- HUnit
+- MissingH
+- network
+- syb
+- template-haskell
+- text
+- transformers
+- uniplate
+- unordered-containers
+
+library:
+  source-dirs: src

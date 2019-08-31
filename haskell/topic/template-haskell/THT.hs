@@ -9,7 +9,7 @@ http://www.haskell.org/haskellwiki/Template_Haskell#Generating_records_which_are
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module THU where
+module THT where
 
 import           TH
 

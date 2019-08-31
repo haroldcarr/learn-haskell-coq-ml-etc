@@ -5,6 +5,8 @@ Last Modified : 2014 Mar 16 (Sun) 11:17:56 by Harold Carr.
 http://neilmitchell.blogspot.com/2013/10/haskell-type-graphs-with-uniplate-and.html
 -}
 
+module Uni where
+
 import           Data.Generics.Uniplate.Data
 import           Language.Haskell.Exts
 import           System.Environment
