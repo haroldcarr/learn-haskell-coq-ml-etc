@@ -1,0 +1,38 @@
+name:                tortellini
+version:             0.1.0.0
+github:              "justinwoo/tortellini"
+license:             MIT
+author:              "Justin Woo"
+maintainer:          "moomoowoo@gmail.com"
+copyright:           "2017 Justin Woo"
+
+extra-source-files:
+- README.md
+synopsis:            A library for parsing INI files into a record of records of fields
+description:         See <https://github.com/justinwoo/tortellini#readme>
+
+ghc-options:
+- -Wall
+- -fwarn-redundant-constraints
+
+dependencies:
+- base >= 4.7 && < 5
+- attoparsec
+- text
+- unordered-containers
+- transformers
+
+library:
+  source-dirs: src
+
+tests:
+  tortellini-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - tortellini
+    - hspec
