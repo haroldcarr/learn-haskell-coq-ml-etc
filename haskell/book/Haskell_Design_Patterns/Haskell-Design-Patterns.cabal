@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f1c750dcec55c09cf0be53982939431f8820d47f090722708d8aaada58164d3f
+-- hash: 3e486ee8618393b2852991fd1a3d4cfaea60926ee9ac110799dcecae173a8ad2
 
 name:           Haskell-Design-Patterns
 version:        0.1.0.0
@@ -28,6 +28,7 @@ library
       Ch05_12_functional_dependencies
       Ch06_01_generics_sum_of_products
       Ch06_02_generics_origami_recursion_schemes_fix
+      Ch06_03_generics_scrap_your_boilerplate
       Ch07_01_higher_order_kinds
       Ch07_02_higher_kinded_polymorphism
       Ch07_03_associated_type_synonyms
