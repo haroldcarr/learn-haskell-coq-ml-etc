@@ -6,10 +6,10 @@ import           Data.HashMap.Strict  (HashMap)
 import qualified Data.HashMap.Strict  as HM
 import           Data.Text
 
-type IniDocument = HashMap Text (HashMap Text Text)
+type IniAsNestedMap = HashMap Text (HashMap Text Text)
 
-parseIniDocument :: Text -> Either String IniDocument
-parseIniDocument = parseOnly (document <* (endOfInput <|> pure ()))
+parseIniToNestedMap :: Text -> Either String IniAsNestedMap
+parseIniToNestedMap = parseOnly (document <* (endOfInput <|> pure ()))
 
 whiteSpace :: Parser ()
 whiteSpace =
@@ -39,7 +39,7 @@ section = lexeme $ do
   body <- HM.fromList <$> many field
   pure (name, body)
 
-document :: Parser IniDocument
+document :: Parser IniAsNestedMap
 document = do
   whiteSpace
   HM.fromList <$> many section

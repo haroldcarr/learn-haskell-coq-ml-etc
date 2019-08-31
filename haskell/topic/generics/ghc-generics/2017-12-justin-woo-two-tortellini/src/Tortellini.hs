@@ -13,7 +13,7 @@
 
 module Tortellini where
 
-import           Parser                     (parseIniDocument)
+import           Parser                     (IniAsNestedMap, parseIniToNestedMap)
 ------------------------------------------------------------------------------
 import           Control.Monad.Trans.Except
 import qualified Data.Attoparsec.Text       as AP
@@ -46,7 +46,7 @@ parseIni
   => Text
   -> Either TortErrors record
 parseIni s = do
-  doc <- first (pure . ErrorInParsing . T.pack) $ parseIniDocument s
+  doc <- first (pure . ErrorInParsing . T.pack) $ parseIniToNestedMap s
   -- value created by applying 'to' to transform Generic Rep to value of target type
   runExcept $ to <$> readDocumentSections doc
 
@@ -63,7 +63,7 @@ type TortErrors = NonEmpty TortError
 -- Reading the document body
 
 class ReadDocumentSections (f :: * -> *) where
-  readDocumentSections :: HashMap Text (HashMap Text Text) -> Except TortErrors (f a)
+  readDocumentSections :: IniAsNestedMap -> Except TortErrors (f a)
 
 instance ReadDocumentSections a => ReadDocumentSections (D1 meta a) where
   readDocumentSections hm = M1 <$> readDocumentSections @a hm
