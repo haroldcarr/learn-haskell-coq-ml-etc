@@ -1,0 +1,7 @@
+Created       : 2015 Apr 25 (Sat) 07:57:01 by Harold Carr.
+Last Modified : 2015 Apr 25 (Sat) 07:57:37 by Harold Carr.
+
+https://courses.csail.mit.edu/6.042/spring15/
+https://stellar.mit.edu/S/course/6/sp15/6.042/materials.html
+
+# End of file.
