@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.0.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1bd0b8a9725a56920e8d2c774c77864a294ce69d874065d022dcd98060d16987
+-- hash: d5f4cad3e13f1660925d89d97a67eea8eb65a40d49a3b1bf46cedcaf073a9f9c
 
 name:           misc
 version:        0.1.0.0
@@ -12,6 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      DataDotTree
       Interleave
       ListComprehension
       Misc
@@ -29,6 +30,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , pretty-tree
     , protolude
     , text
   default-language: Haskell2010
@@ -50,6 +52,7 @@ test-suite t
     , hspec
     , hspec-expectations
     , misc
+    , pretty-tree
     , protolude
     , text
   default-language: Haskell2010

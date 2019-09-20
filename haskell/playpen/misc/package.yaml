@@ -7,6 +7,7 @@ ghc-options:
 dependencies:
 - base >= 4.7 && < 5
 - containers
+- pretty-tree
 - protolude
 - text
 
