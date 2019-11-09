@@ -1,0 +1,832 @@
+Let us consider some examples with more informative statements.
+
+Remember the Lie ring. A Lie ring has another interesting property that may be proved using constructive negation.
+
+Theorem 5 Let 
+⟨
+R
+,
++
+,
+⋅
+,
+−
+,
+0
+⟩
+ be a Lie ring. Then there is no 
+e
+∈
+R
+ such that 
+e
+≠
+0
+ and forall 
+a
+∈
+R
+,
+a
+⋅
+e
+=
+a
+. In other words, the Lie ring has no multiplication identity.
+
+Proof Suppose there exists 
+e
+∈
+R
+ such that 
+e
+≠
+0
+ and forall 
+a
+∈
+R
+,
+a
+⋅
+e
+=
+a
+. Then 
+e
+⋅
+e
+=
+e
+. On the other hand, 
+e
+⋅
+e
+=
+0
+ by alternation. Then 
+0
+=
+e
+⋅
+e
+=
+e
+, thus 
+e
+=
+0
+. But 
+e
+≠
+0
+. Contradiction. 
+□
+.
+
+In the first-order language, we write the statement from the theorem above as: 
+¬
+(
+∃
+e
+∈
+R
+,
+(
+¬
+(
+e
+=
+0
+)
+∧
+(
+∀
+x
+∈
+R
+,
+x
+⋅
+e
+=
+x
+)
+)
+)
+, that is: 
+(
+∃
+e
+∈
+R
+,
+(
+¬
+(
+e
+=
+0
+)
+∧
+(
+∀
+x
+∈
+R
+,
+x
+⋅
+e
+=
+x
+)
+)
+)
+→
+⊥
+.
+
+We read this formula as “if there exists 
+e
+∈
+R
+, such that 
+e
+≠
+0
+ and forall 
+x
+∈
+R
+ 
+x
+⋅
+e
+=
+x
+, then bottom is proved”. That is, if we present some 
+e
+ with required properties, then we proved a contradiction. According to the definition of 
+Σ
+-type, a proof of an existence of 
+e
+ with those properties is an ordered pair 
+(
+e
+,
+P
+)
+, where 
+e
+ is some element of a Lie ring 
+R
+ and 
+P
+ is a proof that a property holds for 
+e
+. In our case, 
+P
+ is a proof of 
+¬
+(
+e
+=
+0
+)
+∧
+(
+∀
+x
+∈
+R
+,
+x
+⋅
+e
+=
+x
+)
+)
+, i.e., 
+P
+ is an ordered pair (¬e≡θ , identityProof), where ¬e≡θ proves 
+¬
+(
+e
+=
+0
+)
+ and identityProof proves 
+∀
+x
+∈
+R
+,
+x
+⋅
+e
+=
+x
+.
+
+Accordingly, we need to prove a contradiction with the ordered pair (e, (¬e≡θ, identityProof)), what we have already done above, but informally.
+
+We formalise this proof in Agda:
+
+noIdentity : ¬ (Σ R λ e → (¬ (e ≡ θ)) × ((x : R) → x · e ≡ x))
+noIdentity (e , (¬e≡θ , identityProof)) =
+    let identityIsZero = sym $ trans (sym $ alternation e) (identityProof e) in
+    ¬e≡θ identityIsZero
+We may unfold the negation in the signature of the given function and obtain the type Σ R λ e → ¬ (e ≡ θ) × ((x : R) → x · e ≡ x) → ⊥.
+
+In other words, we have a triple e , ¬e≡θ , identityProof and we should prove ⊥, where e : R, ¬e≡θ is a proof that 
+e
+ doesn’t equal to zero and identityProof is a proof that for all 
+x
+∈
+R
+,
+x
+⋅
+e
+=
+x
+.
+
+It is easy to show that 
+e
+ equals to zero (follows from alternation axiom and assumption identityProof). We declare locally a term called identityIsZero for this purpose. Hence, identityIsZero : e ≡ θ. On the other hand, ¬e≡θ : ¬ e ≡ θ, i.e. ¬e≡θ : e ≡ θ → ⊥. Thus ¬e≡θ identityIsZero : ⊥.
+
+Double negation elimination
+Now, we introduce double negation elimination as a postulate that allows producing classical proofs.
+
+postulate
+  ¬¬-elim : ∀ {A} → ¬ ¬ A → A
+¬¬-elim cannot be defined constructively, so this postulate does not need a definition. This is a double-edged sword: we can also postulate things that are clearly false, e.g. 1 ≡ 0, and derive any statement from the postulate.
+
+The following propositions are provable classically, but not constructively:
+
+The law of excluded middle is a consequence from double negation elimination so far as 
+¬
+¬
+(
+A
+∨
+¬
+A
+)
+ is provable constructively:
+
+lem : ∀ {A} → A ⊎ ¬ A
+lem = ¬¬-elim $ λ f → f $ inj₂ $ λ x → f $ inj₁ x
+Similarly, we obtain disjunction 
+¬
+A
+∨
+B
+ from an implication 
+A
+→
+B
+.
+
+functionToDisj : ∀ {A B} → (A → B) → ¬ A ⊎ B
+functionToDisj f = ¬¬-elim (λ x → x $ inj₁ λ y → x $ inj₂ $ f y)
+Converse contraposition is also provable classically but not intuitionistically. We may prove constructively only 
+(
+¬
+A
+→
+¬
+B
+)
+→
+(
+¬
+¬
+B
+→
+¬
+¬
+A
+)
+, but there is no possibility to remove double negations in conclusion of this implication. We can do it using the double negation elimination law.
+
+contraposition' : ∀ {A B} → (¬ A → ¬ B) → B → A
+contraposition' f x = ¬¬-elim λ a → f a x
+This constructively bad De Morgan’s law is fine from a classical point of view:
+
+deMorgan₁ : ∀ {A B} → ¬ (A × B) → ¬ A ⊎ ¬ B
+deMorgan₁ f = ¬¬-elim λ g → g $ inj₁ $ λ a → g $ inj₂ λ b → f (a , b)
+We leave as an exercise to figure out whether this De Morgan law is provable constructively or classically:
+
+deMorgan₂ : ∀ {A B} → ¬ (A ⊎ B) → ¬ A × ¬ B
+deMorgan₂ = {!!}
+The second exercise: prove Peirce’s law:
+
+peirce : ∀ {A B} → ((A → B) → A) → A
+peirce = {!!}
+Moreover, it is possible to get some useful consequences for quantifiers. We inhabit the following two types in a constructive way:
+
+quantifier₁ :
+    ∀ {A} {P : A → Set} →
+    (f : (x : A) → P x) →
+    ¬ Σ A λ a → ¬ P a
+quantifier₁ f (fst , snd) = exContr snd (f fst)
+
+quantifier₂ :
+    ∀ {A} {P : A → Set} →
+    (Σ A λ a → P a) →
+    ¬ ((x : A) → ¬ P x)
+quantifier₂ (fst , snd) f = exFalso (f fst snd)
+Double negation elimination makes it possible to prove converse implications (we leave the second one as an exercise):
+
+quantifier₃ :
+    ∀ {A} {P : A → Set} →
+    (¬ Σ A λ a → ¬ P a) →
+    ((x : A) → P x)
+quantifier₃ f x = ¬¬-elim $ λ p → f x , p
+
+quantifier₄ :
+    ∀ {A} {P : A → Set} →
+    ¬ ((x : A) → ¬ P x) →
+    (Σ A λ a → P a)
+quantifier₄ f = {!!}
+Markov’s principle
+Markov’s principle is the statement proposed by Russian logician A. Markov Jr., the founder of the Russian school of constructive mathematics and logic.
+
+Suppose that for all 
+a
+ we have a method that tells whether 
+P
+(
+a
+)
+ is true or not (a property 
+P
+ is decidable). If it is not true that there is no 
+x
+ such that 
+P
+(
+x
+)
+ holds, then there exists 
+x
+ such that 
+P
+(
+x
+)
+. In other words, we may use the double negation elimination rule, if we work with decidable relation.
+
+Markov’s principle has the following form:
+
+∀
+x
+,
+(
+P
+(
+x
+)
+∨
+¬
+P
+(
+x
+)
+)
+→
+(
+¬
+¬
+(
+∃
+x
+,
+P
+(
+x
+)
+)
+→
+∃
+x
+,
+P
+(
+x
+)
+)
+.
+
+Classically, 
+∀
+x
+,
+(
+P
+(
+x
+)
+∨
+¬
+P
+(
+x
+)
+)
+ is an universal closure of the law of excluded middle. Constructively, 
+∀
+x
+,
+(
+P
+(
+x
+)
+∨
+¬
+P
+(
+x
+)
+)
+ denotes that we can define satisfiability of a property 
+P
+ for each 
+a
+. That is, 
+∀
+x
+,
+(
+P
+(
+x
+)
+∨
+¬
+P
+(
+x
+)
+)
+ denotes decidability of a predicate 
+P
+. Suppose that there is no 
+x
+ such that 
+P
+(
+x
+)
+ is rejected. Thus, we can conclude that there exists some desired 
+x
+, provided that a given property is decidable.
+
+Thus, Markov’s principle is a restriction of the double elimination rule, which is acceptable to use in constructive mathematics in the case of decidable predicates.
+
+We declare Markov’s principle in Agda as a postulate because this principle is not provable constructively as a general case.
+
+postulate
+  MarkovPrinciple :
+      ∀ {a} {A : Set a} {P : A → Set a} →
+      (f : (x : A) → P x ⊎ ¬ (P x)) →
+      ¬ ¬ (Σ A P) → Σ A P
+Let us explain the use of Markov’s principle in Agda through an example. At first, we declare the datatype called Dec to define a decidable type in Agda:
+
+data Dec {a} (P : Set a) : Set a where
+  yes : ( p :   P) → Dec P
+  no  : (¬p : ¬ P) → Dec P
+This datatype consists of two constructors: yes and no. In other words, Dec P defines a characteristic function of this type.
+
+This lemma claims that the universal closure of the law of excluded middle for predicate P follows from its decidability:
+
+DecLem :
+    ∀ {a} {A : Set a} {P : A → Set a} →
+    (f : (x : A) → Dec (P x)) →
+    ((x : A) → P x ⊎ ¬ P x)
+DecLem f x = case (f x) of
+    λ { (yes p) → inj₁ p
+      ;  (no ¬p) → inj₂ ¬p
+      }
+That is, if we have a general method that for each x : A tells “yes” or “no” for some predicate P, then the law of excluded middle is derivable almost for free!
+
+Let us apply Markov’s principle that is applied to propositional equality of natural numbers. It is obvious that this binary relation is decidable:
+
+Decℕ : (a b : ℕ) → Dec (a ≡ b)
+Decℕ zero zero = yes refl
+Decℕ zero (suc b) = no λ()
+Decℕ (suc a) zero = no λ()
+Decℕ (suc a) (suc b) with Decℕ a b
+Decℕ (suc a) (suc b) | yes refl = yes refl
+Decℕ (suc a) (suc b) | no ¬p = no (¬p ∘ ℕ-lemma a b)
+After that, we prove that the double negation elimination laws hold for propositional equality of natural numbers. That is, we can conclude by using the Markov’s principle that there exist equal natural numbers if the nonexistence of those numbers leads to a contradiction:
+
+¬¬-elim-ℕ : ¬ ¬ (Σ ℕ λ a → Σ ℕ λ b → a ≡ b) → Σ ℕ λ a → Σ ℕ λ b → a ≡ b
+¬¬-elim-ℕ f = MarkovPrinciple (DecLem ¬¬-elim-ℕ-lemma) f
+where ¬¬-elim-ℕ-lemma proves that for all x : ℕ, the relation Σ ℕ (λ b → x ≡ b) is decidable.
+
+Note that Markov’s principle is provable trivially in classical first-order logic:
+
+(
+1
+)
+(
+¬
+¬
+(
+∃
+x
+,
+P
+(
+x
+)
+)
+→
+∃
+x
+,
+P
+(
+x
+)
+)
+→
+(
+∀
+x
+,
+(
+P
+(
+x
+)
+∨
+¬
+P
+(
+x
+)
+)
+→
+(
+¬
+¬
+(
+∃
+x
+,
+P
+(
+x
+)
+)
+→
+∃
+x
+,
+P
+(
+x
+)
+)
+)
+Axiom schema 2
+(
+2
+)
+¬
+¬
+(
+∃
+x
+,
+P
+(
+x
+)
+)
+→
+∃
+x
+,
+P
+(
+x
+)
+Axiom schema 10
+(
+3
+)
+∀
+x
+,
+(
+P
+(
+x
+)
+∨
+¬
+P
+(
+x
+)
+)
+→
+(
+¬
+¬
+(
+∃
+x
+,
+P
+(
+x
+)
+)
+→
+∃
+x
+,
+P
+(
+x
+)
+)
+(1), (2), Modus ponens
+We formalise the classical proof of this statement in Agda as follows:
+
+MarkovClassically :
+    ∀ {a} {A : Set a} {P : A → Set a} →
+    (f : (x : A) → P x ⊎ ¬ (P x)) →
+    ¬ ¬ (Σ A P) → Σ A P
+MarkovClassically f p = const (¬¬-elim p) f
+EXAMPLES OF CLASSICAL PROOFS IN AGDA
+In this subsection, we demonstrate the difference between constructive proofs and classical proofs. In other words, we are going to find out what exactly changes when we resolve to use the double negation elimination and its consequences. Let us consider some examples.
+
+Remember the theorem that for all list xs there exists list ys, such that ys equals to reversed list xs. Now we prove the same statement using the double negation elimination:
+
+theoremReverse₂ : ∀ {a} {A : Set a} (xs : List A) →
+    Σ (List A) λ ys → IsReverse xs ys
+theoremReverse₂ [] = ¬¬-elim λ p → p ([] , ReverseNil)
+theoremReverse₂ (x ∷ xs) =
+    ¬¬-elim λ p →
+    p (proj₁ (theoremReverse₂ xs) ++ [ x ] ,
+       ReverseCons x xs (proj₁ (theoremReverse₂ xs))
+       (proj₂ (theoremReverse₂ xs)))
+We prove this theorem by induction on xs, but we suppose that for every case there is no list ys such that ys is a reversed xs and obtain a contradiction. In other words, we are going to show that the statement is true and it is not necessary to build an explicit construction to solve this problem. In fact, we proved that the nonexistence of the desired list leads to a contradiction, so we concluded that the required list exists using double negation elimination.
+
+We consider a bit more complicated example with a Lie ring again. We have already proved constructively before that a Lie ring has no identity multiplication. We prove below an equivalently formulated statement using the double negation elimination law.
+
+Informally, the statement sounds like “Let 
+R
+ be a Lie ring, then there is no 
+e
+∈
+R
+ such that it is not true that 
+e
+=
+0
+ or not for all 
+x
+∈
+R
+,
+x
+⋅
+e
+=
+x
+”. Formally, 
+¬
+(
+∃
+e
+∈
+R
+)
+,
+¬
+(
+(
+e
+=
+0
+)
+∨
+¬
+(
+∀
+x
+∈
+R
+,
+x
+⋅
+e
+=
+x
+)
+)
+.
+
+noIdentity₁ : ¬ (Σ R λ e → ¬ ((e ≡ θ) ⊎ ¬ ((x : R) → x · e ≡ x)))
+noIdentity₁ (e , snd) =
+    let disjToConj = deMorgan₂ snd in
+    let ¬¬-condition = proj₂ disjToConj in
+    let ¬¬-elimination = ¬¬-elim ¬¬-condition in
+    let ¬e≡θ = proj₁ disjToConj in
+    let identityIsZero = sym $ trans (sym (alternation e)) (¬¬-elimination e) in
+    ¬e≡θ identityIsZero
+We unfold the negation in the signature and get this type:
+
+noIdentity₁ : Σ R λ e → ¬ ((e ≡ θ) ⊎ ¬ ((x : R) → x · e ≡ x)) → ⊥
+i.e., we should prove ⊥ using pair e , snd, where e : R and snd : ¬ ((e ≡ θ) ⊎ ¬ ((x : R) → x · e ≡ x)).
+
+By de Morgan’s law deMorgan₂,
+
+deMorgan₂ snd : ¬ (e ≡ θ) × ¬ ¬ ((x : R) → x · e ≡ x))
+We will denote deMorgan₂ snd as disjToConj for brevity.
+
+Thus proj₁ disjToConj : ¬ (e ≡ θ) and proj₁ disjToConj : ¬ ¬ ((x : R) → x · e ≡ x)). We will denote these terms as ¬e≡θ and ¬¬-condition correspondingly. Hence, ¬¬-elim ¬¬-condition : (x : R) → x · e ≡ x).
+
+After that, we produce the same reasoning as in the constructive counterpart of this proposition, but we use the fact that 
+¬
+(
+A
+∨
+¬
+B
+)
+ classically implies 
+¬
+A
+∧
+B
+, where 
+A
+,
+B
+ are arbitrary statements. Intuitionistically, 
+¬
+(
+A
+∨
+¬
+B
+)
+ implies 
+¬
+A
+∧
+¬
+¬
+B
+, but 
+¬
+¬
+B
+ is not equivalent to 
+B
+, and we use the double negation elimination to obtain 
+B
+ from its double negation.
+
+Conclusion
+In this series, we first discussed the logical background with a look on classical and constructive logic calculi. After that, we introduced the reader to theorem proving and dependently typed programming in Agda and played with (non)constructive negation. It is quite clear that our introduction is not that exhaustive. If these topics interest you, we would like to propose you the following books for further study:
+
+The basic introduction to mathematical logic, foundations of mathematics, and computability theory is “Introduction to metamathematics” by Stephen Cole Kleene, one of founders of modern mathematical logic.
+
+To learn more about proof theory and its connection with type theory, we recommend the wonderful textbook called “Basic proof theory” by Anne Sjerp Troelstra and Helmut Schwichtenberg.
+
+You might read more systematic and detailed introduction to Agda by Aaron Stump. For more in-depth Agda learning, we advise the paper called “Dependently typed metaprogramming” by Conor McBride.
+
+As an extra reading, we would like to recommend you several more books:
+
+You might consider the topological and algebraic approach to classical and intuitionistic logic. If so, it would be useful to read “The mathematics of metamathematics” by Helena Rasiowa and Roman Sikorski for this purpose.
+
+Also, we wrote about a Lie ring and related algebraic systems. To learn about algebraic systems in more detail, see the widely known work on universal algebra and model theory called “Algebraic systems” by famous Soviet mathematician and logician Anatolij I. Mal’tsev.
+
+The classical monograph by Boris A. Kushner presents real analysis and calculus based on constructive logical principles. This work is a good example of development of mathematics via constructive logic and computability theory as its foundations.
+
+You also may read about philosophical aspects of constructive mathematics and logic in “Elements of intuitionism” by English philosopher and logician Michael Dummett.
+
+To read more posts like these, follow Serokell on Twitter and Facebook!
+
+Acknowledgement
+I would like to thank Gints Dreimanis, Jonn Mostovoy and Vlad Zavialov for reviews, critique, and useful advice.
+
+agdatheorem proving
+© 2015–2019 Serokell OÜ
+
+
+
+

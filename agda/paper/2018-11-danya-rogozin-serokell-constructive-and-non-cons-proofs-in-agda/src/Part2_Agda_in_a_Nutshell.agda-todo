@@ -1,0 +1,299 @@
+
+
+
+Suppose we need to extend a ring with additional axioms. Consider a Lie ring that generalizes Lie algebra, which is a well-known construction in linear algebra widely applied in mathematical physics and quantum mechanics. Initially, we suggest the following informal definition:
+
+Definition 4
+A Lie ring is a ring 
+⟨
+R
+,
++
+,
+⋅
+,
+−
+,
+0
+⟩
+ with two additional axioms:
+
+(Alternation) 
+∀
+a
+∈
+R
+,
+a
+⋅
+a
+=
+0
+;
+(Jacobi identity) 
+∀
+a
+,
+b
+,
+c
+∈
+R
+,
+(
+a
+⋅
+b
+)
+⋅
+c
++
+b
+⋅
+(
+c
+⋅
+a
+)
++
+c
+⋅
+(
+a
+⋅
+b
+)
+=
+0
+.
+We extend a ring to a Lie ring in Agda by declaring a new record, but we need to tell somehow that a given type R is already a ring. We pass an additional instance argument in a signature of a record called LieRing for this purpose:
+
+record LieRing (R : Set){{ring : Ring R}} : Set₁ where
+Then we add the special axioms of a Lie ring as usual:
+
+constructor mkLeeRing
+field
+  alternation : (a : R) → a · a ≡ θ
+  jacobiIdentity : (a b c : R) → (a · b) · c + b · (c · a) + c · (a · b) ≡ θ
+Lie ring is anticommutative, in other words:
+
+Lemma 1
+Let 
+R
+ be Lie ring, then forall 
+a
+,
+b
+∈
+R
+, 
+a
+⋅
+b
++
+b
+⋅
+a
+=
+0
+.
+
+Proof
+Firstly, we prove this fact informally. For convenience, we prove this useful proposition.
+
+Proposition 1
+If 
+R
+ is a Lie ring, then forall 
+a
+,
+b
+∈
+R
+, 
+(
+a
++
+b
+)
+⋅
+(
+a
++
+b
+)
+=
+(
+a
+⋅
+b
+)
++
+(
+b
+⋅
+a
+)
+.
+
+(
+a
++
+b
+)
+⋅
+(
+a
++
+b
+)
+=
+Right distribution
+a
+⋅
+(
+a
++
+b
+)
++
+b
+⋅
+(
+a
++
+b
+)
+=
+Left distribution
+(
+a
+⋅
+a
++
+a
+⋅
+b
+)
++
+(
+b
+⋅
+a
++
+b
+⋅
+b
+)
+=
+Alternation
+(
+a
+⋅
+a
++
+a
+⋅
+b
+)
++
+(
+b
+⋅
+a
++
+0
+)
+=
+Identity axiom
+(
+a
+⋅
+a
++
+a
+⋅
+b
+)
++
+b
+⋅
+a
+=
+Alternation
+(
+0
++
+a
+⋅
+b
+)
++
+b
+⋅
+a
+=
+Identity axiom
+a
+⋅
+b
++
+b
+⋅
+a
+
+□
+Thus 
+a
+⋅
+b
++
+b
+⋅
+a
+=
+(
+a
++
+b
+)
+⋅
+(
+a
++
+b
+)
+=
+0
+ by proposition above and alternation.
+
+□
+Formalisation of this proof completely preserves the reasoning above. The first lemma is the sequence of equalities applied sequentially via transitivity of propositional equality:
+
+lemma : (a b : R) → (a + b) · (a + b) ≡ (a · b) + (b · a)
+lemma a b =
+    begin
+    ((a + b) · (a + b)        
+    ≡⟨ ·-distr-right a b (a + b) ⟩
+    a · (a + b) + b · (a + b)
+    ≡⟨ cong₂ _+_ (·-distr-left a a b) (·-distr-left b a b) ⟩
+    (a · a + a · b) + (b · a + b · b)
+    ≡⟨ cong (_+_ (a · a + a · b)) (cong₂ _+_ refl (alternation b)) ⟩
+    (a · a + a · b) +  (b · a + θ)
+    ≡⟨ cong (_+_ (a · a + a · b)) (+-θ (b · a)) ⟩
+    (a · a + a · b) + (b · a)
+    ≡⟨ cong₂ _+_
+    (cong₂ _+_ (alternation a) refl)
+    refl ⟩
+    (θ + a · b) + (b · a)
+    ≡⟨ cong₂ _+_ (trans (+-commute θ (a · b)) (+-θ (a · b))) refl ⟩
+    (a · b + b · a)
+    ∎)
+Anticommutativity is proved in the same way using the obtained lemma:
+
+anticommutativity : (a b : R) → (a · b + b · a) ≡ θ
+anticommutativity a b = (a · b + b · a) ≡⟨ sym $ lemma a b ⟩ (alternation (a + b))
+Conclusion
+In this post, we have briefly described basic concepts of dependently typed programming and theorem proving in Agda via examples. In the next post, we will introduce negation with classical postulates and play with non-constructive proofs in Agda.
+
+-}

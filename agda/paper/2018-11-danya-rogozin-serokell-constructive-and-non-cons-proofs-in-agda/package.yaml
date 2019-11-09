@@ -1,0 +1,9 @@
+name:                danya-rogozin-serokell-constructive-and-non-cons-proofs-in-agda
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+

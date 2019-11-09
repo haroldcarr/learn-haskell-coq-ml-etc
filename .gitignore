@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2019 May 27 (Mon) 18:32:40 by Harold Carr.
+# Last Modified : 2019 Nov 09 (Sat) 12:07:13 by Harold Carr.
 
 *~
 
@@ -17,6 +17,7 @@ TAGS
 # STACK / HASKELL
 
 .stack-work
+stack.yaml.lock
 
 # ------------------------------------------------------------------------------
 # ECLIPSE
