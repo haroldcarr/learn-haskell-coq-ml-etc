@@ -1,9 +1,23 @@
-name:                haskell-serbia-dependent-types
-version:             0.1.0.0
-build-type:          Simple
-cabal-version:       >=1.10
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 68cbe025a481428499b9071a8194008ce97b4b993b78b520b932e3c5b8c8618e
+
+name:           haskell-serbia-dependent-types
+version:        0.1.0.0
+build-type:     Simple
 
 library
-  exposed-modules:     DT
-  build-depends:       base >= 4.7 && < 5
-  default-language:    Haskell2010
+  exposed-modules:
+      DT
+  other-modules:
+      Paths_haskell_serbia_dependent_types
+  hs-source-dirs:
+      ./.
+  ghc-options: -Wall -fwarn-redundant-constraints
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010

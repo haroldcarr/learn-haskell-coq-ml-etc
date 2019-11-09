@@ -1,0 +1,12 @@
+name:                danny-gratzer-intro-to-dependent-types
+version:             0.1.0.0
+
+ghc-options:
+- -Wall
+- -fwarn-redundant-constraints
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: .

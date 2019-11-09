@@ -15,7 +15,7 @@
 
 module HOTL where
 
-import           Data.Kind
+-- import           Data.Kind
 import           Data.Text as T
 
 
@@ -250,6 +250,7 @@ defunctionalisation
 
 e.g.,
 -}
+
 type TyFun a b = a -> b -> *
 infixr 0 `TyFun`
 data SymConst2         :: * `TyFun` * `TyFun` *

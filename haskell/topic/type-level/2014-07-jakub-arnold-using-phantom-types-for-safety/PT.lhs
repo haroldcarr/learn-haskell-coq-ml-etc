@@ -23,7 +23,7 @@ type level using Phantom Type.
 Type called "Phantom Type"  if it has type parameter that only appears on LHS
 (i.e,. not used by value constructors)
 
-> data Message a = Message String
+> newtype Message a = Message String
 
 enables : Message Int, Message String, Message (Maybe Char), ...
 
@@ -36,19 +36,19 @@ Even if type parameter not used in constructors,
 it is still verified by the type system:
 
 > type Recipient = String
-> send :: Message Encrypted -> Recipient -> IO ()
-> send = undefined
+> send    :: Message Encrypted -> Recipient -> IO ()
+> send     = undefined
 > encrypt :: Message PlainText -> Message Encrypted
-> encrypt = undefined
+> encrypt  = undefined
 > decrypt :: Message Encrypted -> Message PlainText
-> decrypt = undefined
+> decrypt  = undefined
 
 For safety, make Message constructor private and export a smart constructor.
 Makes it impossible to change state of Message type other than using
 encrypt/decrypt.
 
 > newMessage :: String -> Message PlainText
-> newMessage s = Message s
+> newMessage  = Message
 
 Will be rejected:
 
@@ -70,16 +70,16 @@ Jul 10, 2014
 
 via newtype
 
-> data MessageNT = MessageNT String
+> newtype MessageNT          = MessageNT String
 > newtype PlainTextMessageNT = PlainTextMessage MessageNT
 > newtype EncryptedMessageNT = EncryptedMessage MessageNT
 
-> sendNT :: EncryptedMessageNT -> IO ()
-> sendNT = undefined
+> sendNT    :: EncryptedMessageNT -> IO ()
+> sendNT     = undefined
 > encryptNT :: PlainTextMessageNT -> EncryptedMessageNT
-> encryptNT = undefined
+> encryptNT  = undefined
 > decryptNT :: EncryptedMessageNT -> PlainTextMessageNT
-> decryptNT = undefined
+> decryptNT  = undefined
 
 OK solution for statically typed language with no option for
 representing Phantom Types.
@@ -127,9 +127,9 @@ Or: run encryption inside send.
 > sendE (PlainTextMessageG m) = sendG (encryptG m)
 >  where encryptG m' = undefined
 
-What if multipe places where message needs encryption?
+What if multiple places where message needs encryption?
 Also make encrypt do nothing for already encrypted messages.
 If encrypt can fail, the need to handle failures in all places.
 Also, code for constructing messages might in external lib.
 
-Summary: Phantom Types for compiletime checkes
+Summary: Phantom Types for compiletime checks

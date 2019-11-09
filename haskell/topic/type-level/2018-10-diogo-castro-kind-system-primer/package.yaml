@@ -1,0 +1,10 @@
+name:                diogo-castro-kind-system-primer
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+- ghc-prim
+
+library:
+  source-dirs: src

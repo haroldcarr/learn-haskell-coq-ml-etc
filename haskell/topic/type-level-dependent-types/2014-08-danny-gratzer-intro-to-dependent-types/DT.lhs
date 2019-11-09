@@ -24,26 +24,26 @@ utilities
 mirror (i.e., lift, reflect) value into isomorphic type
 
 > data RNat :: Nat -> * where
->   RZ ::           RNat  Z
->   RS :: RNat n -> RNat (S n)
+>   RZ ::           RNat  'Z
+>   RS :: RNat n -> RNat ('S n)
 
 type-level addition
 
 > type family Plus n m :: Nat where
->   Plus  Z    m =           m
->   Plus (S n) m = S (Plus n m)
+>   Plus  'Z    m =            m
+>   Plus ('S n) m = 'S (Plus n m)
 
 value-level addition
 
 > plus :: Nat -> Nat -> Nat
-> plus  Z    m =           m
-> plus (S n) m = S (plus n m)
+> plus     Z    m =            m
+> plus    (S n) m =  S (plus n m)
 
 value-level addition using dependent types
 
 > plus' :: RNat n -> RNat m -> RNat (Plus n m)
-> plus'  RZ    m =             m
-> plus' (RS n) m = RS (plus' n m)
+> plus'   RZ    m =             m
+> plus'  (RS n) m = RS (plus' n m)
 
 get type error if definition incorrect
 
@@ -66,6 +66,7 @@ use Nat
 > readNat :: String -> Nat
 > readNat = toNat <$> read
 
+> e1 :: Int
 > e1 = toInt (plus (readNat "4") (readNat "5"))
 
 turn runtime values into types

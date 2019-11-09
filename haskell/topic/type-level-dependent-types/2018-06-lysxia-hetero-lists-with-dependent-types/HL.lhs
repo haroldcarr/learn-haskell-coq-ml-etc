@@ -59,7 +59,7 @@ extract element of a given type in the list.
 CONVENTIONAL APPROACH
 
 > class Get0 a bs where
->  get0 :: bs -> a
+>   get0 :: bs -> a
 
 write two overlapping instances
 
@@ -112,7 +112,7 @@ one solution: add constraint that c is not equal to a or b
 ------------------------------------------------------------------------------
 TYPE DISEQUALITY CONSTRAINTS
 
-Haskell has equality constraint (~), but no disequality constraint “(/~)”,
+Haskell has equality constraint (~), but no disequality constraint "(/~)",
 nor any general way to negate a constraint (incompatible with open type classes).
 
 solution: define equality as a boolean-valued closed TypeFamily

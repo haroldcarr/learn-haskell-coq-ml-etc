@@ -1,10 +1,23 @@
-name:                danny-gratzer-intro-to-dependent-types
-version:             0.1.0.0
-build-type:          Simple
-extra-source-files:  README.md
-cabal-version:       >=1.10
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 5a97b0663b1cf1afb08d46eb51789ee5bea35fe383cdf89aef5ea09af7f4e588
+
+name:           danny-gratzer-intro-to-dependent-types
+version:        0.1.0.0
+build-type:     Simple
 
 library
-  exposed-modules:     DT
-  build-depends:       base >= 4.7 && < 5
-  default-language:    Haskell2010
+  exposed-modules:
+      DT
+  other-modules:
+      Paths_danny_gratzer_intro_to_dependent_types
+  hs-source-dirs:
+      ./.
+  ghc-options: -Wall -fwarn-redundant-constraints
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010

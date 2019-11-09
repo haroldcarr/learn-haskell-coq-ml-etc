@@ -1,8 +1,10 @@
--- This file has been generated from package.yaml by hpack version 0.28.2.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cc959bd9742981640d97bb253127f8a12f487e3186e2fa3d7b838a1562ecbdfc
+-- hash: 22ee1d069da0ba6362de54e3fa0e4f670aa94d0d3c76de095d324730dc6f0a29
 
 name:           csongor-kiss-higher-order-type-level
 version:        0.1.0.0
@@ -13,7 +15,6 @@ maintainer:     example@example.com
 copyright:      2018 Author name here
 license:        BSD3
 build-type:     Simple
-cabal-version:  >= 1.10
 
 source-repository head
   type: git
@@ -26,7 +27,7 @@ library
       Paths_csongor_kiss_higher_order_type_level
   hs-source-dirs:
       ./.
-  ghc-options: -Wall
+  ghc-options: -Wall -fwarn-redundant-constraints
   build-depends:
       base >=4.7 && <5
     , text

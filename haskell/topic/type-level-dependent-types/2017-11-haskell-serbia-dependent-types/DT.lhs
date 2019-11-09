@@ -51,7 +51,7 @@ A type has a set of possible term-level values.
 > -- | type with zero inhabitants
 > data Void
 > instance Show Void where -- there will not be any instances, so this is useless, but used below
->   show x = "Void"
+>   show _ = "Void"
 
 -- type with one inhabitant
 data () = ()
@@ -90,16 +90,18 @@ Framework for exploring forms of abstraction.
 
 1. Values depending on values (functions)
 
-> -- | b depends on a
-> a :: Integer
-> a = 2
-> b :: Bool
-> b = even a
+> -- | bb depends on aa
+> aa :: Integer
+> aa = 2
+> bb :: Bool
+> bb = even aa
 
 2.. Values depending on Types (classes)
 
-> mbi =   (maxBound :: Int) == 9223372036854775807
-> mbb = if maxBound :: Bool then "yes" else "no"
+> mbi :: Bool
+> mbi  =   (maxBound :: Int) == 9223372036854775807
+> mbb :: String
+> mbb  = if maxBound :: Bool then "yes" else "no"
 
 Type determines the values maxBound will have.
 
@@ -157,6 +159,7 @@ Can pattern match on more specific constructors:
 
 > eval :: Term a -> a
 > eval (Lit a) = a
+> eval _ = undefined
 
 :t Lit
 Lit :: Int -> Term Int

@@ -10,6 +10,7 @@ dependencies:
 
 ghc-options:
 - -Wall
+- -fwarn-redundant-constraints
 
 library:
   source-dirs: src

@@ -1,5 +1,45 @@
 Created       : 2014 Jul 22 (Tue) 17:25:11 by Harold Carr.
-Last Modified : 2016 Nov 30 (Wed) 21:55:29 by Harold Carr.
+Last Modified : 2019 Oct 21 (Mon) 13:54:49 by Harold Carr.
+
+------------------------------------------------------------------------------
+Subject: FM'19 - thanks for coming!
+From: "J.N. Oliveira" <jno@di.uminho.pt>
+Date: Sat, 12 Oct 2019 16:24:54 +0100
+CC: Lisandra Maria Pereira da Silva <a73559@alunos.uminho.pt>
+To: <harold.carr@oracle.com>, <mark.moir@oracle.com>
+
+Dear Harold and Mark
+
+It was great to know you in person at FM’19.
+
+The current version of the “book” is at http://www4.di.uminho.pt/~jno/ps/pdbc.pdf
+
+In the last year I added chapters 5, 6 and 7. FM’19 forced me to stop at section 7.9.
+
+These chapters are what I teach to my 4th year students (Lisandra, who was among the best in the 
+class, had this still in slide form).
+
+It is more practical to use relations (the Kleisli category of the powerset monad) than keeping using
+functions as in chapters 2 to 4. "Functions are special cases of relations", all maths books say 
+But they not tell about the monadic flavour of the “aphorism".
+
+About music: the slides I mentioned are http://www4.di.uminho.pt/~jno/ps/cehum13-en.pdf
+
+The “afterthought” in slide 38 eventually became a paper: “Programming from Metaphorisms”
+which was fun to write (https://www.sciencedirect.com/science/article/pii/S2352220817301645)
+
+Let us keep in touch. I promise to be back once I find some “Lisandra 2.0” among my students.
+It is difficult but sometimes miracles happen
+
+Meanwhile, I will study blockchain.
+
+@Mark: see you on Wednesday
+
+All the best and thanks for attending FM’19!
+
+jno
+
+
 
 The papers
 
