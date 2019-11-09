@@ -1,0 +1,7 @@
+Jeremy Avigad, Robert Y. Lewis, and Floris van Doorn, Logic and Proof (course; Lean)
+(intro to proof and symbolic logic)
+https://leanprover.github.io/logic_and_proof/
+http://www.cs.ru.nl/~freek/courses/tt-2016/
+
+Jeremy Avigad, Leonardo de Moura, and Soonho Kong, Theorem Proving in Lean (course; Lean)
+https://leanprover.github.io/theorem_proving_in_lean/

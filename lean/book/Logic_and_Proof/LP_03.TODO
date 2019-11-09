@@ -1,0 +1,30 @@
+
+
+-- Give a natural deduction proof of ¬(𝐴∧𝐵)→(𝐴→¬𝐵).
+
+-- Give a natural deduction proof of 𝑄∧𝑆 from hypotheses (𝑃∧𝑄)∧𝑅 and 𝑆∧𝑇.
+
+-- Give a natural deduction proof of (𝐴→𝐶)∧(𝐵→¬𝐶)→¬(𝐴∧𝐵).
+
+-- Give a natural deduction proof of (𝐴∧𝐵)→((𝐴→𝐶)→¬(𝐵→¬𝐶)).
+
+-- Take another look at Exercise 3 in the last chapter. Using propositional variables 𝐴, 𝐵, and 𝐶 for “Alan likes kangaroos,” “Betty likes frogs” and “Carl likes hamsters,” respectively, express the three hypotheses in the previous problem as symbolic formulas, and then derive a contradiction from them in natural deduction.
+
+-- Give a natural deduction proof of 𝐴∨𝐵→𝐵∨𝐴.
+
+-- Give a natural deduction proof of ¬𝐴∧¬𝐵→¬(𝐴∨𝐵)
+
+-- Give a natural deduction proof of ¬(𝐴∧𝐵) from ¬𝐴∨¬𝐵. (You do not need to use proof by contradiction.)
+
+-- Give a natural deduction proof of ¬(𝐴↔¬𝐴).
+
+-- Give a natural deduction proof of (¬𝐴↔¬𝐵) from hypothesis 𝐴↔𝐵.
+
+-- Give a natural deduction proof of 𝑃→𝑅 from hypothesis (𝑃∨𝑄)→𝑅. How does this differ from a proof of ((𝑃∨𝑄)→𝑅)→(𝑃→𝑅)?
+
+-- Give a natural deduction proof of 𝐶→(𝐴∨𝐵)∧𝐶 from hypothesis 𝐴∨𝐵.
+
+-- Give a natural deduction proof of 𝑊∨𝑌→𝑋∨𝑍 from hypotheses 𝑊→𝑋 and 𝑌→𝑍.
+
+-- Give a natural deduction proof of (𝐴∨(𝐵∧𝐴))→𝐴.
+
