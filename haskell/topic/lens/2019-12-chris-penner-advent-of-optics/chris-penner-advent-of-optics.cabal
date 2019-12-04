@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: daabec6d47304b1a6aecc726d56c517825fbe32f4cdd8fc3008b49146d1ddedc
+-- hash: e9744c8ce7b92319775ec4729a64e28dc707b306877ceacedcecd90ee1997ac7
 
 name:           chris-penner-advent-of-optics
 version:        0.1.0.0
@@ -16,6 +16,7 @@ test-suite t
   other-modules:
       TestDay01
       TestDay02
+      TestDay03
       Paths_chris_penner_advent_of_optics
   hs-source-dirs:
       test
@@ -28,6 +29,7 @@ test-suite t
     , lens
     , lens-action
     , lens-regex-pcre
+    , linear
     , monad-loops
     , pretty-show
     , protolude

@@ -7,6 +7,7 @@ dependencies:
 - lens
 - lens-action
 - lens-regex-pcre
+- linear
 - monad-loops
 - protolude
 - text
