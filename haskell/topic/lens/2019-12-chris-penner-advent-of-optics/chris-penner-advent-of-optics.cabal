@@ -1,0 +1,37 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: daabec6d47304b1a6aecc726d56c517825fbe32f4cdd8fc3008b49146d1ddedc
+
+name:           chris-penner-advent-of-optics
+version:        0.1.0.0
+build-type:     Simple
+
+test-suite t
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      TestDay01
+      TestDay02
+      Paths_chris_penner_advent_of_optics
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , lens
+    , lens-action
+    , lens-regex-pcre
+    , monad-loops
+    , pretty-show
+    , protolude
+    , tasty
+    , tasty-hunit
+    , text
+  default-language: Haskell2010

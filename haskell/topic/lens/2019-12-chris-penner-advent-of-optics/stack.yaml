@@ -1,0 +1,15 @@
+resolver: lts-13.25
+packages:
+- .
+extra-deps:
+- lens-regex-pcre-1.0.0.1@sha256:659c009809c5c6750c2a010cce5e963e7f12cc9d03f609ff37bebdfbae16cf56,2068
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=2.1"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor

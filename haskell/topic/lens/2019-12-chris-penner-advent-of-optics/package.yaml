@@ -1,0 +1,27 @@
+name:                chris-penner-advent-of-optics
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+- lens
+- lens-action
+- lens-regex-pcre
+- monad-loops
+- protolude
+- text
+
+tests:
+  t:
+    source-dirs:         test
+    main:                hspec.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bytestring
+    - HUnit
+    - pretty-show
+    - tasty
+    - tasty-hunit
