@@ -1,0 +1,35 @@
+name:                hc-usage
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+- lens
+- mtl
+- transformers
+- pretty-show
+- protolude
+
+library:
+  source-dirs: src
+
+executables:
+  m:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hc-usage
+
+tests:
+  hc-usage-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hc-usage
