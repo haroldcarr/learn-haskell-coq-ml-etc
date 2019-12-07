@@ -6,5 +6,7 @@ main :: IO ()
 main = do
   rr  <- r
   rr' <- r'
+  rr''<- r''
   print rr
   print rr'
+  print rr''
