@@ -17,15 +17,15 @@ import           Protolude hiding (get, gets)
 {-# ANN module ("HLint: ignore Redundant return" :: Prelude.String) #-}
 
 data Bar = Bar
-  { _barX :: Int
-  , _barY :: Int
+  { _barX :: Text
+  , _barY :: Text
   } deriving (Eq, Show)
 makeClassy ''Bar
 makeFields ''Bar
 
 data Foo = Foo
-  { _fooX :: Int
-  , _fooY :: Int
+  { _fooX :: Text
+  , _fooY :: Text
   , _fooZ :: Bar
   } deriving (Eq, Show)
 makeClassy ''Foo
@@ -34,53 +34,56 @@ makeFields ''Foo
 instance HasBar Foo where
   bar = lens _fooZ (\foo' bar' -> foo' { _fooZ = bar' })
 
-xxx :: (Monad m, HasFoo x) => RWST () [Text] x m Int
+xxx :: (Monad m, HasFoo x) => RWST () [Text] x m Text
 xxx  = do
   x'   <- use fooX
-  fooX .= (-1)
+  fooX .= "fx/xxx"
   y'   <- use fooY
-  fooY .= (-2)
+  fooY .= "fy/xxx"
   z'   <- use (fooZ.barX)
-  pure (x' + y' + z')
+  pure (x' <> y' <> z')
 
-xxx' :: (Monad m, HasFoo x, HasBar x) => RWST () [Text] x m Int
+xxx' :: (Monad m, HasFoo x, HasBar x) => RWST () [Text] x m Text
 xxx'  = do
   x'   <- use fooX
-  fooX .= (-1)
+  fooX .= "fx/xxx'"
   y'   <- use fooY
-  fooY .= (-2)
+  fooY .= "fy/xxx'"
   yyy' <- yyy
-  pure (x' + y' + yyy')
+  pure (x' <> y' <> yyy')
 
-yyy :: (Monad m, HasBar x) => RWST () [Text] x m Int
+yyy :: (Monad m, HasBar x) => RWST () [Text] x m Text
 yyy  = do
   x'   <- use barX
-  barX .= (-4)
+  barX .= "bx/yyy"
   y'   <- use barY
-  barY .= (-5)
-  pure (x' + y')
+  barY .= "by/yyy"
+  pure (x' <> y')
 
-xxx'' :: (Monad m, HasFoo x, HasBar x, HasX x Int) => RWST () [Text] x m Int
+xxx'' :: (Monad m, HasFoo x, HasBar x, HasX x Text) => RWST () [Text] x m Text
 xxx''  = do
   x'   <- use fooX
-  fooX .= (-1)
+  fooX .= "fx/xxx''"
   y'   <- use fooY
-  fooY .= (-2)
+  fooY .= "fy/xxx''"
   yyy' <- yyy
   zzz' <- zzz
-  pure (x' + y' + yyy' + zzz')
+  pure (x' <> y' <> yyy' <> zzz')
 
-zzz :: (Monad m, HasX t Int) => RWST () [Text] t m Int
+zzz :: (Monad m, HasX t Text) => RWST () [Text] t m Text
 zzz  = do
   x' <- use x
-  x .= (-20)
+  x .= "x/zzz"
   pure x'
 
-r :: Monad m => m (Int, Foo, [Text])
-r = runRWST xxx () (Foo 1 2 (Bar 3 4))
+fooey :: Foo
+fooey  = Foo "fx" "fy" (Bar "bx" "by")
 
-r' :: (Monad m, HasFoo Foo, HasBar Foo) => m (Int, Foo, [Text])
-r' = runRWST xxx' () (Foo 1 2 (Bar 3 4))
+r :: Monad m => m (Text, Foo, [Text])
+r = runRWST xxx () fooey
 
-r'' :: (Monad m, HasFoo Foo, HasBar Foo) => m (Int, Foo, [Text])
-r'' = runRWST xxx'' () (Foo 1 2 (Bar 3 4))
+r' :: (Monad m, HasFoo Foo, HasBar Foo) => m (Text, Foo, [Text])
+r' = runRWST xxx' () fooey
+
+r'' :: (Monad m, HasFoo Foo, HasBar Foo) => m (Text, Foo, [Text])
+r'' = runRWST xxx'' () fooey
