@@ -4,9 +4,15 @@ import Lib
 
 main :: IO ()
 main = do
-  rr  <- r
-  rr' <- r'
-  rr''<- r''
-  print rr
-  print rr'
-  print rr''
+  hf     <- rHasFoo
+  hfhb   <- rHasFooHasBar
+  hfhbhx <- rHasFooHasBarHasX
+  hy     <- rHasY
+  hy'    <- rHasY'
+  hy''   <- rHasY''
+  print hf
+  print hfhb
+  print hfhbhx
+  print hy
+  print hy'
+  print hy''

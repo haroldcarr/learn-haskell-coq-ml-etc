@@ -34,56 +34,77 @@ makeFields ''Foo
 instance HasBar Foo where
   bar = lens _fooZ (\foo' bar' -> foo' { _fooZ = bar' })
 
-xxx :: (Monad m, HasFoo x) => RWST () [Text] x m Text
-xxx  = do
-  x'   <- use fooX
-  fooX .= "fx/xxx"
-  y'   <- use fooY
-  fooY .= "fy/xxx"
-  z'   <- use (fooZ.barX)
-  pure (x' <> y' <> z')
+hasFoo :: (Monad m, HasFoo x) => RWST () [Text] x m Text
+hasFoo  = do
+  fx   <- use fooX
+  fooX .= "fx/hasFoo"
+  fy   <- use fooY
+  fooY .= "fy/hasFoo"
+  fzbx <- use (fooZ.barX)
+  pure (fx <> fy <> fzbx)
 
-xxx' :: (Monad m, HasFoo x, HasBar x) => RWST () [Text] x m Text
-xxx'  = do
-  x'   <- use fooX
-  fooX .= "fx/xxx'"
-  y'   <- use fooY
-  fooY .= "fy/xxx'"
-  yyy' <- yyy
-  pure (x' <> y' <> yyy')
+hasFooHasBar :: (Monad m, HasFoo x, HasBar x) => RWST () [Text] x m Text
+hasFooHasBar  = do
+  fx   <- use fooX
+  fooX .= "fx/hasFooHasBar"
+  fy   <- use fooY
+  fooY .= "fy/hasFooHasBar"
+  hb   <- hasBar
+  pure (fx <> fy <> hb)
 
-yyy :: (Monad m, HasBar x) => RWST () [Text] x m Text
-yyy  = do
-  x'   <- use barX
-  barX .= "bx/yyy"
-  y'   <- use barY
-  barY .= "by/yyy"
-  pure (x' <> y')
+hasBar :: (Monad m, HasBar x) => RWST () [Text] x m Text
+hasBar  = do
+  fx   <- use barX
+  barX .= "bx/hasBar"
+  fy   <- use barY
+  barY .= "by/hasBar"
+  pure (fx <> fy)
 
-xxx'' :: (Monad m, HasFoo x, HasBar x, HasX x Text) => RWST () [Text] x m Text
-xxx''  = do
-  x'   <- use fooX
-  fooX .= "fx/xxx''"
-  y'   <- use fooY
-  fooY .= "fy/xxx''"
-  yyy' <- yyy
-  zzz' <- zzz
-  pure (x' <> y' <> yyy' <> zzz')
+hasFooHasBarHasX :: (Monad m, HasFoo x, HasBar x, HasX x Text) => RWST () [Text] x m Text
+hasFooHasBarHasX  = do
+  fx   <- use fooX
+  fooX .= "fx/hasFooHasBarHasX"
+  fy   <- use fooY
+  fooY .= "fy/hasFooHasBarHasX"
+  hb   <- hasBar
+  hx   <- hasX
+  pure (fx <> fy <> hb <> hx)
 
-zzz :: (Monad m, HasX t Text) => RWST () [Text] t m Text
-zzz  = do
+hasXHasY :: (Monad m, HasX x Text, HasY x Text) => RWST () [Text] x m Text
+hasXHasY  = do
+  hx   <- hasX
+  hy   <- hasY
+  pure (hx <> hy)
+
+hasX :: (Monad m, HasX t Text) => RWST () [Text] t m Text
+hasX  = do
   x' <- use x
-  x .= "x/zzz"
+  x .= "x/hasX"
   pure x'
+
+hasY :: (Monad m, HasY t Text) => RWST () [Text] t m Text
+hasY  = do
+  y' <- use y
+  y .= "y/hasY"
+  pure y'
 
 fooey :: Foo
 fooey  = Foo "fx" "fy" (Bar "bx" "by")
 
-r :: Monad m => m (Text, Foo, [Text])
-r = runRWST xxx () fooey
+rHasFoo :: Monad m => m (Text, Foo, [Text])
+rHasFoo  = runRWST hasFoo () fooey
 
-r' :: (Monad m, HasFoo Foo, HasBar Foo) => m (Text, Foo, [Text])
-r' = runRWST xxx' () fooey
+rHasFooHasBar :: (Monad m, HasFoo Foo, HasBar Foo) => m (Text, Foo, [Text])
+rHasFooHasBar  = runRWST hasFooHasBar () fooey
 
-r'' :: (Monad m, HasFoo Foo, HasBar Foo) => m (Text, Foo, [Text])
-r'' = runRWST xxx'' () fooey
+rHasFooHasBarHasX :: (Monad m, HasFoo Foo, HasBar Foo) => m (Text, Foo, [Text])
+rHasFooHasBarHasX  = runRWST hasFooHasBarHasX () fooey
+
+rHasY :: (Monad m, HasY Foo Text) => m (Text, Foo, [Text])
+rHasY  = runRWST hasY () fooey
+
+rHasY' :: (Monad m, HasY Foo Text) => m (Text, Bar, [Text])
+rHasY'  = runRWST hasY () (Bar "bx" "by")
+
+rHasY'' :: (Monad m, HasY Bar Text) => m (Text, Bar, [Text])
+rHasY''  = runRWST hasY () (Bar "bx" "by")
