@@ -11,6 +11,8 @@
 module X where
 
 ------------------------------------------------------------------------------
+import           Types
+------------------------------------------------------------------------------
 import           Control.Lens
 -- import qualified Control.Lens.Internal.FieldTH  as FTH
 -- import           Control.Lens.TH
@@ -26,11 +28,6 @@ import           Protolude                      hiding (get, gets, round, to)
 {-# ANN module ("HLint: ignore Reduce duplication" :: Prelude.String) #-}
 {-# ANN module ("HLint: ignore Redundant return" :: Prelude.String) #-}
 
-newtype Author    = Author   { _authorAuthor  :: Text             } deriving (Eq, Ord, Show)
-newtype Epoch     = Epoch    { _epochEpoch    :: Int              } deriving (Eq, Num, Ord, Show)
-newtype HashValue = HashValue{ _hashValueHashValue:: ByteString       } deriving (Eq, Ord, Show)
-newtype Round     = Round    { _roundRound    :: Int              } deriving (Eq, Num, Ord, Show)
-
 makeClassyFor "RWAuthor" "lAuthor" [("_getAuthor", "getAuthor")] ''Author
 makeClassyFor "RWEpoch" "lEpoch" [("_epochEpoch", "getEpoch")] ''Epoch
 makeClassyFor "RWHashValue" "lHashValue" [("_getHashValue", "getHashValue")] ''HashValue
@@ -40,12 +37,6 @@ makeFields ''Epoch
 makeFields ''HashValue
 makeFields ''Round
 
-data BlockInfo = BlockInfo
-  { _blockInfoAuthor :: !Author
-  , _blockInfoEpoch  :: !Epoch
-  , _blockInfoRound  :: !Round
-  , _blockInfoId     :: !HashValue
-  } deriving (Eq, Show)
 makeClassyFor "RWBlockInfo" "lBlockInfo"
   [ ("_blockInfoAuthor" , "biAuthor")
   , ("_blockInfoEpoch"  , "biEpoch")
@@ -54,58 +45,34 @@ makeClassyFor "RWBlockInfo" "lBlockInfo"
   ''BlockInfo
 makeFields ''BlockInfo
 
-data VoteData = VoteData
-  { _voteDataProposed :: !BlockInfo
-  , _voteDataParent   :: !BlockInfo
-  } deriving (Eq, Show)
 makeClassyFor "RWVoteData" "lVoteData"
   [ ("_voteDataProposed", "vdProposed")
   , ("_voteDataParent"  , "vdParent") ]
   ''VoteData
 makeFields ''VoteData
 
-data BlockTree a = BlockTree
-  { _blockTreeVoteData      :: !(Map HashValue VoteData)
-  , _blockTreeRootId        :: !HashValue
-  } deriving (Eq, Show)
 makeClassyFor "RWBlockTree" "lBlockTree"
   [ ("_blockTreeVoteData", "btVoteData")
   , ("_blockTreeRootId",   "btRootId") ]
   ''BlockTree
 makeFields ''BlockTree
 
-newtype BlockStore a = BlockStore
-  { _blockStoreInner         :: BlockTree a
-  } deriving (Eq, Show)
 makeClassyFor "RWBlockStore" "lBlockStore"
   [ ("_blockStoreInner", "bsInner") ]
   ''BlockStore
 makeFields ''BlockStore
 
-data Pacemaker = Pacemaker
-  { _pacemakerHighestCommittedRound :: !Round
-  , _pacemakerCurrentRound          :: !Round
-  } deriving (Eq, Show)
 makeClassyFor "RWPacemaker" "lPacemaker"
   [ ("_pacemakerHighestCommittedRound", "psHighestCommittedRound")
   , ("_pacemakerCurrentRound", "psCurrentRound") ]
   ''Pacemaker
 
-data Vote = Vote
-  { _voteVoteData         :: !VoteData
-  , _voteAuthor           :: !Author
-  } deriving (Eq, Show)
 makeClassyFor "RWVote" "lVote"
   [ ("_voteVoteData", "vVoteData")
   , ("_voteAuthor", "vAuthor") ]
   ''Vote
 makeFields ''Vote
 
-data EventProcessor a = EventProcessor
-  { _eventProcessorBlockStore        :: !(BlockStore a)
-  , _eventProcessorPacemaker         :: !Pacemaker
-  , _eventProcessorLastVoteSend      :: !(Maybe (Vote, Round))
-  } deriving (Eq, Show)
 makeClassyFor "RWEventProcessor" "lEventProcessor"
   [ ("_eventProcessorBlockStore", "epsBlockStore")
   , ("_eventProcessorPacemaker", "epsPacemaker")
