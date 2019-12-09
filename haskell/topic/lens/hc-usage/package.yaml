@@ -3,8 +3,11 @@ version:             0.1.0.0
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
 - lens
 - mtl
+- template-haskell
+- th-abstraction
 - transformers
 - pretty-show
 - protolude

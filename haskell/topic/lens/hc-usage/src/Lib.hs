@@ -79,13 +79,13 @@ hasXHasY  = do
 hasX :: (Monad m, HasX t Text) => RWST () [Text] t m Text
 hasX  = do
   x' <- use x
-  x .= "x/hasX"
+  x  .= "x/hasX"
   pure x'
 
 hasY :: (Monad m, HasY t Text) => RWST () [Text] t m Text
 hasY  = do
   y' <- use y
-  y .= "y/hasY"
+  y  .= "y/hasY"
   pure y'
 
 fooey :: Foo
