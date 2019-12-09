@@ -26,7 +26,7 @@ import           Protolude                      hiding (get, gets, round, to)
 {-# ANN module ("HLint: ignore Reduce duplication" :: Prelude.String) #-}
 {-# ANN module ("HLint: ignore Redundant return" :: Prelude.String) #-}
 
-newtype Author    = Author   { _authorAuthor   :: Text             } deriving (Eq, Ord, Show)
+newtype Author    = Author   { _authorAuthor  :: Text             } deriving (Eq, Ord, Show)
 newtype Epoch     = Epoch    { _epochEpoch    :: Int              } deriving (Eq, Num, Ord, Show)
 newtype HashValue = HashValue{ _hashValueHashValue:: ByteString       } deriving (Eq, Ord, Show)
 newtype Round     = Round    { _roundRound    :: Int              } deriving (Eq, Num, Ord, Show)
@@ -113,26 +113,47 @@ makeClassyFor "RWEventProcessor" "lEventProcessor"
   ''EventProcessor
 makeFields ''EventProcessor
 
-bi :: BlockInfo
-bi  = BlockInfo (Author "biauthor") (Epoch 0) (Round 0) (HashValue "0")
+biT :: BlockInfo
+biT  = BlockInfo (Author "biauthor") (Epoch 0) (Round 0) (HashValue "0")
 
-ep :: EventProcessor ByteString
-ep  = EventProcessor
+epT :: EventProcessor ByteString
+epT  = EventProcessor
         (BlockStore (BlockTree Map.empty (HashValue "btrootid")))
         (Pacemaker (Round 100) (Round 101))
         (Just ( Vote
-                  (VoteData bi bi)
+                  (VoteData biT biT)
                   (Author "epauthor")
               , Round 45))
 
-foo :: (Monad m, HasBlockStore s a, Show a) => RWST () [Text] s m ()
+foo
+  :: ( Monad m
+     , HasBlockStore s (BlockStore a)
+     , HasPacemaker s Pacemaker
+     , HasLastVoteSend s (Maybe (Vote, Round))
+     , Show s, Show a)
+  => RWST () [Text] s m ()
 foo  = do
+  ep <- get
   bs <- use blockStore
-  tell ["TELL " <> show bs]
+  pm <- use pacemaker
+  lv <- use lastVoteSend
+  tell ["EP " <> show ep]
+  tell ["BS " <> show bs]
+  tell ["PM " <> show pm]
+  tell ["LV " <> show lv]
+  pure ()
+
+bar :: ( Monad m
+       , HasInner s (BlockTree a)
+       , Show s, Show a)
+    => RWST () [Text] s m ()
+bar  = do
+  rid <- use (inner.rootId)
+  tell ["INNER" <> show rid]
   pure ()
 
 rfoo :: Monad m => m ((), EventProcessor ByteString, [Text])
-rfoo  = runRWST foo () ep
+rfoo  = runRWST foo () epT
 {-
 foo
   :: (RWBlockInfo x, RWVoteData x)
