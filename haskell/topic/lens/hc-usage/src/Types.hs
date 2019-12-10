@@ -25,12 +25,13 @@ data VoteData = VoteData
   } deriving (Eq, Show)
 
 data BlockTree a = BlockTree
-  { _blockTreeVoteData      :: !(Map HashValue VoteData)
-  , _blockTreeRootId        :: !HashValue
+  { _blockTreeVoteDataMap :: !(Map HashValue VoteData)
+  , _blockTreeRootId      :: !HashValue
   } deriving (Eq, Show)
 
-newtype BlockStore a = BlockStore
-  { _blockStoreInner         :: BlockTree a
+data BlockStore a = BlockStore
+  { _blockStoreInner :: BlockTree a
+  , _blockStoreStuff :: Text
   } deriving (Eq, Show)
 
 data Pacemaker = Pacemaker
@@ -39,12 +40,12 @@ data Pacemaker = Pacemaker
   } deriving (Eq, Show)
 
 data Vote = Vote
-  { _voteVoteData         :: !VoteData
-  , _voteAuthor           :: !Author
+  { _voteVoteData :: !VoteData
+  , _voteAuthor   :: !Author
   } deriving (Eq, Show)
 
 data EventProcessor a = EventProcessor
-  { _eventProcessorBlockStore        :: !(BlockStore a)
-  , _eventProcessorPacemaker         :: !Pacemaker
-  , _eventProcessorLastVoteSend      :: !(Maybe (Vote, Round))
+  { _eventProcessorBlockStore   :: !(BlockStore a)
+  , _eventProcessorPacemaker    :: !Pacemaker
+  , _eventProcessorLastVoteSend :: !(Maybe (Vote, Round))
   } deriving (Eq, Show)

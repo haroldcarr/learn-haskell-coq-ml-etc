@@ -11,13 +11,13 @@
 module X where
 
 ------------------------------------------------------------------------------
+import           Init
 import           Types
 ------------------------------------------------------------------------------
 import           Control.Lens
 -- import qualified Control.Lens.Internal.FieldTH  as FTH
 -- import           Control.Lens.TH
 import           Control.Monad.Trans.RWS.Strict
-import qualified Data.Map.Strict                       as Map
 -- import qualified Language.Haskell.TH.Datatype   as THD
 -- import qualified Language.Haskell.TH.Lib        as THL
 -- import qualified Language.Haskell.TH.Syntax     as THS
@@ -80,24 +80,12 @@ makeClassyFor "RWEventProcessor" "lEventProcessor"
   ''EventProcessor
 makeFields ''EventProcessor
 
-biT :: BlockInfo
-biT  = BlockInfo (Author "biauthor") (Epoch 0) (Round 0) (HashValue "0")
-
-epT :: EventProcessor ByteString
-epT  = EventProcessor
-        (BlockStore (BlockTree Map.empty (HashValue "btrootid")))
-        (Pacemaker (Round 100) (Round 101))
-        (Just ( Vote
-                  (VoteData biT biT)
-                  (Author "epauthor")
-              , Round 45))
-
 foo
   :: ( Monad m
      , HasBlockStore s (BlockStore a)
      , HasPacemaker s Pacemaker
      , HasLastVoteSend s (Maybe (Vote, Round))
-     , Show s, Show a)
+     , Show s )
   => RWST () [Text] s m ()
 foo  = do
   ep <- get
@@ -111,8 +99,7 @@ foo  = do
   pure ()
 
 bar :: ( Monad m
-       , HasInner s (BlockTree a)
-       , Show s, Show a)
+       , HasInner s (BlockTree a) )
     => RWST () [Text] s m ()
 bar  = do
   rid <- use (inner.rootId)

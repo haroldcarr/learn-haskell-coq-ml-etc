@@ -94,17 +94,17 @@ fooey  = Foo "fx" "fy" (Bar "bx" "by")
 rHasFoo :: Monad m => m (Text, Foo, [Text])
 rHasFoo  = runRWST hasFoo () fooey
 
-rHasFooHasBar :: (Monad m, HasFoo Foo, HasBar Foo) => m (Text, Foo, [Text])
+rHasFooHasBar :: Monad m => m (Text, Foo, [Text])
 rHasFooHasBar  = runRWST hasFooHasBar () fooey
 
-rHasFooHasBarHasX :: (Monad m, HasFoo Foo, HasBar Foo) => m (Text, Foo, [Text])
+rHasFooHasBarHasX :: Monad m => m (Text, Foo, [Text])
 rHasFooHasBarHasX  = runRWST hasFooHasBarHasX () fooey
 
-rHasY :: (Monad m, HasY Foo Text) => m (Text, Foo, [Text])
+rHasY :: Monad m => m (Text, Foo, [Text])
 rHasY  = runRWST hasY () fooey
 
-rHasY' :: (Monad m, HasY Foo Text) => m (Text, Bar, [Text])
+rHasY' :: Monad m => m (Text, Bar, [Text])
 rHasY'  = runRWST hasY () (Bar "bx" "by")
 
-rHasY'' :: (Monad m, HasY Bar Text) => m (Text, Bar, [Text])
+rHasY'' :: Monad m => m (Text, Bar, [Text])
 rHasY''  = runRWST hasY () (Bar "bx" "by")
