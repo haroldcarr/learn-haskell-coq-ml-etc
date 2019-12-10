@@ -26,12 +26,12 @@ import           Protolude                      hiding (get, gets, round, to)
 ------------------------------------------------------------------------------
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: Prelude.String) #-}
-{-# ANN module ("HLint: ignore Redundant return" :: Prelude.String) #-}
+{-# ANN module ("HLint: ignore Redundant return"   :: Prelude.String) #-}
 
-makeClassyFor "RWAuthor" "lAuthor" [("_getAuthor", "getAuthor")] ''Author
-makeClassyFor "RWEpoch" "lEpoch" [("_epochEpoch", "getEpoch")] ''Epoch
-makeClassyFor "RWHashValue" "lHashValue" [("_getHashValue", "getHashValue")] ''HashValue
-makeClassyFor "RWRound" "lRound" [("_getRound", "getRound")] ''Round
+makeClassyFor "RWAuthor"    "lAuthor"    [("_authorAuthor"      , "getAuthor")]    ''Author
+makeClassyFor "RWEpoch"     "lEpoch"     [("_epochEpoch"        , "getEpoch")]     ''Epoch
+makeClassyFor "RWHashValue" "lHashValue" [("_hashValueHashValue", "getHashValue")] ''HashValue
+makeClassyFor "RWRound"     "lRound"     [("_roundRound"        , "getRound")]     ''Round
 makeFields ''Author
 makeFields ''Epoch
 makeFields ''HashValue

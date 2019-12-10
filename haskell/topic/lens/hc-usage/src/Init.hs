@@ -13,6 +13,7 @@ biT  = BlockInfo (Author "biauthor") (Epoch 0) (Round 0) (HashValue "0")
 
 epT :: EventProcessor ByteString
 epT  = EventProcessor
+        (Author "epauthor")
         (BlockStore (BlockTree Map.empty (HashValue "btrootid")) "bsstuff")
         (Pacemaker (Round 100) (Round 101))
         (Just ( Vote

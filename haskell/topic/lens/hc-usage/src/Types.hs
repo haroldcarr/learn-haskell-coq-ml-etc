@@ -45,7 +45,8 @@ data Vote = Vote
   } deriving (Eq, Show)
 
 data EventProcessor a = EventProcessor
-  { _eventProcessorBlockStore   :: !(BlockStore a)
+  { _eventProcessorAuthor       :: !Author
+  , _eventProcessorBlockStore   :: !(BlockStore a)
   , _eventProcessorPacemaker    :: !Pacemaker
   , _eventProcessorLastVoteSend :: !(Maybe (Vote, Round))
   } deriving (Eq, Show)

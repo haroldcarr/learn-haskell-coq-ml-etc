@@ -31,6 +31,7 @@ makeClassy ''EventProcessor
 makeClassy ''BlockStore
 makeClassy ''Pacemaker
 makeClassy ''BlockTree
+makeClassy ''Author
 
 instance HasBlockStore (EventProcessor a) a where
   blockStore = lens _eventProcessorBlockStore (\x y -> x { _eventProcessorBlockStore = y})
@@ -42,14 +43,18 @@ instance HasBlockTree (EventProcessor a) a where
 instance HasPacemaker (EventProcessor a) where
   pacemaker = lens _eventProcessorPacemaker (\x y -> x { _eventProcessorPacemaker = y})
 
+instance HasAuthor (EventProcessor a) where
+  author = lens _eventProcessorAuthor (\x y -> x { _eventProcessorAuthor = y})
+
 ------------------------------------------------------------------------------
 -- EventProcessor
 
-ep :: (HasPacemaker s, HasBlockStore s a, HasBlockTree s a)
+ep :: (HasAuthor s, HasPacemaker s, HasBlockStore s a, HasBlockTree s a)
    => RWS () [Text] s ()
 ep  = do
   pm
-  bs
+  author <- use author
+  bs author
 
 ------------------------------------------------------------------------------
 -- Pacemaker
@@ -64,21 +69,21 @@ pm  = do
 -- BlockStore
 
 bs :: (HasBlockStore s a, HasBlockTree s a)
-   => RWS () [Text] s ()
-bs  = do
+   => Author -> RWS () [Text] s ()
+bs author = do
   s <- use (blockStore.blockStoreStuff)
   tell ["BS " <> show s]
-  bt
+  bt author
 
 ------------------------------------------------------------------------------
 -- BlockTree
 
 bt :: (HasBlockTree s a)
-    => RWS () [Text] s ()
-bt  = do
+    => Author -> RWS () [Text] s ()
+bt author = do
   vdm <- use (blockTree.blockTreeVoteDataMap)
   let vd = Map.lookup (HashValue "junk") vdm
-  tell ["BT " <> show vd]
+  tell ["BT " <> show author <> " " <> show vd]
 
 ------------------------------------------------------------------------------
 -- run
