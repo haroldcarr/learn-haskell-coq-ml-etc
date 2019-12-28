@@ -41,6 +41,7 @@ parseBindings =
                          return ([x], [t])
     where
       pInfo = fmap HasType (parseType 0 []) <|> fmap (const (HasKind Star)) (reserved simplyTyped "*")
+{-# ANN parseBindings ("HLint: ignore Reduce duplication" :: Prelude.String) #-}
 
 parseStmt :: [String] -> CharParser () (Stmt ITerm Info)
 parseStmt e =
@@ -192,7 +193,7 @@ parseStmt_ e =
     <|> fmap Eval (parseITerm_ 0 e)
 
 parseBindings_ :: Bool -> [String] -> CharParser () ([String], [CTerm_])
-parseBindings_ b e =
+parseBindings_ b e0 =
                      (let rec :: [String] -> [CTerm_] -> CharParser () ([String], [CTerm_])
                           rec e ts =
                             do
@@ -203,12 +204,12 @@ parseBindings_ b e =
                                            t <- parseCTerm_ 0 (if b then e else [])
                                            return (x,t))
                              rec (x : e) (t : ts) <|> return (x : e, t : ts)
-                      in rec e [])
+                      in rec e0 [])
                      <|>
                      do  x <- identifier lambdaPi
                          reserved lambdaPi "::"
-                         t <- parseCTerm_ 0 e
-                         return (x : e, [t])
+                         t <- parseCTerm_ 0 e0
+                         return (x : e0, [t])
 
 parseITerm_ :: Int -> [String] -> CharParser () ITerm_
 parseITerm_ 0 e =
@@ -217,7 +218,7 @@ parseITerm_ 0 e =
           (fe,t:ts) <- parseBindings_ True e
           reserved lambdaPi "."
           t' <- parseCTerm_ 0 fe
-          return (foldl (\ p t -> Pi_ t (Inf_ p)) (Pi_ t t') ts)
+          return (foldl (\ p t0 -> Pi_ t0 (Inf_ p)) (Pi_ t t') ts)
     <|>
     try
        (do
@@ -299,7 +300,7 @@ iPrint_ p ii (Pi_ d r)         =  parensIf (p > 0) (PP.sep [PP.text "forall " <>
 iPrint_ _ ii (Bound_ k)        =  PP.text (vars !! (ii - k - 1))
 iPrint_ _  _ (Free_ (Global s))=  PP.text s
 iPrint_ p ii (i :$: c)         =  parensIf (p > 2) (PP.sep [iPrint_ 2 ii i, PP.nest 2 (cPrint_ 3 ii c)])
-iPrint_ p  _ Nat_              =  PP.text "Nat"
+iPrint_ _  _ Nat_              =  PP.text "Nat"
 iPrint_ p ii (NatElim_ m z s n)=  iPrint_ p ii (Free_ (Global "natElim") :$: m :$: z :$: s :$: n)
 iPrint_ p ii (Vec_ a n)        =  iPrint_ p ii (Free_ (Global "Vec") :$: a :$: n)
 iPrint_ p ii (VecElim_ a m mn mc n xs)
@@ -315,8 +316,8 @@ iPrint_ _  _ x                 =  PP.text ("[" ++ show x ++ "]")
 cPrint_ :: Int -> Int -> CTerm_ -> PP.Doc
 cPrint_ p ii (Inf_ i)    = iPrint_ p ii i
 cPrint_ p ii (Lam_ c)    = parensIf (p > 0) (PP.text "\\ " <> PP.text (vars !! ii) <> PP.text " -> " <> cPrint_ 0 (ii + 1) c)
-cPrint_ p ii Zero_       = fromNat_ 0 ii Zero_     --  PP.text "Zero"
-cPrint_ p ii (Succ_ n)   = fromNat_ 0 ii (Succ_ n) --  iPrint_ p ii (Free_ (Global "Succ") :$: n)
+cPrint_ _ ii Zero_       = fromNat_ 0 ii Zero_     --  PP.text "Zero"
+cPrint_ _ ii (Succ_ n)   = fromNat_ 0 ii (Succ_ n) --  iPrint_ p ii (Free_ (Global "Succ") :$: n)
 cPrint_ p ii (Nil_ a)    = iPrint_ p ii (Free_ (Global "Nil") :$: a)
 cPrint_ p ii (Cons_ a n x xs) =
                              iPrint_ p ii (Free_ (Global "Cons") :$: a :$: n :$: x :$: xs)
@@ -325,7 +326,7 @@ cPrint_ p ii (FZero_ n)  = iPrint_ p ii (Free_ (Global "FZero") :$: n)
 cPrint_ p ii (FSucc_ n f)= iPrint_ p ii (Free_ (Global "FSucc") :$: n :$: f)
 
 fromNat_ :: Int -> Int -> CTerm_ -> PP.Doc
-fromNat_ n ii Zero_ = PP.int n
+fromNat_ n  _ Zero_ = PP.int n
 fromNat_ n ii (Succ_ k) = fromNat_ (n + 1) ii k
 fromNat_ n ii t = parensIf True (PP.int n <> PP.text " + " <> cPrint_ 0 ii t)
 
@@ -390,19 +391,19 @@ commands
          Cmd [":help",":?"]   ""        (const Help)   "display this list of commands" ]
 
 helpTxt :: [InteractiveCommand] -> String
-helpTxt cs
+helpTxt cs0
     =  "List of commands:  Any command may be abbreviated to :c where\n" ++
        "c is the first character in the full name.\n\n" ++
        "<expr>                  evaluate expression\n" ++
        "let <var> = <expr>      define variable\n" ++
        "assume <var> :: <expr>  assume variable\n\n"
        ++
-       unlines (map (\ (Cmd cs a _ d) -> let  ct = concat (intersperse ", " (map (++ if null a then "" else " " ++ a) cs))
-                                         in   ct ++ replicate ((24 - length ct) `max` 2) ' ' ++ d) cs)
+       unlines (map (\ (Cmd cs a _ d) -> let  ct = intercalate ", " (map (++ if null a then "" else " " ++ a) cs)
+                                         in   ct ++ replicate ((24 - length ct) `max` 2) ' ' ++ d) cs0)
 
 interpretCommand :: String -> IO Command
 interpretCommand x
-    =  if isPrefixOf ":" x then
+    =  if ":" `isPrefixOf` x then
          do  let  (cmd,t')  =  break isSpace x
                   t         =  dropWhile isSpace t'
              --  find matching commands
@@ -412,41 +413,41 @@ interpretCommand x
                            return Noop
                [Cmd _ _ f _]
                    ->      return (f t)
-               x   ->  do  putStrLn ("Ambiguous command, could be " ++ concat (intersperse ", " [ head cs | Cmd cs _ _ _ <- matching ]) ++ ".")
+               _x  ->  do  putStrLn ("Ambiguous command, could be " ++ intercalate ", " [ head cs | Cmd cs _ _ _ <- matching ] ++ ".")
                            return Noop
        else
          return (Compile (CompileInteractive x))
 
 handleCommand :: Interpreter i c v t tinf inf -> State v inf -> Command -> IO (Maybe (State v inf))
-handleCommand int state@(inter, out, ve, te) cmd
+handleCommand int state@(inter, _out, ve, te) cmd
     =  case cmd of
-         Quit   ->  when (not inter) (putStrLn "!@#$^&*") >> return Nothing
+         Quit   ->  unless inter (putStrLn "!@#$^&*") >> return Nothing
          Noop   ->  return (Just state)
          Help   ->  putStr (helpTxt commands) >> return (Just state)
-         TypeOf x ->
-                    do  x <- parseIO "<interactive>" (iiparse int) x
+         TypeOf x0 ->
+                    do  x <- parseIO "<interactive>" (iiparse int) x0
                         t <- maybe (return Nothing) (iinfer int ve te) x
-                        maybe (return ()) (\u -> putStrLn (PP.render (itprint int u))) t
+                        maybe (return ()) (putStrLn . PP.render . itprint int) t
                         return (Just state)
          Browse ->  do  putStr (unlines [ s | Global s <- reverse (nub (map fst te)) ])
                         return (Just state)
          Compile c ->
-                    do  state <- case c of
+                    do  state' <- case c of
                                    CompileInteractive s -> compilePhrase int state s
                                    CompileFile f        -> compileFile int state f
-                        return (Just state)
+                        return (Just state')
 
 compileFile :: Interpreter i c v t tinf inf -> State v inf -> String -> IO (State v inf)
-compileFile int state@(inter, out, ve, te) f =
+compileFile int state@(_inter, _out, _ve, _te) f =
     do
       x <- readFile f
       stmts <- parseIO f (many (isparse int)) x
       maybe (error "compileFile") {-(return state)-} (foldM (handleStmt int) state) stmts
 
 compilePhrase :: Interpreter i c v t tinf inf -> State v inf -> String -> IO (State v inf)
-compilePhrase int state@(inter, out, ve, te) x =
+compilePhrase int state@(_inter, _out, _ve, _te) x0 =
     do
-      x <- parseIO "<interactive>" (isparse int) x
+      x <- parseIO "<interactive>" (isparse int) x0
       maybe (error "compilePhrase") {-(return state)-} (handleStmt int state) x
 
 data Interpreter i c v t tinf inf =
@@ -478,7 +479,7 @@ st = I { iname = "the simply typed lambda calculus",
 lp :: Interpreter ITerm_ CTerm_ Value_ Value_ CTerm_ Value_
 lp = I { iname = "lambda-Pi",
            iprompt = "LP> ",
-           iitype = \v c -> iType_ 0 (v, c),
+           iitype = curry (iType_ 0),
            iquote = quote0_,
            ieval = \ e x -> iEval_ x (e, []),
            ihastype = id,
@@ -490,20 +491,20 @@ lp = I { iname = "lambda-Pi",
 
 lpte :: Ctx Value_
 lpte =      [(Global "Zero", VNat_),
-               (Global "Succ", VPi_ VNat_ (\ _ -> VNat_)),
+               (Global "Succ", VPi_ VNat_ (const VNat_)),
                (Global "Nat", VStar_),
-               (Global "natElim", VPi_ (VPi_ VNat_ (\ _ -> VStar_)) (\ m ->
+               (Global "natElim", VPi_ (VPi_ VNat_ (const VStar_)) (\ m ->
                                  VPi_ (m `vapp_` VZero_) (\ _ ->
-                                 VPi_ (VPi_ VNat_ (\ k -> VPi_ (m `vapp_` k) (\ _ -> (m `vapp_` (VSucc_ k))))) ( \ _ ->
+                                 VPi_ (VPi_ VNat_ (\ k -> VPi_ (m `vapp_` k) (const (m `vapp_` VSucc_ k)))) ( \ _ ->
                                  VPi_ VNat_ (\ n -> m `vapp_` n))))),
-               (Global "Nil", VPi_ VStar_ (\ a -> VVec_ a VZero_)),
+               (Global "Nil", VPi_ VStar_ (`VVec_` VZero_)),
                (Global "Cons", VPi_ VStar_ (\ a ->
                               VPi_ VNat_ (\ n ->
                               VPi_ a (\ _ -> VPi_ (VVec_ a n) (\ _ -> VVec_ a (VSucc_ n)))))),
-               (Global "Vec", VPi_ VStar_ (\ _ -> VPi_ VNat_ (\ _ -> VStar_))),
+               (Global "Vec", VPi_ VStar_ (\ _ -> VPi_ VNat_ (const VStar_))),
                (Global "vecElim", VPi_ VStar_ (\ a ->
-                                 VPi_ (VPi_ VNat_ (\ n -> VPi_ (VVec_ a n) (\ _ -> VStar_))) (\ m ->
-                                 VPi_ (m `vapp_` VZero_ `vapp_` (VNil_ a)) (\ _ ->
+                                 VPi_ (VPi_ VNat_ (\ n -> VPi_ (VVec_ a n) (const VStar_))) (\ m ->
+                                 VPi_ (m `vapp_` VZero_ `vapp_` VNil_ a) (\ _ ->
                                  VPi_ (VPi_ VNat_ (\ n ->
                                        VPi_ a (\ x ->
                                        VPi_ (VVec_ a n) (\ xs ->
@@ -513,39 +514,38 @@ lpte =      [(Global "Zero", VNat_),
                                  VPi_ (VVec_ a n) (\ xs -> m `vapp_` n `vapp_` xs))))))),
                (Global "Refl", VPi_ VStar_ (\ a -> VPi_ a (\ x ->
                               VEq_ a x x))),
-               (Global "Eq", VPi_ VStar_ (\ a -> VPi_ a (\ x -> VPi_ a (\ y -> VStar_)))),
+               (Global "Eq", VPi_ VStar_ (\ a -> VPi_ a (\_x -> VPi_ a (const VStar_)))),
                (Global "eqElim", VPi_ VStar_ (\ a ->
-                                VPi_ (VPi_ a (\ x -> VPi_ a (\ y -> VPi_ (VEq_ a x y) (\ _ -> VStar_)))) (\ m ->
+                                VPi_ (VPi_ a (\ x -> VPi_ a (\ y -> VPi_ (VEq_ a x y) (const VStar_)))) (\ m ->
                                 VPi_ (VPi_ a (\ x -> m `vapp_` x `vapp_` x `vapp_` VRefl_ a x)) (\ _ ->
                                 VPi_ a (\ x -> VPi_ a (\ y ->
                                 VPi_ (VEq_ a x y) (\ eq ->
                                 m `vapp_` x `vapp_` y `vapp_` eq))))))),
-               (Global "FZero", VPi_ VNat_ (\ n -> VFin_ (VSucc_ n))),
-               (Global "FSucc", VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\ f ->
+               (Global "FZero", VPi_ VNat_ (VFin_ . VSucc_)),
+               (Global "FSucc", VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\_f ->
                                VFin_ (VSucc_ n)))),
-               (Global "Fin", VPi_ VNat_ (\ n -> VStar_)),
-               (Global "finElim", VPi_ (VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\ _ -> VStar_))) (\ m ->
-                                 VPi_ (VPi_ VNat_ (\ n -> m `vapp_` (VSucc_ n) `vapp_` (VFZero_ n))) (\ _ ->
-                                 VPi_ (VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\ f -> VPi_ (m `vapp_` n `vapp_` f) (\ _ -> m `vapp_` (VSucc_ n) `vapp_` (VFSucc_ n f))))) (\ _ ->
+               (Global "Fin", VPi_ VNat_ (const VStar_)),
+               (Global "finElim", VPi_ (VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (const VStar_))) (\ m ->
+                                 VPi_ (VPi_ VNat_ (\ n -> m `vapp_` VSucc_ n `vapp_` VFZero_ n)) (\ _ ->
+                                 VPi_ (VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\ f -> VPi_ (m `vapp_` n `vapp_` f) (\ _ -> m `vapp_` VSucc_ n `vapp_` VFSucc_ n f)))) (\ _ ->
                                  VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\ f ->
                                  m `vapp_` n `vapp_` f))))))]
 
 lpve :: Ctx Value_
 lpve =      [(Global "Zero", VZero_),
-               (Global "Succ", VLam_ (\ n -> VSucc_ n)),
+               (Global "Succ", VLam_ VSucc_),
                (Global "Nat", VNat_),
                (Global "natElim", cEval_ (Lam_ (Lam_ (Lam_ (Lam_ (Inf_ (NatElim_ (Inf_ (Bound_ 3)) (Inf_ (Bound_ 2)) (Inf_ (Bound_ 1)) (Inf_ (Bound_ 0)))))))) ([], [])),
-               (Global "Nil", VLam_ (\ a -> VNil_ a)),
-               (Global "Cons", VLam_ (\ a -> VLam_ (\ n -> VLam_ (\ x -> VLam_ (\ xs ->
-                              VCons_ a n x xs))))),
-               (Global "Vec", VLam_ (\ a -> VLam_ (\ n -> VVec_ a n))),
+               (Global "Nil", VLam_ VNil_),
+               (Global "Cons", VLam_ (\ a -> VLam_ (\ n -> VLam_ (VLam_ . VCons_ a n)))),
+               (Global "Vec", VLam_ (VLam_ . VVec_)),
                (Global "vecElim", cEval_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Inf_ (VecElim_ (Inf_ (Bound_ 5)) (Inf_ (Bound_ 4)) (Inf_ (Bound_ 3)) (Inf_ (Bound_ 2)) (Inf_ (Bound_ 1)) (Inf_ (Bound_ 0)))))))))) ([],[])),
-               (Global "Refl", VLam_ (\ a -> VLam_ (\ x -> VRefl_ a x))),
-               (Global "Eq", VLam_ (\ a -> VLam_ (\ x -> VLam_ (\ y -> VEq_ a x y)))),
+               (Global "Refl", VLam_ (VLam_ . VRefl_)),
+               (Global "Eq", VLam_ (\ a -> VLam_ (VLam_ . VEq_ a))),
                (Global "eqElim", cEval_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Inf_ (EqElim_ (Inf_ (Bound_ 5)) (Inf_ (Bound_ 4)) (Inf_ (Bound_ 3)) (Inf_ (Bound_ 2)) (Inf_ (Bound_ 1)) (Inf_ (Bound_ 0)))))))))) ([],[])),
-               (Global "FZero", VLam_ (\ n -> VFZero_ n)),
-               (Global "FSucc", VLam_ (\ n -> VLam_ (\ f -> VFSucc_ n f))),
-               (Global "Fin", VLam_ (\ n -> VFin_ n)),
+               (Global "FZero", VLam_ VFZero_),
+               (Global "FSucc", VLam_ (VLam_ . VFSucc_)),
+               (Global "Fin", VLam_ VFin_),
                (Global "finElim", cEval_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Inf_ (FinElim_ (Inf_ (Bound_ 4)) (Inf_ (Bound_ 3)) (Inf_ (Bound_ 2)) (Inf_ (Bound_ 1)) (Inf_ (Bound_ 0))))))))) ([],[]))]
 
 repLP :: Bool -> IO ()
@@ -554,6 +554,12 @@ repLP b = readevalprint lp (b, [], lpve, lpte)
 repST :: Bool -> IO ()
 repST b = readevalprint st (b, [], [], [])
 
+iinfer
+  :: Interpreter i c v a tinf inf
+  -> NameEnv v
+  -> Ctx inf
+  -> i
+  -> IO (Maybe a)
 iinfer int d g t =
     case iitype int d g t of
       Left e  -> putStrLn e >> return Nothing
@@ -594,7 +600,7 @@ check
   -> ((t, v) -> IO ())
   -> ((t, v) -> State v inf)
   -> IO (State v inf)
-check int state@(inter, out, ve, te) i t kp k =
+check int state@(_inter, _out, ve, te) _i t kp k =
                   do
                     --  typecheck and evaluate
                     x <- iinfer int ve te t
@@ -609,15 +615,25 @@ check int state@(inter, out, ve, te) i t kp k =
                           kp (y, v)
                           return (k (y, v))
 
-stassume state@(inter, out, ve, te) x t =
+stassume
+  :: Monad m
+  => State v inf
+  -> String
+  -> inf
+  -> m (State v inf)
+stassume _state@(inter, out, ve, te) x t =
   return               (inter, out, ve, (Global x, t) : te)
+
+
+lpassume :: State Value_ Value_ -> String -> CTerm_ -> IO (State Value_ Value_)
 lpassume state@(inter, out, ve, te) x t =
     check lp state x (Ann_ t (Inf_ Star_))
-          (\ (y, v) -> do putStrLn (PP.render (PP.text x <> PP.text " :: " <> cPrint_ 0 0 (quote0_ v)))
+          (\ (_, v) -> do putStrLn (PP.render (PP.text x <> PP.text " :: " <> cPrint_ 0 0 (quote0_ v)))
                           return ())
-          (\ (y, v) -> (inter, out, ve, (Global x, v) : te))
+          (\ (_, v) -> (inter, out, ve, (Global x, v) : te))
 
-it = "it"
+it :: String
+it  = "it"
 
 process :: String -> String
 process = unlines . map (\ x -> "< " ++ x) . lines
@@ -687,7 +703,7 @@ vapp (VNeutral n)  v =  VNeutral (NApp n v)
 
 cEval :: CTerm -> (NameEnv Value,Env) -> Value
 cEval (Inf  ii)   d =  iEval ii d
-cEval (Lam  e)    d =  VLam (\ x -> cEval e (((\(e, d) -> (e,  (x : d))) d)))
+cEval (Lam  e0)   d0=  VLam (\ x -> cEval e0 ((\(e, d) -> (e,  x : d)) d0))
 
 cKind :: Context -> Type -> Kind -> Result ()
 cKind g (TFree x) Star
@@ -706,7 +722,7 @@ iType ii g (Ann e ty)
     =  do  cKind g ty Star
            cType ii g e ty
            return ty
-iType ii g (Free x)
+iType  _ g (Free x)
     =  case lookup x g of
          Just (HasType ty) ->  return ty
          Nothing           ->  throwError "unknown identifier"
@@ -724,7 +740,7 @@ cType ii g (Inf e) ty
 cType ii g (Lam e) (Fun ty ty')
     =  cType  (ii + 1) ((Local ii, HasType ty) : g)
               (cSubst 0 (Free (Local ii)) e) ty'
-cType ii g _ _
+cType  _ _ _ _
     =  throwError "type mismatch"
 
 type Result a = Either String a
@@ -732,7 +748,7 @@ type Result a = Either String a
 iSubst :: Int -> ITerm -> ITerm -> ITerm
 iSubst ii r (Ann e ty)  =  Ann (cSubst ii r e) ty
 iSubst ii r (Bound j)   =  if ii == j then r else Bound j
-iSubst ii r (Free y)    =  Free y
+iSubst  _ _ (Free y)    =  Free y
 iSubst ii r (e1 :@: e2) =  iSubst ii r e1 :@: cSubst ii r e2
 
 cSubst :: Int -> ITerm -> CTerm -> CTerm
@@ -752,30 +768,37 @@ neutralQuote ii (NApp n v) =  neutralQuote ii n :@: quote ii v
 
 boundfree :: Int -> Name -> ITerm
 boundfree ii (Quote k) =  Bound (ii - k - 1)
-boundfree ii x         =  Free x
+boundfree  _ x         =  Free x
 
+id',const' :: CTerm
 id'      =  Lam (Inf (Bound 0))
 const'   =  Lam (Lam (Inf (Bound 1)))
 
+tfree   :: String -> Type
 tfree a  =  TFree (Global a)
+free    :: String -> CTerm
 free x   =  Inf (Free (Global x))
 
+term1,term2 :: ITerm
 term1    =  Ann id' (Fun (tfree "a") (tfree "a")) :@: free "y"
 term2    =  Ann const' (Fun  (Fun (tfree "b") (tfree "b"))
                                (Fun  (tfree "a")
                                      (Fun (tfree "b") (tfree "b"))))
               :@: id' :@: free "y"
 
-env1     =  [  (Global "y", HasType (tfree "a")),
-                 (Global "a", HasKind Star)]
-env2     =  [(Global "b", HasKind Star)] ++ env1
+env1,env2 :: [(Name, Info)]
+env1     =  [ (Global "y", HasType (tfree "a"))
+            , (Global "a", HasKind Star) ]
+env2     =    (Global "b", HasKind Star) : env1
 
+test_eval1,test_eval2 :: CTerm
 test_eval1=  quote0 (iEval term1 ([],[]))
    {-  \eval{test_eval1}  -}
 
 test_eval2=  quote0 (iEval term2 ([],[]))
    {-  \eval{test_eval2}  -}
 
+test_type1,test_type2 :: Result Type
 test_type1=  iType0 env1 term1
    {-  \eval{test_type1}  -}
 
@@ -868,9 +891,9 @@ vfree_ n = VNeutral_ (NFree_ n)
 
 cEval_ :: CTerm_ -> (NameEnv Value_,Env_) -> Value_
 cEval_ (Inf_  ii)    d  =  iEval_ ii d
-cEval_ (Lam_  c)     d  =  VLam_ (\ x -> cEval_ c (((\(e, d) -> (e,  (x : d))) d)))
+cEval_ (Lam_  c)     d0 =  VLam_ (\ x -> cEval_ c ((\(e, d) -> (e,  x : d)) d0))
 
-cEval_ Zero_      d  = VZero_
+cEval_ Zero_     _d  = VZero_
 cEval_ (Succ_ k)  d  = VSucc_ (cEval_ k d)
 
 cEval_ (Nil_ a)          d  =  VNil_ (cEval_ a d)
@@ -885,15 +908,15 @@ cEval_ (FSucc_ n f)  d  =  VFSucc_ (cEval_ n d) (cEval_ f d)
 iEval_ :: ITerm_ -> (NameEnv Value_,Env_) -> Value_
 iEval_ (Ann_  c _)       d  =  cEval_ c d
 
-iEval_ Star_           d  =  VStar_
-iEval_ (Pi_ ty ty')    d  =  VPi_ (cEval_ ty d) (\ x -> cEval_ ty' (((\(e, d) -> (e,  (x : d))) d)))
+iEval_ Star_          _d  =  VStar_
+iEval_ (Pi_ ty ty')    d0 =  VPi_ (cEval_ ty d0) (\ x -> cEval_ ty' ((\(e, d) -> (e, x : d)) d0))
 
-iEval_ (Free_  x)      d  =  case lookup x (fst d) of Nothing ->  (vfree_ x); Just v -> v
-iEval_ (Bound_  ii)    d  =  (snd d) !! ii
+iEval_ (Free_  x)      d  =  fromMaybe (vfree_ x) (lookup x (fst d))
+iEval_ (Bound_  ii)    d  =  snd d !! ii
 iEval_ (i :$: c)       d  =  vapp_ (iEval_ i d) (cEval_ c d)
 
-iEval_ Nat_                  d  =  VNat_
-iEval_ (NatElim_ m mz ms n)  d
+iEval_ Nat_                 _d  =  VNat_
+iEval_ (NatElim_ m mz ms n0) d
     =  let  mzVal = cEval_ mz d
             msVal = cEval_ ms d
             rec nVal =
@@ -903,11 +926,11 @@ iEval_ (NatElim_ m mz ms n)  d
                 VNeutral_ n  ->  VNeutral_
                                  (NNatElim_ (cEval_ m d) mzVal msVal n)
                 _            ->  error "internal: eval natElim"
-       in   rec (cEval_ n d)
+       in   rec (cEval_ n0 d)
 
 iEval_ (Vec_ a n)                 d  =  VVec_ (cEval_ a d) (cEval_ n d)
 
-iEval_ (VecElim_ a m mn mc n xs)  d  =
+iEval_ (VecElim_ a m mn mc n0 xs0) d  =
     let  mnVal  =  cEval_ mn d
          mcVal  =  cEval_ mc d
          rec nVal xsVal =
@@ -918,7 +941,7 @@ iEval_ (VecElim_ a m mn mc n xs)  d  =
                                   (NVecElim_  (cEval_ a d) (cEval_ m d)
                                               mnVal mcVal nVal n)
              _                ->  error "internal: eval vecElim"
-    in   rec (cEval_ n d) (cEval_ xs d)
+    in   rec (cEval_ n0 d) (cEval_ xs0 d)
 
 iEval_ (Eq_ a x y)                d  =  VEq_ (cEval_ a d) (cEval_ x d) (cEval_ y d)
 iEval_ (EqElim_ a m mr x y eq)    d  =
@@ -949,15 +972,15 @@ iEval_ (FinElim_ m mz ms n f)  d  =
 iSubst_ :: Int -> ITerm_ -> ITerm_ -> ITerm_
 iSubst_ ii i'   (Ann_ c c')     =  Ann_ (cSubst_ ii i' c) (cSubst_ ii i' c')
 
-iSubst_ ii r  Star_           =  Star_
+iSubst_  _ _  Star_           =  Star_
 iSubst_ ii r  (Pi_ ty ty')    =  Pi_  (cSubst_ ii r ty) (cSubst_ (ii + 1) r ty')
 
 iSubst_ ii i' (Bound_ j)      =  if ii == j then i' else Bound_ j
-iSubst_ ii i' (Free_ y)       =  Free_ y
+iSubst_  _ _  (Free_ y)       =  Free_ y
 iSubst_ ii i' (i :$: c)       =  iSubst_ ii i' i :$: cSubst_ ii i' c
 
-iSubst_ ii r  Nat_            =  Nat_
-iSubst_ ii r  (NatElim_ m mz ms n)
+iSubst_  _ _  Nat_            =  Nat_
+iSubst_ ii r  (NatElim_ m mz ms _n)
                                 =  NatElim_ (cSubst_ ii r m)
                                             (cSubst_ ii r mz) (cSubst_ ii r ms)
                                             (cSubst_ ii r ms)
@@ -985,11 +1008,11 @@ cSubst_ :: Int -> ITerm_ -> CTerm_ -> CTerm_
 cSubst_ ii i' (Inf_ i)      =  Inf_ (iSubst_ ii i' i)
 cSubst_ ii i' (Lam_ c)      =  Lam_ (cSubst_ (ii + 1) i' c)
 
-cSubst_ ii r  Zero_         =  Zero_
+cSubst_  _ _  Zero_         =  Zero_
 cSubst_ ii r  (Succ_ n)     =  Succ_ (cSubst_ ii r n)
 
 cSubst_ ii r  (Nil_ a)      =  Nil_ (cSubst_ ii r a)
-cSubst_ ii r  (Cons_ a n x xs)
+cSubst_ ii r  (Cons_ a _n x xs)
                               =  Cons_ (cSubst_ ii r a) (cSubst_ ii r x)
                                        (cSubst_ ii r x) (cSubst_ ii r xs)
 
@@ -1003,15 +1026,15 @@ quote_ ii (VLam_ t)
     =     Lam_ (quote_ (ii + 1) (t (vfree_ (Quote ii))))
 
 
-quote_ ii VStar_ = Inf_ Star_
+quote_  _ VStar_ = Inf_ Star_
 quote_ ii (VPi_ v f)
       =  Inf_ (Pi_ (quote_ ii v) (quote_ (ii + 1) (f (vfree_ (Quote ii)))))
 
 quote_ ii (VNeutral_ n)
     =     Inf_ (neutralQuote_ ii n)
 
-quote_ ii VNat_       =  Inf_ Nat_
-quote_ ii VZero_      =  Zero_
+quote_  _ VNat_       =  Inf_ Nat_
+quote_  _ VZero_      =  Zero_
 quote_ ii (VSucc_ n)  =  Succ_ (quote_ ii n)
 
 quote_ ii (VVec_ a n)         =  Inf_ (Vec_ (quote_ ii a) (quote_ ii n))
@@ -1052,7 +1075,7 @@ neutralQuote_ ii (NFinElim_ m mz ms n f)
 
 boundfree_ :: Int -> Name -> ITerm_
 boundfree_ ii (Quote k) =  Bound_ ((ii - k - 1) `max` 0)
-boundfree_ ii x         =  Free_ x
+boundfree_  _ x         =  Free_ x
 
 instance Show Value_ where
     show = show . quote0_
@@ -1072,15 +1095,15 @@ iType_ ii g (Ann_ e tyt )
               let ty = cEval_ tyt (fst g, [])
               cType_ ii g e ty
               return ty
-iType_ ii g Star_
+iType_  _ _ Star_
      =  return VStar_
 iType_ ii g (Pi_ tyt tyt')
      =  do  cType_ ii g tyt VStar_
             let ty = cEval_ tyt (fst g, [])
-            cType_  (ii + 1) ((\ (d,g) -> (d,  ((Local ii, ty) : g))) g)
+            cType_  (ii + 1) ((\ (d,g') -> (d,  (Local ii, ty) : g')) g)
                       (cSubst_ 0 (Free_ (Local ii)) tyt') VStar_
             return VStar_
-iType_ ii g (Free_ x)
+iType_  _ g (Free_ x)
     =     case lookup x (snd g) of
             Just ty        ->  return ty
             Nothing        ->  throwError ("unknown identifier: " ++ PP.render (iPrint_ 0 0 (Free_ x)))
@@ -1091,7 +1114,7 @@ iType_ ii g (e1 :$: e2)
                                       return ( ty' (cEval_ e2 (fst g, [])))
                 _                  ->  throwError "illegal application"
 
-iType_ ii g Nat_                  =  return VStar_
+iType_  _ _ Nat_                  =  return VStar_
 iType_ ii g (NatElim_ m mz ms n)  =
     do  cType_ ii g m (VPi_ VNat_ (const VStar_))
         let mVal  = cEval_ m (fst g, [])
@@ -1109,15 +1132,15 @@ iType_ ii g (VecElim_ a m mn mc n vs) =
     do  cType_ ii g a VStar_
         let aVal = cEval_ a (fst g, [])
         cType_ ii g m
-          (  VPi_ VNat_ (\n -> VPi_ (VVec_ aVal n) (\ _ -> VStar_)))
+          (  VPi_ VNat_ (\n' -> VPi_ (VVec_ aVal n') (const VStar_)))
         let mVal = cEval_ m (fst g, [])
         cType_ ii g mn (foldl vapp_ mVal [VZero_, VNil_ aVal])
         cType_ ii g mc
-          (  VPi_ VNat_ (\ n ->
+          (  VPi_ VNat_ (\ n' ->
              VPi_ aVal (\ y ->
-             VPi_ (VVec_ aVal n) (\ ys ->
-             VPi_ (foldl vapp_ mVal [n, ys]) (\ _ ->
-             (foldl vapp_ mVal [VSucc_ n, VCons_ aVal n y ys]))))))
+             VPi_ (VVec_ aVal n') (\ ys ->
+             VPi_ (foldl vapp_ mVal [n', ys]) (const
+             (foldl vapp_ mVal [VSucc_ n', VCons_ aVal n' y ys]))))))
         cType_ ii g n VNat_
         let nVal = cEval_ n (fst g, [])
         cType_ ii g vs (VVec_ aVal nVal)
@@ -1134,30 +1157,30 @@ iType_ i g (EqElim_ a m mr x y eq) =
     do  cType_ i g a VStar_
         let aVal = cEval_ a (fst g, [])
         cType_ i g m
-          (VPi_ aVal (\ x ->
-           VPi_ aVal (\ y ->
-           VPi_ (VEq_ aVal x y) (\ _ -> VStar_))))
+          (VPi_ aVal (\x' ->
+           VPi_ aVal (\y' ->
+           VPi_ (VEq_ aVal x' y') (const VStar_))))
         let mVal = cEval_ m (fst g, [])
         cType_ i g mr
-          (VPi_ aVal (\ x ->
-           foldl vapp_ mVal [x, x]))
+          (VPi_ aVal (\x' ->
+           foldl vapp_ mVal [x', x']))
         cType_ i g x aVal
         let xVal = cEval_ x (fst g, [])
         cType_ i g y aVal
         let yVal = cEval_ y (fst g, [])
         cType_ i g eq (VEq_ aVal xVal yVal)
-        let eqVal = cEval_ eq (fst g, [])
+        -- let eqVal = cEval_ eq (fst g, [])
         return (foldl vapp_ mVal [xVal, yVal])
 
 cType_ :: Int -> (NameEnv Value_,Context_) -> CTerm_ -> Type_ -> Result ()
 cType_ ii g (Inf_ e) v
     =     do  v' <- iType_ ii g e
               unless ( quote0_ v == quote0_ v') (throwError ("type mismatch:\n" ++ "type inferred:  " ++ PP.render (cPrint_ 0 0 (quote0_ v')) ++ "\n" ++ "type expected:  " ++ PP.render (cPrint_ 0 0 (quote0_ v)) ++ "\n" ++ "for expression: " ++ PP.render (iPrint_ 0 0 e)))
-cType_ ii g (Lam_ e) ( VPi_ ty ty')
-    =     cType_  (ii + 1) ((\ (d,g) -> (d,  ((Local ii, ty ) : g))) g)
+cType_ ii g0 (Lam_ e) ( VPi_ ty ty')
+    =     cType_  (ii + 1) ((\ (d,g) -> (d,  (Local ii, ty ) : g)) g0)
                   (cSubst_ 0 (Free_ (Local ii)) e) ( ty' (vfree_ (Local ii)))
 
-cType_ ii g Zero_      VNat_  =  return ()
+cType_  _ _ Zero_      VNat_  =  return ()
 cType_ ii g (Succ_ k)  VNat_  =  cType_ ii g k VNat_
 
 cType_ ii g (Nil_ a) (VVec_ bVal VZero_) =
@@ -1187,8 +1210,9 @@ cType_ ii g (Refl_ a z) (VEq_ bVal xVal yVal) =
         unless  (quote0_ zVal == quote0_ xVal && quote0_ zVal == quote0_ yVal)
                 (throwError "type mismatch")
 
-cType_ ii g _ _
+cType_ _ _ _ _
     =     throwError "type mismatch"
+{-# ANN cType_ ("HLint: ignore Reduce duplication" :: Prelude.String) #-}
 
 data Nat = Zero | Succ Nat
 
