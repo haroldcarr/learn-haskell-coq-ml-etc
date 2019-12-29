@@ -14,9 +14,6 @@ import           Text.ParserCombinators.Parsec.Language
 import           Text.ParserCombinators.Parsec.Token
 import qualified Text.PrettyPrint.HughesPJ              as PP
 
-------------------------------------------------------------------------------
--- 2. Simply Typed Lambda Calculus
-
 simplyTyped :: GenTokenParser String u DFI.Identity
 simplyTyped  = makeTokenParser (haskellStyle { identStart = letter <|> P.char '_'
                                              , reservedNames = ["let", "assume", "putStrLn"] })
@@ -134,7 +131,7 @@ parseLam e =
            return (iterate Lam t !! length xs)
 
 parseIO :: String -> CharParser () a -> String -> IO (Maybe a)
-parseIO f p x = case P.parse (whiteSpace simplyTyped >> p >>= \ x' -> eof >> return x') f x of
+parseIO f p x = case P.parse (whiteSpace simplyTyped >> p >>= \x' -> eof >> return x') f x of
                     Left e  -> Prelude.print e >> return Nothing
                     Right r -> return (Just r)
 
@@ -152,7 +149,7 @@ iPrint _  _ x                =  PP.text ("[" ++ show x ++ "]")
 
 cPrint :: Int -> Int -> CTerm -> PP.Doc
 cPrint p ii (Inf i)    = iPrint p ii i
-cPrint p ii (Lam c)    = parensIf (p > 0) (PP.text "\\ " <> PP.text (vars !! ii) <> PP.text " -> " <> cPrint 0 (ii + 1) c)
+cPrint p ii (Lam c)    = parensIf (p > 0) (PP.text "\\" <> PP.text (vars !! ii) <> PP.text " -> " <> cPrint 0 (ii + 1) c)
 
 vars :: [String]
 vars = [ c : n | n <- "" : map show [(1::Int)..], c <- ['x','y','z'] ++ ['a'..'w'] ]
@@ -218,7 +215,7 @@ parseITerm_ 0 e =
           (fe,t:ts) <- parseBindings_ True e
           reserved lambdaPi "."
           t' <- parseCTerm_ 0 fe
-          return (foldl (\ p t0 -> Pi_ t0 (Inf_ p)) (Pi_ t t') ts)
+          return (foldl (\p t0 -> Pi_ t0 (Inf_ p)) (Pi_ t t') ts)
     <|>
     try
        (do
@@ -315,7 +312,7 @@ iPrint_ _  _ x                 =  PP.text ("[" ++ show x ++ "]")
 
 cPrint_ :: Int -> Int -> CTerm_ -> PP.Doc
 cPrint_ p ii (Inf_ i)    = iPrint_ p ii i
-cPrint_ p ii (Lam_ c)    = parensIf (p > 0) (PP.text "\\ " <> PP.text (vars !! ii) <> PP.text " -> " <> cPrint_ 0 (ii + 1) c)
+cPrint_ p ii (Lam_ c)    = parensIf (p > 0) (PP.text "\\" <> PP.text (vars !! ii) <> PP.text " -> " <> cPrint_ 0 (ii + 1) c)
 cPrint_ _ ii Zero_       = fromNat_ 0 ii Zero_     --  PP.text "Zero"
 cPrint_ _ ii (Succ_ n)   = fromNat_ 0 ii (Succ_ n) --  iPrint_ p ii (Free_ (Global "Succ") :$: n)
 cPrint_ p ii (Nil_ a)    = iPrint_ p ii (Free_ (Global "Nil") :$: a)
@@ -398,7 +395,7 @@ helpTxt cs0
        "let <var> = <expr>      define variable\n" ++
        "assume <var> :: <expr>  assume variable\n\n"
        ++
-       unlines (map (\ (Cmd cs a _ d) -> let  ct = intercalate ", " (map (++ if null a then "" else " " ++ a) cs)
+       unlines (map (\(Cmd cs a _ d) -> let  ct = intercalate ", " (map (++ if null a then "" else " " ++ a) cs)
                                          in   ct ++ replicate ((24 - length ct) `max` 2) ' ' ++ d) cs0)
 
 interpretCommand :: String -> IO Command
@@ -407,7 +404,7 @@ interpretCommand x
          do  let  (cmd,t')  =  break isSpace x
                   t         =  dropWhile isSpace t'
              --  find matching commands
-             let  matching  =  filter (\ (Cmd cs _ _ _) -> any (isPrefixOf cmd) cs) commands
+             let  matching  =  filter (\(Cmd cs _ _ _) -> any (isPrefixOf cmd) cs) commands
              case matching of
                []  ->  do  putStrLn ("Unknown command `" ++ cmd ++ "'. Type :? for help.")
                            return Noop
@@ -465,70 +462,70 @@ data Interpreter i c v t tinf inf =
 
 st :: Interpreter ITerm CTerm Value Type Info Info
 st = I { iname = "the simply typed lambda calculus",
-           iprompt = "ST> ",
-           iitype = \_v c -> iType 0 c,
-           iquote = quote0,
-           ieval  = \e x -> iEval x (e, []),
-           ihastype = HasType,
-           icprint = cPrint 0 0,
-           itprint = tPrint 0,
-           iiparse = parseITerm 0 [],
-           isparse = parseStmt [],
-           iassume = \ s (x, t) -> stassume s x t }
+         iprompt = "ST> ",
+         iitype = \_v c -> iType 0 c,
+         iquote = quote0,
+         ieval  = \e x -> iEval x (e, []),
+         ihastype = HasType,
+         icprint = cPrint 0 0,
+         itprint = tPrint 0,
+         iiparse = parseITerm 0 [],
+         isparse = parseStmt [],
+         iassume = \s (x, t) -> stassume s x t }
 
 lp :: Interpreter ITerm_ CTerm_ Value_ Value_ CTerm_ Value_
 lp = I { iname = "lambda-Pi",
-           iprompt = "LP> ",
-           iitype = curry (iType_ 0),
-           iquote = quote0_,
-           ieval = \ e x -> iEval_ x (e, []),
-           ihastype = id,
-           icprint = cPrint_ 0 0,
-           itprint = cPrint_ 0 0 . quote0_,
-           iiparse = parseITerm_ 0 [],
-           isparse = parseStmt_ [],
-           iassume = \ s (x, t) -> lpassume s x t }
+         iprompt = "LP> ",
+         iitype = curry (iType_ 0),
+         iquote = quote0_,
+         ieval = \e x -> iEval_ x (e, []),
+         ihastype = id,
+         icprint = cPrint_ 0 0,
+         itprint = cPrint_ 0 0 . quote0_,
+         iiparse = parseITerm_ 0 [],
+         isparse = parseStmt_ [],
+         iassume = \s (x, t) -> lpassume s x t }
 
 lpte :: Ctx Value_
 lpte =      [(Global "Zero", VNat_),
                (Global "Succ", VPi_ VNat_ (const VNat_)),
                (Global "Nat", VStar_),
-               (Global "natElim", VPi_ (VPi_ VNat_ (const VStar_)) (\ m ->
-                                 VPi_ (m `vapp_` VZero_) (\ _ ->
-                                 VPi_ (VPi_ VNat_ (\ k -> VPi_ (m `vapp_` k) (const (m `vapp_` VSucc_ k)))) ( \ _ ->
-                                 VPi_ VNat_ (\ n -> m `vapp_` n))))),
+               (Global "natElim", VPi_ (VPi_ VNat_ (const VStar_)) (\m ->
+                                 VPi_ (m `vapp_` VZero_) (\_ ->
+                                 VPi_ (VPi_ VNat_ (\k -> VPi_ (m `vapp_` k) (const (m `vapp_` VSucc_ k)))) ( \_ ->
+                                 VPi_ VNat_ (\n -> m `vapp_` n))))),
                (Global "Nil", VPi_ VStar_ (`VVec_` VZero_)),
-               (Global "Cons", VPi_ VStar_ (\ a ->
-                              VPi_ VNat_ (\ n ->
-                              VPi_ a (\ _ -> VPi_ (VVec_ a n) (\ _ -> VVec_ a (VSucc_ n)))))),
-               (Global "Vec", VPi_ VStar_ (\ _ -> VPi_ VNat_ (const VStar_))),
-               (Global "vecElim", VPi_ VStar_ (\ a ->
-                                 VPi_ (VPi_ VNat_ (\ n -> VPi_ (VVec_ a n) (const VStar_))) (\ m ->
-                                 VPi_ (m `vapp_` VZero_ `vapp_` VNil_ a) (\ _ ->
-                                 VPi_ (VPi_ VNat_ (\ n ->
-                                       VPi_ a (\ x ->
-                                       VPi_ (VVec_ a n) (\ xs ->
-                                       VPi_ (m `vapp_` n `vapp_` xs) (\ _ ->
-                                       m `vapp_` VSucc_ n `vapp_` VCons_ a n x xs))))) (\ _ ->
-                                 VPi_ VNat_ (\ n ->
-                                 VPi_ (VVec_ a n) (\ xs -> m `vapp_` n `vapp_` xs))))))),
-               (Global "Refl", VPi_ VStar_ (\ a -> VPi_ a (\ x ->
+               (Global "Cons", VPi_ VStar_ (\a ->
+                              VPi_ VNat_ (\n ->
+                              VPi_ a (\_ -> VPi_ (VVec_ a n) (\_ -> VVec_ a (VSucc_ n)))))),
+               (Global "Vec", VPi_ VStar_ (\_ -> VPi_ VNat_ (const VStar_))),
+               (Global "vecElim", VPi_ VStar_ (\a ->
+                                 VPi_ (VPi_ VNat_ (\n -> VPi_ (VVec_ a n) (const VStar_))) (\m ->
+                                 VPi_ (m `vapp_` VZero_ `vapp_` VNil_ a) (\_ ->
+                                 VPi_ (VPi_ VNat_ (\n ->
+                                       VPi_ a (\x ->
+                                       VPi_ (VVec_ a n) (\xs ->
+                                       VPi_ (m `vapp_` n `vapp_` xs) (\_ ->
+                                       m `vapp_` VSucc_ n `vapp_` VCons_ a n x xs))))) (\_ ->
+                                 VPi_ VNat_ (\n ->
+                                 VPi_ (VVec_ a n) (\xs -> m `vapp_` n `vapp_` xs))))))),
+               (Global "Refl", VPi_ VStar_ (\a -> VPi_ a (\x ->
                               VEq_ a x x))),
-               (Global "Eq", VPi_ VStar_ (\ a -> VPi_ a (\_x -> VPi_ a (const VStar_)))),
-               (Global "eqElim", VPi_ VStar_ (\ a ->
-                                VPi_ (VPi_ a (\ x -> VPi_ a (\ y -> VPi_ (VEq_ a x y) (const VStar_)))) (\ m ->
-                                VPi_ (VPi_ a (\ x -> m `vapp_` x `vapp_` x `vapp_` VRefl_ a x)) (\ _ ->
-                                VPi_ a (\ x -> VPi_ a (\ y ->
-                                VPi_ (VEq_ a x y) (\ eq ->
+               (Global "Eq", VPi_ VStar_ (\a -> VPi_ a (\_x -> VPi_ a (const VStar_)))),
+               (Global "eqElim", VPi_ VStar_ (\a ->
+                                VPi_ (VPi_ a (\x -> VPi_ a (\y -> VPi_ (VEq_ a x y) (const VStar_)))) (\m ->
+                                VPi_ (VPi_ a (\x -> m `vapp_` x `vapp_` x `vapp_` VRefl_ a x)) (\_ ->
+                                VPi_ a (\x -> VPi_ a (\y ->
+                                VPi_ (VEq_ a x y) (\eq ->
                                 m `vapp_` x `vapp_` y `vapp_` eq))))))),
                (Global "FZero", VPi_ VNat_ (VFin_ . VSucc_)),
-               (Global "FSucc", VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\_f ->
+               (Global "FSucc", VPi_ VNat_ (\n -> VPi_ (VFin_ n) (\_f ->
                                VFin_ (VSucc_ n)))),
                (Global "Fin", VPi_ VNat_ (const VStar_)),
-               (Global "finElim", VPi_ (VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (const VStar_))) (\ m ->
-                                 VPi_ (VPi_ VNat_ (\ n -> m `vapp_` VSucc_ n `vapp_` VFZero_ n)) (\ _ ->
-                                 VPi_ (VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\ f -> VPi_ (m `vapp_` n `vapp_` f) (\ _ -> m `vapp_` VSucc_ n `vapp_` VFSucc_ n f)))) (\ _ ->
-                                 VPi_ VNat_ (\ n -> VPi_ (VFin_ n) (\ f ->
+               (Global "finElim", VPi_ (VPi_ VNat_ (\n -> VPi_ (VFin_ n) (const VStar_))) (\m ->
+                                 VPi_ (VPi_ VNat_ (\n -> m `vapp_` VSucc_ n `vapp_` VFZero_ n)) (\_ ->
+                                 VPi_ (VPi_ VNat_ (\n -> VPi_ (VFin_ n) (\f -> VPi_ (m `vapp_` n `vapp_` f) (\_ -> m `vapp_` VSucc_ n `vapp_` VFSucc_ n f)))) (\_ ->
+                                 VPi_ VNat_ (\n -> VPi_ (VFin_ n) (\f ->
                                  m `vapp_` n `vapp_` f))))))]
 
 lpve :: Ctx Value_
@@ -537,11 +534,11 @@ lpve =      [(Global "Zero", VZero_),
                (Global "Nat", VNat_),
                (Global "natElim", cEval_ (Lam_ (Lam_ (Lam_ (Lam_ (Inf_ (NatElim_ (Inf_ (Bound_ 3)) (Inf_ (Bound_ 2)) (Inf_ (Bound_ 1)) (Inf_ (Bound_ 0)))))))) ([], [])),
                (Global "Nil", VLam_ VNil_),
-               (Global "Cons", VLam_ (\ a -> VLam_ (\ n -> VLam_ (VLam_ . VCons_ a n)))),
+               (Global "Cons", VLam_ (\a -> VLam_ (\n -> VLam_ (VLam_ . VCons_ a n)))),
                (Global "Vec", VLam_ (VLam_ . VVec_)),
                (Global "vecElim", cEval_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Inf_ (VecElim_ (Inf_ (Bound_ 5)) (Inf_ (Bound_ 4)) (Inf_ (Bound_ 3)) (Inf_ (Bound_ 2)) (Inf_ (Bound_ 1)) (Inf_ (Bound_ 0)))))))))) ([],[])),
                (Global "Refl", VLam_ (VLam_ . VRefl_)),
-               (Global "Eq", VLam_ (\ a -> VLam_ (VLam_ . VEq_ a))),
+               (Global "Eq", VLam_ (\a -> VLam_ (VLam_ . VEq_ a))),
                (Global "eqElim", cEval_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Lam_ (Inf_ (EqElim_ (Inf_ (Bound_ 5)) (Inf_ (Bound_ 4)) (Inf_ (Bound_ 3)) (Inf_ (Bound_ 2)) (Inf_ (Bound_ 1)) (Inf_ (Bound_ 0)))))))))) ([],[])),
                (Global "FZero", VLam_ VFZero_),
                (Global "FSucc", VLam_ (VLam_ . VFSucc_)),
@@ -581,7 +578,7 @@ handleStmt int state@(inter, out, ve, te) stmt =
       --  checkEval :: String -> i -> IO (State v inf)
       checkEval i t =
         check int state i t
-          (\ (y, v) -> do
+          (\(y, v) -> do
                          --  ugly, but we have limited space in the paper
                          --  usually, you'd want to have the bound identifier *and*
                          --  the result of evaluation
@@ -589,7 +586,7 @@ handleStmt int state@(inter, out, ve, te) stmt =
                                                   else PP.render (PP.text i <> PP.text " :: " <> itprint int y)
                          putStrLn outtext
                          unless (null out) (writeFile out (process outtext)))
-          (\ (y, v) ->
+          (\(y, v) ->
               (inter, "", (Global i, v) : ve, (Global i, ihastype int y) : te))
 
 check
@@ -628,48 +625,67 @@ stassume _state@(inter, out, ve, te) x t =
 lpassume :: State Value_ Value_ -> String -> CTerm_ -> IO (State Value_ Value_)
 lpassume state@(inter, out, ve, te) x t =
     check lp state x (Ann_ t (Inf_ Star_))
-          (\ (_, v) -> do putStrLn (PP.render (PP.text x <> PP.text " :: " <> cPrint_ 0 0 (quote0_ v)))
-                          return ())
-          (\ (_, v) -> (inter, out, ve, (Global x, v) : te))
+          (\(_, v) -> do
+              putStrLn (PP.render (PP.text x <> PP.text " :: " <> cPrint_ 0 0 (quote0_ v)))
+              return ())
+          (\(_, v) ->
+              (inter, out, ve, (Global x, v) : te))
 
 it :: String
 it  = "it"
 
 process :: String -> String
-process = unlines . map (\ x -> "< " ++ x) . lines
+process = unlines . map (\x -> "< " ++ x) . lines
 
 main :: IO ()
 main = repLP True
 
--- Abstract syntax
+------------------------------------------------------------------------------
+-- p2 : Simply Typed Lambda Calculus
 
+{-
+- λ→ for short
+- terms explicitly typed
+- no type inference
+- only base types and functions
+- functions are not polymorphic
+- strongly normalizing: evaluation terminates for any term, independent of the evaluation strategy
+-}
+
+------------------------------------------------------------------------------
+-- p3 : (STLC) Abstract syntax
+
+-- four kinds of terms
 data ITerm -- Inferable
-     =  Ann    CTerm Type -- Annotated
-     |  Bound  Int        -- deBruijn indice
-     |  Free   Name
+     =  Ann    CTerm Type -- explicit Annotation
+     |  Bound  Int        -- variables : deBruijn indice
+     |  Free   Name       -- variable : e.g., top level
      |  ITerm :@: CTerm   -- application
     deriving (Show, Eq)
 
 data CTerm -- Checkable
      =  Inf  ITerm -- Inferable embedded in a CTerm
-     |  Lam  CTerm -- Lambda
+     |  Lam  CTerm -- Lambda abstraction
     deriving (Show, Eq)
 
 data Name
      =  Global  String
-     |  Local   Int    -- when passing a binding into an algo, convert a bound var into a free temporarily
+     |  Local   Int -- when passing a binding into an algorithm, temporarily convert a bound var into a free
      |  Quote   Int
     deriving (Show, Eq)
 
+-- only base types and functions
 data Type
      =  TFree  Name       -- type identifier
-     |  Fun    Type Type  -- function arrows
+     |  Fun    Type Type  -- function arrows (not polymorphic)
     deriving (Show, Eq)
 
+-- terms can be evaluated to values
 data Value
-     =  VLam      (Value -> Value) -- HOAS :: rep funs as Haskell funs
+     =  VLam      (Value -> Value) -- lambda abstraction (HOAS : rep funs as Haskell funs)
      |  VNeutral  Neutral
 
+-- a variable applied to a (possibly empty) sequence of values
 data Neutral
      =  NFree  Name
      |  NApp   Neutral Value
@@ -677,7 +693,28 @@ data Neutral
 vfree :: Name -> Value
 vfree n = VNeutral (NFree n)
 
--- EVALUATION
+------------------------------------------------------------------------------
+-- p 3 : (STLC) Evaluation
+
+{-
+- Figure 1 : big-step eval rulesT
+- e ⇓ v means result of completely evaluating e is v
+- evaluate everything as far as possible, and even evaluate under lambda
+- type annotations ignored
+- variables evaluate to themselves
+- application, case left subterm evaluates to
+  - lambda abstraction
+    - β-reduce
+    - may produce new redexes, so evaluate result
+  - neutral term
+    - eval cannot proceed further
+    - construct new neutral term from results of evaluating the two subterms
+
+examples:
+
+(id :: α → α) y ⇓ y
+(const :: (β → β) → α → β → β) id y ⇓ id
+-}
 
 data Kind = Star
     deriving (Show)
@@ -692,18 +729,89 @@ type Context = [(Name, Info)]
 type Env = [Value]
 
 iEval :: ITerm -> (NameEnv Value,Env) -> Value
-iEval (Ann  e _)    d  =  cEval e d
-iEval (Free  x)     d  =  fromMaybe (vfree x) (lookup x (fst d))
-iEval (Bound  ii)   d  =  snd d !! ii
-iEval (e1 :@: e2)   d  =  vapp (iEval e1 d) (cEval e2 d)
+iEval (Ann  e _)    d  =  cEval e d -- ignore annotation
+iEval (Free  x)     d  =  fromMaybe (vfree x) (lookup x (fst d)) -- vars eval to themselves
+iEval (Bound  ii)   d  =  snd d !! ii                            -- vars eval to themselves
+iEval (e1 :@: e2)   d  =  vapp (iEval e1 d) (cEval e2 d)         -- case
 
 vapp :: Value -> Value -> Value
-vapp (VLam f)      v =  f v
-vapp (VNeutral n)  v =  VNeutral (NApp n v)
+vapp (VLam f)      v =  f v                 -- Beta-reduce
+vapp (VNeutral n)  v =  VNeutral (NApp n v) -- new Neutral from results of two subterms
 
 cEval :: CTerm -> (NameEnv Value,Env) -> Value
 cEval (Inf  ii)   d =  iEval ii d
-cEval (Lam  e0)   d0=  VLam (\ x -> cEval e0 ((\(e, d) -> (e,  x : d)) d0))
+cEval (Lam  e0)   d0=  VLam (\x -> cEval e0 ((\(e, d) -> (e,  x : d)) d0)) -- eval under lambda
+
+------------------------------------------------------------------------------
+-- p4 : (STLC) Type System
+
+{-
+Γ ::= ε          empty context
+    | Γ, α :: ∗  adding a type identifier
+    | Y, x :: τ  adding a term identifier
+
+               valid (Γ)               valid (Γ)   Γ ⊢ τ :: ∗
+---------      -----------------       ----------------------
+valid (ε)      valid (Γ, α :: ∗)       valid (Γ,  x :: τ )
+
+Γ(α) = ∗                 Γ ⊢ τ :: ∗   Γ ⊢ τ' :: ∗
+---------- (TVAR)        ------------------------- (FUN)
+Γ ⊢ α :: ∗               Γ ⊢ τ      →     τ' :: ∗
+
+Figure 2.  definitions of contexts and their validity
+
+- Γ ⊢ e::t : e is type t in context Γ
+- context
+  - lists valid base types
+  - associates identifiers with type information
+- α :: ∗ - indicates α is a base type
+- x :: t - indicates x is a term of type t
+- free vars in terms and types must occur in the context, e.g.,
+  - for const to be of type (β → β) → α → β → β
+  - context must contain at least: α :: ∗, β :: ∗, const :: (β → β) → α → β → β
+  - Note α and β are introduced before they are used in the type of const
+- multiple bindings for same var can occur, rightmost binding takes precedence
+- Γ(z) denotes information associated with identifier z by context Γ
+- TVAR, FUN explain when a type is well-formed
+  - i.e., when all its free variables appear in the context
+- in the well-formedness and type rules assume all contexts are valid
+
+
+Γ ⊢ τ :: ∗   Γ ⊢ e :: ↓ τ
+------------------------- (ANN)
+Γ ⊢ (e :: τ ) :: ↑ τ
+
+Γ(x) = τ
+------------ (var)
+Γ ⊢ x :: ↑ τ
+
+Γ ⊢ e :: ↑ τ → τ'     Γ ⊢ e' :: ↓ τ
+----------------------------------- (APP)
+Γ ⊢ e e' :: ↑ τ'
+
+Γ ⊢ e :: ↑ τ
+------------ (CHK)
+Γ ⊢ e :: ↓ τ
+
+Γ, x :: τ ⊢ e :: ↓ τ
+---------------------- (LAM)
+Γ ⊢ λx → e :: ↓ τ → τ'
+
+Figure 3 Type rules for λ →
+
+- no type inference of types of lambda-bound vars
+- only type checking
+- for annotated terms, vars and applications the types can be determined
+- :: ↓ -- type is an input to type checking algorithm
+- :: ↑ -- type is produced by type checking algorithm
+
+- inferable terms
+  - ANN : check annotated terms against their type annotation, and then return the type
+  - VAR : look up type in environment
+  - APP : 1st postion must be of a function type;
+          check arg against fun’s domain;
+          return fun range as the result type
+-}
 
 cKind :: Context -> Type -> Kind -> Result ()
 cKind g (TFree x) Star
@@ -891,7 +999,7 @@ vfree_ n = VNeutral_ (NFree_ n)
 
 cEval_ :: CTerm_ -> (NameEnv Value_,Env_) -> Value_
 cEval_ (Inf_  ii)    d  =  iEval_ ii d
-cEval_ (Lam_  c)     d0 =  VLam_ (\ x -> cEval_ c ((\(e, d) -> (e,  x : d)) d0))
+cEval_ (Lam_  c)     d0 =  VLam_ (\x -> cEval_ c ((\(e, d) -> (e,  x : d)) d0))
 
 cEval_ Zero_     _d  = VZero_
 cEval_ (Succ_ k)  d  = VSucc_ (cEval_ k d)
@@ -909,7 +1017,7 @@ iEval_ :: ITerm_ -> (NameEnv Value_,Env_) -> Value_
 iEval_ (Ann_  c _)       d  =  cEval_ c d
 
 iEval_ Star_          _d  =  VStar_
-iEval_ (Pi_ ty ty')    d0 =  VPi_ (cEval_ ty d0) (\ x -> cEval_ ty' ((\(e, d) -> (e, x : d)) d0))
+iEval_ (Pi_ ty ty')    d0 =  VPi_ (cEval_ ty d0) (\x -> cEval_ ty' ((\(e, d) -> (e, x : d)) d0))
 
 iEval_ (Free_  x)      d  =  fromMaybe (vfree_ x) (lookup x (fst d))
 iEval_ (Bound_  ii)    d  =  snd d !! ii
@@ -1100,7 +1208,7 @@ iType_  _ _ Star_
 iType_ ii g (Pi_ tyt tyt')
      =  do  cType_ ii g tyt VStar_
             let ty = cEval_ tyt (fst g, [])
-            cType_  (ii + 1) ((\ (d,g') -> (d,  (Local ii, ty) : g')) g)
+            cType_  (ii + 1) ((\(d,g') -> (d,  (Local ii, ty) : g')) g)
                       (cSubst_ 0 (Free_ (Local ii)) tyt') VStar_
             return VStar_
 iType_  _ g (Free_ x)
@@ -1119,7 +1227,7 @@ iType_ ii g (NatElim_ m mz ms n)  =
     do  cType_ ii g m (VPi_ VNat_ (const VStar_))
         let mVal  = cEval_ m (fst g, [])
         cType_ ii g mz (mVal `vapp_` VZero_)
-        cType_ ii g ms (VPi_ VNat_ (\ k -> VPi_ (mVal `vapp_` k) (\ _ -> mVal `vapp_` VSucc_ k)))
+        cType_ ii g ms (VPi_ VNat_ (\k -> VPi_ (mVal `vapp_` k) (\_ -> mVal `vapp_` VSucc_ k)))
         cType_ ii g n VNat_
         let nVal = cEval_ n (fst g, [])
         return (mVal `vapp_` nVal)
@@ -1136,9 +1244,9 @@ iType_ ii g (VecElim_ a m mn mc n vs) =
         let mVal = cEval_ m (fst g, [])
         cType_ ii g mn (foldl vapp_ mVal [VZero_, VNil_ aVal])
         cType_ ii g mc
-          (  VPi_ VNat_ (\ n' ->
-             VPi_ aVal (\ y ->
-             VPi_ (VVec_ aVal n') (\ ys ->
+          (  VPi_ VNat_ (\n' ->
+             VPi_ aVal (\y ->
+             VPi_ (VVec_ aVal n') (\ys ->
              VPi_ (foldl vapp_ mVal [n', ys]) (const
              (foldl vapp_ mVal [VSucc_ n', VCons_ aVal n' y ys]))))))
         cType_ ii g n VNat_
@@ -1177,7 +1285,7 @@ cType_ ii g (Inf_ e) v
     =     do  v' <- iType_ ii g e
               unless ( quote0_ v == quote0_ v') (throwError ("type mismatch:\n" ++ "type inferred:  " ++ PP.render (cPrint_ 0 0 (quote0_ v')) ++ "\n" ++ "type expected:  " ++ PP.render (cPrint_ 0 0 (quote0_ v)) ++ "\n" ++ "for expression: " ++ PP.render (iPrint_ 0 0 e)))
 cType_ ii g0 (Lam_ e) ( VPi_ ty ty')
-    =     cType_  (ii + 1) ((\ (d,g) -> (d,  (Local ii, ty ) : g)) g0)
+    =     cType_  (ii + 1) ((\(d,g) -> (d,  (Local ii, ty ) : g)) g0)
                   (cSubst_ 0 (Free_ (Local ii)) e) ( ty' (vfree_ (Local ii)))
 
 cType_  _ _ Zero_      VNat_  =  return ()
