@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module LambdaPi where
 
 import           Control.Monad.Except
@@ -28,14 +30,14 @@ parseBindings  =
                                            x <- identifier simplyTyped
                                            reserved simplyTyped "::"
                                            t <- pInfo
-                                           return (x,t))
-                             rec (x : e) (t : ts) <|> return (x : e, t : ts)
+                                           pure (x,t))
+                             rec (x : e) (t : ts) <|> pure (x : e, t : ts)
                       in rec [] [])
                      <|>
                      do x <- identifier simplyTyped
                         reserved simplyTyped "::"
                         t <- pInfo
-                        return ([x], [t])
+                        pure ([x], [t])
     where
       pInfo = fmap HasType (parseType 0 []) <|> fmap (const (HasKind Star)) (reserved simplyTyped "*")
 {-# ANN parseBindings ("HLint: ignore Reduce duplication" :: Prelude.String) #-}
@@ -47,19 +49,19 @@ parseStmt e
           x <- identifier simplyTyped
           reserved simplyTyped "="
           t <- parseITerm 0 e
-          return (Let x t)
+          pure (Let x t)
     <|> do
           reserved simplyTyped "assume"
           (xs, ts) <- parseBindings
-          return (Assume (reverse (zip xs ts)))
+          pure (Assume (reverse (zip xs ts)))
     <|> do
           reserved simplyTyped "putStrLn"
           x <- stringLiteral simplyTyped
-          return (PutStrLn x)
+          pure (PutStrLn x)
     <|> do
           reserved lambdaPi "out"
           x <- option "" (stringLiteral simplyTyped)
-          return (Out x)
+          pure (Out x)
     <|> fmap Eval (parseITerm 0 e)
 
 parseType :: Int -> [String] -> CharParser () Type
@@ -67,17 +69,17 @@ parseType 0 e =
     try
        (do
           t <- parseType 1 e
-          rest t <|> return t)
+          rest t <|> pure t)
     where
       rest t =
         do
           reserved simplyTyped "->"
           t' <- parseType 0 e
-          return (Fun t t')
+          pure (Fun t t')
 parseType 1 e =
         do
           x <- identifier simplyTyped
-          return (TFree (Global x))
+          pure (TFree (Global x))
     <|> parens simplyTyped (parseType 0 e)
 parseType _ _ = undefined
 
@@ -89,7 +91,7 @@ parseITerm 1 e =
     try
        (do
           t <- parseITerm 2 e
-          rest (Inf t) <|> return t)
+          rest (Inf t) <|> pure t)
     <|> do
           t <- parens simplyTyped (parseLam e)
           rest t
@@ -98,18 +100,18 @@ parseITerm 1 e =
         do
           reserved simplyTyped "::"
           t' <- parseType 0 e
-          return (Ann t t')
+          pure (Ann t t')
 parseITerm 2 e =
         do
           t <- parseITerm 3 e
           ts <- many (parseCTerm 3 e)
-          return (foldl (:@:) t ts)
+          pure (foldl (:@:) t ts)
 parseITerm 3 e =
         do
           x <- identifier simplyTyped
           case elemIndex x e of
-            Just n  -> return (Bound n)
-            Nothing -> return (Free (Global x))
+            Just n  -> pure (Bound n)
+            Nothing -> pure (Free (Global x))
     <|> parens simplyTyped (parseITerm 0 e)
 parseITerm _ _ = undefined
 
@@ -122,23 +124,23 @@ parseCTerm p e =
     <|> fmap Inf (parseITerm p e)
 
 parseLam :: [String] -> CharParser () CTerm
-parseLam e =
-        do reservedOp simplyTyped "\\"
-           xs <- many1 (identifier simplyTyped)
-           reservedOp simplyTyped "->"
-           t <- parseCTerm 0 (reverse xs ++ e)
-           --  reserved simplyTyped "."
-           return (iterate Lam t !! length xs)
+parseLam e = do
+  reservedOp simplyTyped "\\"
+  xs <- many1 (identifier simplyTyped)
+  reservedOp simplyTyped "->"
+  t <- parseCTerm 0 (reverse xs ++ e)
+  --  reserved simplyTyped "."
+  pure (iterate Lam t !! length xs)
 
 parseIO :: String -> CharParser () a -> String -> IO (Maybe a)
-parseIO f p x = case P.parse (whiteSpace simplyTyped >> p >>= \x' -> eof >> return x') f x of
-                    Left e  -> Prelude.print e >> return Nothing
-                    Right r -> return (Just r)
+parseIO f p x = case P.parse (whiteSpace simplyTyped >> p >>= \x' -> eof >> pure x') f x of
+  Left e  -> Prelude.print e >> pure Nothing
+  Right r -> pure (Just r)
 
 tPrint :: Int -> Type -> PP.Doc
 tPrint _ (TFree (Global s))  = PP.text s
 tPrint p (Fun ty ty')        = parensIf (p > 0) (PP.sep [tPrint 0 ty <> PP.text " ->", PP.nest 2 (tPrint 0 ty')])
-tPrint _ _ = undefined
+tPrint _ _                   = undefined
 
 iPrint :: Int -> Int -> ITerm -> PP.Doc
 iPrint p ii (Ann c ty)       = parensIf (p > 1) (cPrint 2 ii c <> PP.text " :: " <> tPrint 0 ty)
@@ -148,8 +150,8 @@ iPrint p ii (i :@: c)        = parensIf (p > 2) (PP.sep [iPrint 2 ii i, PP.nest 
 iPrint _  _ x                = PP.text ("[" ++ show x ++ "]")
 
 cPrint :: Int -> Int -> CTerm -> PP.Doc
-cPrint p ii (Inf i)    = iPrint p ii i
-cPrint p ii (Lam c)    = parensIf (p > 0) (PP.text "\\" <> PP.text (vars !! ii) <> PP.text " -> " <> cPrint 0 (ii + 1) c)
+cPrint p ii (Inf i) = iPrint p ii i
+cPrint p ii (Lam c) = parensIf (p > 0) (PP.text "\\" <> PP.text (vars !! ii) <> PP.text " -> " <> cPrint 0 (ii + 1) c)
 
 vars :: [String]
 vars = [ c : n | n <- "" : map show [(1::Int)..], c <- ['x','y','z'] ++ ['a'..'w'] ]
@@ -158,10 +160,10 @@ parensIf :: Bool -> PP.Doc -> PP.Doc
 parensIf True  = PP.parens
 parensIf False = id
 
-print    :: CTerm -> String
-print     = PP.render . cPrint 0 0
+print     :: CTerm -> String
+print      = PP.render . cPrint 0 0
 printType :: Type -> String
-printType = PP.render . tPrint 0
+printType  = PP.render . tPrint 0
 
 lambdaPi :: GenTokenParser String u DFI.Identity
 lambdaPi  = makeTokenParser (haskellStyle { identStart = letter <|> P.char '_'
@@ -174,19 +176,19 @@ parseStmt_ e =
           x <- identifier lambdaPi
           reserved lambdaPi "="
           t <- parseITerm_ 0 e
-          return (Let x t)
+          pure (Let x t)
     <|> do
           reserved lambdaPi "assume"
           (xs, ts) <- parseBindings_ False []
-          return (Assume (reverse (zip xs ts)))
+          pure (Assume (reverse (zip xs ts)))
     <|> do
           reserved lambdaPi "putStrLn"
           x <- stringLiteral lambdaPi
-          return (PutStrLn x)
+          pure (PutStrLn x)
     <|> do
           reserved lambdaPi "out"
           x <- option "" (stringLiteral lambdaPi)
-          return (Out x)
+          pure (Out x)
     <|> fmap Eval (parseITerm_ 0 e)
 
 parseBindings_ :: Bool -> [String] -> CharParser () ([String], [CTerm_])
@@ -199,14 +201,14 @@ parseBindings_ b e0 =
                                            x <- identifier lambdaPi
                                            reserved lambdaPi "::"
                                            t <- parseCTerm_ 0 (if b then e else [])
-                                           return (x,t))
-                             rec (x : e) (t : ts) <|> return (x : e, t : ts)
+                                           pure (x,t))
+                             rec (x : e) (t : ts) <|> pure (x : e, t : ts)
                       in rec e0 [])
                      <|>
                      do x <- identifier lambdaPi
                         reserved lambdaPi "::"
                         t <- parseCTerm_ 0 e0
-                        return (x : e0, [t])
+                        pure (x : e0, [t])
 
 parseITerm_ :: Int -> [String] -> CharParser () ITerm_
 parseITerm_ 0 e =
@@ -215,12 +217,12 @@ parseITerm_ 0 e =
           (fe,t:ts) <- parseBindings_ True e
           reserved lambdaPi "."
           t' <- parseCTerm_ 0 fe
-          return (foldl (\p t0 -> Pi_ t0 (Inf_ p)) (Pi_ t t') ts)
+          pure (foldl (\p t0 -> Pi_ t0 (Inf_ p)) (Pi_ t t') ts)
     <|>
     try
        (do
           t <- parseITerm_ 1 e
-          rest (Inf_ t) <|> return t)
+          rest (Inf_ t) <|> pure t)
     <|> do
           t <- parens lambdaPi (parseLam_ e)
           rest t
@@ -229,12 +231,12 @@ parseITerm_ 0 e =
         do
           reserved lambdaPi "->"
           t' <- parseCTerm_ 0 ([]:e)
-          return (Pi_ t t')
+          pure (Pi_ t t')
 parseITerm_ 1 e =
     try
        (do
           t <- parseITerm_ 2 e
-          rest (Inf_ t) <|> return t)
+          rest (Inf_ t) <|> pure t)
     <|> do
           t <- parens lambdaPi (parseLam_ e)
           rest t
@@ -243,24 +245,24 @@ parseITerm_ 1 e =
         do
           reserved lambdaPi "::"
           t' <- parseCTerm_ 0 e
-          return (Ann_ t t')
+          pure (Ann_ t t')
 parseITerm_ 2 e =
         do
           t <- parseITerm_ 3 e
           ts <- many (parseCTerm_ 3 e)
-          return (foldl (:$:) t ts)
+          pure (foldl (:$:) t ts)
 parseITerm_ 3 e =
         do
           reserved lambdaPi "*"
-          return Star_
+          pure Star_
     <|> do
           n <- natural lambdaPi
-          return (toNat_ n)
+          pure (toNat_ n)
     <|> do
           x <- identifier lambdaPi
           case elemIndex x e of
-            Just n  -> return (Bound_ n)
-            Nothing -> return (Free_ (Global x))
+            Just n  -> pure (Bound_ n)
+            Nothing -> pure (Free_ (Global x))
     <|> parens lambdaPi (parseITerm_ 0 e)
 parseITerm_ _ _ = undefined
 
@@ -279,7 +281,7 @@ parseLam_ e =
            reservedOp lambdaPi "->"
            t <- parseCTerm_ 0 (reverse xs ++ e)
            --  reserved lambdaPi "."
-           return (iterate Lam_ t !! length xs)
+           pure (iterate Lam_ t !! length xs)
 
 toNat_ :: Integer -> ITerm_
 toNat_ n = Ann_ (toNat_' n) (Inf_ Nat_)
@@ -331,12 +333,13 @@ nestedForall_ :: Int -> [(Int, CTerm_)] -> CTerm_ -> PP.Doc
 nestedForall_ ii ds (Inf_ (Pi_ d r)) = nestedForall_ (ii + 1) ((ii, d) : ds) r
 nestedForall_ ii ds x                = PP.sep [PP.text "forall " <> PP.sep [parensIf True (PP.text (vars !! n) <> PP.text " :: " <> cPrint_ 0 n d) | (n,d) <- reverse ds] <> PP.text " .", cPrint_ 0 ii x]
 
-data Stmt i tinf = Let String i           --  let x = t
-                 | Assume [(String,tinf)] --  assume x :: t, assume x :: *
-                 | Eval i
-                 | PutStrLn String        --  lhs2TeX hacking, allow to print "magic" string
-                 | Out String             --  more lhs2TeX hacking, allow to print to files
-    deriving (Eq, Show)
+data Stmt i tinf
+  = Let String i           --  let x = t
+  | Assume [(String,tinf)] --  assume x :: t, assume x :: *
+  | Eval i
+  | PutStrLn String        --  lhs2TeX hacking, allow to print "magic" string
+  | Out String             --  more lhs2TeX hacking, allow to print to files
+  deriving (Eq, Show)
 
   --  read-eval-print loop
 readevalprint :: Interpreter i c v t tinf inf -> State v inf -> IO ()
@@ -346,14 +349,14 @@ readevalprint int0 state0@(inter, _out, _ve, _te) =
             putStr (iprompt int); SIO.hFlush SIO.stdout
             x0 <- Just <$> getLine
             case x0 of
-              Nothing -> return ()
+              Nothing -> pure ()
               Just "" -> rec int state
               Just x  ->
                 do
                   -- when inter (addHistory x x) -- HC/TODO
                   c      <- interpretCommand x
                   state' <- handleCommand int state c
-                  maybe (return ()) (rec int) state'
+                  maybe (pure ()) (rec int) state'
     in
       do
         --  welcome
@@ -362,15 +365,17 @@ readevalprint int0 state0@(inter, _out, _ve, _te) =
         --  enter loop
         rec int0 state0
 
-data Command = TypeOf String
-             | Compile CompileForm
-             | Browse
-             | Quit
-             | Help
-             | Noop
+data Command
+  = TypeOf  String
+  | Compile CompileForm
+  | Browse
+  | Quit
+  | Help
+  | Noop
 
-data CompileForm = CompileInteractive  String
-                 | CompileFile         String
+data CompileForm
+  = CompileInteractive  String
+  | CompileFile         String
 
 data InteractiveCommand = Cmd [String] String (String -> Command) String
 
@@ -379,25 +384,24 @@ type Ctx inf = [(Name, inf)]
 type State v inf = (Bool, String, NameEnv v, Ctx inf)
 
 commands :: [InteractiveCommand]
-commands
-    = [ Cmd [":type"]        "<expr>"  TypeOf         "print type of expression",
-        Cmd [":browse"]      ""        (const Browse) "browse names in scope",
-        Cmd [":load"]        "<file>"  (Compile . CompileFile)
-                                                       "load program from file",
-        Cmd [":quit"]        ""        (const Quit)   "exit interpreter",
-        Cmd [":help",":?"]   ""        (const Help)   "display this list of commands" ]
+commands =
+  [ Cmd [":type"]      "<expr>"  TypeOf                  "print type of expression"
+  , Cmd [":browse"]    ""        (const Browse)          "browse names in scope"
+  , Cmd [":load"]      "<file>"  (Compile . CompileFile) "load program from file"
+  , Cmd [":quit"]      ""        (const Quit)            "exit interpreter"
+  , Cmd [":help",":?"] ""        (const Help)            "display this list of commands" ]
 
 helpTxt :: [InteractiveCommand] -> String
-helpTxt cs0
-    = "List of commands:  Any command may be abbreviated to :c where\n" ++
-       "c is the first character in the full name.\n\n" ++
-       "<expr>                  evaluate expression\n" ++
-       "let <var> = <expr>      define variable\n" ++
-       "assume <var> :: <expr>  assume variable\n\n"
-       ++
-       unlines (map (\(Cmd cs a _ d) ->
-                       let ct = intercalate ", " (map (++ if null a then "" else " " ++ a) cs)
-                        in ct ++ replicate ((24 - length ct) `max` 2) ' ' ++ d) cs0)
+helpTxt cs0 =
+  "List of commands:  Any command may be abbreviated to :c where\n" ++
+  "c is the first character in the full name.\n\n" ++
+  "<expr>                  evaluate expression\n" ++
+  "let <var> = <expr>      define variable\n" ++
+  "assume <var> :: <expr>  assume variable\n\n"
+  ++
+  unlines (map (\(Cmd cs a _ d) ->
+                   let ct = intercalate ", " (map (++ if null a then "" else " " ++ a) cs)
+                    in ct ++ replicate ((24 - length ct) `max` 2) ' ' ++ d) cs0)
 
 interpretCommand :: String -> IO Command
 interpretCommand x
@@ -408,82 +412,85 @@ interpretCommand x
             let matching = filter (\(Cmd cs _ _ _) -> any (isPrefixOf cmd) cs) commands
             case matching of
                []  -> do putStrLn ("Unknown command `" ++ cmd ++ "'. Type :? for help.")
-                         return Noop
+                         pure Noop
                [Cmd _ _ f _]
-                   ->    return (f t)
+                   ->    pure (f t)
                _x  -> do putStrLn ("Ambiguous command, could be " ++ intercalate ", " [ head cs | Cmd cs _ _ _ <- matching ] ++ ".")
-                         return Noop
+                         pure Noop
       else
-         return (Compile (CompileInteractive x))
+         pure (Compile (CompileInteractive x))
 
 handleCommand :: Interpreter i c v t tinf inf -> State v inf -> Command -> IO (Maybe (State v inf))
-handleCommand int state@(inter, _out, ve, te) cmd
-    = case cmd of
-         Quit   -> unless inter (putStrLn "!@#$^&*") >> return Nothing
-         Noop   -> return (Just state)
-         Help   -> putStr (helpTxt commands) >> return (Just state)
-         TypeOf x0 ->
-                    do x <- parseIO "<interactive>" (iiparse int) x0
-                       t <- maybe (return Nothing) (iinfer int ve te) x
-                       maybe (return ()) (putStrLn . PP.render . itprint int) t
-                       return (Just state)
-         Browse -> do putStr (unlines [ s | Global s <- reverse (nub (map fst te)) ])
-                      return (Just state)
-         Compile c ->
-                    do state' <- case c of
-                                   CompileInteractive s -> compilePhrase int state s
-                                   CompileFile f        -> compileFile int state f
-                       return (Just state')
+handleCommand int state@(inter, _out, ve, te) = \case
+  Quit      -> unless inter (putStrLn "!@#$^&*") >> pure Nothing
+  Noop      -> pure (Just state)
+  Help      -> putStr (helpTxt commands) >> pure (Just state)
+  TypeOf x0 -> do
+               x <- parseIO "<interactive>" (iiparse int) x0
+               case x of
+                 Nothing -> pure ()
+                 Just x' -> case iinfer int ve te x' of
+                              Left actions -> doActions actions
+                              Right  t     -> (putStrLn . PP.render . itprint int) t
+               pure (Just state)
+  Browse    -> do
+               putStr (unlines [ s | Global s <- reverse (nub (map fst te)) ])
+               pure (Just state)
+  Compile c -> do
+               state' <- case c of
+                           CompileInteractive s -> compilePhrase int state s
+                           CompileFile f        -> compileFile int state f
+               pure (Just state')
 
 compileFile :: Interpreter i c v t tinf inf -> State v inf -> String -> IO (State v inf)
 compileFile int state f = do
   x     <- readFile f
   stmts <- parseIO f (many (isparse int)) x
-  maybe (error "compileFile") {-(return state)-} (foldM (handleStmt int) state) stmts
+  maybe (error "compileFile") {-(pure state)-} (foldM (handleStmt int) state) stmts
 
 compilePhrase :: Interpreter i c v t tinf inf -> State v inf -> String -> IO (State v inf)
 compilePhrase int state x0 = do
   x <- parseIO "<interactive>" (isparse int) x0
-  maybe (error "compilePhrase") {-(return state)-} (handleStmt int state) x
+  maybe (error "compilePhrase") {-(pure state)-} (handleStmt int state) x
 
 data Interpreter i c v t tinf inf =
-    I { iname    :: String,
-        iprompt  :: String,
-        iitype   :: NameEnv v -> Ctx inf -> i -> Result t,
-        iquote   :: v -> c,
-        ieval    :: NameEnv v -> i -> v,
-        ihastype :: t -> inf,
-        icprint  :: c -> PP.Doc,
-        itprint  :: t -> PP.Doc,
-        iiparse  :: CharParser () i,
-        isparse  :: CharParser () (Stmt i tinf),
-        iassume  :: State v inf -> (String, tinf) -> IO (State v inf) }
+    I { iname    :: String
+      , iprompt  :: String
+      , iitype   :: NameEnv v -> Ctx inf -> i -> Either String t
+      , iquote   :: v -> c
+      , ieval    :: NameEnv v -> i -> v
+      , ihastype :: t -> inf
+      , icprint  :: c -> PP.Doc
+      , itprint  :: t -> PP.Doc
+      , iiparse  :: CharParser () i
+      , isparse  :: CharParser () (Stmt i tinf)
+      , iassume  :: State v inf -> (String, tinf) -> ([Action], State v inf) }
 
 st :: Interpreter ITerm CTerm Value Type Info Info
-st = I { iname = "the simply typed lambda calculus",
-         iprompt = "ST> ",
-         iitype = \_v c -> iType 0 c,
-         iquote = quote0,
-         ieval  = \e x -> iEval x (e, []),
-         ihastype = HasType,
-         icprint = cPrint 0 0,
-         itprint = tPrint 0,
-         iiparse = parseITerm 0 [],
-         isparse = parseStmt [],
-         iassume = \s (x, t) -> stassume s x t }
+st = I { iname    = "the simply typed lambda calculus"
+       , iprompt  = "ST> "
+       , iitype   = \_v c -> iType 0 c
+       , iquote   = quote0
+       , ieval    = \e x -> iEval x (e, [])
+       , ihastype = HasType
+       , icprint  = cPrint 0 0
+       , itprint  = tPrint 0
+       , iiparse  = parseITerm 0 []
+       , isparse  = parseStmt []
+       , iassume  = \s (x, t) -> stassume s x t }
 
 lp :: Interpreter ITerm_ CTerm_ Value_ Value_ CTerm_ Value_
-lp = I { iname = "lambda-Pi",
-         iprompt = "LP> ",
-         iitype = curry (iType_ 0),
-         iquote = quote0_,
-         ieval = \e x -> iEval_ x (e, []),
-         ihastype = id,
-         icprint = cPrint_ 0 0,
-         itprint = cPrint_ 0 0 . quote0_,
-         iiparse = parseITerm_ 0 [],
-         isparse = parseStmt_ [],
-         iassume = \s (x, t) -> lpassume s x t }
+lp = I { iname    = "lambda-Pi"
+       , iprompt  = "LP> "
+       , iitype   = curry (iType_ 0)
+       , iquote   = quote0_
+       , ieval    = \e x -> iEval_ x (e, [])
+       , ihastype = id
+       , icprint  = cPrint_ 0 0
+       , itprint  = cPrint_ 0 0 . quote0_
+       , iiparse  = parseITerm_ 0 []
+       , isparse  = parseStmt_ []
+       , iassume  = \s (x, t) -> lpassume s x t }
 
 lpte :: Ctx Value_
 lpte =     [   (Global "Zero", VNat_),
@@ -555,80 +562,86 @@ iinfer
   -> NameEnv v
   -> Ctx inf
   -> i
-  -> IO (Maybe a)
-iinfer int d g t =
-    case iitype int d g t of
-      Left e  -> putStrLn e >> return Nothing
-      Right v -> return (Just v)
+  -> Either [Action] a
+iinfer int d g t = case iitype int d g t of
+  Left  e -> Left  [APutStrLn e]
+  Right v -> Right v
+
+data Action
+  = APutStrLn  String
+  | AWriteFile String String
+  deriving (Eq, Show)
+
+doActions :: [Action] -> IO ()
+doActions actions =
+  forM_ actions $ \case
+    APutStrLn s      -> putStrLn s
+    AWriteFile _o _s -> undefined
 
 handleStmt
   :: Interpreter i c v t tinf inf
   -> State v inf
   -> Stmt i tinf
   -> IO (State v inf)
-handleStmt int state@(inter, out, ve, te) stmt =
-      case stmt of
-          Assume ass -> foldM (iassume int) state ass
-          Let x e    -> checkEval x e
-          Eval e     -> checkEval it e
-          PutStrLn x -> putStrLn x >> return state
-          Out f      -> return (inter, f, ve, te)
-    where
-      --  checkEval :: String -> i -> IO (State v inf)
-      checkEval i t =
-        check int state i t
-          (\(y, v) -> do
-                         --  ugly, but we have limited space in the paper
-                         --  usually, you'd want to have the bound identifier *and*
-                         --  the result of evaluation
-                         let outtext = if i == it then PP.render (icprint int (iquote int v) <> PP.text " :: " <> itprint int y)
-                                                  else PP.render (PP.text i <> PP.text " :: " <> itprint int y)
-                         putStrLn outtext
-                         unless (null out) (writeFile out (process outtext)))
-          (\(y, v) ->
-              (inter, "", (Global i, v) : ve, (Global i, ihastype int y) : te))
+handleStmt int state stmt = do
+  let (actions, state') = handleStmtPure int state stmt
+  doActions actions
+  pure state'
+
+handleStmtPure
+  :: Interpreter i c v t tinf inf
+  -> State v inf
+  -> Stmt i tinf
+  -> ([Action], State v inf)
+handleStmtPure int state@(inter, out, ve, te) = \case
+  Assume ass -> foldM (iassume int) state ass
+  Let x e    -> checkEval x e
+  Eval e     -> checkEval it e
+  PutStrLn x -> ([APutStrLn x], state)
+  Out f      -> pure (inter, f, ve, te)
+ where
+  -- checkEval :: String -> i -> IO (State v inf)
+  checkEval i t =
+    check int state i t
+      (\(y, v) ->
+          --  TODO : the bound identifier *and* the result of evaluation
+          let outtext =
+                if i == it
+                then PP.render (icprint int (iquote int v) <> PP.text " :: " <> itprint int y)
+                else PP.render (PP.text i <> PP.text " :: " <> itprint int y)
+           in APutStrLn outtext : if null out then [] else [AWriteFile out (process outtext)])
+      (\(y, v) ->
+          (inter, "", (Global i, v) : ve, (Global i, ihastype int y) : te))
 
 check
   :: Interpreter i c v t tinf inf
   -> State v inf
   -> String
   -> i
-  -> ((t, v) -> IO ())
+  -> ((t, v) -> [Action])
   -> ((t, v) -> State v inf)
-  -> IO (State v inf)
+  -> ([Action], State v inf)
 check int state@(_inter, _out, ve, te) _i t kp k =
-                  do
-                    --  typecheck and evaluate
-                    x <- iinfer int ve te t
-                    case x of
-                      Nothing  ->
-                        do
-                          putStrLn "type error"
-                          return state
-                      Just y   ->
-                        do
-                          let v = ieval int ve t
-                          kp (y, v)
-                          return (k (y, v))
+  --  typecheck and evaluate
+  case iinfer int ve te t of
+    Left actions -> (actions ++ [APutStrLn "type error"], state)
+    Right y      -> do
+      let v = ieval int ve t
+      (kp (y, v), k (y, v))
 
 stassume
-  :: Monad m
-  => State v inf
+  :: State v inf
   -> String
   -> inf
-  -> m (State v inf)
-stassume _state@(inter, out, ve, te) x t =
-  return               (inter, out, ve, (Global x, t) : te)
+  -> ([Action], State v inf)
+stassume (inter, out, ve, te) x t =
+  ([], (inter, out, ve, (Global x, t) : te))
 
-
-lpassume :: State Value_ Value_ -> String -> CTerm_ -> IO (State Value_ Value_)
+lpassume :: State Value_ Value_ -> String -> CTerm_ -> ([Action], State Value_ Value_)
 lpassume state@(inter, out, ve, te) x t =
-    check lp state x (Ann_ t (Inf_ Star_))
-          (\(_, v) -> do
-              putStrLn (PP.render (PP.text x <> PP.text " :: " <> cPrint_ 0 0 (quote0_ v)))
-              return ())
-          (\(_, v) ->
-              (inter, out, ve, (Global x, v) : te))
+  check lp state x (Ann_ t (Inf_ Star_))
+        (\(_, v) -> [APutStrLn (PP.render (PP.text x <> PP.text " :: " <> cPrint_ 0 0 (quote0_ v)))])
+        (\(_, v) -> (inter, out, ve, (Global x, v) : te))
 
 it :: String
 it  = "it"
@@ -662,21 +675,21 @@ e ::= e :: τ  annotated term
     | λx → e  lambda abstraction
 -}
 data ITerm -- Inferable
-     = Ann    CTerm Type -- explicit Annotation
-     | Bound  Int        -- variables : deBruijn indice
-     | Free   Name       -- variable : e.g., top level
-     | ITerm :@: CTerm   -- application
+     = Ann   CTerm Type -- explicit Annotation
+     | Bound Int        -- variables : deBruijn indice
+     | Free  Name       -- variable : e.g., top level
+     | ITerm :@: CTerm  -- application
     deriving (Show, Eq)
 
 data CTerm -- Checkable
-     = Inf  ITerm -- Inferable embedded in a CTerm
-     | Lam  CTerm -- Lambda abstraction
+     = Inf ITerm -- Inferable embedded in a CTerm
+     | Lam CTerm -- Lambda abstraction
     deriving (Show, Eq)
 
 data Name
-     = Global  String
-     | Local   Int -- when passing a binding into an algorithm, temporarily convert a bound var into a free
-     | Quote   Int
+     = Global String
+     | Local  Int -- when passing a binding into an algorithm, temporarily convert a bound var into a free
+     | Quote  Int
     deriving (Show, Eq)
 
 {-
@@ -686,8 +699,8 @@ types
     | τ → τ'  function type
 -}
 data Type
-     = TFree  Name       -- type identifier
-     | Fun    Type Type  -- function arrows (not polymorphic)
+     = TFree Name       -- type identifier
+     | Fun   Type Type  -- function arrows (not polymorphic)
     deriving (Show, Eq)
 
 {-
@@ -697,8 +710,8 @@ v ::= n       neutral term
     | λx → v  lambda abstraction
 -}
 data Value
-     = VLam      (Value -> Value) -- lambda abstraction (HOAS : rep funs as Haskell funs)
-     | VNeutral  Neutral
+     = VLam     (Value -> Value) -- lambda abstraction (HOAS : rep funs as Haskell funs)
+     | VNeutral Neutral
 instance Eq Value where
   (==) (VLam     _)           _  = False
   (==)           _  (VLam     _) = False
@@ -713,8 +726,8 @@ n ::= x     variable
     | n v   application
 -}
 data Neutral
-     = NFree  Name
-     | NApp   Neutral Value
+     = NFree Name
+     | NApp  Neutral Value
      deriving (Show, Eq)
 
 vfree :: Name -> Value
@@ -868,45 +881,38 @@ Figure 3 Type rules for λ →
           return fun range as the result type
 -}
 
-cKind :: Context -> Type -> Kind -> Result ()
-cKind g (TFree x) Star
-    = case lookup x g of
-         Just (HasKind Star) -> return ()
-         Nothing             -> throwError "unknown identifier"
-cKind g (Fun kk kk') Star
-    = do cKind g kk   Star
-         cKind g kk'  Star
+cKind :: Context -> Type -> Kind -> Either String ()
+cKind g (TFree x) Star = case lookup x g of
+  Just (HasKind Star) -> pure ()
+  Nothing             -> throwError "unknown identifier"
+cKind g (Fun kk kk') Star = do
+  cKind g kk   Star
+  cKind g kk'  Star
 
-iType0 :: Context -> ITerm -> Result Type
+iType0 :: Context -> ITerm -> Either String Type
 iType0 = iType 0
 
-iType :: Int -> Context -> ITerm -> Result Type
-iType ii g (Ann e ty)
-    = do cKind g ty Star
-         cType ii g e ty
-         return ty
-iType  _ g (Free x)
-    = case lookup x g of
-         Just (HasType ty) -> return ty
-         Nothing           -> throwError "unknown identifier"
-iType ii g (e1 :@: e2)
-    = do si <- iType ii g e1
-         case si of
-             Fun ty ty'  -> do cType ii g e2 ty
-                               return ty'
-             _           -> throwError "illegal application"
+iType :: Int -> Context -> ITerm -> Either String Type
+iType ii g (Ann e ty) = do
+  cKind g ty Star
+  cType ii g e ty
+  pure ty
+iType  _ g (Free x) = case lookup x g of
+  Just (HasType ty) -> pure ty
+  Nothing           -> throwError "unknown identifier"
+iType ii g (e1 :@: e2) = do
+  si <- iType ii g e1
+  case si of
+    Fun ty ty' -> do cType ii g e2 ty; pure ty'
+    _          -> throwError "illegal application"
 
-cType :: Int -> Context -> CTerm -> Type -> Result ()
-cType ii g (Inf e) ty
-    = do ty' <- iType ii g e
-         unless (ty == ty') (throwError "type mismatch")
-cType ii g (Lam e) (Fun ty ty')
-    = cType  (ii + 1) ((Local ii, HasType ty) : g)
-             (cSubst 0 (Free (Local ii)) e) ty'
-cType  _ _ _ _
-    = throwError "type mismatch"
-
-type Result a = Either String a
+cType :: Int -> Context -> CTerm -> Type -> Either String ()
+cType ii g (Inf e) ty           = do
+  ty' <- iType ii g e
+  unless (ty == ty') (throwError "type mismatch")
+cType ii g (Lam e) (Fun ty ty') =
+  cType  (ii + 1) ((Local ii, HasType ty) : g) (cSubst 0 (Free (Local ii)) e) ty'
+cType  _ _ _ _                  = throwError "type mismatch"
 
 iSubst :: Int -> ITerm -> ITerm -> ITerm
 iSubst ii r (Ann e ty)  = Ann (cSubst ii r e) ty
@@ -961,7 +967,7 @@ test_eval1= quote0 (iEval term1 ([],[]))
 test_eval2= quote0 (iEval term2 ([],[]))
    {-  \eval{test_eval2}  -}
 
-test_type1,test_type2 :: Result Type
+test_type1,test_type2 :: Either String Type
 test_type1= iType0 env1 term1
    {-  \eval{test_type1}  -}
 
@@ -1089,7 +1095,7 @@ iEval_ (NatElim_ m mz ms n0) d
                 VNeutral_ n  -> VNeutral_
                                  (NNatElim_ (cEval_ m d) mzVal msVal n)
                 _            -> error "internal: eval natElim"
-       in   rec (cEval_ n0 d)
+        in rec (cEval_ n0 d)
 
 iEval_ (Vec_ a n)                 d  = VVec_ (cEval_ a d) (cEval_ n d)
 
@@ -1104,7 +1110,7 @@ iEval_ (VecElim_ a m mn mc n0 xs0) d  =
                                   (NVecElim_  (cEval_ a d) (cEval_ m d)
                                               mnVal mcVal nVal n)
              _                -> error "internal: eval vecElim"
-    in   rec (cEval_ n0 d) (cEval_ xs0 d)
+     in rec (cEval_ n0 d) (cEval_ xs0 d)
 
 iEval_ (Eq_ a x y)                d  = VEq_ (cEval_ a d) (cEval_ x d) (cEval_ y d)
 iEval_ (EqElim_ a m mr x y eq)    d  =
@@ -1116,7 +1122,7 @@ iEval_ (EqElim_ a m mr x y eq)    d  =
                VNeutral_ (NEqElim_  (cEval_ a d) (cEval_ m d) mrVal
                                     (cEval_ x d) (cEval_ y d) n)
              _ -> error "internal: eval eqElim"
-    in   rec (cEval_ eq d)
+     in rec (cEval_ eq d)
 
 iEval_ (Fin_ n)                d  = VFin_ (cEval_ n d)
 iEval_ (FinElim_ m mz ms n f)  d  =
@@ -1130,7 +1136,7 @@ iEval_ (FinElim_ m mz ms n f)  d  =
                                   (NFinElim_  (cEval_ m d) (cEval_ mz d)
                                               (cEval_ ms d) (cEval_ n d) n')
              _                -> error "internal: eval finElim"
-    in   rec (cEval_ f d)
+     in rec (cEval_ f d)
 
 iSubst_ :: Int -> ITerm_ -> ITerm_ -> ITerm_
 iSubst_ ii i'   (Ann_ c c')     = Ann_ (cSubst_ ii i' c) (cSubst_ ii i' c')
@@ -1240,44 +1246,43 @@ boundfree_ :: Int -> Name -> ITerm_
 boundfree_ ii (Quote k) = Bound_ ((ii - k - 1) `max` 0)
 boundfree_  _ x         = Free_ x
 
-instance Show Value_ where
-    show = show . quote0_
+instance Show Value_ where show = show . quote0_
 
-type Type_     = Value_
-type Context_  = [(Name, Type_)]
+type Type_    = Value_
+type Context_ = [(Name, Type_)]
 
 quote0_ :: Value_ -> CTerm_
 quote0_  = quote_ 0
 
-iType0_ :: (NameEnv Value_,Context_) -> ITerm_ -> Result Type_
+iType0_ :: (NameEnv Value_,Context_) -> ITerm_ -> Either String Type_
 iType0_ = iType_ 0
 
-iType_ :: Int -> (NameEnv Value_,Context_) -> ITerm_ -> Result Type_
+iType_ :: Int -> (NameEnv Value_,Context_) -> ITerm_ -> Either String Type_
 iType_ ii g (Ann_ e tyt )
     =    do cType_ ii g tyt VStar_
             let ty = cEval_ tyt (fst g, [])
             cType_ ii g e ty
-            return ty
+            pure ty
 iType_  _ _ Star_
-    = return VStar_
+    = pure VStar_
 iType_ ii g (Pi_ tyt tyt')
     = do cType_ ii g tyt VStar_
          let ty = cEval_ tyt (fst g, [])
          cType_  (ii + 1) ((\(d,g') -> (d,  (Local ii, ty) : g')) g)
                  (cSubst_ 0 (Free_ (Local ii)) tyt') VStar_
-         return VStar_
+         pure VStar_
 iType_  _ g (Free_ x)
     =    case lookup x (snd g) of
-            Just ty        -> return ty
+            Just ty        -> pure ty
             Nothing        -> throwError ("unknown identifier: " ++ PP.render (iPrint_ 0 0 (Free_ x)))
 iType_ ii g (e1 :$: e2)
     =    do si <- iType_ ii g e1
             case si of
                 VPi_  ty ty'  -> do cType_ ii g e2 ty
-                                    return ( ty' (cEval_ e2 (fst g, [])))
+                                    pure ( ty' (cEval_ e2 (fst g, [])))
                 _             -> throwError "illegal application"
 
-iType_  _ _ Nat_                  = return VStar_
+iType_  _ _ Nat_                  = pure VStar_
 iType_ ii g (NatElim_ m mz ms n)  =
     do cType_ ii g m (VPi_ VNat_ (const VStar_))
        let mVal = cEval_ m (fst g, [])
@@ -1285,12 +1290,12 @@ iType_ ii g (NatElim_ m mz ms n)  =
        cType_ ii g ms (VPi_ VNat_ (\k -> VPi_ (mVal `vapp_` k) (\_ -> mVal `vapp_` VSucc_ k)))
        cType_ ii g n VNat_
        let nVal = cEval_ n (fst g, [])
-       return (mVal `vapp_` nVal)
+       pure (mVal `vapp_` nVal)
 
 iType_ ii g (Vec_ a n) =
     do cType_ ii g a  VStar_
        cType_ ii g n  VNat_
-       return VStar_
+       pure VStar_
 iType_ ii g (VecElim_ a m mn mc n vs) =
     do cType_ ii g a VStar_
        let aVal = cEval_ a (fst g, [])
@@ -1308,14 +1313,14 @@ iType_ ii g (VecElim_ a m mn mc n vs) =
        let nVal = cEval_ n (fst g, [])
        cType_ ii g vs (VVec_ aVal nVal)
        let vsVal = cEval_ vs (fst g, [])
-       return (foldl vapp_ mVal [nVal, vsVal])
+       pure (foldl vapp_ mVal [nVal, vsVal])
 
 iType_ i g (Eq_ a x y) =
     do cType_ i g a VStar_
        let aVal = cEval_ a (fst g, [])
        cType_ i g x aVal
        cType_ i g y aVal
-       return VStar_
+       pure VStar_
 iType_ i g (EqElim_ a m mr x y eq) =
     do cType_ i g a VStar_
        let aVal = cEval_ a (fst g, [])
@@ -1333,9 +1338,9 @@ iType_ i g (EqElim_ a m mr x y eq) =
        let yVal = cEval_ y (fst g, [])
        cType_ i g eq (VEq_ aVal xVal yVal)
        -- let eqVal = cEval_ eq (fst g, [])
-       return (foldl vapp_ mVal [xVal, yVal])
+       pure (foldl vapp_ mVal [xVal, yVal])
 
-cType_ :: Int -> (NameEnv Value_,Context_) -> CTerm_ -> Type_ -> Result ()
+cType_ :: Int -> (NameEnv Value_,Context_) -> CTerm_ -> Type_ -> Either String ()
 cType_ ii g (Inf_ e) v
     = do v' <- iType_ ii g e
          unless ( quote0_ v == quote0_ v') (throwError ("type mismatch:\n" ++ "type inferred:  " ++ PP.render (cPrint_ 0 0 (quote0_ v')) ++ "\n" ++ "type expected:  " ++ PP.render (cPrint_ 0 0 (quote0_ v)) ++ "\n" ++ "for expression: " ++ PP.render (iPrint_ 0 0 e)))
@@ -1343,7 +1348,7 @@ cType_ ii g0 (Lam_ e) ( VPi_ ty ty')
     =    cType_  (ii + 1) ((\(d,g) -> (d,  (Local ii, ty ) : g)) g0)
                  (cSubst_ 0 (Free_ (Local ii)) e) ( ty' (vfree_ (Local ii)))
 
-cType_  _ _ Zero_      VNat_  = return ()
+cType_  _ _ Zero_      VNat_  = pure ()
 cType_ ii g (Succ_ k)  VNat_  = cType_ ii g k VNat_
 
 cType_ ii g (Nil_ a) (VVec_ bVal VZero_) =
@@ -1373,8 +1378,7 @@ cType_ ii g (Refl_ a z) (VEq_ bVal xVal yVal) =
        unless  (quote0_ zVal == quote0_ xVal && quote0_ zVal == quote0_ yVal)
                (throwError "type mismatch")
 
-cType_ _ _ _ _
-    =    throwError "type mismatch"
+cType_ _ _ _ _ = throwError "type mismatch"
 {-# ANN cType_ ("HLint: ignore Reduce duplication" :: Prelude.String) #-}
 
 data Nat = Zero | Succ Nat
