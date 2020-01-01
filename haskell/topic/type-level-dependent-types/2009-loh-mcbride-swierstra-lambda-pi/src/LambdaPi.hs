@@ -343,27 +343,22 @@ data Stmt i tinf
 
   --  read-eval-print loop
 readevalprint :: Interpreter i c v t tinf inf -> State v inf -> IO ()
-readevalprint int0 state0@(inter, _out, _ve, _te) =
-    let rec int state =
-          do
-            putStr (iprompt int); SIO.hFlush SIO.stdout
-            x0 <- Just <$> getLine
-            case x0 of
-              Nothing -> pure ()
-              Just "" -> rec int state
-              Just x  ->
-                do
-                  -- when inter (addHistory x x) -- HC/TODO
-                  c      <- interpretCommand x
-                  state' <- handleCommand int state c
-                  maybe (pure ()) (rec int) state'
-    in
-      do
-        --  welcome
-        when inter $ putStrLn ("Interpreter for " ++ iname int0 ++ ".\n" ++
-                               "Type :? for help.")
-        --  enter loop
-        rec int0 state0
+readevalprint int0 state0@(interactive, _out, _ve, _te) = do
+  when interactive $
+    putStrLn ("Interpreter for " ++ iname int0 ++ ".\n" ++ "Type :? for help.")
+  loop int0 state0
+ where
+  loop int state = do
+    putStr (iprompt int); SIO.hFlush SIO.stdout
+    x0 <- Just <$> getLine
+    case x0 of
+      Nothing -> pure ()
+      Just "" -> loop int state
+      Just x  -> do
+        -- when inter (addHistory x x) -- HC/TODO
+        c      <- interpretCommand x
+        state' <- handleCommand int state c
+        maybe (pure ()) (loop int) state'
 
 data Command
   = TypeOf  String
