@@ -713,13 +713,15 @@ v ::= n       neutral term
 data Value
      = VLam     (Value -> Value) -- lambda abstraction (HOAS : rep funs as Haskell funs)
      | VNeutral Neutral
+-- Eq and Show are just for testing.
 instance Eq Value where
+  (==) (VLam     _) (VLam     _) = True -- True of testing
   (==) (VLam     _)           _  = False
   (==)           _  (VLam     _) = False
   (==) (VNeutral l) (VNeutral r) = l == r
 instance Show Value where
-  show (VLam _)     = "VLam"
-  show (VNeutral n) = "VNeutral " ++ show n
+  show (VLam _)     = "VLam <fun>"
+  show (VNeutral n) = "(VNeutral " ++ show n ++ ")"
 {-
 neutral : a variable applied to a (possibly empty) sequence of values
 
@@ -885,7 +887,8 @@ Figure 3 Type rules for λ →
 cKind :: Context -> Type -> Kind -> Either String ()
 cKind g (TFree x) Star = case lookup x g of
   Just (HasKind Star) -> pure ()
-  Nothing             -> throwError "unknown identifier"
+  Just z              -> throwError ("cKind: not covered: " ++ show x ++ " : " ++ show z)
+  Nothing             -> throwError "cKind: unknown identifier"
 cKind g (Fun kk kk') Star = do
   cKind g kk   Star
   cKind g kk'  Star
@@ -900,12 +903,14 @@ iType ii g (Ann e ty) = do
   pure ty
 iType  _ g (Free x) = case lookup x g of
   Just (HasType ty) -> pure ty
+  Just z            -> throwError ("iType: not covered: " ++ show z)
   Nothing           -> throwError "unknown identifier"
 iType ii g (e1 :@: e2) = do
   si <- iType ii g e1
   case si of
     Fun ty ty' -> do cType ii g e2 ty; pure ty'
     _          -> throwError "illegal application"
+iType _ _ x = throwError ("iType: not covered: " ++ show x)
 
 cType :: Int -> Context -> CTerm -> Type -> Either String ()
 cType ii g (Inf e) ty           = do
@@ -1055,6 +1060,7 @@ type Env_ = [Value_]
 vapp_ :: Value_ -> Value_ -> Value_
 vapp_ (VLam_ f)      v = f v
 vapp_ (VNeutral_ n)  v = VNeutral_ (NApp_ n v)
+vapp_ x              _ = error ("vapp_: not covered: " ++ show x)
 
 vfree_ :: Name -> Value_
 vfree_ n = VNeutral_ (NFree_ n)
@@ -1340,6 +1346,8 @@ iType_ i g (EqElim_ a m mr x y eq) =
        cType_ i g eq (VEq_ aVal xVal yVal)
        -- let eqVal = cEval_ eq (fst g, [])
        pure (foldl vapp_ mVal [xVal, yVal])
+
+iType_ _i _g x = throwError ("iType: not covered: " ++ show x)
 
 cType_ :: Int -> (NameEnv Value_,Context_) -> CTerm_ -> Type_ -> Either String ()
 cType_ ii g (Inf_ e) v
