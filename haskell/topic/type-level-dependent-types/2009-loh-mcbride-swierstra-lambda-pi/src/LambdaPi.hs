@@ -401,8 +401,8 @@ helpTxt cs0 =
 interpretCommand :: String -> IO Command
 interpretCommand x =
   if ":" `isPrefixOf` x then do
-    let (cmd,t') = break isSpace x
-        t        = dropWhile isSpace t'
+    let (cmd,t0) = break     isSpace x
+        t        = dropWhile isSpace t0
     --  find matching commands
         matching = filter (\(Cmd cs _ _ _) -> any (isPrefixOf cmd) cs) commands
     case matching of
@@ -647,8 +647,11 @@ it  = "it"
 process :: String -> String
 process = unlines . map (\x -> "< " ++ x) . lines
 
-main :: IO ()
-main = repLP True
+mainST :: IO ()
+mainST = repST True
+
+mainLP :: IO ()
+mainLP = repLP True
 
 ------------------------------------------------------------------------------
 -- p2 : Simply Typed Lambda Calculus (aka λ→)
@@ -745,12 +748,12 @@ examples:
 -}
 
 data Kind = Star
-    deriving (Eq, Show)
+  deriving (Eq, Show)
 
 data Info
-     = HasKind  Kind
-     | HasType  Type
-    deriving (Eq, Show)
+  = HasKind  Kind
+  | HasType  Type
+  deriving (Eq, Show)
 
 type Context = [(Name, Info)]
 type Env     = [Value]

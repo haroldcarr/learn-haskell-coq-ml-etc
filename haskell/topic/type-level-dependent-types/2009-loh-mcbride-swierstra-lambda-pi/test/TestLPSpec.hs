@@ -42,19 +42,21 @@ parseST  = describe "parse ST" $ do
           "putStrLn \"x\""
           (PutStrLn "x")
   stParse "id"
-          "let id = (\\x -> x) :: a -> a"
+          "let id = (\\x -> x) :: Nat -> Nat"
           (Let "id"
            (Ann
              (Lam (Inf (Bound 0)))
-             (Fun (TFree (Global "a")) (TFree (Global "a")))))
+             (Fun (TFree (Global "Nat")) (TFree (Global "Nat")))))
   stParse "const"
-          "let const = (\\x y -> x) :: a -> b -> a"
+          "let const = (\\x y -> x) :: Nat -> Nat -> Nat"
           (Let "const"
            (Ann
              (Lam (Lam (Inf (Bound 1))))
-             (Fun (TFree (Global "a"))
-               (Fun (TFree (Global "b"))
-                 (TFree (Global "a"))))))
+             (Fun
+               (TFree (Global "Nat"))
+               (Fun
+                 (TFree (Global "Nat"))
+                 (TFree (Global "Nat"))))))
 
 parseLP :: Spec
 parseLP  = describe "parse LP" $ do

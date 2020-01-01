@@ -21,14 +21,25 @@ dependencies:
 library:
   source-dirs: src
 
+_exe-ghc-options: &exe-ghc-options
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+
 executables:
-  m:
+  st:
     source-dirs:         app
-    main:                Main.hs
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+    main:                MainST.hs
+    other-modules:       ""
+    ghc-options:         *exe-ghc-options
+    dependencies:
+    - loh-mcbride-swierstra-lambda-pi
+
+  lp:
+    source-dirs:         app
+    main:                MainLP.hs
+    other-modules:       ""
+    ghc-options:         *exe-ghc-options
     dependencies:
     - loh-mcbride-swierstra-lambda-pi
 
