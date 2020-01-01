@@ -379,9 +379,9 @@ data CompileForm
 
 data InteractiveCommand = Cmd [String] String (String -> Command) String
 
-type NameEnv v = [(Name, v)]
-type Ctx inf = [(Name, inf)]
-type State v inf = (Bool, String, NameEnv v, Ctx inf)
+type NameEnv v     = [(Name, v)]
+type Ctx       inf = [(Name, inf)]
+type State   v inf = (Bool, String, NameEnv v, Ctx inf)
 
 commands :: [InteractiveCommand]
 commands =
@@ -404,21 +404,24 @@ helpTxt cs0 =
                     in ct ++ replicate ((24 - length ct) `max` 2) ' ' ++ d) cs0)
 
 interpretCommand :: String -> IO Command
-interpretCommand x
-    = if ":" `isPrefixOf` x then
-         do let (cmd,t') = break isSpace x
-                t        = dropWhile isSpace t'
-            --  find matching commands
-            let matching = filter (\(Cmd cs _ _ _) -> any (isPrefixOf cmd) cs) commands
-            case matching of
-               []  -> do putStrLn ("Unknown command `" ++ cmd ++ "'. Type :? for help.")
-                         pure Noop
-               [Cmd _ _ f _]
-                   ->    pure (f t)
-               _x  -> do putStrLn ("Ambiguous command, could be " ++ intercalate ", " [ head cs | Cmd cs _ _ _ <- matching ] ++ ".")
-                         pure Noop
-      else
-         pure (Compile (CompileInteractive x))
+interpretCommand x =
+  if ":" `isPrefixOf` x then do
+    let (cmd,t') = break isSpace x
+        t        = dropWhile isSpace t'
+    --  find matching commands
+        matching = filter (\(Cmd cs _ _ _) -> any (isPrefixOf cmd) cs) commands
+    case matching of
+       []  -> do
+         putStrLn ("Unknown command `" ++ cmd ++ "'. Type :? for help.")
+         pure Noop
+       [Cmd _ _ f _] ->
+         pure (f t)
+       _x  -> do
+         putStrLn (   "Ambiguous command, could be "
+                   ++ intercalate ", " [ head cs | Cmd cs _ _ _ <- matching ] ++ "." )
+         pure Noop
+  else
+     pure (Compile (CompileInteractive x))
 
 handleCommand :: Interpreter i c v t tinf inf -> State v inf -> Command -> IO (Maybe (State v inf))
 handleCommand int state@(inter, _out, ve, te) = \case
