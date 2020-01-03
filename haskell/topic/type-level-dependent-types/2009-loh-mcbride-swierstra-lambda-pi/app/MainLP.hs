@@ -1,7 +1,7 @@
 module Main where
 
-import qualified LambdaPi
+import qualified Repl
 
 main :: IO ()
-main = LambdaPi.mainLP
+main = Repl.mainLP
 

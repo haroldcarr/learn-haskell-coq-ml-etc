@@ -1,7 +1,7 @@
 module TestLPSpec where
 
 ------------------------------------------------------------------------------
-import           LambdaPi                      hiding (it)
+import           All                           hiding (it)
 ------------------------------------------------------------------------------
 import           Test.Hspec
 import qualified Text.ParserCombinators.Parsec as P
