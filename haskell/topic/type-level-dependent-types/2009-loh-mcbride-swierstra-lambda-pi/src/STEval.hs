@@ -37,7 +37,7 @@ type Env     = [Value]
 {-
 inferable eval (eval ↑)
 -}
-iEval :: ITerm -> (NameEnv Value,Env) -> Value
+iEval :: ITerm -> (NameEnv Value, Env) -> Value
 {-
 ignore annotation
 
@@ -95,7 +95,7 @@ checkable eval (eval ↓)
 cEval :: CTerm -> (NameEnv Value, Env) -> Value
 cEval (Inf  ii) d  = iEval ii d
 -- create a Haskell fun and add the bound var x to Env while evaluating the body
-cEval (Lam  e0) d0 = VLam (\x -> cEval e0 ((\(e, d) -> (e,  x : d)) d0))
+cEval (Lam  e0) d0 = VLam (\x -> cEval e0 ((\(e, d) -> (e, x : d)) d0))
 
 ------------------------------------------------------------------------------
 -- p4 : (STLC) Type System
@@ -137,9 +137,9 @@ cKind g (TFree x) Star = case lookup x g of
 ------------------------- (FUN)
 Γ ⊢ τ      →     τ' :: ∗
 -}
-cKind g (Fun kk kk') Star = do
-  cKind g kk   Star
-  cKind g kk'  Star
+cKind g (Fun k k') Star = do
+  cKind g k  Star
+  cKind g k' Star
 {-
 --------------------------------------------------
 type rules
