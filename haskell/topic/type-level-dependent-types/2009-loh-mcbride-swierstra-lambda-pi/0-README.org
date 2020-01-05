@@ -1,6 +1,0 @@
-This code is a refactored version of Andres Loh, Conor McBride and Wouter Swierstra's
-"A Tutorial Implementation of a Dependently Typed Lambda Calculus".
-
-See [[https://www.andres-loeh.de/LambdaPi/]] for the paper and original code.
-
-
