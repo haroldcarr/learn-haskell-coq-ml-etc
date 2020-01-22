@@ -1,0 +1,24 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 52942ec3ec845f136bcc16be50c01390f6d43af43dfc29b06ccc2a570a342c28
+
+name:           mkstf
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      E
+  other-modules:
+      Paths_mkstf
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , exceptions
+  default-language: Haskell2010
