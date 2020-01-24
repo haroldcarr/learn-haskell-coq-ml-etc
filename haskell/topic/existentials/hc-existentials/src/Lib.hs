@@ -138,6 +138,7 @@ evalF2 (Object a  _ f2) = f2 a
 
 update :: Object -> Object
 update (Object a f1 f2) = Object (a * 10) f1 f2
+-- update o@(Object a f1 f2) = o { oA = a * 10 }
 -- cannot use record update syntax due to
 -- GHC error : "Record update for insufficiently polymorphic field"
 
