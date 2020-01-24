@@ -122,12 +122,13 @@ t04  = do
     `shouldBe` Nothing
 
 ------------------------------------------------------------------------------
--- all info preserved - OOP
+-- OOP
 
-data Object = forall a. Object
-  { oData :: a
-  , oF1   :: a -> Bool
-  , oF2   :: a -> Text }
+data Object where
+  Object :: Num a => -- Num needed to make 'update' work
+    { oA  :: a
+    , oF1 :: a -> Bool
+    , oF2 :: a -> Text } -> Object
 
 evalF1 :: Object -> Bool
 evalF1 (Object a f1  _) = f1 a
@@ -135,10 +136,16 @@ evalF1 (Object a f1  _) = f1 a
 evalF2 :: Object -> Text
 evalF2 (Object a  _ f2) = f2 a
 
+update :: Object -> Object
+update (Object a f1 f2) = Object (a * 10) f1 f2
+-- cannot use record update syntax due to
+-- GHC error : "Record update for insufficiently polymorphic field"
+
 oop :: Object
 oop  = Object 1 even show
 
 t05 :: Spec
 t05  = do
-  it "t05a" $ evalF1 oop `shouldBe` False
-  it "t05b" $ evalF2 oop `shouldBe` "1"
+  it "t05a" $ evalF1         oop  `shouldBe` False
+  it "t05b" $ evalF2         oop  `shouldBe` "1"
+  it "t05c" $ evalF2 (update oop) `shouldBe` "10"
