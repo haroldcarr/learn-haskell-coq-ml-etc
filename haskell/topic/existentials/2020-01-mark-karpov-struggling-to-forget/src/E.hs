@@ -82,20 +82,26 @@ Solution
 
 use CPS (because GHC does not have proper existential quantification)
 -}
+{-
 mk0
   :: MonadThrow m
   => -- ...
      FilePath
   -> (forall p b t. Path p b t -> m r)
   -> m r
-mk0 = undefined
-
+-}
 -- conditional constraining may have something to do with constraints
 
 data ((x :: k) `Or` (y :: k)) (c :: k -> Constraint) where
   Any    :: (x `Or` y) Unconstrained
   First  :: (x `Or` y) ((~) x)
   Second :: (x `Or` y) ((~) y)
+
+-- HC
+instance Show (Or x y z) where
+  show Any    = "Any"
+  show First  = "First"
+  show Second = "Second"
 
 class Unconstrained (x :: k)
 instance Unconstrained x
@@ -107,6 +113,20 @@ mk :: MonadThrow m
   -> FilePath
   -> (forall p b t. (pc p, bc b, tc t) => Path p b t -> m r)
   -> m r
+mk First  First  First  fp f = f (PosixAbsDir  fp)
+mk First  First  Second fp f = f (PosixAbsFile fp)
+mk First  Second First  fp f = f (PosixRelDir  fp)
+mk First  Second Second fp f = f (PosixRelFile fp)
+mk Second First  First  fp f = f (WinAbsDir    fp)
+mk Second First  Second fp f = f (WinAbsFile   fp)
+mk Second Second First  fp f = f (WinRelDir    fp)
+mk Second Second Second fp f = f (WinRelFile   fp)
+mk Any    _      _      _  _ = throwM AnyPlatform
+mk _      Any    _      _  _ = throwM AnyBase
+mk _      _      Any    _  _ = throwM AnyPType
+
+data MyException = AnyPlatform | AnyBase | AnyPType deriving Show
+instance Exception MyException
 
 -- erogonomics:
 
@@ -147,7 +167,6 @@ pattern IsPosix :: Path 'Posix b t -> Path p b t
 pattern IsPosix path <- (isPosix -> Just path)
 
 isPosix :: Path p b t -> Maybe (Path 'Posix b t)
-
 isPosix = \case
   PosixAbsDir  path -> Just (PosixAbsDir  path)
   PosixAbsFile path -> Just (PosixAbsFile path)
