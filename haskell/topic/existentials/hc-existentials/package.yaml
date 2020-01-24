@@ -1,0 +1,28 @@
+name:                hc-existentials
+version:             0.1.0.0
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wpartial-fields
+- -Wredundant-constraints
+- -fhide-source-paths
+
+dependencies:
+- base >= 4.7 && < 5
+- hspec
+- protolude
+- text
+
+library:
+  source-dirs: src
+
+tests:
+  t:
+    source-dirs:         test
+    main:                hspec.hs
+    dependencies:
+    - hc-existentials
