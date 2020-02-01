@@ -34,7 +34,7 @@ tail1  = \case
   Nil1       -> Nothing
   Cons1 _ xs -> Just xs
 
--- workaround since == cannot be defined since 'a' is unknown
+-- workaround since '==' cannot be defined since 'a' is unknown
 tailLength1 :: List1 -> Int
 tailLength1 xs = case tail1 xs of
   Nothing  -> -1
@@ -42,10 +42,10 @@ tailLength1 xs = case tail1 xs of
 
 t01 :: Spec
 t01  = do
-  it "t01a" $ length1     Nil1                       `shouldBe` 0
-  it "t01b" $ length1     (Cons1 1 (Cons1 "2" Nil1)) `shouldBe` 2
-  it "t01c" $ tailLength1 Nil1                       `shouldBe` -1
-  it "t01b" $ tailLength1 (Cons1 1 (Cons1 2.0 Nil1)) `shouldBe` 1
+  it "t01a" $ length1                         Nil1   `shouldBe`  0
+  it "t01b" $ length1     (Cons1 1 (Cons1 "2" Nil1)) `shouldBe`  2
+  it "t01c" $ tailLength1                     Nil1   `shouldBe` -1
+  it "t01b" $ tailLength1 (Cons1 1 (Cons1 2.0 Nil1)) `shouldBe`  1
 
 -- possible types for 'a' is open : can accept any 'a'
 
@@ -66,7 +66,7 @@ showHead2  = \case
 
 t02 :: Spec
 t02  = do
-  it "t02a" $ showHead2 Nil2                       `shouldBe` Nothing
+  it "t02a" $ showHead2                     Nil2   `shouldBe` Nothing
   it "t02b" $ showHead2 (Cons2 1 (Cons2 "2" Nil2)) `shouldBe` Just "1"
 
 -- possible types for 'a' is open : can defined new instances of 'Show'
@@ -74,34 +74,34 @@ t02  = do
 ------------------------------------------------------------------------------
 -- all info preserved
 
-data EType a where
-  ETypeInt   :: EType Int
-  ETypeText  :: EType Text
+data Typ a where
+  TypInt  :: Typ Int
+  TypText :: Typ Text
 
 data List3 where
-  Nil3  ::                          List3
-  Cons3 :: EType a -> a -> List3 -> List3
+  Nil3  ::                        List3
+  Cons3 :: Typ a -> a -> List3 -> List3
 
--- pattern matching on 'EType' "reveals" 'a'
+-- pattern matching on 'Typ' "reveals" 'a'
 
 fold3 :: List3 -> Text
 fold3  = \case
-  Nil3                 -> "Nil3"
-  Cons3 ETypeInt  x xs -> show (x * 10) <> " " <> fold3 xs
-  Cons3 ETypeText x xs -> T.toUpper x   <> " " <> fold3 xs
+  Nil3               -> "Nil3"
+  Cons3 TypInt  x xs -> show (x * 10) <> " " <> fold3 xs
+  Cons3 TypText x xs -> T.toUpper x   <> " " <> fold3 xs
 
 t03 :: Spec
 t03 =
-  it "t03" $ fold3 (Cons3 ETypeInt 1 (Cons3 ETypeText "two" Nil3))
+  it "t03" $ fold3 (Cons3 TypInt 1 (Cons3 TypText "two" Nil3))
     `shouldBe` "10 TWO Nil3"
 
 -- but 'a' still cannot escape scope
 {-
 head3 :: List3 -> Maybe a
 head3  = \case
-  Nil3 -> Nothing
-  Cons3 ETypeInt  x _ -> Just x
-  Cons3 ETypeText x _ -> Just x
+  Nil3              -> Nothing
+  Cons3 TypInt  x _ -> Just x -- compile error on Just
+  Cons3 TypText x _ -> Just x -- ditto
 
     • Could not deduce: a ~ Int
       from the context: a1 ~ Int
@@ -111,14 +111,14 @@ head3  = \case
 
 headIfInt3 :: List3 -> Maybe Int
 headIfInt3  = \case
-  Cons3 ETypeInt x _ -> Just x
-  _                  -> Nothing
+  Cons3 TypInt x _ -> Just x
+  _                -> Nothing
 
 t04 :: Spec
 t04  = do
-  it "t04a" $ headIfInt3 (Cons3 ETypeInt   1  (Cons3 ETypeText "two" Nil3))
+  it "t04a" $ headIfInt3 (Cons3 TypInt   1  (Cons3 TypText "two" Nil3))
     `shouldBe` Just 1
-  it "t04b" $ headIfInt3 (Cons3 ETypeText "1" (Cons3 ETypeText "two" Nil3))
+  it "t04b" $ headIfInt3 (Cons3 TypText "1" (Cons3 TypText "two" Nil3))
     `shouldBe` Nothing
 
 ------------------------------------------------------------------------------

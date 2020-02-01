@@ -14,7 +14,15 @@ ghc-options:
 dependencies:
 - base >= 4.7 && < 5
 - exceptions
+- hspec
+- protolude
 
 library:
   source-dirs: src
 
+tests:
+  t:
+    source-dirs:         test
+    main:                hspec.hs
+    dependencies:
+    - mkstf

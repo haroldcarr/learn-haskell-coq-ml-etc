@@ -1,19 +1,23 @@
-{-# LANGUAGE ConstraintKinds #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+
+{-# LANGUAGE ConstraintKinds   #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE LambdaCase      #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE PolyKinds       #-}
-{-# LANGUAGE TypeOperators   #-}
-{-# LANGUAGE DataKinds       #-}
-{-# LANGUAGE GADTs           #-}
-{-# LANGUAGE KindSignatures  #-}
-{-# LANGUAGE RankNTypes      #-}
+{-# LANGUAGE ViewPatterns      #-}
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE PatternSynonyms   #-}
+{-# LANGUAGE PolyKinds         #-}
+{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE GADTs             #-}
+{-# LANGUAGE KindSignatures    #-}
+{-# LANGUAGE RankNTypes        #-}
 
 module E where
 
-import Data.Kind
-import Control.Monad.Catch
+import           Control.Monad.Catch
+import           Data.Kind
+import           Prelude             hiding (abs)
+import           Test.Hspec
 
 {-
 Mark Karpov
@@ -127,6 +131,14 @@ mk _      _      Any    _  _ = throwM AnyPType
 
 data MyException = AnyPlatform | AnyBase | AnyPType deriving Show
 instance Exception MyException
+
+t01 :: Spec
+t01  = do
+  it "t01a" $ mk First First First "/tmp" (\_ -> pure 1) `shouldBe` Just 1
+  it "t01b" $ mk posix abs   dir   "/tmp" (\_ -> pure 1) `shouldBe` Just 1
+  it "t01c" $ case mk posix abs   dir   "/tmp" (\_ -> throwM (SomeException AnyBase)) of
+    Left (SomeException _) -> True  `shouldBe` True
+    Right ()               -> False `shouldBe` True
 
 -- erogonomics:
 
