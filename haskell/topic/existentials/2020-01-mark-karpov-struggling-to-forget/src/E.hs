@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ViewPatterns      #-}
 {-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE MultiWayIf        #-}
 {-# LANGUAGE PatternSynonyms   #-}
 {-# LANGUAGE PolyKinds         #-}
 {-# LANGUAGE TypeOperators     #-}
@@ -50,7 +51,6 @@ parseRelFile :: MonadThrow m => FilePath -> m (Path Rel File)
 
 instead:
 -}
-
 data Platform = Posix | Win
 data Base     = Abs   | Rel
 data PType    = Dir   | File
@@ -64,7 +64,6 @@ data Path (p :: Platform) (b :: Base) (t :: PType) where
   WinAbsFile   :: FilePath -> Path 'Win   'Abs 'File
   WinRelDir    :: FilePath -> Path 'Win   'Rel 'Dir
   WinRelFile   :: FilePath -> Path 'Win   'Rel 'File
-
 {-
 The 3 type indices lead (on purpose) to a combinatorial explosion.
 Want to make some indices existential while leaving others fixed.
@@ -94,6 +93,7 @@ mk0
   -> (forall p b t. Path p b t -> m r)
   -> m r
 -}
+
 -- conditional constraining may have something to do with constraints
 
 data ((x :: k) `Or` (y :: k)) (c :: k -> Constraint) where
@@ -129,16 +129,26 @@ mk Any    _      _      _  _ = throwM AnyPlatform
 mk _      Any    _      _  _ = throwM AnyBase
 mk _      _      Any    _  _ = throwM AnyPType
 
-data MyException = AnyPlatform | AnyBase | AnyPType deriving Show
-instance Exception MyException
+mkHc :: MonadThrow m
+  => ('Posix `Or` 'Win)  pc
+  -> ('Abs   `Or` 'Rel)  bc
+  -> ('Dir   `Or` 'File) tc
+  -> FilePath
+  -> (forall p b t. (pc p, bc b, tc t) => m (Path p b t))
+mkHc First  First  First  fp = pure (PosixAbsDir  fp)
+mkHc First  First  Second fp = pure (PosixAbsFile fp)
+mkHc First  Second First  fp = pure (PosixRelDir  fp)
+mkHc First  Second Second fp = pure (PosixRelFile fp)
+mkHc Second First  First  fp = pure (WinAbsDir    fp)
+mkHc Second First  Second fp = pure (WinAbsFile   fp)
+mkHc Second Second First  fp = pure (WinRelDir    fp)
+mkHc Second Second Second fp = pure (WinRelFile   fp)
+mkHc Any    _      _      _  = throwM AnyPlatform
+mkHc _      Any    _      _  = throwM AnyBase
+mkHc _      _      Any    _  = throwM AnyPType
 
-t01 :: Spec
-t01  = do
-  it "t01a" $ mk First First First "/tmp" (\_ -> pure 1) `shouldBe` Just 1
-  it "t01b" $ mk posix abs   dir   "/tmp" (\_ -> pure 1) `shouldBe` Just 1
-  it "t01c" $ case mk posix abs   dir   "/tmp" (\_ -> throwM (SomeException AnyBase)) of
-    Left (SomeException _) -> True  `shouldBe` True
-    Right ()               -> False `shouldBe` True
+data MyException = AnyPlatform | AnyBase | AnyPType deriving (Eq, Show)
+instance Exception MyException
 
 -- erogonomics:
 
@@ -163,6 +173,13 @@ dir    = First
 file  :: ('Dir   `Or` 'File) ((~) 'File)
 file   = Second
 
+t01 :: Spec
+t01  = do
+  it "t01a" $      mk First First First "/tmp" (\_ -> pure 1) `shouldBe` Just 1
+  it "t01b" $      mk posix abs   dir   "/tmp" (\_ -> pure 1) `shouldBe` Just 1
+  it "t01c" $ case mk posix abs   dir   "/tmp" (\_ -> throwM AnyBase) of
+    Left  e  -> fromException e `shouldBe` Just AnyBase
+    Right () -> True            `shouldBe` False
 {-
 In 'any' case : type index fixed during parsing, but not immediately known at the type level.
 
@@ -174,18 +191,93 @@ instead discovered when needed by performing case-analysis.
 
 E.g.,
 -}
-
 pattern IsPosix :: Path 'Posix b t -> Path p b t
 pattern IsPosix path <- (isPosix -> Just path)
 
 isPosix :: Path p b t -> Maybe (Path 'Posix b t)
-isPosix = \case
-  PosixAbsDir  path -> Just (PosixAbsDir  path)
-  PosixAbsFile path -> Just (PosixAbsFile path)
-  PosixRelDir  path -> Just (PosixRelDir  path)
-  PosixRelFile path -> Just (PosixRelFile path)
+isPosix  = \case
+  a@PosixAbsDir  {} -> Just a
+  a@PosixAbsFile {} -> Just a
+  a@PosixRelDir  {} -> Just a
+  a@PosixRelFile {} -> Just a
   _                 -> Nothing
 
+pattern IsWin :: Path 'Win b t -> Path p b t
+pattern IsWin path <- (isWin -> Just path)
+
+isWin :: Path p b t -> Maybe (Path 'Win b t)
+isWin  = \case
+  a@WinAbsDir  {} -> Just a
+  a@WinAbsFile {} -> Just a
+  a@WinRelDir  {} -> Just a
+  a@WinRelFile {} -> Just a
+  _                 -> Nothing
+
+pattern IsAbs :: Path p 'Abs t -> Path p b t
+pattern IsAbs path <- (isAbs -> Just path)
+
+isAbs :: Path p b t -> Maybe (Path p 'Abs t)
+isAbs  = \case
+  a@PosixAbsDir  {} -> Just a
+  a@PosixAbsFile {} -> Just a
+  a@WinAbsDir    {} -> Just a
+  a@WinAbsFile   {} -> Just a
+  _                 -> Nothing
+
+pattern IsRel :: Path p 'Rel t -> Path p b t
+pattern IsRel path <- (isRel -> Just path)
+
+isRel :: Path p b t -> Maybe (Path p 'Rel t)
+isRel  = \case
+  a@PosixRelDir  {} -> Just a
+  a@PosixRelFile {} -> Just a
+  a@WinRelDir    {} -> Just a
+  a@WinRelFile   {} -> Just a
+  _                 -> Nothing
+
+pattern IsDir :: Path p b 'Dir -> Path p b t
+pattern IsDir path <- (isDir -> Just path)
+
+isDir :: Path p b t -> Maybe (Path p b 'Dir)
+isDir  = \case
+  a@PosixAbsDir  {} -> Just a
+  a@PosixRelDir  {} -> Just a
+  a@WinAbsDir    {} -> Just a
+  a@WinRelDir    {} -> Just a
+  _                 -> Nothing
+
+pattern IsFile :: Path p b 'File -> Path p b t
+pattern IsFile path <- (isFile -> Just path)
+
+isFile :: Path p b t -> Maybe (Path p b 'File)
+isFile  = \case
+  a@PosixAbsFile {} -> Just a
+  a@PosixRelFile {} -> Just a
+  a@WinAbsFile   {} -> Just a
+  a@WinRelFile   {} -> Just a
+  _                 -> Nothing
+
+handleHc :: Monad m => Path p b t -> m String
+handleHc path = case (path, path, path) of
+  (IsPosix _x, IsAbs _y, IsDir  _z) -> pure "posix abs dir"
+  (IsPosix _x, IsAbs _y, IsFile _z) -> pure "posix abs file"
+  (IsPosix _x, IsRel _y, IsDir  _z) -> pure "posix rel dir"
+  (IsPosix _x, IsRel _y, IsFile _z) -> pure "posix rel file"
+  (IsWin   _x, IsAbs _y, IsDir  _z) -> pure "win   abs dir"
+  (IsWin   _x, IsAbs _y, IsFile _z) -> pure "win   abs file"
+  (IsWin   _x, IsRel _y, IsDir  _z) -> pure "win   rel dir"
+  (IsWin   _x, IsRel _y, IsFile _z) -> pure "win   rel file"
+
+handleHc' :: Monad m => Path p b t -> m String
+handleHc' path = case path of
+  (PosixAbsDir  fp) -> pure ("posix abs dir"  ++ fp)
+  (PosixAbsFile fp) -> pure ("posix abs file" ++ fp)
+  (PosixRelDir  fp) -> pure ("posix rel dir"  ++ fp)
+  (PosixRelFile fp) -> pure ("posix rel file" ++ fp)
+  (WinAbsDir    fp) -> pure ("win   abs dir"  ++ fp)
+  (WinAbsFile   fp) -> pure ("win   abs file" ++ fp)
+  (WinRelDir    fp) -> pure ("win   rel dir"  ++ fp)
+  (WinRelFile   fp) -> pure ("win   rel file" ++ fp)
 {-
 using above enables establishing that p ~ 'Posix in one branch of execution
 while handing the opposite case in the other branch.
