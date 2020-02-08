@@ -1,23 +1,27 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
-{-# LANGUAGE ConstraintKinds   #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ViewPatterns      #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE MultiWayIf        #-}
-{-# LANGUAGE PatternSynonyms   #-}
-{-# LANGUAGE PolyKinds         #-}
-{-# LANGUAGE TypeOperators     #-}
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE KindSignatures    #-}
-{-# LANGUAGE RankNTypes        #-}
+{-# LANGUAGE ConstraintKinds    #-}
+{-# LANGUAGE DataKinds          #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE FlexibleInstances  #-}
+{-# LANGUAGE GADTs              #-}
+{-# LANGUAGE KindSignatures     #-}
+{-# LANGUAGE LambdaCase         #-}
+{-# LANGUAGE MultiWayIf         #-}
+{-# LANGUAGE PatternSynonyms    #-}
+{-# LANGUAGE PolyKinds          #-}
+{-# LANGUAGE RankNTypes         #-}
+{-# LANGUAGE TypeOperators      #-}
+{-# LANGUAGE ViewPatterns       #-}
 
 module E where
 
 import           Control.Monad.Catch
+import           Data.Data
 import           Data.Kind
-import           Prelude             hiding (abs)
+import           GHC.Generics
+import           Prelude             hiding (abs, any)
 import           Test.Hspec
 
 {-
@@ -32,24 +36,32 @@ by universally quantified variables
 
 example : typed file paths, like https://hackage.haskell.org/package/path
 flaw of path is that it forces the users to know too much about the paths:
-
+-}
 -- | Path of some base and type.
 --
 -- The type variables are:
 --
 --   * @b@ — base, the base location of the path; absolute or relative.
 --   * @t@ — type, whether file or directory.
-newtype Path b t = Path FilePath
+newtype Path0 b t = Path0 FilePath
   deriving (Data, Typeable, Generic)
 
-To create a value of the type Path one has to choose what to expect (choose b and t):
+-- To create a value of the type Path one has to choose what to expect (must choose both b and t):
 
-parseAbsDir  :: MonadThrow m => FilePath -> m (Path Abs Dir)
-parseRelDir  :: MonadThrow m => FilePath -> m (Path Rel Dir)
-parseAbsFile :: MonadThrow m => FilePath -> m (Path Abs File)
-parseRelFile :: MonadThrow m => FilePath -> m (Path Rel File)
+parseAbsDir  :: MonadThrow m => FilePath -> m (Path0 'Abs 'Dir)
+parseRelDir  :: MonadThrow m => FilePath -> m (Path0 'Rel 'Dir)
+parseAbsFile :: MonadThrow m => FilePath -> m (Path0 'Abs 'File)
+parseRelFile :: MonadThrow m => FilePath -> m (Path0 'Rel 'File)
+parseAbsDir  _ = throwM AnyPlatform -- hc : for compiler
+parseRelDir  _ = throwM AnyPlatform
+parseAbsFile _ = throwM AnyPlatform
+parseRelFile _ = throwM AnyPlatform
+{-
+There are no parseSomeDir or parseRelSome functions.
 
-instead:
+Forces users to use IO parsing functions to determine Abs/Rel Dir/File.
+
+To parse *purely* without knowing whether the path is absolute or relative:
 -}
 data Platform = Posix | Win
 data Base     = Abs   | Rel
@@ -64,9 +76,33 @@ data Path (p :: Platform) (b :: Base) (t :: PType) where
   WinAbsFile   :: FilePath -> Path 'Win   'Abs 'File
   WinRelDir    :: FilePath -> Path 'Win   'Rel 'Dir
   WinRelFile   :: FilePath -> Path 'Win   'Rel 'File
+
+-- HC
+instance Show (Path a b t) where
+  show (PosixAbsDir  fp) = "(PosixAbsDir "  ++ fp ++ ")"
+  show (PosixAbsFile fp) = "(PosixAbsFile " ++ fp ++ ")"
+  show (PosixRelDir  fp) = "(PosixRelDir "  ++ fp ++ ")"
+  show (PosixRelFile fp) = "(PosixRelFile " ++ fp ++ ")"
+  show (WinAbsDir    fp) = "(WinAbsDir "    ++ fp ++ ")"
+  show (WinAbsFile   fp) = "(WinAbsFile "   ++ fp ++ ")"
+  show (WinRelDir    fp) = "(WinRelDir "    ++ fp ++ ")"
+  show (WinRelFile   fp) = "(WinRelFile "   ++ fp ++ ")"
+
+-- HC
+instance Eq (Path a b t) where
+  PosixAbsDir  l == PosixAbsDir  r = l == r
+  PosixAbsFile l == PosixAbsFile r = l == r
+  PosixRelDir  l == PosixRelDir  r = l == r
+  PosixRelFile l == PosixRelFile r = l == r
+  WinAbsDir    l == WinAbsDir    r = l == r
+  WinAbsFile   l == WinAbsFile   r = l == r
+  WinRelDir    l == WinRelDir    r = l == r
+  WinRelFile   l == WinRelFile   r = l == r
 {-
 The 3 type indices lead (on purpose) to a combinatorial explosion.
-Want to make some indices existential while leaving others fixed.
+
+MAIN POINT: want to make some indices existential while leaving others fixed.
+
 Could use existential wrappers but there are too many possible combinations:
 
 data PathSomePlatform b t = <...>
@@ -92,9 +128,10 @@ mk0
      FilePath
   -> (forall p b t. Path p b t -> m r)
   -> m r
--}
 
--- conditional constraining may have something to do with constraints
+To fix p b and t sometimes while leaving them existential in other cases:
+use conditional constraining:
+-}
 
 data ((x :: k) `Or` (y :: k)) (c :: k -> Constraint) where
   Any    :: (x `Or` y) Unconstrained
@@ -175,13 +212,20 @@ file   = Second
 
 t01 :: Spec
 t01  = do
-  it "t01a" $      mk First First First "/tmp" (\_ -> pure 1) `shouldBe` Just 1
-  it "t01b" $      mk posix abs   dir   "/tmp" (\_ -> pure 1) `shouldBe` Just 1
-  it "t01c" $ case mk posix abs   dir   "/tmp" (\_ -> throwM AnyBase) of
-    Left  e  -> fromException e `shouldBe` Just AnyBase
-    Right () -> True            `shouldBe` False
+  it "t01a" $ mk   First First First "/tmp" (\_ -> pure 1) `shouldBe` Just 1
+  it "t01b" $ mk   posix abs   dir   "/tmp" (\_ -> pure 1) `shouldBe` Just 1
+  it "t01c" $ mk   posix abs   dir   "/tmp" (\_ -> throwM AnyBase) `shouldBeE` AnyBase
+  it "t01d" $ mkHc posix abs   dir   "/tmp" `shouldBe`  Just (PosixAbsDir "/tmp")
+  it "t01e" $ mkHc any   abs   dir   "/tmp" `shouldBeE` AnyPlatform
+
+shouldBeE :: (Eq e, Exception e) => Either SomeException b -> e -> Expectation
+shouldBeE x me = case x of
+  Left  e  -> fromException e `shouldBe` Just me
+  Right _  -> True            `shouldBe` False
+
 {-
-In 'any' case : type index fixed during parsing, but not immediately known at the type level.
+In 'any' case : type index (e.g., Dir or File) fixed during parsing,
+but not immediately known at the type level.
 
 Case analysis on the 'Path p b t' type
 -------------------------------------
@@ -270,14 +314,14 @@ handleHc path = case (path, path, path) of
 
 handleHc' :: Monad m => Path p b t -> m String
 handleHc' path = case path of
-  (PosixAbsDir  fp) -> pure ("posix abs dir"  ++ fp)
-  (PosixAbsFile fp) -> pure ("posix abs file" ++ fp)
-  (PosixRelDir  fp) -> pure ("posix rel dir"  ++ fp)
-  (PosixRelFile fp) -> pure ("posix rel file" ++ fp)
-  (WinAbsDir    fp) -> pure ("win   abs dir"  ++ fp)
-  (WinAbsFile   fp) -> pure ("win   abs file" ++ fp)
-  (WinRelDir    fp) -> pure ("win   rel dir"  ++ fp)
-  (WinRelFile   fp) -> pure ("win   rel file" ++ fp)
+  (PosixAbsDir  fp) -> pure ("posix abs dir "  ++ fp)
+  (PosixAbsFile fp) -> pure ("posix abs file " ++ fp)
+  (PosixRelDir  fp) -> pure ("posix rel dir "  ++ fp)
+  (PosixRelFile fp) -> pure ("posix rel file " ++ fp)
+  (WinAbsDir    fp) -> pure ("win   abs dir "  ++ fp)
+  (WinAbsFile   fp) -> pure ("win   abs file " ++ fp)
+  (WinRelDir    fp) -> pure ("win   rel dir "  ++ fp)
+  (WinRelFile   fp) -> pure ("win   rel file " ++ fp)
 {-
 using above enables establishing that p ~ 'Posix in one branch of execution
 while handing the opposite case in the other branch.
@@ -288,11 +332,9 @@ This is similar to using bare GADTs except the correspondence between types and 
 is less precise and you do not discover more than necessary unless you want to
 --- patterns like this can also be nested
 
-the main difficulty is now resolved
 
-but still not clear how to handle the any case for something like Dir vs File.
-
-A trailing slash may guarantee that you have a directory path,
-but if it is not there and the user doesn’t say what he/she wants,
-it is hard to guess what you have—a directory or a file.
+Still not clear how to handle the any case for something like Dir vs File.
+A trailing slash might indicate a directory path,
+but if it is not there and user does not specify,
+must guess either directory or a file.
 -}
