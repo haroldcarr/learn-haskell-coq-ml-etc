@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 768f9cf3dadce8259f0fd243fd480a36d046b1fb124f5af3177d2970a968d5ed
+-- hash: aa6ff8c716d88cb42fd521fad181a90e3d9819d24a8d833185e090fac61cbf05
 
 name:           abe
 version:        0.1.0.0
@@ -20,6 +20,21 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
   build-depends:
       base >=4.7 && <5
+    , hspec
+    , mtl
+    , text
+  default-language: Haskell2010
+
+executable m
+  main-is: Main.hs
+  other-modules:
+      
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      abe
+    , base >=4.7 && <5
     , hspec
     , mtl
     , text

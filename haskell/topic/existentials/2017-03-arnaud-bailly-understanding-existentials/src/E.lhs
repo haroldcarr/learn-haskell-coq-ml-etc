@@ -120,12 +120,11 @@ Use it:
 >   loop' [] = do
 >     (c,t) <- get
 >     lift $ putStrLn $ show c ++ "/" ++ show t
->   loop' (Question q:qs) = do
->     lift $ qprint q
+>   loop' (q@(Question qE):qs) = do
+>     lift $ qprint qE
 >     a <- lift getLine
->     let a' = convertUserAnswer q a
 >     (c,t) <- get
->     if isCorrectAnswer a' q then do
+>     if checkAnswer q a then do
 >       put (c+1,t+1)
 >       lift $ putStrLn "YES"
 >     else do
@@ -149,8 +148,12 @@ References:
 
 > t01 :: Spec
 > t01  = do
->   it "q1" $ checkAnswer q1      "x"  `shouldBe` False
->   it "q2" $ checkAnswer q2      "2"  `shouldBe` True
->   it "q3" $ checkAnswer q3      "0"  `shouldBe` False
->   it "q4" $ checkAnswer q4 "[1,2,3]" `shouldBe` True
+>   it "q1t" $ checkAnswer q1      "D-" `shouldBe` True
+>   it "q1f" $ checkAnswer q1      "x"  `shouldBe` False
+>   it "q2t" $ checkAnswer q2      "2"  `shouldBe` True
+>   it "q2f" $ checkAnswer q2      "1"  `shouldBe` False
+>   it "q3t" $ checkAnswer q3    "4.5"  `shouldBe` True
+>   it "q3f" $ checkAnswer q3      "0"  `shouldBe` False
+>   it "q4t" $ checkAnswer q4 "[1,2,3]" `shouldBe` True
+>   it "q4f" $ checkAnswer q4     "[1]" `shouldBe` False
 
