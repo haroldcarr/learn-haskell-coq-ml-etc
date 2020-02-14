@@ -1,0 +1,31 @@
+name:                bnfc-meta-examples
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+- BNFC-meta
+
+library:
+  source-dirs: src
+
+executables:
+  main:
+    source-dirs:         app
+    main:                Main.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bnfc-meta-examples
+
+tests:
+  test:
+    source-dirs:         test
+    main:                Spec.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bnfc-meta-examples

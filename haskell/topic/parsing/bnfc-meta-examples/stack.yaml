@@ -1,0 +1,21 @@
+allow-newer: true
+resolver: lts-13.25
+packages:
+- .
+
+extra-deps:
+- git: https://github.com/JonasDuregard/BNFC-meta
+  commit: 1526a2fbd7b01d374ebe2e49f78494f46d7472b8
+- alex-meta-0.3.0.11
+- happy-meta-0.2.0.10
+
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=2.1"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor
