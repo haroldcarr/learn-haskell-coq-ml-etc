@@ -9,7 +9,7 @@ import           Data.Maybe
 import           Language.LBNF
 
 bnfc [lbnf|
-Ap.  Expr    ::= Expr Expr;
+Ap.  Expr    ::= Expr Expr; -- TODO left to right associate
 VL . Expr    ::= "\\" Ident [Ident] "->" Expr;
 Ref. Expr    ::= Ident;
 [] . [Ident] ::= ;
