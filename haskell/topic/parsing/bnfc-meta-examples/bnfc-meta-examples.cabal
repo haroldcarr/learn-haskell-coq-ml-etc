@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8abba6b2d57af3f6fc90041eeef574be1a31abd1405ce28536b0655db0814068
+-- hash: 1a676bf3487ec2f84ddf0a0ccdef3b1ea01ea22a6097d631c8a2ef9548099b8e
 
 name:           bnfc-meta-examples
 version:        0.1.0.0
@@ -15,6 +15,8 @@ library
       Fischoff.Thump
       Fischoff.Thump2
       Fischoff.Thump3
+      HC.Def
+      HC.Use
       JavaLight.JavaletteLight
       JavaLight.UseJll
       Typesafe.Example
