@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+
 {-# LANGUAGE QuasiQuotes #-}
 
 module Typesafe.Example where

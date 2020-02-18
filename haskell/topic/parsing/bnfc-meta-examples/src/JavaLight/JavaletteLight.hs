@@ -4,7 +4,7 @@
 module JavaLight.JavaletteLight where
 
 import           Language.LBNF.Compiletime
-import           Language.LBNF             (bnfc, dumpCode, lbnf)
+import           Language.LBNF             (bnfc, lbnf)
 
 bnfc [lbnf|
 

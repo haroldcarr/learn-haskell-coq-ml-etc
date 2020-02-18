@@ -3,7 +3,6 @@
 module JavaLight.UseJll where
 
 import           JavaLight.JavaletteLight
-import           Language.LBNF.Runtime
 import           Prelude                  hiding (exp)
 
 {- This Javalette Light program is parsed at compile time,
