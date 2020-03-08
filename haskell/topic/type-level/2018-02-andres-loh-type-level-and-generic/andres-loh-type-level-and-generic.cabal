@@ -1,13 +1,48 @@
-name:                  andres-loh-type-level-and-generic
-version:               0.1.0.0
-build-type:            Simple
-cabal-version:         >=1.10
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: f24c84551af8a00ef48194d8c683313e47ab0355e097642a58a25d97e01f39da
+
+name:           andres-loh-type-level-and-generic
+version:        0.1.0.0
+build-type:     Simple
 
 library
-  hs-source-dirs:      src
-  exposed-modules:     HC
-  build-depends:       base >= 4.7 && < 5
-                     , HUnit
-                     , test-hunit-util
-  ghc-options:         -Wall
-  default-language:    Haskell2010
+  exposed-modules:
+      HC
+      NP
+      NS
+      Use
+  other-modules:
+      Paths_andres_loh_type_level_and_generic
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , generics-sop
+    , test-hunit-util
+  default-language: Haskell2010
+
+test-suite t
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      TestSpec
+      Paths_andres_loh_type_level_and_generic
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HUnit
+    , andres-loh-type-level-and-generic
+    , base >=4.7 && <5
+    , generics-sop
+    , hspec
+    , hspec-contrib
+    , test-hunit-util
+  default-language: Haskell2010

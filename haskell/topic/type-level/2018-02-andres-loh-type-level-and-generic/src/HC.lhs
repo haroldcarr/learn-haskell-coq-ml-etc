@@ -4,7 +4,7 @@
 > {-# LANGUAGE DataKinds                 #-}
 > {-# LANGUAGE FlexibleInstances         #-}
 > {-# LANGUAGE GADTs                     #-}
-> {-# LANGUAGE KindSignatures            #-}
+> -- {-# LANGUAGE KindSignatures            #-}
 > {-# LANGUAGE MultiParamTypeClasses     #-}
 > {-# LANGUAGE PolyKinds                 #-}
 > {-# LANGUAGE RankNTypes                #-}
@@ -19,7 +19,6 @@
 >
 > import           Data.Char             (digitToInt)
 > import           GHC.Exts              (Constraint)
-> import           Test.HUnit            (Counts, Test (TestList), runTestTT)
 > import qualified Test.HUnit.Util       as U (t, e)
 
 CUFP 2015
@@ -962,14 +961,4 @@ Eq, Show support
 >     . showsPrec 5 xs
 >
 > deriving instance All Eq xs => Eq (HList xs)
-
-------------------------------------------------------------------------------
-
-> test :: IO Counts
-> test  =
->   runTestTT $ TestList $
->   txsum ++ tv3 ++ tvr3 ++ tva ++ tvfffvabc ++
->   gnpi ++ ghl ++ gchar ++ g2 ++ exj ++ hpn ++ hpk ++ hpt ++ hmi ++ htos ++ htos' ++ sgnpm ++
->   hcp1 ++ hcp2t
-
 
