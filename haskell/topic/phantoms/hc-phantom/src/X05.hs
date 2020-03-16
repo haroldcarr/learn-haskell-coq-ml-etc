@@ -19,8 +19,8 @@ type Length u = Tagged u Double
 oneHalfInch    :: Length "inches"
 oneHalfInch     = Tagged 0.5
 
-twoCentimeters :: Length "centimeters"
-twoCentimeters  = Tagged 2.0
+fourCentimeters :: Length "centimeters"
+fourCentimeters  = Tagged 4.0
 
 add0 :: Length "inches"
      -> Length "centimeters"
@@ -28,20 +28,20 @@ add0 :: Length "inches"
 add0 (Tagged x) (Tagged y) = Tagged (x + y)
 
 x1 :: Length a
-x1  = add0 oneHalfInch twoCentimeters
+x1  = add0 oneHalfInch fourCentimeters
 
 x2 :: Length "ounces"
-x2  = add0 oneHalfInch twoCentimeters
+x2  = add0 oneHalfInch fourCentimeters
 
 typeOfLengthCentimeters      :: TypeRep
-typeOfLengthCentimeters       = typeOf twoCentimeters
+typeOfLengthCentimeters       = typeOf fourCentimeters
 typeOfProxyLengthCentimeters :: TypeRep
-typeOfProxyLengthCentimeters  = typeOf (Proxy::Proxy (Length "centimeters"))
+typeOfProxyLengthCentimeters  = typeRep (Proxy :: Proxy (Proxy (Length "centimeters")))
 
 typeOfLengthInches           :: TypeRep
 typeOfLengthInches            = typeOf oneHalfInch
 typeOfProxyLengthInches      :: TypeRep
-typeOfProxyLengthInches       = typeOf (Proxy::Proxy (Length "inches"))
+typeOfProxyLengthInches       = typeRep (Proxy :: Proxy (Proxy (Length "inches")))
 
 add :: forall k (a :: k) (b :: k) (c :: k)
      . (Typeable a, Typeable b, Typeable c, Typeable k)
@@ -50,30 +50,30 @@ add :: forall k (a :: k) (b :: k) (c :: k)
     -> Proxy (Length c)
     -> Maybe (Length c)
 add x y p = do
-  Tagged x' <- canonical x
-  Tagged y' <- canonical y
+  Tagged x' <- toCentimeters x
+  Tagged y' <- toCentimeters y
   let xy = x' + y'
   if | typeOf p == typeOfProxyLengthCentimeters -> Just (Tagged xy)
      | typeOf p == typeOfProxyLengthInches      -> Just (Tagged (xy/2.54))
      | otherwise -> Nothing
 
-canonical
+toCentimeters
   :: forall k (a :: k)
    . (Typeable a, Typeable k)
   => Length a
   -> Maybe (Length "centimeters")
-canonical la@(Tagged a) =
+toCentimeters la@(Tagged a) =
   if | typeOf la == typeOfLengthCentimeters ->
        cast la
      | typeOf la == typeOfLengthInches ->
-       Just (Tagged (a/2.54))
+       Just (Tagged (a * 2.54))
      | otherwise -> Nothing
 
-x3  = add oneHalfInch    twoCentimeters (Proxy::Proxy (Length "inches"))
-x4  = add twoCentimeters twoCentimeters (Proxy::Proxy (Length "centimeters"))
+ic = add oneHalfInch     fourCentimeters (Proxy::Proxy (Length "inches"))
+cc = add fourCentimeters fourCentimeters (Proxy::Proxy (Length "centimeters"))
 
 x05 :: Spec
 x05  = describe "X05" $ do
-  it "x3" $ x3 `shouldBe` Just (Tagged 0.8649017298034596)
-  it "x4" $ x4 `shouldBe` Just (Tagged 4.0)
+  it "ic" $ ic `shouldBe` Just (Tagged 2.074803149606299)
+  it "cc" $ cc `shouldBe` Just (Tagged 8.0)
 
