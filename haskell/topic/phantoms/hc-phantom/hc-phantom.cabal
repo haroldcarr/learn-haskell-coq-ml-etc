@@ -1,0 +1,48 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 159c7dba3c7a687b4ed0d5f74e274c5461c96a0f3b92f03d7f64bb25d2cba79d
+
+name:           hc-phantom
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      X01
+      X02
+      X03
+      X04
+      X05
+      X06
+  other-modules:
+      Paths_hc_phantom
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , hspec
+    , protolude
+    , tagged
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      XSpec
+      Paths_hc_phantom
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , hc-phantom
+    , hspec
+    , protolude
+    , tagged
+  default-language: Haskell2010

@@ -1,0 +1,1 @@
+https://hackage.haskell.org/package/dimensional-1.3/docs/Numeric-Units-Dimensional.html

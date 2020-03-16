@@ -1,0 +1,9 @@
+search for tagged: http://dev.stephendiehl.com/hask/
+
+https://github.com/ekmett/tagged
+
+https://neilmitchell.blogspot.com/2007/04/phantom-types-for-real-problems.html
+
+maybe:
+Ralph Hinze : Fun With Phantom Types
+http://www.cs.ox.ac.uk/ralf.hinze/publications/With.pdf
