@@ -1,5 +1,5 @@
 # Created       : 2013 Aug 24 (Sat) 15:05:15 by carr.
-# Last Modified : 2019 Nov 09 (Sat) 12:07:13 by Harold Carr.
+# Last Modified : 2020 Mar 16 (Mon) 12:20:13 by Harold Carr.
 
 *~
 
@@ -10,7 +10,10 @@ TAGS
 .DS_Store
 .DS_Store?
 
+*.epub
+*.mobi
 *.pdf
+
 **/dist
 
 # ------------------------------------------------------------------------------
