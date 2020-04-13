@@ -1,12 +1,13 @@
 resolver: lts-13.25
 packages:
 - .
-# extra-deps: []
+extra-deps:
+- s-cargot-0.1.4.0@sha256:61ea1833fbb4c80d93577144870e449d2007d311c34d74252850bb48aa8c31fb,3525
 # flags: {}
 # extra-package-dbs: []
 # system-ghc: true
 # require-stack-version: -any # Default
-# require-stack-version: ">=1.9"
+# require-stack-version: ">=2.1"
 # arch: i386
 # arch: x86_64
 # extra-include-dirs: [/path/to/dir]

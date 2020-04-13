@@ -1,5 +1,5 @@
 Created       : 2013 Oct 04 (Fri) 09:43:02 by carr.
-Last Modified : 2020 Mar 07 (Sat) 09:00:52 by Harold Carr.
+Last Modified : 2020 Apr 08 (Wed) 08:16:34 by Harold Carr.
 
 - [[http://www.haskellers.com/user/haroldcarr]]
 
@@ -19,16 +19,17 @@ Last Modified : 2020 Mar 07 (Sat) 09:00:52 by Harold Carr.
 - list: [[http://user.it.uu.se/~bengt/Info/summer-schools.shtml]]
 
 
+- Coq Workshop 2009-2020 : https://coq-workshop.gitlab.io/
+
 - April - July 2014
-  - England :    http://www.cs.nott.ac.uk/MGS/
+  - England : http://www.cs.nott.ac.uk/MGS/
   - France : formal math https://ihp2014.pps.univ-paris-diderot.fr/doku.php
-             certification of programs: July 7-11
-                         https://ihp2014.pps.univ-paris-diderot.fr/doku.php?id=workshop_5
+             certification of programs: https://ihp2014.pps.univ-paris-diderot.fr/doku.php?id=workshop_5
+
 - May-July
-  - Paris
-    - https://ihp2014.pps.univ-paris-diderot.fr/doku.php
-  - Stanford : SAT/SMT Summer School
-    - http://smt2015.csl.sri.com/school/
+  - Paris : https://ihp2014.pps.univ-paris-diderot.fr/doku.php
+  - Stanford : SAT/SMT Summer School http://smt2015.csl.sri.com/school/
+
 - May
   - Atherton, California : Summer School on Formal Techniques
     - http://fm.csl.sri.com/SSFT20/
@@ -38,16 +39,15 @@ Last Modified : 2020 Mar 07 (Sat) 09:00:52 by Harold Carr.
     - http://fm.csl.sri.com/SSFT12
     - http://fm.csl.sri.com/SSFT11
   - France : Coq http://www.epit2015.website/
-  - Italy :
-    - Programming Language Implementation Summer School
-      - https://pliss2019.github.io/
-      - https://pliss2017.github.io/
+  - Italy : Programming Language Implementation Summer School
+    - https://pliss2019.github.io/
+    - https://pliss2017.github.io/
+
 - June
-  - Homotopy Type Theory workshop @ Snowbird June 1-4, 2017
-    -  http://www.ams.org/programs/research-communities/2017MRC-1
-  - NASA Formal Methods Symposium
-    - http://crisys.cs.umn.edu/nfm2016
-  - OPLSS: Oregon: [[http://www.cs.uoregon.edu/research/summerschool]]
+  - Snowbird 2017 :Homotopy Type Theory workshop http://www.ams.org/programs/research-communities/2017MRC-1
+  - NASA Formal Methods Symposium http://crisys.cs.umn.edu/nfm2016
+  - Oregon: OPLSS: [[http://www.cs.uoregon.edu/research/summerschool]]
+
 - July
   - Salt Lake
     - The Racket School of Languages and Semantics: Summer School : Salt Lake City
@@ -71,27 +71,29 @@ Last Modified : 2020 Mar 07 (Sat) 09:00:52 by Harold Carr.
   - Austria :
     - Dependently Typed Programming 2014, Vienna, Austria http://eb.host.cs.st-andrews.ac.uk/DTP2014/
       - Affiliated with July 14-18: CS Logic / Logic in CS: http://lics.rwth-aachen.de/csl-lics14/
+
 - August
-  - Munich https://www2.in.tum.de/mod19/
-  - Cambridge : http://www.cl.cam.ac.uk/events/metaprog2016/ (International summer school on metaprogramming)
-  - Edinburgh: http://www.macs.hw.ac.uk/~dsg/events/ISS-AiPL-2014/ (Advances in Programming Languages)
-  - St. Andrews : http://eb.host.cs.st-andrews.ac.uk/PracticalTypes/ (Practical Types)
-  - https://asimod.in.tum.de/2017/ (Logical Methods for Safety and Security of Software Systems)
+  - Germany : Engineering Secure and Dependable Software Systems https://i4.pages.gitlab.lrz.de/organization/mod-2020/
+  - Munich : https://www2.in.tum.de/mod19/
+  - Cambridge : International summer school on metaprogramming http://www.cl.cam.ac.uk/events/metaprog2016/ 
+  - Edinburgh : Advances in Programming Languages http://www.macs.hw.ac.uk/~dsg/events/ISS-AiPL-2014/ 
+  - St. Andrews : Practical Types http://eb.host.cs.st-andrews.ac.uk/PracticalTypes/
+  - Logical Methods for Safety and Security of Software Systems https://asimod.in.tum.de/2017/ 
+
 - Sept
-  - Munich
-    - http://www.mathematik.uni-muenchen.de/~schwicht/pc20.php Proof and Computation
+  - Munich : Proof and Computation http://www.mathematik.uni-muenchen.de/~schwicht/pc20.php
 
   - Elba, Italy
-    - [[http://laser.inf.ethz.ch/2014/]] (Leading-Edge Software Engineering)
-    - http://laser.inf.ethz.ch/2013/ (Cloud and Big Data)
-    - http://laser.inf.ethz.ch/2011/ (verification, includes Coq)
-    - http://laser.inf.ethz.ch/2013/editions.php (past sessions)
+    - Leading-Edge Software Engineering [[http://laser.inf.ethz.ch/2014/]]
+    - Cloud and Big Data http://laser.inf.ethz.ch/2013/
+    - verification, includes Coq http://laser.inf.ethz.ch/2011/
+    - past sessions http://laser.inf.ethz.ch/2013/editions.php
 
 ** past
 - 2013: NY: [[http://www.cs.cornell.edu/conferences/formalnetworks/]]
 - 2013: France: [[http://www-hpc.cea.fr/SummerSchools2013-CS.htm]]
 - 2012: France: http://www-hpc.cea.fr/SummerSchools2012-CS.htm
-- 1998: Portugal: [[http://www.di.uminho.pt/afp98/preprogram.html]] (advanced functional programming)
+- 1998: Portugal: advanced functional programming [[http://www.di.uminho.pt/afp98/preprogram.html]]
 
 ------------------------------------------------------------------------------
 * courses

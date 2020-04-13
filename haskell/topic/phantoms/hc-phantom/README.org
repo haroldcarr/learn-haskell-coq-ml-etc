@@ -4,6 +4,9 @@ https://github.com/ekmett/tagged
 
 https://neilmitchell.blogspot.com/2007/04/phantom-types-for-real-problems.html
 
+https://kseo.github.io/posts/2017-01-15-data-proxy.html
+https://ryanglscott.github.io/2019/02/06/proxy-arguments-in-class-methods/
+
 maybe:
 Ralph Hinze : Fun With Phantom Types
 http://www.cs.ox.ac.uk/ralf.hinze/publications/With.pdf
