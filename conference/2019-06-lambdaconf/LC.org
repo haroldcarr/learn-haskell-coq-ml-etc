@@ -6,6 +6,8 @@ Category Theory as a Tool for Thought
 
 Daniel Beskin
 
+https://www.youtube.com/watch?v=lVs35Nngj88
+
 https://github.com/ncreep/category-theory-as-a-tool-for-thought
 
 ------------------------------------------------------------------------------
@@ -19,10 +21,26 @@ Pawel Szulc
 Isomorphic Reasoning: Counting with Types
 
 Emily Pillmore
+(Note: Emily got her master's degree in Math at the U/U.
+       She has been working for a Haskell/Blockchain company (with people I know).
+       She is talk about maybe moving back to Utah to do a PhD in math.)
 
 Alexander Konovalov
 
+in this order:
+https://www.youtube.com/watch?v=ApHFidwNypE
+https://www.youtube.com/watch?v=UScWv37aJhY
+https://www.youtube.com/watch?v=kKZTd7D33KY
+
 https://github.com/cohomolo-gy/Isomorphic-Reasoning/blob/master/main.pdf
+
+------------------------------------------------------------------------------
+
+A Categorical View of Adjunctions, Free Constructions, and Profunctor Optics
+
+Emily Pillmore
+
+https://www.youtube.com/watch?v=ondYG33qfUQ
 
 ------------------------------------------------------------------------------
 
@@ -38,7 +56,25 @@ Pluggable, Stackable API Implementations
 
 Harold Carr
 
+https://www.youtube.com/watch?v=v9ofvTDZ7zg
+
 https://github.com/haroldcarr/pluggable-stackable-api-impl-example
+
+------------------------------------------------------------------------------
+
+Boolean Blindness Explained for Beginners in Haskell
+
+Stephen Pimentel
+
+https://www.youtube.com/watch?v=xR9ayZ5c4JA
+
+------------------------------------------------------------------------------
+
+GADTs and You; Writing Safer Code Using GADTs
+
+Nathan Holland
+
+https://www.youtube.com/watch?v=tEQ8bTNYj5g
 
 ------------------------------------------------------------------------------
 
@@ -46,11 +82,15 @@ Overlapping and Undecidable and Incoherent, Oh My!
 
 Jake Keuhlen
 
+https://www.youtube.com/watch?v=oQ1VcnhWTQQ
+
 ------------------------------------------------------------------------------
 
 An Introduction to Natural Deduction
 
 Lyle Kopnicky
+
+https://www.youtube.com/watch?v=wp9NHKkTZ5U
 
 https://github.com/lylek/proof-verifier.git
 
@@ -64,9 +104,44 @@ slides:
 
 ------------------------------------------------------------------------------
 
+Thomas Dietert
+
+Types as Program Specifications: A Intro to Type-Level Programming in Haskell
+
+https://www.youtube.com/watch?v=GECZE3UtWpc
+
+------------------------------------------------------------------------------
+
+Tony Morris
+
+Trees that Grow
+
+https://www.youtube.com/watch?v=kqUSOEMqnc4
+
+
+------------------------------------------------------------------------------
+
+Tony Morris
+
+Zippers; The Theory and the Application
+
+https://www.youtube.com/watch?v=okHznGNAgbw
+
+------------------------------------------------------------------------------
+
+Ashley Yakeley
+
+Pinafore: Strongly Typed Information Representation
+
+https://www.youtube.com/watch?v=aLbl0sMEygk
+
+------------------------------------------------------------------------------
+
 The CDelta Cryptocurrency Platform
 
 Michael Stay
+
+https://www.youtube.com/watch?v=izcGJyy9Pkw
 
 ------------------------------------------------------------------------------
 
