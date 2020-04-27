@@ -1,0 +1,27 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: c5e480f657fc00ee72598ddda3dbfa4f8101a097b321ae539eefd99480e6b1e8
+
+name:           gabriel-volpe-parallel-typeclass
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_gabriel_volpe_parallel_typeclass
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , natural-transformation
+    , refined
+    , template-haskell
+    , validation
+  default-language: Haskell2010

@@ -1,0 +1,15 @@
+resolver: lts-13.25
+packages:
+- .
+extra-deps:
+- refined-0.4.4@sha256:c387bd725ecb18f8ec93b2271b53604f2ed70f7e2fc548dc5f2f1991d4cd9ee0,2776
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=2.1"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor
