@@ -1,0 +1,25 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 808d7c4d2b902ff4f278efd6360bc6e3c8482aba6a3fa894d47769fbebfa8be7
+
+name:           nikita-volkov-the-refinement-types-library
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_nikita_volkov_the_refinement_types_library
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , prettyprinter
+    , refined
+  default-language: Haskell2010
