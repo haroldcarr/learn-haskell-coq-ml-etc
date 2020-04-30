@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d5f4cad3e13f1660925d89d97a67eea8eb65a40d49a3b1bf46cedcaf073a9f9c
+-- hash: bb0c3d0798d6dfec077e86184a5d601fea1736cd7a168a5b7ed68cef70a94302
 
 name:           misc
 version:        0.1.0.0
@@ -21,6 +21,7 @@ library
       RebindableSyntax
       Seq
       ValidResponses
+      X2020_4_28_Emily_Pilmore
       Yoneda
   other-modules:
       Paths_misc
