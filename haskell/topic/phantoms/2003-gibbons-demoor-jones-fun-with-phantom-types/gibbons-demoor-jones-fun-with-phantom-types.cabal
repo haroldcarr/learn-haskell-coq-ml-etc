@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0bd5094aa2935015cba3659570db79e719869e69d8922025f97058aa4eafead8
+-- hash: f2db596004f2df4c0d8092143ac4565591f869634b81f58d1bfd759e66fc1fe4
 
 name:           gibbons-demoor-jones-fun-with-phantom-types
 version:        0.1.0.0
@@ -20,26 +20,16 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
   build-depends:
       base >=4.7 && <5
-    , protolude
-  default-language: Haskell2010
-
-executable m
-  main-is: Main.hs
-  other-modules:
-      
-  hs-source-dirs:
-      app
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      base >=4.7 && <5
-    , gibbons-demoor-jones-fun-with-phantom-types
+    , hspec
+    , hspec-expectations
     , protolude
   default-language: Haskell2010
 
 test-suite t
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: hspec.hs
   other-modules:
+      XSpec
       Paths_gibbons_demoor_jones_fun_with_phantom_types
   hs-source-dirs:
       test
@@ -47,5 +37,7 @@ test-suite t
   build-depends:
       base >=4.7 && <5
     , gibbons-demoor-jones-fun-with-phantom-types
+    , hspec
+    , hspec-expectations
     , protolude
   default-language: Haskell2010

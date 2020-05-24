@@ -13,6 +13,8 @@ ghc-options:
 
 dependencies:
 - base >= 4.7 && < 5
+- hspec
+- hspec-expectations
 - protolude
 
 library:
@@ -23,19 +25,10 @@ _exe-ghc-options:        &exe-ghc-options
   - -rtsopts
   - -with-rtsopts=-N
 
-executables:
-  m:
-    source-dirs:         app
-    main:                Main.hs
-    other-modules:       ""
-    ghc-options:         *exe-ghc-options
-    dependencies:
-    - gibbons-demoor-jones-fun-with-phantom-types
-
 tests:
   t:
     source-dirs:         test
-    main:                Spec.hs
+    main:                hspec.hs
     ghc-options:         *exe-ghc-options
     dependencies:
     - gibbons-demoor-jones-fun-with-phantom-types

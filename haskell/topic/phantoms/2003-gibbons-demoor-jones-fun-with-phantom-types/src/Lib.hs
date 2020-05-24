@@ -8,6 +8,7 @@ module Lib where
 
 import qualified Prelude
 import           Protolude
+import           Test.Hspec
 
 {-# ANN module ("HLint: ignore Eta reduce" :: Prelude.String) #-}
 
@@ -71,6 +72,13 @@ example : compress different types of data to strings of bits
 (could use type classes)
 
 idea : define type whose elements represent types
+
+the compiler will complain if you try to compress an incorrect type
+
+compress RInt "60"
+
+<interactive>:2:15: error:
+    • Couldn't match expected type ‘Int’ with actual type ‘[Char]’
 -}
 
 data RType t where
@@ -87,9 +95,14 @@ type Bit = Int
 compress                       :: forall t . RType t -> t -> [Bit]
 compress  RInt               i  = compressInt i
 compress  RChar              c  = compressChar c
+--  0 indicates empty list
 compress (RList  _)         []  = [0]
+-- 1 indicates non-empty list
 compress (RList ra)    (a : as) = 1 : compress ra a ++ compress (RList ra) as
-compress (RPair ra rb) (a, b)   =     compress ra a ++ compress rb b
+compress (RPair ra rb) (a ,  b) =     compress ra a ++ compress rb b
+
+-- to extend compress to data types with more than two constructors
+-- ensure codes for the constructors have a unique prefix property
 
 -- https://gist.github.com/linusyang/4057470cf96b88d13bd8
 
@@ -118,7 +131,15 @@ compressInt = padding 32
 compressChar :: Char -> [Bit]
 compressChar x = padding 7 $ ord x
 
+testCompress :: Spec
+testCompress  = describe "testCompress" $ do
+  it "int" $ compress RInt 60 `shouldBe`
+    [0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+  it "string" $ compress rString "Richard" `shouldBe`
+    [1,0,1,0,0,1,0,1,1,1,0,0,1,0,1,1,1,1,1,0,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,0,0,1,1,1,0,1,0,0,1,1,1,1,0,0,1,0,0,1,1,0]
+
 {-
+TODO ...
 -}
 
 
