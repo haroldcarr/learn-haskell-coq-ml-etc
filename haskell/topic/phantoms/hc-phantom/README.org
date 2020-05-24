@@ -10,3 +10,52 @@ https://ryanglscott.github.io/2019/02/06/proxy-arguments-in-class-methods/
 maybe:
 Ralph Hinze : Fun With Phantom Types
 http://www.cs.ox.ac.uk/ralf.hinze/publications/With.pdf
+
+https://jfmengels.net/single-out-elements-using-phantom-types/
+
+
+------------------------------------------------------------------------------
+https://stackoverflow.com/questions/28247543/motivation-behind-phantom-types
+
+- make invalid states unrepresentable
+- carry information in the type level
+
+HASKELL
+- TODO: example : distances tagged by length unit (to avoid Mars Climate Orbiter disaster).
+
+
+------------------------------------------------------------------------------
+https://james-iry.blogspot.com/2010/10/phantom-types-in-haskell-and-scala.html
+HASKELL:
+
+TODO: example : only launch a rocket that has fuel and oxygen
+
+
+------------------------------------------------------------------------------
+https://kean.github.io/post/phantom-types
+SWIFT
+
+Phantom types parameterize generic types but never actually in their implementation.
+
+They are useful for additional type safety
+by adding extra information to types and use that extra info to restrict code,
+thereby making invalid situations impossible.
+
+Examples:
+- Id Type
+- Authentication Scopes
+- Layout Anchors
+
+------------------------------------------------------------------------------
+https://medium.com/@ckoster22/advanced-types-in-elm-phantom-types-808044c5946d
+ELM
+
+carry more information at the type level
+
+example: form validation
+- runtime : check form is not empty
+
+
+Phantom types can be used to obtain guarantees at compile time.
+
+
