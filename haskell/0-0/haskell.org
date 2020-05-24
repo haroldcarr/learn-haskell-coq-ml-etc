@@ -1,5 +1,5 @@
 Created       : 2014 Aug 08 (Fri) 18:13:47 by Harold Carr.
-Last Modified : 2015 Sep 29 (Tue) 21:32:32 by Harold Carr.
+Last Modified : 2020 May 13 (Wed) 19:10:11 by Harold Carr.
 
 ghc-mod:   https://github.com/kazu-yamamoto/ghc-mod structured-haskell-mode: https://github.com/chrisdone/structured-haskell-mode
 hdevtools: https://github.com/bitc/hdevtools﻿
@@ -12,6 +12,15 @@ Pasting code:
 http://paste.lisp.org/ -- for Emacs Lisp syntax highlighting
 https://gist.github.com/ -- for private pastes
 http://lpaste.net/ -- if you want others to be able to edit yours﻿
+
+------------------------------------------------------------------------------
+libgmp missing when building GHC
+
+https://stackoverflow.com/questions/6360724/installing-ghc-binaries-on-linux-cant-find-libgmp-so
+
+oracle rh linux:
+
+sudo yum -y install gmp-devel
 
 ------------------------------------------------------------------------------
 
