@@ -13,6 +13,15 @@ http://www.cs.ox.ac.uk/ralf.hinze/publications/With.pdf
 
 https://jfmengels.net/single-out-elements-using-phantom-types/
 
+------------------------------------------------------------------------------
+Uses of Data.Tagged
+
+https://hackage.haskell.org/package/pathtype
+https://hackage.haskell.org/package/string-class
+https://hackage.haskell.org/package/github - john wiegley, oleg
+https://hackage.haskell.org/package/gitlib-cmdline - john wiegley
+https://hackage.haskell.org/package/enumerable
+https://hackage.haskell.org/package/fay
 
 ------------------------------------------------------------------------------
 https://stackoverflow.com/questions/28247543/motivation-behind-phantom-types

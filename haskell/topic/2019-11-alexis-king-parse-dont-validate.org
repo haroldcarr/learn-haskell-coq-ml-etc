@@ -1,0 +1,201 @@
+module Lib where
+
+someFunc :: IO ()
+someFunc = putStrLn "someFunc"
+
+{-
+https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
+ALEXIS KING
+Parse, don’t validate
+2019-11-05
+
+type-driven design
+
+static type systems facilitate answering questions like
+“is it possible to write this function?”
+
+examples:
+
+foo :: Integer -> Void
+
+NO : Void has no values
+
+head :: [a] -> a
+head :: [a] -> a
+head (x:_) = x
+
+warning: [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘head’: Patterns not matched: []
+
+points out that function is partial
+impossible to get an 'a' from an empty
+
+making partial functions total
+
+WEAKEN TYPE
+
+headMaybe :: [a] -> Maybe a
+headMaybe (x:_) = Just x
+headMaybe []    = Nothing
+
+Maybe
+- convenient to implement
+- inconvenient for callers to use
+
+getConfigurationDirectories :: IO [FilePath]
+getConfigurationDirectories = do
+  configDirsString <- getEnv "CONFIG_DIRS"
+  let configDirsList = split ',' configDirsString
+  when (null configDirsList) $
+    throwIO (userError "CONFIG_DIRS cannot be empty")
+  pure configDirsList
+
+main :: IO ()
+main = do
+  configDirs <- getConfigurationDirectories
+  case headMaybe configDirs of
+    Just cacheDir -> initializeCache cacheDir
+    Nothing -> error "should never happen; already checked configDirs is non-empty"
+
+getConfigurationDirectories checks that the list is non-empty
+but main has to check again
+- potential performance cost (these can add up)
+- bug waiting to happen
+  - if getConfigurationDirectories stops checking for empty
+    - if forget to update main then “impossible” error becomes possible/probable
+
+WANT: statically prove Nothing impossible
+- then getConfigurationDirectories change caught at compile-time
+
+
+STRENGTHEN TYPE : eliminate possibility of head on empty list
+
+-- | type that represents non-empty lists
+-- Can think of value of type [a], plus proof it is non-empty
+data NonEmpty a = a :| [a]
+
+head :: NonEmpty a -> a
+head (x:|_) = x
+
+getConfigurationDirectories :: IO (NonEmpty FilePath)
+getConfigurationDirectories = do
+  configDirsString <- getEnv "CONFIG_DIRS"
+  let configDirsList = split ',' configDirsString
+  --   nonEmpty :: [a] -> Maybe (NonEmpty a)
+  case nonEmpty configDirsList of
+    -- Maybe still here
+    Just nonEmptyConfigDirsList ->
+      -- when check passes, create data that carries "non empty" in type
+      pure nonEmptyConfigDirsList
+    Nothing ->
+      -- fail early
+      throwIO $ userError "CONFIG_DIRS cannot be empty"
+
+main :: IO ()
+main = do
+  configDirs <- getConfigurationDirectories
+  -- redundant check now gone
+  initializeCache (head configDirs)
+
+if getConfigurationDirectories stops checking
+its return type changes
+so main will fail typechecking : an alert
+
+validation : throws info away
+parsing    : preserves info in types
+
+validateNonEmpty :: [a] -> IO ()
+validateNonEmpty (_:_) = pure ()
+validateNonEmpty   []  = throwIO $ userError "list cannot be empty"
+
+parseNonEmpty    :: [a] -> IO (NonEmpty a)
+parseNonEmpty   (x:xs) = pure (x:|xs)
+parseNonEmpty      []  = throwIO $ userError "list cannot be empty"
+
+difference is in the return type
+- parseNonEmpty returns NonEmpty a
+  - "refinement" of input type
+  - preserves knowledge gained during checking in the type system
+
+parser
+- consumes less-structured input
+- produces more-structured output
+- by nature, a partial function (needs a notion of failure)
+
+do input checks early
+- on boundary between program and real world
+- once done, never check again
+
+CONS to parsing everything up front
+- might require values to be parsed long before they are used
+
+avoid "Shotgun parsing" antipattern
+- parsing/validation code mixed with and spread across processing code
+- errors discovered later might mean some input already processed and state changed
+  - requires a rollback
+
+doing all VALIDATION up front
+- difficult/impossible to determine if everything validated (i.e., no proof)
+
+Parsing : two phases
+- parsing   : rejects input or strengthens types
+- execution : relies on strengthened types
+
+Parsing in practice
+
+focus on the datatypes, e.g.,
+
+-- what to do if list has duplicate keys?
+fun :: [(k,v)] -> ??
+
+-- assert no duplicates
+checkNoDuplicateKeys :: (MonadError AppError m, Eq k) => [(k, v)] -> m ()
+
+but above check is fragile
+- easy to forget because its return value is unused
+- so if omitted, code that needs it would still typecheck
+
+solution : data structure that disallows duplicate keys by construction (e.g., Map)
+- adjust 'fun's type signature to accept a Map instead of a list of tuples
+
+checkNoDuplicateKeys :: (MonadError AppError m, Eq k) => [(k, v)] -> m (Map k v)
+
+two ideas:
+- data structure that makes illegal states unrepresentable
+- get data into most precise representation early (at boundary)
+
+if one branch eventually requires a more precise representation
+- parse into the that form as soon as branch is selected
+- use sum types to enable datatypes to reflect and adapt to control flow
+
+write functions on type-info carrying representations (not given representation)
+
+more advice
+- let datatypes inform code (not vice-versa)
+- avoid sticking a Bool in a record just because it’s needed by current function : refactor instead
+- be wary of funs that return m ()
+- ok to parse data in multiple passes
+  - avoiding shotgun parsing means : do not act on input data before it’s fully parsed
+  - ok to use some of input data to decide how to parse other input data (context-sensitive)
+- single source of truth. : avoid denormalized reps, especially mutable
+  - duplicating same data in multiple places makes illegal state possible
+    - places getting out of sync
+- if denormalization absolutely necessary
+  - keep denormalized reps behind abstraction boundaries
+  - encapsuled in a trusted module that holds responsibility for keeping reps in sync
+- use abstract datatypes to make validators “look like” parsers
+  - sometimes, making an illegal state unrepresentable is impractical
+  - use an abstract newtype with a smart constructor to “fake” a parser from a validator
+
+related reading
+
+Matt Parson : Type Safety Back and Forth
+https://www.parsonsmatt.org/2017/10/11/type_safety_back_and_forth.html
+
+Matt Noonan’s 2018 paper : Ghosts of Departed Proofs
+- techniques for capturing invariants in the type system
+https://kataskeue.com/gdp.pdf
+
+Sometimes authorization needed before parsing user input (e.g., avoid DNS attacks)
+-}

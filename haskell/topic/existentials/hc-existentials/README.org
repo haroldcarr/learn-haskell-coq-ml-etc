@@ -1,14 +1,59 @@
-------
-title:
+------------------------------------------------------------------------------
+DONE
 
-How to use Phantom Types and Existential Types in Production
+2017-03-arnaud-bailly-understanding-existentials
+2018-11-mark-karpov-existential-quantification
 
-------------
-description:
+------------------------------------------------------------------------------
+IN PROGRESS
+https://blog.jle.im/entry/practical-dependent-types-in-haskell-2.html
 
-TBD
+- universal   : caller chooses the type being instanced
+                function’s implementation has to accommodate any choice
 
-----
-bio:
+- existential : function’s implementation chooses the type being instanced
+                caller has to accommodate any choice
 
-Harold Carr does blockchain research at Oracle Labs (using Haskell). At Oracle and Sun, he worked on cloud infrastructure, InfiniBand transport, and remoting system technology (i.e., REST, SOAP, CORBA, and RMI). He has worked on distributed Lisp and distributed C++ with Hewlett-Packard Research Laboratories, was Chief Architect of Lisp technology at Autodesk, and was a logic simulation consultant for Cirrus Logic. He holds a Ph.D. in Computer Science from the University of Utah.
+------------------------------------------------------------------------------
+TODO
+https://medium.com/@jonathangfischoff/existential-quantification-patterns-and-antipatterns-3b7b683b7d71
+
+good example of type-aligned sequences
+
+------------------------------------------------------------------------------
+TODO
+https://reasonablypolymorphic.com/existentialization
+
+------------------------------------------------------------------------------
+TODO
+http://dev.stephendiehl.com/hask/#existential-quantification
+
+
+------------------------------------------------------------------------------
+https://en.wikibooks.org/wiki/Haskell/Existentially_quantified_types
+
+a way of 'squashing' a group of types into one, single type
+
+------------------------------------------------------------------------------
+https://ocharles.org.uk/blog/guest-posts/2014-12-19-existential-quantification.html
+
+Existential types help model and implement:
+
+abstract data types
+ML-style packages
+object-oriented programming (see «Existential Objects» in TAPL)
+extensible exceptions (Simon Marlow https://simonmar.github.io/bib/papers/ext-exceptions.pdf)
+dynamic typing (as in Data.Dynamic)
+type-aligned sequences, such as free applicative functors or bind chains
+
+------------------------------------------------------------------------------
+https://stackoverflow.com/questions/14299638/existential-vs-universally-quantified-types-in-haskell
+
+- universally quantified types describe things that work the same for any type
+- existential types describe things that work with a specific but unknown type
+
+------------------------------------------------------------------------------
+https://softwareengineering.stackexchange.com/a/311833/119693
+good or bad?
+
+

@@ -2,8 +2,10 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE TemplateHaskell        #-}
 {-# LANGUAGE TypeOperators          #-}
+
+-- needed (despite what hlint says):
+{-# LANGUAGE TemplateHaskell        #-}
 
 module Lib where
 

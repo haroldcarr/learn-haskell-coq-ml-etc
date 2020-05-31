@@ -40,35 +40,35 @@ https://github.com/matt-noonan/justified-containers
 Ghosts of Departed Proofs (Functional Pearl) - GDP
 Matt Noonan
 
-a type system provides a mechanism for enforcing program invariants at compile time
+type system : mechanism for enforcing program invariants at compile time
 
 e.g.,
 
 ST monad
 - enables pure computations to use local mutable state
-- phantom type parameter and ank-2 types gives compile-time guarantee
+- phantom type parameter and rank-2 types gives compile-time guarantee
   that that state is invisible from the outside
 
 ------------------------------------------------------------------------------
 GDP
-- Properties and proofs are represented in code.
-  - Proofs are entities in host language : can be analyzed
+- properties and proofs are represented in code
+  - proofs are entities in host language : can be analyzed
   - propositions are represented by types
   - proof of proposition is a value of that type
-- Proofs carried by phantom type parameters
+- proofs carried by phantom type parameters
   - phantom type param is mechanism for giving proof to the library API
   - phantom type variables attached to newtype wrappers
   - newtype wrapper erased during compilation
     - no run-time cost
     - proofs do not exists in executable
-- Library-controlled APIs to create proofs
+- library-controlled APIs to create proofs
   - only library able to create domain proofs/axioms
   - e.g., exporting functions that
     - create values with known properties
     - classify a value into mutually disjoint refinements
     - introduce existentially quantified properties
       - e.g., name in TODO, runSt in TODO, or withMap in TODO
-- Library exports combinators for manipulating proofs
+- library exports combinators for manipulating proofs
   - user can use with evidence at hand to produce a proof of a safety property
   - resulting proof communicated to library
 
@@ -93,11 +93,11 @@ some examples rely on safe coercions
 User must guarantee.  Not expressed in types:
 
 sortBy  :: (a -> a -> Ordering) -> [a] -> [a]
--- Usage constraint: in `mergeBy comp xs ys`
+-- usage constraint: in `mergeBy comp xs ys`
 -- input lists `xs` and `ys` should also be sorted by the same comparator
 mergeBy :: (a -> a -> Ordering) -> [a] -> [a] -> [a]
 
-What if User has a proof that input lists are sorted properly?
+What if user has a proof that input lists are sorted properly?
 
 2.1 Conjuring a Name
 
@@ -106,18 +106,19 @@ how to express the idea of two comparators being "the same"?
 - written :  a ~~ n
   - "values of type 'a' with name 'n'
 - impl: newtype around a, with phantom type param n
--}
 
--- module for attaching names to values:
+module for attaching names to values:
 
 -- module Named (Named, type (~~), name) where
--- - hides constructor of Named
---   ensures that name is the only way to introduce a name for a value
-
 -- import Data.Coerce
 
--- key feature : exported `name` funcation expresses "any value can be given a name"
+- hides constructor of Named
+- ensures that name is the only way to introduce a name for a value
+-}
+
+-- key feature : exported `name` function expresses "any value can be given a name"
 newtype Named name a = Named a
+
 type a ~~ name = Named name a
 
 {-
@@ -127,8 +128,8 @@ to emulate existentially-quantified type
 - user passes a computation that is agnostic about the name that will be chosen
 - See TODO
 -}
--- means: ype of `name`    is     a -> (exists name. (a ~~ name))
--- rank-2 type of name, uses a polymorphic continuation (emulates an existential type)
+-- means: type of `name`  is a -> (exists name. (a ~~ name))
+-- rank-2 type of `name`, uses a polymorphic continuation (emulates an existential type)
 name :: a -> (forall name. (a ~~ name) -> t) -> t
 name x k = k (coerce x)
 
@@ -178,8 +179,8 @@ sortBy
   -> SortedBy comp [a]
 sortBy comp xs = coerce (L.sortBy (the comp) xs)
 
--- after erasure, this will be just a call U.mergeBy
--- user must provide
+-- after erasure, this will just be a call to U.mergeBy
+-- user provides
 -- - a named comparator
 -- - two lists sorted by same comparator
 mergeBy
@@ -251,11 +252,11 @@ difference between examples
   - library selects a name that is not inspectable by user
 -}
 
-yy :: [Int]
-yy  = name compare $ \up' ->
-        let l1 = sortBy up' [1,2,3]
-            l2 = sortBy up' [1,2,3]
-         in the (mergeBy up' l1 l2)
+yy :: (a -> a -> Ordering) -> [a] -> [a] -> [a]
+yy cmp x y = name cmp $ \up' ->
+  let l1 = sortBy up' x
+      l2 = sortBy up' y
+   in the (mergeBy up' l1 l2)
 
 ------------------------------------------------------------------------------
 -- 3. case study #2 : sharing state threads
@@ -399,7 +400,6 @@ eg = J.withMap test $ \table ->
 -- Value in map 1: Hello
 -- Value in map 2: Howdy
 -- Value in map 3: HELLO
-
 
 --------------------------------------------------
 -- 4.1 designing for the user's state of knowledge
@@ -593,7 +593,7 @@ type Defining f = (Coercible Defn f, Coercible f Defn)
 
 -- Enable library authors to define introduction rules for -- names that they have defined.
 -- coercion is only possible since this function is in the Named module.
-defn :: Defining f
+defn :: Defining f -- redundant constraint
      => a
      -> (a ~~ f)
 defn = coerce

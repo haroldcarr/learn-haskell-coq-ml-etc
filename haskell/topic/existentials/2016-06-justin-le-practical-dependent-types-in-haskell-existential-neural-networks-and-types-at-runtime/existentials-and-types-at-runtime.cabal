@@ -1,0 +1,49 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 0e468e9c3c11b8fa4edccd9e8556cd3602b4a45ee6dc562a7b4d02057ac3922a
+
+name:           existentials-and-types-at-runtime
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_existentials_and_types_at_runtime
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      MonadRandom
+    , base >=4.7 && <5
+    , binary
+    , hmatrix
+    , hspec
+    , protolude
+    , singletons
+  default-language: Haskell2010
+
+test-suite t
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      LibSpec
+      Paths_existentials_and_types_at_runtime
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      MonadRandom
+    , base >=4.7 && <5
+    , binary
+    , existentials-and-types-at-runtime
+    , hmatrix
+    , hspec
+    , protolude
+    , singletons
+  default-language: Haskell2010

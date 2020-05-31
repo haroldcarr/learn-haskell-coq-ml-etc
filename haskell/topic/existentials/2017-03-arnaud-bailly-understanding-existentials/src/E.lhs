@@ -13,14 +13,10 @@ Existential Types - March 31, 2017 : http://abailly.github.io/posts/existential-
 
 Example use-case : quiz made up of different types of questions
 
-> data OpenQuestion
->   = OpenQuestion   { oquestion ::  Text,  ocorrect :: Text }
-> data MCQuestion
->   = MCQuestion     { mquestion :: [Text], mcorrect :: Int }
-> data RatingQuestion
->   = RatingQuestion { rquestion ::  Text,  rcorrect :: Float }
-> data ConstantQuestion
->   = ConstantQuestion
+> data OpenQuestion     = OpenQuestion   { oquestion ::  Text , ocorrect :: Text  }
+> data MCQuestion       = MCQuestion     { mquestion :: [Text], mcorrect :: Int   }
+> data RatingQuestion   = RatingQuestion { rquestion ::  Text , rcorrect :: Float }
+> data ConstantQuestion = ConstantQuestion
 
 Key issue:
 - define a container that can hold different types of questions
@@ -51,36 +47,36 @@ Solution using type class and existentials :
 Make each type of question an instance of Questionable interface.
 
 > instance Questionable OpenQuestion where
->   type Answer         OpenQuestion         = Text
->   type TQuestion      OpenQuestion         = Text
->   isCorrectAnswer u  (OpenQuestion _ c)    = u == c
->   question           (OpenQuestion q _)    = q
->   qprint             (OpenQuestion q _)    = print q
->   convertUserAnswer _                      = T.pack
+>   type Answer         OpenQuestion        = Text
+>   type TQuestion      OpenQuestion        = Text
+>   isCorrectAnswer u  (OpenQuestion _ c)   = u == c
+>   question           (OpenQuestion q _)   = q
+>   qprint             (OpenQuestion q _)   = print q
+>   convertUserAnswer _                     = T.pack
 
 > instance Questionable MCQuestion where
->   type Answer         MCQuestion           = Int
->   type TQuestion      MCQuestion           = [Text]
->   isCorrectAnswer u  (MCQuestion _ c)      = u == c
->   question           (MCQuestion q _)      = q
->   qprint             (MCQuestion q _)      = print q
->   convertUserAnswer _                      = read
+>   type Answer         MCQuestion          = Int
+>   type TQuestion      MCQuestion          = [Text]
+>   isCorrectAnswer u  (MCQuestion _ c)     = u == c
+>   question           (MCQuestion q _)     = q
+>   qprint             (MCQuestion q _)     = print q
+>   convertUserAnswer _                     = read
 
 > instance Questionable RatingQuestion where
->   type Answer         RatingQuestion       = Float
->   type TQuestion      RatingQuestion       = Text
->   isCorrectAnswer u  (RatingQuestion _ c)  = u == c
->   question           (RatingQuestion q _)  = q
->   qprint             (RatingQuestion q _)  = print q
->   convertUserAnswer _                      = read
+>   type Answer         RatingQuestion      = Float
+>   type TQuestion      RatingQuestion      = Text
+>   isCorrectAnswer u  (RatingQuestion _ c) = u == c
+>   question           (RatingQuestion q _) = q
+>   qprint             (RatingQuestion q _) = print q
+>   convertUserAnswer _                     = read
 
 > instance Questionable ConstantQuestion where
->   type Answer         ConstantQuestion     = [Int]
->   type TQuestion      ConstantQuestion     = [Int]
->   isCorrectAnswer u   ConstantQuestion     = u == [1,2,3]
->   question            ConstantQuestion     = [1,2,3]
->   qprint              ConstantQuestion     = print [1,2,3::Int]
->   convertUserAnswer _                      = read
+>   type Answer         ConstantQuestion    = [Int]
+>   type TQuestion      ConstantQuestion    = [Int]
+>   isCorrectAnswer u   ConstantQuestion    = u == [1,2,3]
+>   question            ConstantQuestion    = [1,2,3]
+>   qprint              ConstantQuestion    = print [1,2,3::Int]
+>   convertUserAnswer _                     = read
 
 Wrap them in `Question` using existential quantification.
 
@@ -136,7 +132,8 @@ Use it:
 > lq = loop questions
 
 Why called existential? (Especially since introduced by forall keyword?)
-- comes from the fact that : ∀x.Q(x)⟹P = (∃x.Q(x)) ⟹ P.
+- comes from the fact that : ∀x.Q(x)  ⟹ P = 
+                            (∃x.Q(x)) ⟹ P
 - See StackOverflow
     - explains how intuitionistic logic rules relate ∀ and ∃ quantifiers
       in the case of type constructors.

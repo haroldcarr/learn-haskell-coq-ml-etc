@@ -1,9 +1,16 @@
-module ESpec where
+{-# LANGUAGE NoImplicitPrelude #-}
+
+module LibSpec where
 
 import           Test.Hspec
 ------------------------------------------------------------------------------
-import           E
-
+import           Lib
+{-
 spec :: Spec
-spec  =
+spec = do
   t01
+  t02
+  t03
+  t04
+  t05
+-}

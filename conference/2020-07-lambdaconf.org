@@ -1,0 +1,31 @@
+------
+title:
+
+How to use Phantom Types and Existential Types in Production
+
+------------
+description:
+
+Phantom types are a way to carry (possibly domain-specific) information in types.
+Existential types are a way to hide information from places where those types are used.
+This talk will develop a small application that:
+- parses and validates user input
+- uses phantom types to
+  - turn validated data into types that carry "proofs" of that validation
+  - use functions that require those proofs to be called
+- uses existential types to
+  - hide the state of pure computations from the IO layer that must pass that state
+    back into the pure layer later
+  - ensure the app can only make valid state transitions (a.k.a., "type-aligned sequences")
+By the end of the talk you should understand the often used phrases
+- "make illegal values unrepresentable" -- via phantom types
+- "enforce abstraction boundaries in the type system" -- via existential types
+
+----
+bio:
+
+Harold Carr does blockchain research at Oracle Labs (using Haskell). At Oracle and Sun, he worked on cloud infrastructure, InfiniBand transport, and remoting system technology (i.e., REST, SOAP, CORBA, and RMI). He has worked on distributed Lisp and distributed C++ with Hewlett-Packard Research Laboratories, was Chief Architect of Lisp technology at Autodesk, and was a logic simulation consultant for Cirrus Logic. He holds a Ph.D. in Computer Science from the University of Utah.
+
+==============================================================================
+
+
