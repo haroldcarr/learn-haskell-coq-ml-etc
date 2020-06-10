@@ -15,10 +15,12 @@ https://blog.jle.im/entry/practical-dependent-types-in-haskell-2.html
                 caller has to accommodate any choice
 
 ------------------------------------------------------------------------------
-TODO
+DONE example of type-aligned sequences
 https://medium.com/@jonathangfischoff/existential-quantification-patterns-and-antipatterns-3b7b683b7d71
 
-good example of type-aligned sequences
+------------------------------------------------------------------------------
+TODO type-aligned sequences
+https://stackoverflow.com/a/40199858
 
 ------------------------------------------------------------------------------
 TODO
@@ -27,7 +29,6 @@ https://reasonablypolymorphic.com/existentialization
 ------------------------------------------------------------------------------
 TODO
 http://dev.stephendiehl.com/hask/#existential-quantification
-
 
 ------------------------------------------------------------------------------
 https://en.wikibooks.org/wiki/Haskell/Existentially_quantified_types

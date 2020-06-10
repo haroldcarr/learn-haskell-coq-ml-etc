@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bb0c3d0798d6dfec077e86184a5d601fea1736cd7a168a5b7ed68cef70a94302
+-- hash: 16c6e660aa416e09afde4e60e91a0aac835ba916ff5d1415e4f60bcad52a80c0
 
 name:           misc
 version:        0.1.0.0
@@ -20,6 +20,7 @@ library
       ReaderFun
       RebindableSyntax
       Seq
+      SerializationMultiplexing
       ValidResponses
       X2020_4_28_Emily_Pilmore
       Yoneda
@@ -30,6 +31,8 @@ library
   ghc-options: -Wall
   build-depends:
       base >=4.7 && <5
+    , bytestring
+    , cereal
     , containers
     , pretty-tree
     , protolude
@@ -48,6 +51,7 @@ test-suite t
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , cereal
     , containers
     , cryptonite
     , hspec

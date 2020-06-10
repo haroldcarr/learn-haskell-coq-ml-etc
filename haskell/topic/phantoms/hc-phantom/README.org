@@ -32,13 +32,16 @@ https://stackoverflow.com/questions/28247543/motivation-behind-phantom-types
 HASKELL
 - TODO: example : distances tagged by length unit (to avoid Mars Climate Orbiter disaster).
 
+------------------------------------------------------------------------------
+TODO
+https://hackage.haskell.org/package/goggles-0.3.2/docs/Network-Goggles.html
+https://hackage.haskell.org/package/dimensional-1.3/docs/Numeric-Units-Dimensional.html
 
 ------------------------------------------------------------------------------
 https://james-iry.blogspot.com/2010/10/phantom-types-in-haskell-and-scala.html
 HASKELL:
 
 TODO: example : only launch a rocket that has fuel and oxygen
-
 
 ------------------------------------------------------------------------------
 https://kean.github.io/post/phantom-types
@@ -63,7 +66,6 @@ carry more information at the type level
 
 example: form validation
 - runtime : check form is not empty
-
 
 Phantom types can be used to obtain guarantees at compile time.
 

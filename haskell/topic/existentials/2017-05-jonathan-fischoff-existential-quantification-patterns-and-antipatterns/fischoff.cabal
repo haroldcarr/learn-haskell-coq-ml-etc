@@ -1,0 +1,39 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e69151482ba0afe62b8aef671a535134513393d68cb3bd8361c746608178e645
+
+name:           fischoff
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_fischoff
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , hspec
+  default-language: Haskell2010
+
+test-suite t
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      LibSpec
+      Paths_fischoff
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , fischoff
+    , hspec
+  default-language: Haskell2010
