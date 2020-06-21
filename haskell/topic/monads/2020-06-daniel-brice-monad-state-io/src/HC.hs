@@ -26,18 +26,22 @@ instance MonadState s (SIO s) where
     liftIO (writeIORef ref s')
     return ()
 
-programHc :: (Eq s, Num s) => MonadState s m => m s
+data MyState = MyState
+  { one :: Int
+  , two :: [Text]
+  } deriving Show
+
+programHc :: MonadState MyState m => m MyState
 programHc = do
-  n <- get
-  if n == 10 then  pure n
-  else put (n + 1) >> programHc
+  s@(MyState n x) <- get
+  if n == 10 then pure s
+  else put (MyState (n + 1) (show n : x)) >> programHc
 
 top :: IO ()
 top = do
-  ior <- newIORef (0::Int)
+  ior <- newIORef (MyState 0 ["HC"])
   a   <- runSIO programHc ior
   print a
-
 
 ------------------------------------------------------------------------------
 
