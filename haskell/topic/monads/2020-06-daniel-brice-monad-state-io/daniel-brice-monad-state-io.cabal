@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7295645b3217bed59005af299a16c6188675a364c0a47362649388e79daf9f6b
+-- hash: 7d46ec29c8c750e88b0c64733330ff87c2fb0a25604f51aea171fbcffd06205e
 
 name:           daniel-brice-monad-state-io
 version:        0.1.0.0
@@ -12,6 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      HC
       Lib
   other-modules:
       Paths_daniel_brice_monad_state_io
