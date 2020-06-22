@@ -1,8 +1,11 @@
 module XSpec where
 
+import           HC
 import           Lib
 ------------------------------------------------------------------------------
 import           Test.Hspec
 
 spec :: Spec
-spec  = test
+spec  = do
+  Lib.test
+  HC.test

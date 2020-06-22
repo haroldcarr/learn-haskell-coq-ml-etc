@@ -44,7 +44,7 @@ top :: IO ()
 top = hspec test
 
 test :: Spec
-test  = do
+test  = describe "Lib" $ do
   describe "modify" $
     it "works, IO" $ do
       var <- newTVarIO (1 :: Int)

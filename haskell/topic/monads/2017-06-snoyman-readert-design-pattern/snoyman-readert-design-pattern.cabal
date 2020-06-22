@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 64aa7df70d2f4a4e84c16352b44684ee00c84d04bc37834a472f416237ea4f6d
+-- hash: 0d3e959baaf1a48e90e13bb462717be951813b62163542f1e1a4c51a20a07029
 
 name:           snoyman-readert-design-pattern
 version:        0.1.0.0
@@ -12,6 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      HC
       Lib
   other-modules:
       Paths_snoyman_readert_design_pattern
