@@ -1,6 +1,10 @@
 module Main where
 
+import HC
 import Lib
 
 main :: IO ()
-main  = top
+main  = do
+  top
+  hctop
+  initAndRunProgram
