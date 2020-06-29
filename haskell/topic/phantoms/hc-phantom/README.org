@@ -1,7 +1,5 @@
 search for tagged: http://dev.stephendiehl.com/hask/
 
-https://github.com/ekmett/tagged
-
 https://neilmitchell.blogspot.com/2007/04/phantom-types-for-real-problems.html
 
 https://kseo.github.io/posts/2017-01-15-data-proxy.html
@@ -15,6 +13,8 @@ https://jfmengels.net/single-out-elements-using-phantom-types/
 
 ------------------------------------------------------------------------------
 Uses of Data.Tagged
+
+https://github.com/ekmett/tagged
 
 https://hackage.haskell.org/package/pathtype
 https://hackage.haskell.org/package/string-class

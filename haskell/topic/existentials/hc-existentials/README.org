@@ -15,6 +15,25 @@ https://blog.jle.im/entry/practical-dependent-types-in-haskell-2.html
                 caller has to accommodate any choice
 
 ------------------------------------------------------------------------------
+TODO
+https://github.com/freckle/guides/blob/master/haskell-best-practices.md
+
+Existentials
+Why / when you want to use them:
+
+you have multiple types which satisfy some interface (type class)
+AND
+you want to be able to add types to the interface without changing some supertype
+(i.e. 'open' rather than 'closed')
+AND
+you want to delay the choice of which function from the interface to apply to the data
+(e.g. rather than using existentials for an interface with a single function,
+just apply that function, see haskell-antipattern-existential-typeclass)
+AND
+you want to work with multiple types adhering to this interface
+without regard for their original type
+
+------------------------------------------------------------------------------
 DONE example of type-aligned sequences
 https://medium.com/@jonathangfischoff/existential-quantification-patterns-and-antipatterns-3b7b683b7d71
 
