@@ -1,0 +1,61 @@
+name:                 using-phantoms-and-existentials
+version:              0.1.0.0
+github:               githubuser/using-phantoms-and-existentials
+license:              BSD3
+author:               Harold Carr
+maintainer:           harold.carr@gmail.com
+copyright:            2020 Harold Carr
+
+extra-source-files:
+- README.org
+
+synopsis:             Short description of your package
+category:             Web
+description:          Please see the README on GitHub at ...
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wpartial-fields
+- -Wredundant-constraints
+- -fhide-source-paths
+
+dependencies:
+- base >= 4.7 && < 5
+- gdp
+- hspec
+- lens
+- prettyprinter
+- protolude
+- random
+- refined
+- text
+
+library:
+  source-dirs: src
+
+_exe-ghc-options:        &exe-ghc-options
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+
+executables:
+  m:
+    source-dirs:         app
+    main:                Main.hs
+    other-modules:       ""
+    ghc-options:         *exe-ghc-options
+    dependencies:
+    - using-phantoms-and-existentials
+
+tests:
+  t:
+    source-dirs:         test
+    main:                hspec.hs
+    ghc-options:         *exe-ghc-options
+    dependencies:
+    - hspec
+    - using-phantoms-and-existentials

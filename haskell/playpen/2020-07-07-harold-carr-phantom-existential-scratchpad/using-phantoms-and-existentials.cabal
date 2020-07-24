@@ -1,0 +1,93 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 2db0effb7095db6ded5a5b9f5af47034f2453b61278123532a12cdf63e66628b
+
+name:           using-phantoms-and-existentials
+version:        0.1.0.0
+synopsis:       Short description of your package
+description:    Please see the README on GitHub at ...
+category:       Web
+homepage:       https://github.com/githubuser/using-phantoms-and-existentials#readme
+bug-reports:    https://github.com/githubuser/using-phantoms-and-existentials/issues
+author:         Harold Carr
+maintainer:     harold.carr@gmail.com
+copyright:      2020 Harold Carr
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.org
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/using-phantoms-and-existentials
+
+library
+  exposed-modules:
+      Astro
+      FuelLevel
+      GoNoGo
+      Sorted
+      Weather
+      X01
+  other-modules:
+      Paths_using_phantoms_and_existentials
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , gdp
+    , hspec
+    , lens
+    , prettyprinter
+    , protolude
+    , random
+    , refined
+    , text
+  default-language: Haskell2010
+
+executable m
+  main-is: Main.hs
+  other-modules:
+      
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , gdp
+    , hspec
+    , lens
+    , prettyprinter
+    , protolude
+    , random
+    , refined
+    , text
+    , using-phantoms-and-existentials
+  default-language: Haskell2010
+
+test-suite t
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      XSpec
+      Paths_using_phantoms_and_existentials
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , gdp
+    , hspec
+    , lens
+    , prettyprinter
+    , protolude
+    , random
+    , refined
+    , text
+    , using-phantoms-and-existentials
+  default-language: Haskell2010
