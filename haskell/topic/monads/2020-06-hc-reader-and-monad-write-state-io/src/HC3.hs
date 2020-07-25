@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -14,9 +15,11 @@ import Protolude
 import Control.Monad.Writer.Strict
 ------------------------------------------------------------------------------
 
-newtype RWSIO r w s a = RWSIO { runRWSIO :: (r, IORef (w, s)) -> IO a }
-  deriving ( Functor, Applicative, Monad, MonadIO, MonadReader (r, IORef (w, s)) )
-  via ReaderT (r, (IORef (w, s))) IO
+type RWSRef r w s = (r, IORef (w, s))
+
+newtype RWSIO r w s a = RWSIO { runRWSIO :: RWSRef r w s -> IO a }
+  deriving ( Functor, Applicative, Monad, MonadIO, MonadReader (RWSRef r w s) )
+  via ReaderT (RWSRef r w s) IO
 
 instance MonadState s (RWSIO r w s) where
   get = do
@@ -48,13 +51,16 @@ instance Monoid w => MonadWriter w (RWSIO r w s) where
     liftIO (writeIORef ref (f w, s))
     pure a
 
-ask' :: (Monad m, MonadReader (r, (IORef (w, s))) m) => m r
+ask' :: (Monad m, MonadReader (RWSRef r w s) m) => m r
 ask'  = fst <$> ask
 
+type MonadProgram r w s m =
+  ( MonadReader (RWSRef r w s) m
+  , MonadWriter           w    m
+  , MonadState              s  m )
+
 programHc3
-  :: ( MonadReader (Int, (IORef ([Int], Int))) m
-     , MonadWriter               [Int]         m
-     , MonadState                       Int    m )
+  :: MonadProgram Int [Int] Int m
   => m Int
 programHc3 = do
   x <- ask'
