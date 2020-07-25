@@ -26,7 +26,7 @@ instance MonadState s (RWSIO r w s) where
 
   put s' = do
     ref <- ask
-    (r, w, _s) <- liftIO (readIORef ref)
+    (r, w, _s)  <- liftIO (readIORef ref)
     liftIO (writeIORef ref (r, w, s'))
     pure ()
 
@@ -50,8 +50,8 @@ instance Monoid w => MonadWriter w (RWSIO r w s) where
 
 ask' :: (MonadIO m, MonadReader (IORef (r, w, s)) m) => m r
 ask'  = do
-  ref <- ask
-  (r, _w, _s) <- liftIO (readIORef ref)
+  ref           <- ask
+  (r, _w, _s)   <- liftIO (readIORef ref)
   pure r
 
 programHc2
