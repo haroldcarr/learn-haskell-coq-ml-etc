@@ -7,7 +7,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module HC2 where
+module ZScratch where
 
 import Data.IORef
 import Protolude
@@ -66,8 +66,8 @@ programHc2 = do
   if n == 10 then  pure n
   else put (n + 1) >> programHc2
 
-top2 :: IO ()
-top2 = do
+topz :: IO ()
+topz = do
   ior <- newIORef (1::Int, [0::Int], 1::Int)
   a <- runRWSIO (programHc2) ior
   r <- readIORef ior

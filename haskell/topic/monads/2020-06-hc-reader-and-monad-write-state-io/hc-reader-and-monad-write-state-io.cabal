@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f73f91ed8d9c39d26ceececf940fdabdfecbbbc0bf1289d0c62d30f4e579d042
+-- hash: 7fd6583fffdc2850e4d81635d5cb28f78f28b1ae62b2ffd319cffa335916ac2b
 
 name:           hc-reader-and-monad-write-state-io
 version:        0.1.0.0
@@ -12,11 +12,10 @@ build-type:     Simple
 
 library
   exposed-modules:
-      HC
-      HC2
-      HC3
-      HC4
+      MonadRWS
       MyMakeClassy
+      Use
+      ZScratch
   other-modules:
       Paths_hc_reader_and_monad_write_state_io
   hs-source-dirs:

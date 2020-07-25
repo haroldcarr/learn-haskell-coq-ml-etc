@@ -7,7 +7,7 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TupleSections         #-}
 
-module HC3 where
+module MonadRWS where
 
 import           Control.Monad.Writer.Strict
 import           Data.IORef
@@ -65,26 +65,3 @@ resetMonadRWS :: (MonadIO m, Monoid w) => RWSRef r w s -> s -> m ()
 resetMonadRWS (_, ref) s =
   liftIO (writeIORef ref (mempty, s))
 
-------------------------------------------------------------------------------
-
-programHc3
-  :: MonadRWS Int [Int] Int m
-  => Int -> m Int
-programHc3 stop = do
-  x <- ask'
-  n <- get
-  tell [n+x]
-  if n == stop then pure n
-  else put (n + 1) >> programHc3 stop
-
-top3 :: IO ()
-top3 = do
-  x@(_, ref) <- liftIO (initMonadRWS (1::Int) (1::Int))
-  a1         <- runRWSIO (programHc3 10) x
-  (w1, s1)   <- readIORef ref
-  print (a1, w1, s1)
-
-  liftIO (resetMonadRWS x s1)
-  a2         <- runRWSIO (programHc3 15) x
-  (w2, s2)   <- readIORef ref
-  print (a2, w2, s2)
