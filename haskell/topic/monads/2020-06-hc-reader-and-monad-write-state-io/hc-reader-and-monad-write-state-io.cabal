@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 154f589eb1c7e9b0bbe0ac68ae3c9f72d616a3bda14f6b30fa431dd46eca32c6
+-- hash: f73f91ed8d9c39d26ceececf940fdabdfecbbbc0bf1289d0c62d30f4e579d042
 
 name:           hc-reader-and-monad-write-state-io
 version:        0.1.0.0
@@ -15,6 +15,8 @@ library
       HC
       HC2
       HC3
+      HC4
+      MyMakeClassy
   other-modules:
       Paths_hc_reader_and_monad_write_state_io
   hs-source-dirs:
@@ -22,6 +24,8 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
   build-depends:
       base >=4.7 && <5
+    , lens
     , mtl
     , protolude
+    , template-haskell
   default-language: Haskell2010

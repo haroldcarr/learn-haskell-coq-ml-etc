@@ -54,13 +54,13 @@ instance Monoid w => MonadWriter w (RWSIO r w s) where
 ask' :: (Monad m, MonadReader (RWSRef r w s) m) => m r
 ask'  = fst <$> ask
 
-type MonadProgram r w s m =
+type MonadRWS r w s m =
   ( MonadReader (RWSRef r w s) m
   , MonadWriter           w    m
   , MonadState              s  m )
 
 programHc3
-  :: MonadProgram Int [Int] Int m
+  :: MonadRWS Int [Int] Int m
   => m Int
 programHc3 = do
   x <- ask'

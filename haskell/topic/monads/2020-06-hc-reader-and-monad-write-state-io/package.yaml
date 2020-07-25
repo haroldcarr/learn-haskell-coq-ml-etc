@@ -14,7 +14,9 @@ ghc-options:
 dependencies:
 - base >= 4.7 && < 5
 - protolude
+- lens
 - mtl
+- template-haskell
 
 library:
   source-dirs: src
