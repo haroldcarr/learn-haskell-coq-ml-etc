@@ -12,8 +12,8 @@ main = void $ runTestTT $ TestList
   ++ simplifyId
   ++ simplifyLHS
   ++ simplifyRHS
-  ++ simplifiedSpecification
-  ++ strengthenedSpec
+  ++ simplifiedLHSSpecification
+  ++ strengthenedLHSSpec
   ++ monidalLaw1
   ++ monidalLaw2
   ++ secondInTermsOfFirst
