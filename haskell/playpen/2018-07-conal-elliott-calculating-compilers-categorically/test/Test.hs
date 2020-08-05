@@ -2,7 +2,7 @@
 
 module Main where
 
-import Lib
+import X1 hiding ((++))
 import Protolude
 import Test.HUnit
 

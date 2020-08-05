@@ -2,17 +2,21 @@
 
 {-# LANGUAGE ConstrainedClassMethods #-}
 {-# LANGUAGE FlexibleContexts        #-}
+{-# LANGUAGE FlexibleInstances       #-}
+{-# LANGUAGE GADTs                   #-}
+{-# LANGUAGE KindSignatures          #-}
 {-# LANGUAGE LambdaCase              #-}
 {-# LANGUAGE MonoLocalBinds          #-}
+{-# LANGUAGE MultiParamTypeClasses   #-}
 {-# LANGUAGE NoImplicitPrelude       #-}
 {-# LANGUAGE OverloadedStrings       #-}
 {-# LANGUAGE RankNTypes              #-}
 {-# LANGUAGE TypeOperators           #-}
 
-module Lib where
+module X1 where
 
 import qualified Prelude
-import           Protolude       hiding (first, second, swap)
+import           Protolude       hiding (first, second, swap, (++))
 import           Test.HUnit
 import qualified Test.HUnit.Util as U
 
@@ -34,20 +38,20 @@ July 26, 2018
 ------------------------------------------------------------------------------
 Abstract
 
-compiling a programming language to a stack-based VM.
-Innovation : factor into two phases:
-- translation into standard algebraic vocabulary
+task: compile a programming language to a stack-based VM
+
+two phases:
+- translate typed FP language (here, Haskell) to the vocabulary of categories
   - independent of stack machines
-  - justified/implemented in a more general setting
-  - converts a typed functional language (here, Haskell) to the vocabulary of categories
+  - justified/implemented in a more general setting of categories
 - stack-oriented interpretation of that vocabulary
   - captures essential nature of stack-based computation
   - independent of the source language
   - calculate a category of stack computations from a simple specification
 
 Other examples of this technique
-- generation parallel implementations on GPUs and FPGAs
-- incremental evaluation,
+- generate parallel implementations on GPUs and FPGAs
+- incremental evaluation
 - interval analysis
 - automatic differentiation
 
@@ -62,24 +66,25 @@ as long as it does so in a stack discipline
 -- stack is a pair
 -- with a on top at the start of the computation
 -- f a on top at the end of the computation
--- and z as the rest of the stack at the start and finish.
+-- z as the rest of the stack at the start and finish
 first0 :: (a -> b) -> forall z. ((a, z) -> (b, z))
 first0 f (a, z) = (f a, z)
 
 {-
 In-between the start and end, the stack may grow and shrink,
 but in the end the only stack change is on top.
-Note also that first f can do nothing with z other than preserve it.
+In this case, first f can do nothing with z other than preserve it.
 -}
 
--- Notion of stack computation as a data type of "stack functions"
--- Converts a Haskell function to StackFun.
+-- stack computation as a data type of "stack functions"
 newtype StackFun a b = SF (forall z. (a, z) -> (b, z))
+
+-- converts a Haskell function to StackFun
 stackFun :: (a -> b) -> StackFun a b
 stackFun f = SF (first f)
 
 -- Converse: turn a stack function into a regular function
--- initializing the stack to contain a and ()
+-- initialize stack to (a, ())
 -- evaluating the contained stack operations
 -- discard the final ()
 evalStackFun0 :: StackFun a b -> (a -> b)
@@ -102,12 +107,13 @@ instance UnitCat     (->) where
   runit           a   =  (a, ())
   rcounit    (a, ())  =   a
 
+-- test input data
 xX :: Int
 xX  = 1
 
 -- Lemma 1
--- show that evalStackFun is a left inverse for stackFun,
--- i.e., for all f, evalStackFun (stackFun f) = f .
+-- show that evalStackFun is a left inverse for stackFun
+-- i.e., for all f, evalStackFun (stackFun f) = f
 lemma1 :: [Test]
 lemma1  = U.tt "lemma1"
   [ evalStackFun (stackFun f)               xX
@@ -155,14 +161,11 @@ we will start with a recipe for f and systematically construct an analogous reci
 - start with a formulation of f in the vocabulary of categories
 - require that stackFun preserves the algebraic structure of the category vocabulary
 
-While inconvenient to program in this vocabulary directly, we can instead
-automatically convert from Haskell programs [Elliott, 2017].
-
-This approach to calculating correct implementations has also been
-used for automatic differentiation [Elliott, 2018].
+inconvenient to program in this vocabulary directly
+but can automatically convert from Haskell programs [Elliott, 2017]
 
 BENEFIT:
-- only need to implement a few type class instances
+- only need to implement type class instances
   (rather than manipulate a syntactic representation)
 
 ------------------------------------------------------------------------------
@@ -180,7 +183,7 @@ instance Category (->) where
   g ... f = g . f
 
 {-
-The structure preservation (homomorphism) properties are:
+the structure preservation (homomorphism) properties are:
   id                        = stackFun id
   stackFun g ... stackFun f = stackFun (g . f)
 
@@ -189,7 +192,7 @@ the ones on the right are for (->) (i.e., regular functions).
 Solving these equations for the LHS operations results in a correct instance of Category
 for StackFun.
 
-The id equation is already in solved form, so we can use it directly as an implementation.
+The id equation is already in solved form, so it can be used directly as an implementation.
 But first, simplify the equation:
 -}
 simplifyId :: [Test]
@@ -481,7 +484,7 @@ instance Cartesian StackFun where
 These operations are used in the translation from λ-calculus (e.g., Haskell) to categorical form.
 The projections exl and exr are used to translate pattern-matching on pairs.
 Duplication is used for translation of pair formation and application expressions,
-use the "fork" operation [Elliott, 2017, Section 3]:
+via the "fork" operation [Elliott, 2017, Section 3]:
 -}
 (.^.) :: (Category k, MonoidalP k, Cartesian k)
       => (a `k` c) -> (a `k` d)
@@ -516,9 +519,10 @@ instance Cocartesian StackFun where
   inl = stackFun inl
   inr = stackFun inr
   jam = stackFun jam
+
 {-
 Just as the (.^.) ("fork") operation for producing products is defined via (×) and dup,
-so is the (.|.) ("join") operation ((for consuming coproducts/sums) defined via (+) and jam:
+the (.|.) ("join") operation for consuming coproducts/sums  is defined via (+) and jam:
 -}
 (.|.) :: (Category k, MonoidalS k, Cocartesian k)
       => (a `k` c) -> (b `k` c)
@@ -540,15 +544,134 @@ instance Distributive (->) where
                   Right (v, b) -> (Right v, b)
 
 -- (.|.) and distl ops are used to translate multi-constructor case expressions to categorical form
--- [Elliott, 2017, Section 8].
+-- [Elliott, 2017, Section 8]
 instance Distributive StackFun where
   distl   = stackFun distl
   distr   = stackFun distr
   undistr = stackFun undistr
 
--- define MonoidalS instance for StackFun
--- (using the MonoidalS and Distributive instances for (->))
+-- MonoidalS instance for StackFun (using the MonoidalS and Distributive instances for (->))
 -- Theorem 4 (Proved in Appendix A.4).
 -- Given the instance definition above, stackFun is a MonoidalS homomorphism.
 instance MonoidalS StackFun where
   SF f .+. SF g = SF (undistr ... (f .+. g) ... distr)
+
+{-
+------------------------------------------------------------------------------
+2 Stack programs
+
+StackFun and its type class instances above capture essence of stack computation
+and also support evaluation as functions (via evalStackFun).
+
+for optimization and code generation: need to inspect the structure of a computation
+-- impossible with StackFun (because represented as a function)
+
+Solution: make the notion of stack computation
+as a data type having a precise relationship with the function representation
+-}
+
+-- reified primitive functions
+data Prim :: * -> * -> * where
+  Exl     :: Prim (a, b) a
+  Exr     :: Prim (a, b) b
+  Dup     :: Prim a (a, a)
+  -- ...
+  Negate  :: Num a => Prim a      a
+  Add     :: Num a => Prim (a, a) a
+  Sub     :: Num a => Prim (a, a) a
+  Mul     :: Num a => Prim (a, a) a
+
+-- evaluator
+evalPrim :: Prim a b -> (a -> b)
+evalPrim Exl    = exl
+evalPrim Exr    = exr
+evalPrim Dup    = dup
+-- ...
+evalPrim Negate = negateC
+evalPrim Add    = addC
+evalPrim Sub    = subC
+evalPrim Mul    = mulC
+
+negateC        :: Num a => a -> a
+negateC = \a -> -a
+addC,subC,mulC :: Num a => (a, a) -> a
+addC    = Prelude.uncurry (+)
+subC    = Prelude.uncurry (-)
+mulC    = Prelude.uncurry (*)
+
+-- stack program is a sequence of instructions,
+-- many being primitive functions that replace the top of the stack without using the rest,
+-- and the others that re-associate
+
+data StackOp :: * -> * -> * where
+  Prim :: Prim a b -> StackOp  (a,     z)   (b,      z)
+  Push ::             StackOp ((a, b), z)   (a, (b,  z))
+  Pop  ::             StackOp (a, (b,  z)) ((a,  b), z)
+
+-- interpretation as functions
+evalStackOp :: StackOp u v -> (u -> v)
+evalStackOp (Prim f) = first (evalPrim f )
+evalStackOp Push     = rassoc
+evalStackOp Pop      = lassoc
+
+-- form linear sequences of stack operations, each feeding its result to the next
+infixr 5 :<
+data StackOps :: * -> * -> * where
+  Nil  :: StackOps a a
+  (:<) :: StackOp a b -> StackOps b c -> StackOps a c
+
+evalStackOps :: StackOps u v -> (u -> v)
+evalStackOps Nil          = id
+evalStackOps (op :< rest) = evalStackOps rest . evalStackOp op
+
+-- compose sequences sequentially
+infixr 5 ++
+(++) :: StackOps a b -> StackOps b c -> StackOps a c
+Nil ++ ops'         = ops'
+(op :< ops) ++ ops' = op :< (ops ++ ops')
+
+{-
+Lemma 5.
+Nil and (++) implement identity and composition on functions in the following sense:
+  id                              = evalStackOps Nil
+  evalStackOps g ◦ evalStackOps f = evalStackOps (f ++ g)
+
+Proof.
+The first property is immediate from the definition of evalStackOps.
+The second follows by structural induction on f.
+-}
+
+-- stack program is a sequence of stack operations that can change only the top of the stack:
+newtype StackProg a b = SP { unSP :: forall z. StackOps (a, z) (b, z) }
+
+-- TODO
+-- Stack programs (specified by progFun as homomorphism and calculated in Appendix A.5)
+
+instance Category StackProg where
+  id          = SP Nil
+  SP g ... SP f = SP (f ++ g)
+{-
+instance MonoidalP StackFun where
+  first (SP ops) = SP (Push :< ops ++ Pop :< Nil)
+  second g       = swap ... first g ... swap
+  f .*. g        = first f ... second g
+-}
+primProg :: Prim a b -> StackProg a b
+primProg p = SP (Prim p :< Nil)
+
+instance Cartesian StackProg where
+  exl = primProg Exl
+  exr = primProg Exr
+  dup = primProg Dup
+{-
+class NumCat k a where
+  negateC          :: a `k` a
+  addC, subC, mulC :: (a, a) `k` a
+
+instance Num a => NumCat StackProg a where
+  negateC = primProg Negate
+  addC    = primProg Add
+  subC    = primProg Sub
+  mulC    = primProg Mul
+-- ...
+-}
