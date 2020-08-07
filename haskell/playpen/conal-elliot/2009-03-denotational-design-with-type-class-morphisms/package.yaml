@@ -1,8 +1,18 @@
 name: type-class-morphisms
 version: 0.1.0.0
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wpartial-fields
+- -Wredundant-constraints
+
 dependencies:
-  - base
-ghc-options: -Wall
+- base
+- protolude
 
 library:
   source-dirs: src/

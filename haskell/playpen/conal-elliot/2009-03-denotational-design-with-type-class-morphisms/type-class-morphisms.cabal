@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 05fee86e0ee85d04fec503f16dc4ceb97885c51fe63f0b719b99e80d1c36cc61
+-- hash: 6c5d6465096b08f0353d6ab470c97c3f33b9435a70b1d1ea0702dc38b00d82a5
 
 name:           type-class-morphisms
 version:        0.1.0.0
@@ -13,9 +13,10 @@ build-type:     Simple
 library
   hs-source-dirs:
       src/
-  ghc-options: -Wall
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
       base
+    , protolude
   exposed-modules:
       Lib
   other-modules:

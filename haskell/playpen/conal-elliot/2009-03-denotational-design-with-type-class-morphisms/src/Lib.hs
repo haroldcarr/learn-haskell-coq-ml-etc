@@ -1,61 +1,40 @@
-> {-# LANGUAGE NoImplicitPrelude #-}
->
-> module Lib where
+{-# LANGUAGE NoImplicitPrelude #-}
 
-------------------------------------------------------------------------------
-Abstract
+module Lib where
 
-type classes : mechanism for varied impls of interfaces
+import Protolude hiding (Map)
 
-many founded in math, so have regularity of types and properties (laws) that must hold
-
-implementator specifies what instance accomplishes
-
-to give guidance to the "what", without constraining "how" paper proposes:
-- type class morphisms (TCMs)
-- refines the compositional style of denotational semantics
-- THE INSTANCE’S MEANING FOLLOWS THE MEANING’S INSTANCE
-- determines meaning of each type class instance
-  - hence defines correctness of impl
-- transfer laws about type’s semantic model (e.g., class laws) to hold for the type itself
-- TCM/types/properties give guidance to library implementor
+{-
+https://github.com/conal/talk-2014-lambdajam-denotational-design
 
 ------------------------------------------------------------------------------
 1. Introduction
 
-Data type representations collect related pieces of info : making more convenient to use
+data type rep collects related pieces of info : making more convenient to use
 
-Data abstraction : separation between type’s interface/impl
+data abstraction : separation interface/impl
+- reveals what users need
+- implementor free to improve hidden impl
 
-abstraction reveals what users need, but shield users from impl
-
-shield benefits implementor: free to improve hidden impl
-
-What kind of a thing is an interface that can connect implementors
-with users while still serving the distinct needs of each?
-
-Partial answer
+interface
 - names of data types
 - names and types of operations that work on them
 
 e.g., finite map:
 
-abstract type Map :: ∗ → ∗ → ∗
+abstract type Map :: ∗ -> ∗ -> ∗
 
 empty  :: (     ...) => Map k v
-insert :: (     ...) => k       -> v -> Map k v -> Map k v
+insert :: (     ...) => k -> v -> Map k v -> Map k v
 lookup :: (Eq k ...) => Map k v -> k -> Maybe v
 
-Map rep and operation impl not revealed
-
-above does not deliver the "shield"
-- impl reveals too much info to users (i.e.,, class constraints)
+Map rep and operation impl not revealed, but
+- impl reveals too much info  (i.e.,, class constraints)
 - signatures provide too little
 - users care about what the names "mean"
 
-What is the essence of a type?
-Useful answer is given by denotational semantics.
-Meaning of each op defined as a function from meanings of args to meaning result.
+use DENOTATIONAL SEMANTICS to provide the essence of a type
+- meaning of ops defined as a function from meanings of args to meaning result
 E.g.,
 - meaning of `Map k v` could be partial functions from k to v.
   - empty yields bottom for all inputs
@@ -71,7 +50,7 @@ principle for answering that question:
 - THE INSTANCE’S MEANING FOLLOWS THE MEANING’S INSTANCE
 - meaning of each method application is given by
   application of the same method to the meanings of the arguments.
-- The semantic function is to be a type class morphism
+- The semantic function is a type class morphism
   - i.e., it preserves class structure.
 
 e.g., define Monoid instance for above finite map type
@@ -84,22 +63,19 @@ Sometimes TCM property fails.
 - In each case, class laws are guaranteed to hold, via morphisms
   - so need not be proved specifically for impls
 
-TCM discipline requires up-front effort in clarity of thinking,
-just as static typing does.
-
 ------------------------------------------------------------------------------
 2. Denotational semantics and data types
 
 Specify, for each syntactic category C,
-- mathematical model [[ C ]] of meanings
-- a semantic function [[ · ]]C :: C -> [[C]]
+- mathematical model [[C]] of meanings
+- a semantic function [[·]]C :: C -> [[C]]
 
-[[ · ]]C semantic functions must be compositional
+[[·]]C semantic functions must be compositional
 i.e., must be defined by (mutual) structural recursion
 
 Notation:
-- [[ · ]]C c : shortened to : [[ c ]]C
-- [[ · ]]C   : shortened to : [[ · ]] (when unambiguous)
+- [[·]]_C c : shortened to : [[c]]C (when unambiguous)
+- [[·]]_C   : shortened to : [[·]]  (when unambiguous)
 
 Can also apply denotational semantics to data types.
 
@@ -116,23 +92,22 @@ Central question:
   - or, indication that allows for graceful recovery.
   - so model map’s partiality via a success/failure type : Maybe
 
-[[Map k v]] = k → Maybe v
+[[Map k v]] = k -> Maybe v
 
 The meaning function is defined recursively over the abstract syntactic constructors.
 This practice transfers directly to algebraic data types.
 Doing something different here
 - define meaning of an interface, without reference to representation.
 
-The type constraints in the map interface above 
-contribute only to the impl, not the semantics.
+The type constraints in the map interface above contribute only to the impl, not the semantics.
 
 A semantics for Map then consists of a model, as given above,
 and an interpretation for each member of the interface.
 
-[[ ·             ]] :: Map k v → (k → Maybe v)
-[[ empty         ]]  = λk → Nothing
-[[ insert k0 v m ]]  = λk → if k ≡ k 0 then Just v else [[m]] k
-[[ lookup m k    ]]  = [[m]] k
+[[ ·             ]] :: Map k v -> (k -> Maybe v)
+[[ empty         ]]  = λk      -> Nothing
+[[ insert k' v m ]]  = λk      -> if k ≡ k' then Just v else [[m]] k
+[[ lookup m    k ]]  = [[m]] k
 
 More functions on maps defined semantically within this model
 - left-biased "union" :
@@ -286,3 +261,4 @@ simpler semantic model.
 
 However, there is a subtle problem with these two Monoid
 instances. Can you spot it? (Warning: Spoiler ahead.)
+-}
