@@ -1,11 +1,14 @@
--- This file has been generated from package.yaml by hpack version 0.19.3.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: 05fee86e0ee85d04fec503f16dc4ceb97885c51fe63f0b719b99e80d1c36cc61
 
 name:           type-class-morphisms
 version:        0.1.0.0
 build-type:     Simple
-cabal-version:  >= 1.10
 
 library
   hs-source-dirs:
