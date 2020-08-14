@@ -1,0 +1,11 @@
+test for unexpected thunks
+- ghc-heap
+- test for unexpected thunks
+  https://github.com/input-output-hk/cardano-prelude/blob/master/src/Cardano/Prelude/GHC/Heap/NormalForm/Classy.hs#L69
+
+https://hackage.haskell.org/package/StrictCheck
+- paper about it in ICFP 2018
+- not useful in context where values are nodes in spine of a data structure (instead of values it's storing)
+
+
+
