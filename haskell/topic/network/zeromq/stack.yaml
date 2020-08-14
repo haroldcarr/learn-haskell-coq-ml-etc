@@ -1,0 +1,15 @@
+resolver: lts-13.25
+packages:
+- .
+extra-deps:
+- unagi-chan-0.4.1.3@sha256:4283bb02bc5ee56203671756d92b24112eb6159f2b2840a10a539b4651d5f12e,8719
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=2.3"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor

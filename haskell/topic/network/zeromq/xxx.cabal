@@ -1,0 +1,78 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: fb9df6f4367621f0668ac57965ba5e1ed517e6a0c8b504780945481af690caed
+
+name:           xxx
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_xxx
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      async
+    , base >=4.7 && <5
+    , bytestring
+    , cereal
+    , cereal-text
+    , containers
+    , mtl
+    , protolude
+    , text
+    , unagi-chan
+    , zeromq4-haskell
+  default-language: Haskell2010
+
+executable m
+  main-is: Main.hs
+  other-modules:
+      Paths_xxx
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      async
+    , base >=4.7 && <5
+    , bytestring
+    , cereal
+    , cereal-text
+    , containers
+    , mtl
+    , protolude
+    , text
+    , unagi-chan
+    , xxx
+    , zeromq4-haskell
+  default-language: Haskell2010
+
+test-suite t
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_xxx
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      async
+    , base >=4.7 && <5
+    , bytestring
+    , cereal
+    , cereal-text
+    , containers
+    , mtl
+    , protolude
+    , text
+    , unagi-chan
+    , xxx
+    , zeromq4-haskell
+  default-language: Haskell2010

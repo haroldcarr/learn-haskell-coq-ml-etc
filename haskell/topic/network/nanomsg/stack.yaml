@@ -1,0 +1,15 @@
+resolver: lts-13.25
+packages:
+- .
+extra-deps:
+- nanomsg-haskell-0.2.4@sha256:a77242f9414523881ba643e199ea0bcd72c4d7dcdc26d5b6574786a25a5d5009,3230
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=2.3"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor
