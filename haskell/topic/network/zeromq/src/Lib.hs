@@ -89,7 +89,7 @@ runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
       Left () -> tprint [show (unAddr myAddr), "ZMQ_RECEIVER ()"]
       Right v -> tprint [show (unAddr myAddr), "ZMQ_SENDER", show v]
     -------------------------
-    ztprint ["exiting ZMQ_THREAD"]
+    ztprint [show (unAddr myAddr), "exiting ZMQ_THREAD"]
 
   res <- Async.waitCatch zmqThread
   Async.cancel zmqThread >> case res of
