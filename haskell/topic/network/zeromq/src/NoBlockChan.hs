@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE OverloadedStrings   #-}
@@ -28,27 +29,27 @@ newNoBlockChan = do
   pure (w, r')
 
 getMsgSync :: MVar (UNB.Stream msg) -> IO msg
-getMsgSync m = do
+getMsgSync !m = do
   inboxRead <- takeMVar m
   t         <- UNB.tryReadNext inboxRead
   case t of
     UNB.Pending           -> putMVar m inboxRead  >> getMsgSync m
-    UNB.Next v inboxRead' -> putMVar m inboxRead' >> pure v
+    UNB.Next v inboxRead' -> putMVar m inboxRead' >> (pure $! v)
 
 tryGetMsgs :: Eq msg => MVar (UNB.Stream msg) -> Int -> IO [msg]
-tryGetMsgs m i0 = do
+tryGetMsgs !m !i0 = do
   inboxRead <- takeMVar m
   msgs      <- go inboxRead i0
   if msgs /= []
-    then pure msgs
+    then pure $! msgs
     else threadDelay 1000 >> pure []
  where
-  go strm i =
+  go !strm !i =
     if i <= 0
     then putMVar m strm >> pure []
     else do
       s <- UNB.tryReadNext strm
       case s of
-        UNB.Next a strm' -> a `seq` fmap (a:) (go strm' (i - 1))
+        UNB.Next a strm' -> a `seq` strm' `seq` fmap (a:) (go strm' (i - 1))
         UNB.Pending      -> putMVar m strm >> pure []
 

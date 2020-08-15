@@ -113,16 +113,16 @@ updateConnectionCache
   :: ConnectionCache Address (Socket z Push)
   -> Recipients Address
   -> ZMQ z (ConnectionCache Address (Socket z Push))
-updateConnectionCache cc rs =
+updateConnectionCache !cc !rs =
   maybe (pure cc) (addNewAddrs cc) (checkExistingConnections cc rs)
 
 addNewAddrs
   :: ConnectionCache Address (Socket z Push)
   -> Set.Set (Addr Address)
   -> ZMQ z (ConnectionCache Address (Socket z Push))
-addNewAddrs (ConnectionCache !m0) addrs = ConnectionCache <$> foldM go m0 addrs
+addNewAddrs (ConnectionCache !m0) !addrs = ConnectionCache <$> foldM go m0 addrs
  where
-  go m addr = do
-    s <- socket Push
-    _ <- connect s (unAddr addr)
+  go !m !addr = do
+    !s <- socket Push
+    void (connect s (unAddr addr))
     pure $! Map.insert addr (Connection s) m
