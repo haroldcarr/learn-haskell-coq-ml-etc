@@ -98,7 +98,7 @@ sender TransportEnv{..} !cc0 = do
     l logInfo ["sending to", show addrs, "MSG", show msg]
     cc     <- liftIO (takeMVar ccMvar)
     !cc'   <- updateConnectionCache cc addrs
-    !socks <- recipList cc' addrs
+    !socks <- recipListZ cc' addrs
     mapM_ (\s -> send s [] msg) socks -- GIVE MSGS TO ZMQ
     liftIO (putMVar ccMvar cc')
     l logInfo ["sent msg"]
@@ -143,12 +143,8 @@ addNewAddrs cc@(ConnectionCache !m) = \case
               pure $! ConnectionCache $! Map.insert addr (Connection s) m
     cc' `seq` addNewAddrs cc' addrs
 
-recipList
+recipListZ
   :: ConnectionCache Address (Socket z Push)
   -> Recipients Address
   -> ZMQ z [Socket z Push]
-recipList (ConnectionCache m) = \case
-  RAll        -> pure $! unConnection <$> Map.elems m
-  RSome addrs -> pure $! unConnection . (m Map.!) <$> Set.toList addrs
-  ROne  addr  -> pure $! unConnection <$> [m Map.! addr]
-
+recipListZ = recipList

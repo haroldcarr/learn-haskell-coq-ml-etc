@@ -61,6 +61,15 @@ setup me le li = do
   pure ( TransportEnv inboxW outboxR me [] (le me) (li me)
        , inboxR, outboxW )
 
+recipList
+  :: (MonadIO m, Ord addr)
+  => ConnectionCache addr conn
+  -> Recipients addr
+  -> m [conn]
+recipList (ConnectionCache m) = \case
+  RAll        -> pure $! unConnection <$> Map.elems m
+  RSome addrs -> pure $! unConnection . (m Map.!) <$> Set.toList addrs
+  ROne  addr  -> pure $! unConnection <$> [m Map.! addr]
 
 ------------------------------------------------------------------------------
 
