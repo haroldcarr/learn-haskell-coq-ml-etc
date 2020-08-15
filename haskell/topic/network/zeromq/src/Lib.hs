@@ -31,10 +31,10 @@ import           System.ZMQ4.Monadic
 
 ------------------------------------------------------------------------------
 
-type    Address            = Prelude.String -- because that is what ZMQ4 uses
-newtype Addr           a   = Addr           { unAddr           :: a } deriving (Eq, Ord, Show)
-newtype PushSock       a   = PushSock       { unPushSock       :: a }
-newtype AddrToPushSock a s = AddrToPushSock { unAddrToPushSock :: Map.Map (Addr a) (PushSock s) }
+type    Address             = Prelude.String -- because that is what ZMQ4 uses
+newtype Addr            a   = Addr            {unAddr            :: a} deriving (Eq, Ord, Show)
+newtype Connection      c   = Connection      {unConnection      :: c}
+newtype ConnectionCache a c = ConnectionCache {unConnectionCache :: Map.Map (Addr a)(Connection c)}
 
 -- | who to send a message to
 data Recipients a
@@ -82,7 +82,7 @@ runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
     -------------------------
     ztprint myAddr ["launching ZMQ_SENDER"]
     zmqSender <- async $ do
-      rolodex <- addNewAddrs (AddrToPushSock Map.empty) addrList
+      rolodex <- addNewAddrs (ConnectionCache Map.empty) addrList
       void (sender myAddr outboxRead rolodex)
       ztprint myAddr ["exiting ZMQ_SENDER"]
     -------------------------
@@ -120,7 +120,7 @@ receiver TransportEnv {..} = do
 sender
   :: Addr Address
   -> U.OutChan (OutBoundMsg Address ByteString)
-  -> AddrToPushSock Address (Socket z Push)
+  -> ConnectionCache Address (Socket z Push)
   -> ZMQ z ()
 sender me outboxRead !r = do
   rMvar <- liftIO (newMVar r)
@@ -128,7 +128,7 @@ sender me outboxRead !r = do
     (OutBoundMsg !addrs !msg) <- liftIO $! U.readChan outboxRead
     ztprint me ["sending to", show addrs, "MSG", show msg]
     r'      <- liftIO (takeMVar rMvar)
-    !newRol <- updateAddrToPushSock r' addrs
+    !newRol <- updateConnectionCache r' addrs
     !socks  <- recipList newRol addrs
     mapM_ (\s -> send s [] msg) socks -- GIVE MESSAGES TO ZMQ
     liftIO (putMVar rMvar newRol)
@@ -136,18 +136,18 @@ sender me outboxRead !r = do
 
 ------------------------------------------------------------------------------
 
-updateAddrToPushSock
-  :: AddrToPushSock Address (Socket z Push)
+updateConnectionCache
+  :: ConnectionCache Address (Socket z Push)
   -> Recipients Address
-  -> ZMQ z (AddrToPushSock Address (Socket z Push))
-updateAddrToPushSock r@(AddrToPushSock !_rol) RAll = pure $! r
-updateAddrToPushSock r@(AddrToPushSock !rol) (RSome !addrs) =
+  -> ZMQ z (ConnectionCache Address (Socket z Push))
+updateConnectionCache r@(ConnectionCache !_rol) RAll = pure $! r
+updateConnectionCache r@(ConnectionCache !rol) (RSome !addrs) =
   if Set.isSubsetOf addrs $! Map.keysSet rol
   then pure $! r
   else do
     !a <- addNewAddrs r $! Set.toList addrs
     pure $! a
-updateAddrToPushSock r@(AddrToPushSock !rol) (ROne !addr) =
+updateConnectionCache r@(ConnectionCache !rol) (ROne !addr) =
   if Set.member addr $! Map.keysSet rol
   then pure $! r
   else do
@@ -155,26 +155,26 @@ updateAddrToPushSock r@(AddrToPushSock !rol) (ROne !addr) =
     pure $! a
 
 addNewAddrs
-  :: AddrToPushSock Address (Socket z Push)
+  :: ConnectionCache Address (Socket z Push)
   -> [Addr Address]
-  -> ZMQ z (AddrToPushSock Address (Socket z Push))
+  -> ZMQ z (ConnectionCache Address (Socket z Push))
 addNewAddrs !r [] = pure r
-addNewAddrs (AddrToPushSock !r) (x:xs) = do
+addNewAddrs (ConnectionCache !r) (x:xs) = do
   !r' <- if Map.member x r
-         then pure $! AddrToPushSock r
+         then pure $! ConnectionCache r
          else do
            s <- socket Push
            _ <- connect s (unAddr x)
-           pure $! AddrToPushSock $! Map.insert x (PushSock s) r
+           pure $! ConnectionCache $! Map.insert x (Connection s) r
   r' `seq` addNewAddrs r' xs
 
 recipList
-  :: AddrToPushSock Address (Socket z Push)
+  :: ConnectionCache Address (Socket z Push)
   -> Recipients Address
   -> ZMQ z [Socket z Push]
-recipList (AddrToPushSock r) RAll          = pure $! unPushSock <$> Map.elems r
-recipList (AddrToPushSock r) (RSome addrs) = pure $! unPushSock . (r Map.!) <$> Set.toList addrs
-recipList (AddrToPushSock r) (ROne addr)   = pure $! unPushSock <$> [r Map.! addr]
+recipList (ConnectionCache r) RAll          = pure $! unConnection <$> Map.elems r
+recipList (ConnectionCache r) (RSome addrs) = pure $! unConnection . (r Map.!) <$> Set.toList addrs
+recipList (ConnectionCache r) (ROne addr)   = pure $! unConnection <$> [r Map.! addr]
 
 ------------------------------------------------------------------------------
 
