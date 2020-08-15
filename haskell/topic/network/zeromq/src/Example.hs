@@ -6,6 +6,7 @@ module Example where
 
 ------------------------------------------------------------------------------
 import           Lib
+import           NoBlockChan
 import           Types
 ------------------------------------------------------------------------------
 import qualified Control.Concurrent.Async      as Async
