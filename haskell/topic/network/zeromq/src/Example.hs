@@ -25,8 +25,8 @@ main  = do
       b = Addr "tcp://127.0.0.1:10001"
   (at, ainr, aobw) <- setup a
   (bt, binr, bobw) <- setup b
-  runMsgServer (at :: TransportEnv SignedRPC)
-  runMsgServer (bt :: TransportEnv SignedRPC)
+  runMsgServer (at :: TransportEnv SignedRPC Address)
+  runMsgServer (bt :: TransportEnv SignedRPC Address)
   Async.concurrently_
     (sendMsgs b aobw)
     (Async.concurrently_
@@ -39,10 +39,6 @@ main  = do
     forM_ [1::Int .. limit] $ \i ->
       U.writeChan c (OutBoundMsg (ROne to) (S.encode (SignedRPC i)))
   recvMsgs mvc = do
-    {-
-    m <- getMsgSync mvc
-    print (["receive", "decoded", show m]::[Text])
-    -}
     ms <- tryGetMsgs mvc 2000
     for_ ms $ \m@(SignedRPC i) ->
       -- print (["receive", "decoded", show m]::[Text])

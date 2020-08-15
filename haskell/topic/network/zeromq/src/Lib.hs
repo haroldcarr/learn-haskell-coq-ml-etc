@@ -22,8 +22,8 @@ import qualified Data.Map.Strict                          as Map
 import qualified Data.Serialize                           as S
 import           Data.Serialize.Text                      ()
 import qualified Data.Set                                 as Set
-import qualified Data.Text                                as T
 import           GHC.Generics                             (Generic)
+import qualified Prelude
 import           Protolude                                hiding (async,
                                                            newChan, readChan,
                                                            to)
@@ -31,8 +31,7 @@ import           System.ZMQ4.Monadic
 
 ------------------------------------------------------------------------------
 
-type Address = Text
-
+type    Address            = Prelude.String -- because that is what ZMQ4 uses
 newtype Addr           a   = Addr           { unAddr           :: a } deriving (Eq, Ord, Show)
 newtype PushSock       a   = PushSock       { unPushSock       :: a }
 newtype AddrToPushSock a s = AddrToPushSock { unAddrToPushSock :: Map.Map (Addr a) (PushSock s) }
@@ -49,69 +48,73 @@ data OutBoundMsg addr msg = OutBoundMsg
   , obmBody :: !msg
   } deriving (Eq, Generic)
 
-data TransportEnv rpc = TransportEnv
+data TransportEnv rpc addr = TransportEnv
   { inboxWrite :: !(UNB.InChan rpc)
-  , outboxRead :: !(U.OutChan  (OutBoundMsg Address ByteString))
-  , myAddr     :: !(Addr Address)
-  , addrList   :: ![Addr Address] }
+  , outboxRead :: !(U.OutChan  (OutBoundMsg addr ByteString))
+  , myAddr     :: !(Addr addr)
+  , addrList   :: ![Addr addr] }
 
 setup
-  :: Addr Address
-  -> IO ( TransportEnv rpc
+  :: Addr addr
+  -> IO ( TransportEnv rpc addr
         , MVar (UNB.Stream rpc)
-        , U.InChan (OutBoundMsg Address ByteString) )
+        , U.InChan (OutBoundMsg addr ByteString) )
 setup me = do
   (inboxWrite , inboxRead)  <- newNoBlockChan
   (outboxWrite, outboxRead) <- U.newChan
   pure ( TransportEnv inboxWrite outboxRead me []
        , inboxRead, outboxWrite )
 
-runMsgServer :: (Show rpc, S.Serialize rpc) => TransportEnv rpc -> IO ()
+runMsgServer
+  :: (Show rpc, S.Serialize rpc)
+  => TransportEnv rpc Address -> IO ()
 runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
   zmqThread <- Async.async $ runZMQ $ do
-    ztprint [show (unAddr myAddr), "launching ZMQ_THREAD"]
+    ztprint myAddr ["launching ZMQ_THREAD"]
     -------------------------
-    ztprint [show (unAddr myAddr), "launching ZMQ_RECEIVER"]
+    ztprint myAddr ["launching ZMQ_RECEIVER"]
     zmqReceiver <- async $ do
       void (receiver te)
-      ztprint [show (unAddr myAddr), "exiting ZMQ_RECEIVER"]
+      ztprint myAddr ["exiting ZMQ_RECEIVER"]
     -------------------------
     -- ensure the receive side is up
     liftIO (threadDelay 100000)
     -------------------------
-    ztprint [show (unAddr myAddr), "launching ZMQ_SENDER"]
+    ztprint myAddr ["launching ZMQ_SENDER"]
     zmqSender <- async $ do
       rolodex <- addNewAddrs (AddrToPushSock Map.empty) addrList
       void (sender myAddr outboxRead rolodex)
-      ztprint [show (unAddr myAddr), "exiting ZMQ_SENDER"]
+      ztprint myAddr ["exiting ZMQ_SENDER"]
     -------------------------
     liftIO $ Async.waitEitherCancel zmqReceiver zmqSender >>= \case
       Left () -> tprint [show (unAddr myAddr), "ZMQ_RECEIVER ()"]
       Right v -> tprint [show (unAddr myAddr), "ZMQ_SENDER", show v]
     -------------------------
-    ztprint [show (unAddr myAddr), "exiting ZMQ_THREAD"]
+    ztprint myAddr ["exiting ZMQ_THREAD"]
 
   res <- Async.waitCatch zmqThread
   Async.cancel zmqThread >> case res of
     Right () -> tprint [show (unAddr myAddr), "ZMQ_MSG_SERVER died Right ()"]
     Left err -> tprint [show (unAddr myAddr), "ZMQ_MSG_SERVER died Left", show err]
 
-receiver :: (Show rpc, S.Serialize rpc) => TransportEnv rpc -> ZMQ z ()
+receiver
+  :: (Show rpc, S.Serialize rpc)
+  => TransportEnv rpc Address -> ZMQ z ()
 receiver TransportEnv {..} = do
   sock <- socket Pull
-  ztprint [show (unAddr myAddr), "bind"]
-  _ <- bind sock (T.unpack (unAddr myAddr))
+  ztprint myAddr ["bind"]
+  _ <- bind sock (unAddr myAddr)
   forever $ do
     newMsg <- receive sock -- GET MESSAGE FROM ZMQ
-    ztprint [show (unAddr myAddr), "recv", show newMsg]
+    ztprint myAddr ["recv", show newMsg]
     case S.decode newMsg of
       Left err -> do
-        ztprint [show (unAddr myAddr), "failed S.decode", show newMsg, show err]
+        ztprint myAddr ["failed S.decode", show newMsg, show err]
         liftIO yield
       Right r ->
         liftIO $ do
           UNB.writeChan inboxWrite r
-          tprint [show (unAddr myAddr), "S.decode", show r]
+          tprint [unAddr myAddr, "S.decode", show r]
           yield
 
 sender
@@ -123,13 +126,13 @@ sender me outboxRead !r = do
   rMvar <- liftIO (newMVar r)
   forever $ do
     (OutBoundMsg !addrs !msg) <- liftIO $! U.readChan outboxRead
-    ztprint [show (unAddr me), "sending to", show addrs, "MSG", show msg]
+    ztprint me ["sending to", show addrs, "MSG", show msg]
     r'      <- liftIO (takeMVar rMvar)
     !newRol <- updateAddrToPushSock r' addrs
     !socks  <- recipList newRol addrs
     mapM_ (\s -> send s [] msg) socks -- GIVE MESSAGES TO ZMQ
     liftIO (putMVar rMvar newRol)
-    ztprint [show (unAddr me), "sent msg"]
+    ztprint me ["sent msg"]
 
 ------------------------------------------------------------------------------
 
@@ -161,7 +164,7 @@ addNewAddrs (AddrToPushSock !r) (x:xs) = do
          then pure $! AddrToPushSock r
          else do
            s <- socket Push
-           _ <- connect s (T.unpack (unAddr x))
+           _ <- connect s (unAddr x)
            pure $! AddrToPushSock $! Map.insert x (PushSock s) r
   r' `seq` addNewAddrs r' xs
 
@@ -210,9 +213,9 @@ tryGetMsgs m i0 = do
 
 ------------------------------------------------------------------------------
 
-ztprint :: [Text] -> ZMQ z ()
-ztprint _ = pure () -- liftIO . tprint
+ztprint :: Addr Address -> [Text] -> ZMQ z ()
+ztprint _ _ = pure () -- liftIO . tprint
 
-tprint :: [Text] -> IO ()
+tprint :: [Prelude.String] -> IO ()
 tprint _  = pure () -- print
 
