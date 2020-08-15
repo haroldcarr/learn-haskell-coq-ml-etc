@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a31e65546776ecfbf88467969ec038ae0d6e8989eb00d1c4c5c6b98c8dc9a93d
+-- hash: a0c748bf65dfd8ab2b1364ecec4f21e9b3aa9468e7860d4365a2b17f29af6f9b
 
 name:           xxx
 version:        0.1.0.0
@@ -18,7 +18,7 @@ library
       Paths_xxx
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -O2
   build-depends:
       async
     , base >=4.7 && <5

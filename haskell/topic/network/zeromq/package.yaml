@@ -26,6 +26,8 @@ dependencies:
 
 library:
   source-dirs: src
+  ghc-options:
+  - -O2
 
 _exe-ghc-options:        &exe-ghc-options
   - -threaded
