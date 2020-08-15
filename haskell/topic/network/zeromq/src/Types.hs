@@ -44,18 +44,23 @@ data TransportEnv rpc addr = TransportEnv
   { inboxWrite :: !(UNB.InChan rpc)
   , outboxRead :: !(U.OutChan  (OutBoundMsg addr ByteString))
   , myAddr     :: !(Addr addr)
-  , addrList   :: ![Addr addr] }
+  , addrList   :: ![Addr addr]
+  , logErr     :: !([Text] -> IO ())
+  , logInfo    :: !([Text] -> IO ()) }
 
 setup
   :: Addr addr
+  -> (Addr addr -> [Text] -> IO ())
+  -> (Addr addr -> [Text] -> IO ())
   -> IO ( TransportEnv rpc addr
         , MVar (UNB.Stream rpc)
         , U.InChan (OutBoundMsg addr ByteString) )
-setup me = do
+setup me le li = do
   (inboxW , inboxR)  <- newNoBlockChan
   (outboxW, outboxR) <- U.newChan
-  pure ( TransportEnv inboxW outboxR me []
+  pure ( TransportEnv inboxW outboxR me [] (le me) (li me)
        , inboxR, outboxW )
+
 
 ------------------------------------------------------------------------------
 

@@ -39,32 +39,32 @@ runMsgServer
   -> IO ()
 runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
   zmqThread <- Async.async $ runZMQ $ do
-    ztprint myAddr ["launching ZMQ_THREAD"]
+    l logInfo ["launching ZMQ_THREAD"]
     -------------------------
-    ztprint myAddr ["launching ZMQ_RECEIVER"]
+    l logInfo ["launching ZMQ_RECEIVER"]
     zmqReceiver <- async $ do
       void (receiver te)
-      ztprint myAddr ["exiting ZMQ_RECEIVER"]
+      l logErr ["exiting ZMQ_RECEIVER"]
     -------------------------
     -- ensure the receive side is up
     liftIO (threadDelay 100000)
     -------------------------
-    ztprint myAddr ["launching ZMQ_SENDER"]
+    l logInfo ["launching ZMQ_SENDER"]
     zmqSender <- async $ do
-      rolodex <- addNewAddrs (ConnectionCache Map.empty) addrList
-      void (sender myAddr outboxRead rolodex)
-      ztprint myAddr ["exiting ZMQ_SENDER"]
+      cc <- addNewAddrs (ConnectionCache Map.empty) addrList
+      void (sender te cc)
+      l logErr ["exiting ZMQ_SENDER"]
     -------------------------
     liftIO $ Async.waitEitherCancel zmqReceiver zmqSender >>= \case
-      Left () -> tprint [show (unAddr myAddr), "ZMQ_RECEIVER ()"]
-      Right v -> tprint [show (unAddr myAddr), "ZMQ_SENDER", show v]
+      Left () -> logErr [show (unAddr myAddr), "ZMQ_RECEIVER ()"]
+      Right v -> logErr [show (unAddr myAddr), "ZMQ_SENDER", show v]
     -------------------------
-    ztprint myAddr ["exiting ZMQ_THREAD"]
+    l logErr ["exiting ZMQ_THREAD"]
 
   res <- Async.waitCatch zmqThread
   Async.cancel zmqThread >> case res of
-    Right () -> tprint [show (unAddr myAddr), "ZMQ_MSG_SERVER died Right ()"]
-    Left err -> tprint [show (unAddr myAddr), "ZMQ_MSG_SERVER died Left", show err]
+    Right () -> logErr [show (unAddr myAddr), "ZMQ_MSG_SERVER died Right ()"]
+    Left err -> logErr [show (unAddr myAddr), "ZMQ_MSG_SERVER died Left", show err]
 
 receiver
   :: (Show rpc, S.Serialize rpc)
@@ -72,37 +72,40 @@ receiver
   -> ZMQ z ()
 receiver TransportEnv {..} = do
   sock <- socket Pull
-  ztprint myAddr ["bind"]
+  l logInfo ["bind"]
   _ <- bind sock (unAddr myAddr)
   forever $ do
-    newMsg <- receive sock -- GET MESSAGE FROM ZMQ
-    ztprint myAddr ["recv", show newMsg]
+    newMsg <- receive sock -- GET MSG FROM ZMQ
+    l logInfo ["recv", show newMsg]
     case S.decode newMsg of
       Left err -> do
-        ztprint myAddr ["failed S.decode", show newMsg, show err]
+        l logErr ["failed S.decode", show newMsg, show err]
         liftIO yield
       Right r ->
         liftIO $ do
-          UNB.writeChan inboxWrite r
-          tprint [unAddr myAddr, "S.decode", show r]
+          UNB.writeChan inboxWrite r -- GIVE MSG TO SYSTEM
+          logInfo ["S.decode", show r]
           yield
 
 sender
-  :: Addr Address
-  -> U.OutChan (OutBoundMsg Address ByteString)
+  :: TransportEnv rpc Address
   -> ConnectionCache Address (Socket z Push)
   -> ZMQ z ()
-sender me outboxRead !r = do
-  rMvar <- liftIO (newMVar r)
+sender TransportEnv{..} !cc0 = do
+  ccMvar <- liftIO (newMVar cc0)
   forever $ do
-    (OutBoundMsg !addrs !msg) <- liftIO $! U.readChan outboxRead
-    ztprint me ["sending to", show addrs, "MSG", show msg]
-    r'      <- liftIO (takeMVar rMvar)
-    !newRol <- updateConnectionCache r' addrs
-    !socks  <- recipList newRol addrs
-    mapM_ (\s -> send s [] msg) socks -- GIVE MESSAGES TO ZMQ
-    liftIO (putMVar rMvar newRol)
-    ztprint me ["sent msg"]
+    (OutBoundMsg !addrs !msg) <- liftIO $! U.readChan outboxRead -- GET MSGS FROM SYSTEM
+    l logInfo ["sending to", show addrs, "MSG", show msg]
+    cc     <- liftIO (takeMVar ccMvar)
+    !cc'   <- updateConnectionCache cc addrs
+    !socks <- recipList cc' addrs
+    mapM_ (\s -> send s [] msg) socks -- GIVE MSGS TO ZMQ
+    liftIO (putMVar ccMvar cc')
+    l logInfo ["sent msg"]
+
+l :: ([Text] -> IO ())
+  -> ([Text] -> ZMQ z ())
+l f x = liftIO (f x)
 
 ------------------------------------------------------------------------------
 
@@ -144,16 +147,8 @@ recipList
   :: ConnectionCache Address (Socket z Push)
   -> Recipients Address
   -> ZMQ z [Socket z Push]
-recipList (ConnectionCache r) = \case
-  RAll        -> pure $! unConnection <$> Map.elems r
-  RSome addrs -> pure $! unConnection . (r Map.!) <$> Set.toList addrs
-  ROne  addr  -> pure $! unConnection <$> [r Map.! addr]
-
-------------------------------------------------------------------------------
-
-ztprint :: Addr Address -> [Text] -> ZMQ z ()
-ztprint _ _ = pure () -- liftIO . tprint
-
-tprint :: [Prelude.String] -> IO ()
-tprint _  = pure () -- print
+recipList (ConnectionCache m) = \case
+  RAll        -> pure $! unConnection <$> Map.elems m
+  RSome addrs -> pure $! unConnection . (m Map.!) <$> Set.toList addrs
+  ROne  addr  -> pure $! unConnection <$> [m Map.! addr]
 

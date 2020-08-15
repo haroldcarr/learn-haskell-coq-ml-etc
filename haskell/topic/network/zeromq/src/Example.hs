@@ -22,10 +22,12 @@ instance S.Serialize SignedRPC
 
 main :: IO ()
 main  = do
-  let a = Addr "tcp://127.0.0.1:10000"
-      b = Addr "tcp://127.0.0.1:10001"
-  (at, ainr, aobw) <- setup a
-  (bt, binr, bobw) <- setup b
+  let a      = Addr "tcp://127.0.0.1:10000"
+      b      = Addr "tcp://127.0.0.1:10001"
+      le _ _ = pure ()
+      li _ _ = pure ()
+  (at, ainr, aobw) <- setup a le li
+  (bt, binr, bobw) <- setup b le li
   runMsgServer (at :: TransportEnv SignedRPC Address)
   runMsgServer (bt :: TransportEnv SignedRPC Address)
   Async.concurrently_
