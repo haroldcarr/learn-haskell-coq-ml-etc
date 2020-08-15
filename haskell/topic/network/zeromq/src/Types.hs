@@ -63,7 +63,7 @@ setup me le li = do
        , inboxR, outboxW )
 
 -- Returns Nothing if all addresses in cache.
--- Returns Just set of address NOT in cache.
+-- Returns Just set of addresses NOT in cache.
 checkExistingConnections
   :: Ord addr
   => ConnectionCache addr conn
