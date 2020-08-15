@@ -140,41 +140,44 @@ updateConnectionCache
   :: ConnectionCache Address (Socket z Push)
   -> Recipients Address
   -> ZMQ z (ConnectionCache Address (Socket z Push))
-updateConnectionCache r@(ConnectionCache !_rol) RAll = pure $! r
-updateConnectionCache r@(ConnectionCache !rol) (RSome !addrs) =
-  if Set.isSubsetOf addrs $! Map.keysSet rol
-  then pure $! r
-  else do
-    !a <- addNewAddrs r $! Set.toList addrs
-    pure $! a
-updateConnectionCache r@(ConnectionCache !rol) (ROne !addr) =
-  if Set.member addr $! Map.keysSet rol
-  then pure $! r
-  else do
-    !a <- addNewAddrs r [addr]
-    pure $! a
+updateConnectionCache cc@(ConnectionCache !m) = \case
+  RAll -> pure $! cc
+  RSome !addrs ->
+    if Set.isSubsetOf addrs $! Map.keysSet m
+    then pure $! cc
+    else do
+      !cc' <- addNewAddrs cc $! Set.toList addrs
+      pure $! cc'
+  ROne !addr ->
+    if Set.member addr $! Map.keysSet m
+    then pure $! cc
+    else do
+      !cc' <- addNewAddrs cc [addr]
+      pure $! cc'
 
 addNewAddrs
   :: ConnectionCache Address (Socket z Push)
   -> [Addr Address]
   -> ZMQ z (ConnectionCache Address (Socket z Push))
-addNewAddrs !r [] = pure r
-addNewAddrs (ConnectionCache !r) (x:xs) = do
-  !r' <- if Map.member x r
-         then pure $! ConnectionCache r
-         else do
-           s <- socket Push
-           _ <- connect s (unAddr x)
-           pure $! ConnectionCache $! Map.insert x (Connection s) r
-  r' `seq` addNewAddrs r' xs
+addNewAddrs cc@(ConnectionCache !m) = \case
+  [] -> pure cc
+  (addr:addrs) -> do
+    !cc' <- if Map.member addr m
+            then pure $! ConnectionCache m
+            else do
+              s <- socket Push
+              _ <- connect s (unAddr addr)
+              pure $! ConnectionCache $! Map.insert addr (Connection s) m
+    cc' `seq` addNewAddrs cc' addrs
 
 recipList
   :: ConnectionCache Address (Socket z Push)
   -> Recipients Address
   -> ZMQ z [Socket z Push]
-recipList (ConnectionCache r) RAll          = pure $! unConnection <$> Map.elems r
-recipList (ConnectionCache r) (RSome addrs) = pure $! unConnection . (r Map.!) <$> Set.toList addrs
-recipList (ConnectionCache r) (ROne addr)   = pure $! unConnection <$> [r Map.! addr]
+recipList (ConnectionCache r) = \case
+  RAll        -> pure $! unConnection <$> Map.elems r
+  RSome addrs -> pure $! unConnection . (r Map.!) <$> Set.toList addrs
+  ROne  addr  -> pure $! unConnection <$> [r Map.! addr]
 
 ------------------------------------------------------------------------------
 
