@@ -6,6 +6,7 @@ module Example where
 
 ------------------------------------------------------------------------------
 import           Lib
+import           Types
 ------------------------------------------------------------------------------
 import qualified Control.Concurrent.Async      as Async
 import qualified Control.Concurrent.Chan.Unagi as U
