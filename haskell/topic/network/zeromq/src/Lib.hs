@@ -51,7 +51,7 @@ runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
     -------------------------
     l logInfo ["launching ZMQ_SENDER"]
     zmqSender <- async $ do
-      cc <- addNewAddrs (ConnectionCache Map.empty) addrList
+      cc <- addNewAddrs (ConnectionCache Map.empty) (Set.fromList addrList)
       void (sender te cc)
       l logErr ["exiting ZMQ_SENDER"]
     -------------------------
@@ -113,35 +113,19 @@ updateConnectionCache
   :: ConnectionCache Address (Socket z Push)
   -> Recipients Address
   -> ZMQ z (ConnectionCache Address (Socket z Push))
-updateConnectionCache cc@(ConnectionCache !m) = \case
-  RAll -> pure $! cc
-  RSome !addrs ->
-    if Set.isSubsetOf addrs $! Map.keysSet m
-    then pure $! cc
-    else do
-      !cc' <- addNewAddrs cc $! Set.toList addrs
-      pure $! cc'
-  ROne !addr ->
-    if Set.member addr $! Map.keysSet m
-    then pure $! cc
-    else do
-      !cc' <- addNewAddrs cc [addr]
-      pure $! cc'
+updateConnectionCache cc rs =
+  maybe (pure cc) (addNewAddrs cc) (checkExistingConnections cc rs)
 
 addNewAddrs
   :: ConnectionCache Address (Socket z Push)
-  -> [Addr Address]
+  -> Set.Set (Addr Address)
   -> ZMQ z (ConnectionCache Address (Socket z Push))
-addNewAddrs cc@(ConnectionCache !m) = \case
-  [] -> pure cc
-  (addr:addrs) -> do
-    !cc' <- if Map.member addr m
-            then pure $! ConnectionCache m
-            else do
-              s <- socket Push
-              _ <- connect s (unAddr addr)
-              pure $! ConnectionCache $! Map.insert addr (Connection s) m
-    cc' `seq` addNewAddrs cc' addrs
+addNewAddrs (ConnectionCache !m0) addrs = ConnectionCache <$> foldM go m0 addrs
+ where
+  go m addr = do
+    s <- socket Push
+    _ <- connect s (unAddr addr)
+    pure $! Map.insert addr (Connection s) m
 
 recipListZ
   :: ConnectionCache Address (Socket z Push)

@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
@@ -60,6 +61,24 @@ setup me le li = do
   (outboxW, outboxR) <- U.newChan
   pure ( TransportEnv inboxW outboxR me [] (le me) (li me)
        , inboxR, outboxW )
+
+-- Returns Nothing if all addresses in cache.
+-- Returns Just set of address NOT in cache.
+checkExistingConnections
+  :: Ord addr
+  => ConnectionCache addr conn
+  -> Recipients addr
+  -> Maybe (Set.Set (Addr addr))
+checkExistingConnections (ConnectionCache !m) = \case
+  RAll -> Nothing
+  RSome !addrs ->
+    if Set.isSubsetOf addrs $! Map.keysSet m
+    then Nothing
+    else Just $! Set.difference addrs (Map.keysSet m)
+  ROne !addr ->
+    if Set.member addr $! Map.keysSet m
+    then Nothing
+    else Just $! Set.singleton addr
 
 recipList
   :: (MonadIO m, Ord addr)
