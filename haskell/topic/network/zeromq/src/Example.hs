@@ -5,7 +5,7 @@
 module Example where
 
 ------------------------------------------------------------------------------
-import           ConnectionCache
+import           Init
 import           Lib
 import           NoBlockChan
 import           Types
@@ -28,8 +28,8 @@ main  = do
       b      = Addr "tcp://127.0.0.1:10001"
       le _ _ = pure ()
       li _ _ = pure ()
-  (at, ainr, aobw) <- setup a le li
-  (bt, binr, bobw) <- setup b le li
+  (at, ainr, aobw) <- initialize a le li
+  (bt, binr, bobw) <- initialize b le li
   runMsgServer (at :: TransportEnv SignedRPC Address)
   runMsgServer (bt :: TransportEnv SignedRPC Address)
   Async.concurrently_

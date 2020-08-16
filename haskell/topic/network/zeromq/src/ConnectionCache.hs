@@ -1,5 +1,4 @@
 {-# LANGUAGE BangPatterns        #-}
-{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE RankNTypes          #-}
@@ -8,25 +7,18 @@
 module ConnectionCache where
 
 ------------------------------------------------------------------------------
+import           Types
+------------------------------------------------------------------------------
 import           Control.Monad.State.Strict
 import qualified Data.Map.Strict            as Map
 import           Data.Serialize.Text        ()
 import qualified Data.Set                   as Set
-import           GHC.Generics               (Generic)
 import           Protolude                  hiding (async, newChan, readChan,
                                              to)
 ------------------------------------------------------------------------------
 
-newtype Addr            a   = Addr            {unAddr            :: a} deriving (Eq, Ord, Show)
 newtype Connection      c   = Connection      {unConnection      :: c}
 newtype ConnectionCache a c = ConnectionCache {unConnectionCache :: Map.Map (Addr a)(Connection c)}
-
--- | who to send a message to
-data Recipients a
-  = RAll
-  | RSome !(Set.Set (Addr a))
-  | ROne  !(Addr a)
-  deriving (Eq, Generic, Show)
 
 -- | Returns Nothing if all addresses in cache.
 -- Returns Just set of addresses NOT in cache.
