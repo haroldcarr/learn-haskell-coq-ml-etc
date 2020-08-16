@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 019f5f33973587bf3c95c34116c33ef235559b1d19d462e4af479affc2885988
+-- hash: 28fa462e711ae9723df0af9220d2c3f7eed73eaf831fcab8e8aa3f77a1fb93a8
 
 name:           xxx
 version:        0.1.0.0
@@ -12,6 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      ConnectionCache
       Example
       Lib
       NoBlockChan

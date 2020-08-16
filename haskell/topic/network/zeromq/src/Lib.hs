@@ -9,6 +9,7 @@
 module Lib where
 
 ------------------------------------------------------------------------------
+import           ConnectionCache
 import           Types
 ------------------------------------------------------------------------------
 import           Control.Concurrent                       (forkIO, newMVar,
@@ -98,7 +99,7 @@ sender TransportEnv{..} !cc0 = do
     l logInfo ["sending to", show addrs, "MSG", show msg]
     cc     <- liftIO (takeMVar ccMvar)
     !cc'   <- updateConnectionCache cc addrs
-    !socks <- recipList cc' addrs
+    !socks <- getConnections cc' addrs
     mapM_ (\s -> send s [] msg) socks -- GIVE MSGS TO ZMQ
     liftIO (putMVar ccMvar cc')
     l logInfo ["sent msg"]

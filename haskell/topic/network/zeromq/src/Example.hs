@@ -5,6 +5,7 @@
 module Example where
 
 ------------------------------------------------------------------------------
+import           ConnectionCache
 import           Lib
 import           NoBlockChan
 import           Types

@@ -1,6 +1,4 @@
-{-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE DeriveGeneric       #-}
-{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -8,6 +6,7 @@
 module Types where
 
 ------------------------------------------------------------------------------
+import           ConnectionCache
 import           NoBlockChan
 ------------------------------------------------------------------------------
 import qualified Control.Concurrent.Chan.Unagi            as U
@@ -21,17 +20,6 @@ import           Protolude                                hiding (async,
                                                            newChan, readChan,
                                                            to)
 ------------------------------------------------------------------------------
-
-newtype Addr            a   = Addr            {unAddr            :: a} deriving (Eq, Ord, Show)
-newtype Connection      c   = Connection      {unConnection      :: c}
-newtype ConnectionCache a c = ConnectionCache {unConnectionCache :: Map.Map (Addr a)(Connection c)}
-
--- | who to send a message to
-data Recipients a
-  = RAll
-  | RSome !(Set.Set (Addr a))
-  | ROne  !(Addr a)
-  deriving (Eq, Generic, Show)
 
 data OutBoundMsg addr msg = OutBoundMsg
   { obmTo   :: !(Recipients addr)
@@ -58,32 +46,3 @@ setup me le li = do
   (outboxW, outboxR) <- U.newChan
   pure ( TransportEnv inboxW outboxR me [] (le me) (li me)
        , inboxR, outboxW )
-
--- Returns Nothing if all addresses in cache.
--- Returns Just set of addresses NOT in cache.
-checkExistingConnections
-  :: Ord addr
-  => ConnectionCache addr conn
-  -> Recipients addr
-  -> Maybe (Set.Set (Addr addr))
-checkExistingConnections (ConnectionCache !m) = \case
-  RAll -> Nothing
-  RSome !addrs ->
-    if Set.isSubsetOf addrs $! Map.keysSet m
-    then Nothing
-    else Just $! Set.difference addrs (Map.keysSet m)
-  ROne !addr ->
-    if Set.member addr $! Map.keysSet m
-    then Nothing
-    else Just $! Set.singleton addr
-
-recipList
-  :: (MonadIO m, Ord addr)
-  => ConnectionCache addr conn
-  -> Recipients addr
-  -> m [conn]
-recipList (ConnectionCache m) = \case
-  RAll        -> pure $! unConnection <$> Map.elems m
-  RSome addrs -> pure $! unConnection . (m Map.!) <$> Set.toList addrs
-  ROne  addr  -> pure $! unConnection <$> [m Map.! addr]
-
