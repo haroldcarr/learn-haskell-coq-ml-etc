@@ -6,7 +6,7 @@
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Lib where
+module ZMQ where
 
 ------------------------------------------------------------------------------
 import           ConnectionCache

@@ -6,9 +6,9 @@ module Example where
 
 ------------------------------------------------------------------------------
 import           Init
-import           Lib
 import           NoBlockChan
 import           Types
+import           ZMQ
 ------------------------------------------------------------------------------
 import qualified Control.Concurrent.Async      as Async
 import qualified Control.Concurrent.Chan.Unagi as U

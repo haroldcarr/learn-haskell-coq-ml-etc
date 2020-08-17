@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6fbe8612df7234ebc676ea5a1b90c2e7853202fa45ccdcee4f440750fce6f6aa
+-- hash: 6c372b516a140bb43ae90c754f47eefdc40e583b19f1fab7c69d410f109c7eb6
 
 name:           xxx
 version:        0.1.0.0
@@ -15,9 +15,9 @@ library
       ConnectionCache
       Example
       Init
-      Lib
       NoBlockChan
       Types
+      ZMQ
   other-modules:
       Paths_xxx
   hs-source-dirs:
