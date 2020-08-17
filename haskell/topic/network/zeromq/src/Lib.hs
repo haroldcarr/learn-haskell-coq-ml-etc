@@ -23,7 +23,6 @@ import           Control.Monad.State.Strict
 import qualified Data.Map.Strict                          as Map
 import qualified Data.Serialize                           as S
 import           Data.Serialize.Text                      ()
-import qualified Data.Set                                 as Set
 import qualified Prelude
 import           Protolude                                hiding (async,
                                                            newChan, readChan,
@@ -52,7 +51,7 @@ runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
     -------------------------
     l logInfo ["launching ZMQ_SENDER"]
     zmqSender <- async $ do
-      cc <- addNewAddrs (ConnectionCache Map.empty) (Set.fromList addrList)
+      (_, _, cc) <- mkNewConnections (ConnectionCache Map.empty) addrList
       void (sender te cc)
       l logErr ["exiting ZMQ_SENDER"]
     -------------------------
@@ -97,10 +96,9 @@ sender TransportEnv{..} !cc0 = do
   forever $ do
     (OutBoundMsg !addrs !msg) <- liftIO $! U.readChan outboxRead -- GET MSGS FROM SYSTEM
     l logInfo ["sending to", show addrs, "MSG", show msg]
-    cc     <- liftIO (takeMVar ccMvar)
-    !cc'   <- updateConnectionCache cc addrs
-    !socks <- getConnections cc' addrs
-    mapM_ (\s -> send s [] msg) socks -- GIVE MSGS TO ZMQ
+    !cc            <- liftIO (takeMVar ccMvar)
+    (_, !cs, !cc') <- getOrMakeConnection cc addrs
+    mapM_ (\(_,s) -> send s [] msg) cs -- GIVE MSGS TO ZMQ
     liftIO (putMVar ccMvar cc')
     l logInfo ["sent msg"]
 
@@ -110,20 +108,30 @@ l f x = liftIO (f x)
 
 ------------------------------------------------------------------------------
 
-updateConnectionCache
+-- returns ([could not connect], [connections], cache)
+-- TODO: ZMQ viz could not connect
+-- TODO: connections are (address, socket) - address for debugging
+getOrMakeConnection
   :: ConnectionCache Address (Socket z Push)
-  -> Recipients Address
-  -> ZMQ z (ConnectionCache Address (Socket z Push))
-updateConnectionCache !cc !rs =
-  maybe (pure cc) (addNewAddrs cc) (checkExistingConnections cc rs)
+  -> [Address]
+  -> ZMQ z ([Address], [(Address, Socket z Push)], ConnectionCache Address (Socket z Push))
+getOrMakeConnection !cc peers  =
+  case getConnections cc peers of
+    ([],          connections) -> pure ([], connections, cc)
+    (needConnect, connections) -> do
+      (cannotConnect, newConnections, cc') <- mkNewConnections cc needConnect
+      pure (cannotConnect, connections ++ newConnections, cc')
 
-addNewAddrs
+mkNewConnections
   :: ConnectionCache Address (Socket z Push)
-  -> Set.Set Address
-  -> ZMQ z (ConnectionCache Address (Socket z Push))
-addNewAddrs (ConnectionCache !m0) !addrs = ConnectionCache <$> foldM go m0 addrs
+  -> [Address]
+  -> ZMQ z ([Address], [(Address, Socket z Push)], ConnectionCache Address (Socket z Push))
+mkNewConnections (ConnectionCache !m0) !addrs = do
+  (absent, present, m) <- foldM go ([], [], m0) addrs
+  pure $! (absent, present, ConnectionCache m)
  where
-  go !m !addr = do
+  go (!ab, !p, !m) !address = do
     !s <- socket Push
-    void (connect s addr)
-    pure $! Map.insert addr s m
+    void (connect s address)
+    pure $! (ab, (address, s):p, Map.insert address s m)
+

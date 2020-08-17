@@ -9,22 +9,14 @@ module Types where
 import qualified Control.Concurrent.Chan.Unagi            as U
 import qualified Control.Concurrent.Chan.Unagi.NoBlocking as UNB
 import           Data.Serialize.Text                      ()
-import qualified Data.Set                                 as Set
 import           GHC.Generics                             (Generic)
 import           Protolude                                hiding (async,
                                                            newChan, readChan,
                                                            to)
 ------------------------------------------------------------------------------
 
--- | who to send a message to
-data Recipients a
-  = RAll
-  | RSome !(Set.Set a)
-  | ROne  !a
-  deriving (Eq, Generic, Show)
-
 data OutBoundMsg addr msg = OutBoundMsg
-  { obmTo   :: !(Recipients addr)
+  { obmTo   :: ![addr]
   , obmBody :: !msg
   } deriving (Eq, Generic)
 

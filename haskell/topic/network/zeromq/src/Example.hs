@@ -42,7 +42,7 @@ main  = do
  where
   sendMsgs to c =
     forM_ [1::Int .. limit] $ \i ->
-      U.writeChan c (OutBoundMsg (ROne to) (S.encode (SignedRPC i)))
+      U.writeChan c (OutBoundMsg [to] (S.encode (SignedRPC i)))
   recvMsgs mvc = do
     ms <- tryGetMsgs mvc 2000
     for_ ms $ \m@(SignedRPC i) ->
