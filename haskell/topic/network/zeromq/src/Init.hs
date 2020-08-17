@@ -19,9 +19,9 @@ initialize
   :: addr
   -> (addr -> [Text] -> IO ())
   -> (addr -> [Text] -> IO ())
-  -> IO ( TransportEnv rpc addr
-        , MVar (UNB.Stream rpc)
-        , U.InChan (OutBoundMsg addr ByteString) )
+  -> IO ( TransportEnv addr
+        , MVar (UNB.Stream ByteString)
+        , U.InChan (OutBoundMsg addr) )
 initialize me le li = do
   (inboxW , inboxR)  <- newNoBlockChan
   (outboxW, outboxR) <- U.newChan

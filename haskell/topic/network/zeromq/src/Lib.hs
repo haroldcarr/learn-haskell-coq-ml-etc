@@ -21,8 +21,6 @@ import qualified Control.Concurrent.Chan.Unagi            as U
 import qualified Control.Concurrent.Chan.Unagi.NoBlocking as UNB
 import           Control.Monad.State.Strict
 import qualified Data.Map.Strict                          as Map
-import qualified Data.Serialize                           as S
-import           Data.Serialize.Text                      ()
 import qualified Prelude
 import           Protolude                                hiding (async,
                                                            newChan, readChan,
@@ -34,8 +32,7 @@ import           System.ZMQ4.Monadic
 type Address = Prelude.String -- because that is what ZMQ4 uses
 
 runMsgServer
-  :: (Show rpc, S.Serialize rpc)
-  => TransportEnv rpc Address
+  :: TransportEnv Address
   -> IO ()
 runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
   zmqThread <- Async.async $ runZMQ $ do
@@ -67,8 +64,7 @@ runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
     Left err -> logErr [show myAddr, "ZMQ_MSG_SERVER died Left", show err]
 
 receiver
-  :: (Show rpc, S.Serialize rpc)
-  => TransportEnv rpc Address
+  :: TransportEnv Address
   -> ZMQ z ()
 receiver TransportEnv {..} = do
   sock <- socket Pull
@@ -77,18 +73,12 @@ receiver TransportEnv {..} = do
   forever $ do
     newMsg <- receive sock -- GET MSG FROM ZMQ
     l logInfo ["recv", show newMsg]
-    case S.decode newMsg of
-      Left err -> do
-        l logErr ["failed S.decode", show newMsg, show err]
-        liftIO yield
-      Right r ->
-        liftIO $ do
-          UNB.writeChan inboxWrite r -- GIVE MSG TO SYSTEM
-          logInfo ["S.decode", show r]
-          yield
+    liftIO $ do
+      UNB.writeChan inboxWrite newMsg -- GIVE MSG TO SYSTEM
+      yield
 
 sender
-  :: TransportEnv rpc Address
+  :: TransportEnv Address
   -> ConnectionCache Address (Socket z Push)
   -> ZMQ z ()
 sender TransportEnv{..} !cc0 = do

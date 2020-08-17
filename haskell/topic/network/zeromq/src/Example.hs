@@ -30,8 +30,8 @@ main  = do
       li _ _ = pure ()
   (at, ainr, aobw) <- initialize a le li
   (bt, binr, bobw) <- initialize b le li
-  runMsgServer (at :: TransportEnv SignedRPC Address)
-  runMsgServer (bt :: TransportEnv SignedRPC Address)
+  runMsgServer (at :: TransportEnv Address)
+  runMsgServer (bt :: TransportEnv Address)
   Async.concurrently_
     (sendMsgs b aobw)
     (Async.concurrently_
@@ -45,10 +45,13 @@ main  = do
       U.writeChan c (OutBoundMsg [to] (S.encode (SignedRPC i)))
   recvMsgs mvc = do
     ms <- tryGetMsgs mvc 2000
-    for_ ms $ \m@(SignedRPC i) ->
-      -- print (["receive", "decoded", show m]::[Text])
-      when (i == limit) $ do
-        print (["receive", "decoded", show m]::[Text])
-        exitSuccess
+    for_ ms $ \m -> case S.decode m of
+      Left err ->
+        print ["failed S.decode"::Text, show m, show err]
+      Right rpc@(SignedRPC i) ->
+        -- print (["receive", "decoded", show m]::[Text])
+        when (i == limit) $ do
+          print (["receive", "decoded", show rpc]::[Text])
+          exitSuccess
     threadDelay 10000
     recvMsgs mvc

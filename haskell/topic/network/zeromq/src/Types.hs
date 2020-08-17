@@ -15,14 +15,14 @@ import           Protolude                                hiding (async,
                                                            to)
 ------------------------------------------------------------------------------
 
-data OutBoundMsg addr msg = OutBoundMsg
+data OutBoundMsg addr = OutBoundMsg
   { obmTo   :: ![addr]
-  , obmBody :: !msg
+  , obmBody :: !ByteString
   } deriving (Eq, Generic)
 
-data TransportEnv rpc addr = TransportEnv
-  { inboxWrite :: !(UNB.InChan rpc)
-  , outboxRead :: !(U.OutChan  (OutBoundMsg addr ByteString))
+data TransportEnv addr = TransportEnv
+  { inboxWrite :: !(UNB.InChan ByteString)
+  , outboxRead :: !(U.OutChan  (OutBoundMsg addr))
   , myAddr     :: !addr
   , addrList   :: ![addr]
   , logErr     :: !([Text] -> IO ())
