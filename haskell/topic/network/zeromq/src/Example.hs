@@ -24,8 +24,8 @@ instance S.Serialize SignedRPC
 
 main :: IO ()
 main  = do
-  let a      = Addr "tcp://127.0.0.1:10000"
-      b      = Addr "tcp://127.0.0.1:10001"
+  let a      = "tcp://127.0.0.1:10000"
+      b      = "tcp://127.0.0.1:10001"
       le _ _ = pure ()
       li _ _ = pure ()
   (at, ainr, aobw) <- initialize a le li

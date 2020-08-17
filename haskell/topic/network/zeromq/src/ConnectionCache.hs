@@ -17,8 +17,8 @@ import           Protolude                  hiding (async, newChan, readChan,
                                              to)
 ------------------------------------------------------------------------------
 
-newtype Connection      c   = Connection      {unConnection      :: c}
-newtype ConnectionCache a c = ConnectionCache {unConnectionCache :: Map.Map (Addr a)(Connection c)}
+newtype Connection      c   = Connection      { unConnection      :: c }
+newtype ConnectionCache a c = ConnectionCache { unConnectionCache :: Map.Map a c }
 
 -- | Returns Nothing if all addresses in cache.
 -- Returns Just set of addresses NOT in cache.
@@ -26,7 +26,7 @@ checkExistingConnections
   :: Ord addr
   => ConnectionCache addr conn
   -> Recipients addr
-  -> Maybe (Set.Set (Addr addr))
+  -> Maybe (Set.Set addr)
 checkExistingConnections (ConnectionCache !m) = \case
   RAll -> Nothing
   RSome !addrs ->
@@ -45,7 +45,7 @@ getConnections
   -> Recipients addr
   -> m [conn]
 getConnections (ConnectionCache m) = \case
-  RAll        -> pure $! unConnection <$> Map.elems m
-  RSome addrs -> pure $! unConnection . (m Map.!) <$> Set.toList addrs
-  ROne  addr  -> pure $! unConnection <$> [m Map.! addr]
+  RAll        -> pure $! Map.elems m
+  RSome addrs -> pure $! (m Map.!) <$> Set.toList addrs
+  ROne  addr  -> pure    [m Map.! addr]
 

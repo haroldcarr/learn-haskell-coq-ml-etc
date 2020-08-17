@@ -16,9 +16,9 @@ import           Protolude                                hiding (async,
 ------------------------------------------------------------------------------
 
 initialize
-  :: Addr addr
-  -> (Addr addr -> [Text] -> IO ())
-  -> (Addr addr -> [Text] -> IO ())
+  :: addr
+  -> (addr -> [Text] -> IO ())
+  -> (addr -> [Text] -> IO ())
   -> IO ( TransportEnv rpc addr
         , MVar (UNB.Stream rpc)
         , U.InChan (OutBoundMsg addr ByteString) )

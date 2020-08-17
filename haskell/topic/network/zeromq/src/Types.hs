@@ -16,13 +16,11 @@ import           Protolude                                hiding (async,
                                                            to)
 ------------------------------------------------------------------------------
 
-newtype Addr a = Addr { unAddr :: a } deriving (Eq, Ord, Show)
-
 -- | who to send a message to
 data Recipients a
   = RAll
-  | RSome !(Set.Set (Addr a))
-  | ROne  !(Addr a)
+  | RSome !(Set.Set a)
+  | ROne  !a
   deriving (Eq, Generic, Show)
 
 data OutBoundMsg addr msg = OutBoundMsg
@@ -33,7 +31,7 @@ data OutBoundMsg addr msg = OutBoundMsg
 data TransportEnv rpc addr = TransportEnv
   { inboxWrite :: !(UNB.InChan rpc)
   , outboxRead :: !(U.OutChan  (OutBoundMsg addr ByteString))
-  , myAddr     :: !(Addr addr)
-  , addrList   :: ![Addr addr]
+  , myAddr     :: !addr
+  , addrList   :: ![addr]
   , logErr     :: !([Text] -> IO ())
   , logInfo    :: !([Text] -> IO ()) }

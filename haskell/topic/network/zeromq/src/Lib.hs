@@ -57,15 +57,15 @@ runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
       l logErr ["exiting ZMQ_SENDER"]
     -------------------------
     liftIO $ Async.waitEitherCancel zmqReceiver zmqSender >>= \case
-      Left () -> logErr [show (unAddr myAddr), "ZMQ_RECEIVER ()"]
-      Right v -> logErr [show (unAddr myAddr), "ZMQ_SENDER", show v]
+      Left () -> logErr [show myAddr, "ZMQ_RECEIVER ()"]
+      Right v -> logErr [show myAddr, "ZMQ_SENDER", show v]
     -------------------------
     l logErr ["exiting ZMQ_THREAD"]
 
   res <- Async.waitCatch zmqThread
   Async.cancel zmqThread >> case res of
-    Right () -> logErr [show (unAddr myAddr), "ZMQ_MSG_SERVER died Right ()"]
-    Left err -> logErr [show (unAddr myAddr), "ZMQ_MSG_SERVER died Left", show err]
+    Right () -> logErr [show myAddr, "ZMQ_MSG_SERVER died Right ()"]
+    Left err -> logErr [show myAddr, "ZMQ_MSG_SERVER died Left", show err]
 
 receiver
   :: (Show rpc, S.Serialize rpc)
@@ -74,7 +74,7 @@ receiver
 receiver TransportEnv {..} = do
   sock <- socket Pull
   l logInfo ["bind"]
-  _ <- bind sock (unAddr myAddr)
+  _ <- bind sock myAddr
   forever $ do
     newMsg <- receive sock -- GET MSG FROM ZMQ
     l logInfo ["recv", show newMsg]
@@ -119,11 +119,11 @@ updateConnectionCache !cc !rs =
 
 addNewAddrs
   :: ConnectionCache Address (Socket z Push)
-  -> Set.Set (Addr Address)
+  -> Set.Set Address
   -> ZMQ z (ConnectionCache Address (Socket z Push))
 addNewAddrs (ConnectionCache !m0) !addrs = ConnectionCache <$> foldM go m0 addrs
  where
   go !m !addr = do
     !s <- socket Push
-    void (connect s (unAddr addr))
-    pure $! Map.insert addr (Connection s) m
+    void (connect s addr)
+    pure $! Map.insert addr s m
