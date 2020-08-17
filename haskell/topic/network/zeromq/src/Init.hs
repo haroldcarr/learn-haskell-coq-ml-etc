@@ -16,9 +16,9 @@ import           Protolude                                hiding (async,
 ------------------------------------------------------------------------------
 
 initialize
-  :: addr
-  -> (addr -> [Text] -> IO ())
-  -> (addr -> [Text] -> IO ())
+  :: addr -- listen address
+  -> (addr -> [Text] -> IO ()) -- logErr
+  -> (addr -> [Text] -> IO ()) -- logInfo
   -> IO ( TransportEnv addr
         , MVar (UNB.Stream ByteString)
         , U.InChan (OutBoundMsg addr) )
@@ -26,5 +26,6 @@ initialize me le li = do
   (inboxW , inboxR)  <- newNoBlockChan
   (outboxW, outboxR) <- U.newChan
   pure ( TransportEnv inboxW outboxR me [] (le me) (li me)
-       , inboxR, outboxW )
+       , inboxR
+       , outboxW )
 

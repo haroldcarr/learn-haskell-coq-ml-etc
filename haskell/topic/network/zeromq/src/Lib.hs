@@ -36,32 +36,32 @@ runMsgServer
   -> IO ()
 runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
   zmqThread <- Async.async $ runZMQ $ do
-    l logInfo ["launching ZMQ_THREAD"]
+    l logInfo ["starting zmqThread"]
     -------------------------
-    l logInfo ["launching ZMQ_RECEIVER"]
+    l logInfo ["starting zmqReceiver"]
     zmqReceiver <- async $ do
       void (receiver te)
-      l logErr ["exiting ZMQ_RECEIVER"]
+      l logErr ["exiting zmqReceiver"]
     -------------------------
     -- ensure the receive side is up
     liftIO (threadDelay 100000)
     -------------------------
-    l logInfo ["launching ZMQ_SENDER"]
+    l logInfo ["starting zmqSender"]
     zmqSender <- async $ do
       (_, _, cc) <- mkNewConnections (ConnectionCache Map.empty) addrList
       void (sender te cc)
-      l logErr ["exiting ZMQ_SENDER"]
+      l logErr ["exiting zmqSender"]
     -------------------------
     liftIO $ Async.waitEitherCancel zmqReceiver zmqSender >>= \case
-      Left () -> logErr [show myAddr, "ZMQ_RECEIVER ()"]
-      Right v -> logErr [show myAddr, "ZMQ_SENDER", show v]
+      Left () -> logErr ["waitEitherCancel", "zmqReceiver ()"]
+      Right v -> logErr ["waitEitherCancel", "zmqSender", show v]
     -------------------------
-    l logErr ["exiting ZMQ_THREAD"]
+    l logErr ["exiting zmqThread"]
 
   res <- Async.waitCatch zmqThread
   Async.cancel zmqThread >> case res of
-    Right () -> logErr [show myAddr, "ZMQ_MSG_SERVER died Right ()"]
-    Left err -> logErr [show myAddr, "ZMQ_MSG_SERVER died Left", show err]
+    Right () -> logErr ["ZMQ runMsgServer died Right ()"]
+    Left err -> logErr ["ZMQ runMsgServer died Left", show err]
 
 receiver
   :: TransportEnv Address
@@ -71,7 +71,7 @@ receiver TransportEnv {..} = do
   l logInfo ["bind"]
   _ <- bind sock myAddr
   forever $ do
-    newMsg <- receive sock -- GET MSG FROM ZMQ
+    !newMsg <- receive sock -- GET MSG FROM ZMQ
     l logInfo ["recv", show newMsg]
     liftIO $ do
       UNB.writeChan inboxWrite newMsg -- GIVE MSG TO SYSTEM
@@ -88,7 +88,7 @@ sender TransportEnv{..} !cc0 = do
     l logInfo ["sending to", show addrs, "MSG", show msg]
     !cc            <- liftIO (takeMVar ccMvar)
     (_, !cs, !cc') <- getOrMakeConnection cc addrs
-    mapM_ (\(_,s) -> send s [] msg) cs -- GIVE MSGS TO ZMQ
+    mapM_ (\(_,!s) -> send s [] msg) cs -- GIVE MSGS TO ZMQ
     liftIO (putMVar ccMvar cc')
     l logInfo ["sent msg"]
 
@@ -105,7 +105,7 @@ getOrMakeConnection
   :: ConnectionCache Address (Socket z Push)
   -> [Address]
   -> ZMQ z ([Address], [(Address, Socket z Push)], ConnectionCache Address (Socket z Push))
-getOrMakeConnection !cc peers  =
+getOrMakeConnection !cc !peers  =
   case getConnections cc peers of
     ([],          connections) -> pure ([], connections, cc)
     (needConnect, connections) -> do
@@ -117,7 +117,7 @@ mkNewConnections
   -> [Address]
   -> ZMQ z ([Address], [(Address, Socket z Push)], ConnectionCache Address (Socket z Push))
 mkNewConnections (ConnectionCache !m0) !addrs = do
-  (absent, present, m) <- foldM go ([], [], m0) addrs
+  (!absent, !present, !m) <- foldM go ([], [], m0) addrs
   pure $! (absent, present, ConnectionCache m)
  where
   go (!ab, !p, !m) !address = do

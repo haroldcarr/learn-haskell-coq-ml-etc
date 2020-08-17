@@ -21,5 +21,5 @@ getConnections
 getConnections (ConnectionCache !m) = foldl' go ([],[])
  where
   go (!nic, !ic) !a = case Map.lookup a m of
-    Nothing -> (a:nic, ic)
-    Just c  -> (nic, (a,c):ic)
+    Nothing -> (a:nic,       ic)
+    Just c  -> (  nic, (a,c):ic)

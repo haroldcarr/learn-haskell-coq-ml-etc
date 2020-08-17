@@ -49,7 +49,6 @@ main  = do
       Left err ->
         print ["failed S.decode"::Text, show m, show err]
       Right rpc@(SignedRPC i) ->
-        -- print (["receive", "decoded", show m]::[Text])
         when (i == limit) $ do
           print (["receive", "decoded", show rpc]::[Text])
           exitSuccess
