@@ -29,8 +29,9 @@ main  = do
       le _ _     = pure ()
       li _ _     = pure ()
       useNoBlock = False -- rough time test say BLOCKING is faster
-  (at, ainrNB, ainr, aobw) <- initialize a le li useNoBlock
-  (bt, binrNB, binr, bobw) <- initialize b le li useNoBlock
+      useOBChan  = True
+  (at, ainrNB, ainr, aobw) <- initialize a le li useNoBlock useOBChan
+  (bt, binrNB, binr, bobw) <- initialize b le li useNoBlock useOBChan
   runMsgServer (at :: TransportEnv Address)
   runMsgServer (bt :: TransportEnv Address)
   Async.concurrently_
