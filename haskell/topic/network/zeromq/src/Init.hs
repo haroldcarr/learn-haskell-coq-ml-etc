@@ -19,13 +19,17 @@ initialize
   :: addr -- listen address
   -> (addr -> [Text] -> IO ()) -- logErr
   -> (addr -> [Text] -> IO ()) -- logInfo
+  -> Bool
   -> IO ( TransportEnv addr
         , MVar (UNB.Stream ByteString)
+        , U.OutChan ByteString
         , U.InChan (OutBoundMsg addr) )
-initialize me le li = do
-  (inboxW , inboxR)  <- newNoBlockChan
-  (outboxW, outboxR) <- U.newChan
-  pure ( TransportEnv inboxW outboxR me [] (le me) (li me)
+initialize me le li b = do
+  (inboxWNB, inboxRNB) <- newNoBlockChan
+  (inboxW  , inboxR)   <- U.newChan
+  (outboxW , outboxR)  <- U.newChan
+  pure ( TransportEnv inboxWNB inboxW outboxR me [] (le me) (li me) b
+       , inboxRNB
        , inboxR
        , outboxW )
 

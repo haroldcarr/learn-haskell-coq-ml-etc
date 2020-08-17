@@ -36,45 +36,48 @@ runMsgServer
   -> IO ()
 runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
   zmqThread <- Async.async $ runZMQ $ do
-    l logInfo ["starting zmqThread"]
+    l teLogInfo ["starting zmqThread"]
     -------------------------
-    l logInfo ["starting zmqReceiver"]
+    l teLogInfo ["starting zmqReceiver"]
     zmqReceiver <- async $ do
       void (receiver te)
-      l logErr ["exiting zmqReceiver"]
+      l teLogErr ["exiting zmqReceiver"]
     -------------------------
     -- ensure the receive side is up
     liftIO (threadDelay 100000)
     -------------------------
-    l logInfo ["starting zmqSender"]
+    l teLogInfo ["starting zmqSender"]
     zmqSender <- async $ do
-      (_, _, cc) <- mkNewConnections (ConnectionCache Map.empty) addrList
+      (_, _, cc) <- mkNewConnections (ConnectionCache Map.empty) teAddrList
       void (sender te cc)
-      l logErr ["exiting zmqSender"]
+      l teLogErr ["exiting zmqSender"]
     -------------------------
     liftIO $ Async.waitEitherCancel zmqReceiver zmqSender >>= \case
-      Left () -> logErr ["waitEitherCancel", "zmqReceiver ()"]
-      Right v -> logErr ["waitEitherCancel", "zmqSender", show v]
+      Left () -> teLogErr ["waitEitherCancel", "zmqReceiver ()"]
+      Right v -> teLogErr ["waitEitherCancel", "zmqSender", show v]
     -------------------------
-    l logErr ["exiting zmqThread"]
+    l teLogErr ["exiting zmqThread"]
 
   res <- Async.waitCatch zmqThread
   Async.cancel zmqThread >> case res of
-    Right () -> logErr ["ZMQ runMsgServer died Right ()"]
-    Left err -> logErr ["ZMQ runMsgServer died Left", show err]
+    Right () -> teLogErr ["ZMQ runMsgServer died Right ()"]
+    Left err -> teLogErr ["ZMQ runMsgServer died Left", show err]
 
 receiver
   :: TransportEnv Address
   -> ZMQ z ()
 receiver TransportEnv {..} = do
   sock <- socket Pull
-  l logInfo ["bind"]
-  _ <- bind sock myAddr
+  l teLogInfo ["bind"]
+  _ <- bind sock teMyAddr
   forever $ do
     !newMsg <- receive sock -- GET MSG FROM ZMQ
-    l logInfo ["recv", show newMsg]
+    l teLogInfo ["recv", show newMsg]
     liftIO $ do
-      UNB.writeChan inboxWrite newMsg -- GIVE MSG TO SYSTEM
+      -- GIVE MSG TO SYSTEM
+      if teUseNoBlock
+        then UNB.writeChan teInboxWriteNB newMsg
+        else   U.writeChan teInboxWrite   newMsg
       yield
 
 sender
@@ -84,13 +87,13 @@ sender
 sender TransportEnv{..} !cc0 = do
   ccMvar <- liftIO (newMVar cc0)
   forever $ do
-    (OutBoundMsg !addrs !msg) <- liftIO $! U.readChan outboxRead -- GET MSGS FROM SYSTEM
-    l logInfo ["sending to", show addrs, "MSG", show msg]
+    (OutBoundMsg !addrs !msg) <- liftIO $! U.readChan teOutboxRead -- GET MSGS FROM SYSTEM
+    l teLogInfo ["sending to", show addrs, "MSG", show msg]
     !cc            <- liftIO (takeMVar ccMvar)
     (_, !cs, !cc') <- getOrMakeConnection cc addrs
     mapM_ (\(_,!s) -> send s [] msg) cs -- GIVE MSGS TO ZMQ
     liftIO (putMVar ccMvar cc')
-    l logInfo ["sent msg"]
+    l teLogInfo ["sent msg"]
 
 l :: ([Text] -> IO    ())
   -> ([Text] -> ZMQ z ())

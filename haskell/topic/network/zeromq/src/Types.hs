@@ -21,9 +21,11 @@ data OutBoundMsg addr = OutBoundMsg
   } deriving (Eq, Generic)
 
 data TransportEnv addr = TransportEnv
-  { inboxWrite :: !(UNB.InChan ByteString)
-  , outboxRead :: !(U.OutChan  (OutBoundMsg addr))
-  , myAddr     :: !addr
-  , addrList   :: ![addr]
-  , logErr     :: !([Text] -> IO ())
-  , logInfo    :: !([Text] -> IO ()) }
+  { teInboxWriteNB :: !(UNB.InChan ByteString)     -- noblocking - just use this, or the next, not both
+  , teInboxWrite   :: !(U.InChan   ByteString)     -- blocking
+  , teOutboxRead   :: !(U.OutChan  (OutBoundMsg addr))
+  , teMyAddr       :: !addr
+  , teAddrList     :: ![addr]
+  , teLogErr       :: !([Text] -> IO ())
+  , teLogInfo      :: !([Text] -> IO ())
+  , teUseNoBlock   :: Bool }
