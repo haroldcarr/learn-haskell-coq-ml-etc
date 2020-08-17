@@ -24,10 +24,9 @@ data TransportEnv addr = TransportEnv
   { teMyAddr       :: !addr                    -- listen address
   , teAddrList     :: ![addr]                  -- peers known at initialization
   , teUseNoBlock   :: Bool                     -- use noblock or blocking channels for inbound messages (not both)
-  , teInboxWriteNB :: !(UNB.InChan ByteString) -- noblocking
-  , teInboxWrite   :: !(U.InChan   ByteString) -- blocking
-  , teUseOBChan    :: Bool                     -- use a channel to give outbound messages to ZMQ
-  , teOutboxRead   :: !(U.OutChan  (OutBoundMsg addr)) -- outbound channel
+  , teInboxWriteNB :: !(UNB.InChan ByteString) -- inbound noblocking
+  , teInboxWrite   :: !(U.InChan   ByteString) -- inbound blocking
+  , teOutboxRead   :: !(U.OutChan  (OutBoundMsg addr)) -- outbound blocking channel
   , teLogErr       :: !([Text] -> IO ())
   , teLogInfo      :: !([Text] -> IO ())
   }

@@ -48,6 +48,7 @@ runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
     -------------------------
     l teLogInfo ["starting zmqSender"]
     zmqSender <- async $ do
+      -- The connection cache MUST be created inside the ZMQ monad and cannot be passed outside.
       (_, _, cc) <- mkNewConnections (ConnectionCache Map.empty) teAddrList
       void (sender te cc)
       l teLogErr ["exiting zmqSender"]
@@ -80,6 +81,8 @@ receiver TransportEnv {..} = do
         else   U.writeChan teInboxWrite   newMsg
       yield
 
+-- The app layer MUST communicate with ZMQ via the channel
+-- because the connection cache must live inside the ZMQ monad.
 sender
   :: TransportEnv Address
   -> ConnectionCache Address (Socket z Push)

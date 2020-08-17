@@ -17,7 +17,7 @@ import           Protolude                     hiding (to)
 ------------------------------------------------------------------------------
 
 limit :: Int
-limit  = 100000
+limit  = 250000
 
 newtype SignedRPC = SignedRPC Int deriving (Eq, Generic, Show)
 instance S.Serialize SignedRPC
@@ -28,10 +28,10 @@ main  = do
       b          = "tcp://127.0.0.1:10001"
       le _ _     = pure ()
       li _ _     = pure ()
-      useNoBlock = False -- rough time test say BLOCKING is faster
-      useOBChan  = True
-  (at, ainrNB, ainr, aobw) <- initialize a le li useNoBlock useOBChan
-  (bt, binrNB, binr, bobw) <- initialize b le li useNoBlock useOBChan
+      -- useNoBlock = True  -- time stack exec m : real	0m1.993s; user	0m2.744s; sys	0m0.958s
+      useNoBlock = False    -- time stack exec m : real	0m1.355s; user	0m2.757s; sys	0m0.936s
+  (at, ainrNB, ainr, aobw) <- initialize a le li useNoBlock
+  (bt, binrNB, binr, bobw) <- initialize b le li useNoBlock
   runMsgServer (at :: TransportEnv Address)
   runMsgServer (bt :: TransportEnv Address)
   Async.concurrently_
