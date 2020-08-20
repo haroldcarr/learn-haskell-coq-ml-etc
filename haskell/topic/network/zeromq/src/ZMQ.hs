@@ -10,6 +10,7 @@ module ZMQ where
 
 ------------------------------------------------------------------------------
 import           ConnectionCache
+import           NoBlockChan
 import           Types
 ------------------------------------------------------------------------------
 import           Control.Concurrent                       (forkIO, newMVar,
@@ -18,7 +19,6 @@ import           Control.Concurrent                       (forkIO, newMVar,
                                                            yield)
 import qualified Control.Concurrent.Async                 as Async
 import qualified Control.Concurrent.Chan.Unagi            as U
-import qualified Control.Concurrent.Chan.Unagi.NoBlocking as UNB
 import           Control.Monad.State.Strict
 import qualified Data.Map.Strict                          as Map
 import qualified Prelude
@@ -32,15 +32,17 @@ import           System.ZMQ4.Monadic
 type Address = Prelude.String -- because that is what ZMQ4 uses
 
 runMsgServer
-  :: TransportEnv Address
+  :: Channel chanType
+  => Proxy chanType
+  -> TransportEnv Address chanType
   -> IO ()
-runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
+runMsgServer chanType te@TransportEnv{..} = void $ forkIO $ forever $ do
   zmqThread <- Async.async $ runZMQ $ do
     l teLogInfo ["starting zmqThread"]
     -------------------------
     l teLogInfo ["starting zmqReceiver"]
     zmqReceiver <- async $ do
-      void (receiver te)
+      void (receiver chanType te)
       l teLogErr ["exiting zmqReceiver"]
     -------------------------
     -- ensure the receive side is up
@@ -65,9 +67,11 @@ runMsgServer te@TransportEnv{..} = void $ forkIO $ forever $ do
     Left err -> teLogErr ["ZMQ runMsgServer died Left", show err]
 
 receiver
-  :: TransportEnv Address
+  :: Channel chanType
+  => Proxy chanType
+  -> TransportEnv Address chanType
   -> ZMQ z ()
-receiver TransportEnv {..} = do
+receiver chanType TransportEnv {..} = do
   sock <- socket Pull
   l teLogInfo ["bind"]
   _ <- bind sock teMyAddr
@@ -75,16 +79,13 @@ receiver TransportEnv {..} = do
     !newMsg <- receive sock -- GET MSG FROM ZMQ
     l teLogInfo ["recv", show newMsg]
     liftIO $ do
-      -- GIVE MSG TO SYSTEM
-      if teUseNoBlock
-        then UNB.writeChan teInboxWriteNB newMsg
-        else   U.writeChan teInboxWrite   newMsg
+      writeC chanType teInboxWrite newMsg -- GIVE MSG TO SYSTEM
       yield
 
 -- The app layer MUST communicate with ZMQ via the channel
 -- because the connection cache must live inside the ZMQ monad.
 sender
-  :: TransportEnv Address
+  :: TransportEnv Address chanType
   -> ConnectionCache Address (Socket z Push)
   -> ZMQ z ()
 sender TransportEnv{..} !cc0 = do

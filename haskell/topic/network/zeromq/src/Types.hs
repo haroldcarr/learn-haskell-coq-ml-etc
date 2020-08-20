@@ -1,7 +1,10 @@
-{-# LANGUAGE DeriveGeneric       #-}
-{-# LANGUAGE NoImplicitPrelude   #-}
-{-# LANGUAGE RankNTypes          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE DeriveGeneric        #-}
+{-# LANGUAGE NoImplicitPrelude    #-}
+{-# LANGUAGE RankNTypes           #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Types where
 
@@ -20,14 +23,25 @@ data OutBoundMsg addr = OutBoundMsg
   , obmBody :: !ByteString
   } deriving (Eq, Generic)
 
-data TransportEnv addr = TransportEnv
-  { teMyAddr       :: !addr                    -- listen address
-  , teAddrList     :: ![addr]                  -- peers known at initialization
-  , teUseNoBlock   :: Bool                     -- use noblock or blocking channels for inbound messages (not both)
-  , teInboxWriteNB :: !(UNB.InChan ByteString) -- inbound noblocking
-  , teInboxWrite   :: !(U.InChan   ByteString) -- inbound blocking
-  , teOutboxRead   :: !(U.OutChan  (OutBoundMsg addr)) -- outbound blocking channel
-  , teLogErr       :: !([Text] -> IO ())
-  , teLogInfo      :: !([Text] -> IO ())
+data BlockOrNonBlock = BlockingChannel | NonBlockingChannel
+
+type family WriteChanType a where
+  WriteChanType 'BlockingChannel    =   U.InChan ByteString
+  WriteChanType 'NonBlockingChannel = UNB.InChan ByteString
+
+type family ReadChanType a where
+  ReadChanType 'BlockingChannel     =        U.OutChan ByteString
+  ReadChanType 'NonBlockingChannel  = MVar (UNB.Stream ByteString)
+
+type family WriteReadChanType a where
+  WriteReadChanType a = (WriteChanType a, ReadChanType a)
+
+data TransportEnv addr bornb = TransportEnv
+  { teMyAddr     :: !addr                    -- listen address
+  , teAddrList   :: ![addr]                  -- peers known at initialization
+  , teInboxWrite :: !(WriteChanType bornb)
+  , teOutboxRead :: !(U.OutChan  (OutBoundMsg addr)) -- outbound blocking channel
+  , teLogErr     :: !([Text] -> IO ())
+  , teLogInfo    :: !([Text] -> IO ())
   }
 

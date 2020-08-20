@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns        #-}
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE OverloadedStrings   #-}
@@ -8,10 +9,12 @@
 module NoBlockChan where
 
 ------------------------------------------------------------------------------
-import           Control.Concurrent                       (newMVar,
-                                                           putMVar, takeMVar,
-                                                           threadDelay
-                                                           )
+import           Types
+------------------------------------------------------------------------------
+import           Control.Concurrent                       (newMVar, putMVar,
+                                                           takeMVar,
+                                                           threadDelay)
+import qualified Control.Concurrent.Chan.Unagi            as U
 import qualified Control.Concurrent.Chan.Unagi.NoBlocking as UNB
 import           Control.Monad.State.Strict
 import           Data.Serialize.Text                      ()
@@ -19,6 +22,21 @@ import           Protolude                                hiding (async,
                                                            newChan, readChan,
                                                            to)
 ------------------------------------------------------------------------------
+
+class Channel t where
+  mkC    :: Proxy t -> IO (WriteReadChanType t)
+  writeC :: Proxy t -> WriteChanType t -> ByteString -> IO ()
+  readC  :: Proxy t -> ReadChanType  t -> Int -> IO [ByteString]
+
+instance Channel 'BlockingChannel where
+  mkC    _     = U.newChan
+  writeC _     = U.writeChan
+  readC  _ c _ = U.readChan c >>= \x -> pure [x]
+
+instance Channel 'NonBlockingChannel where
+  mkC    _     = newNoBlockChan
+  writeC _     = UNB.writeChan
+  readC  _ c i = tryGetMsgs c i >>= \x -> do threadDelay 10000; pure x
 
 newNoBlockChan :: IO (UNB.InChan a, MVar (UNB.Stream a))
 newNoBlockChan = do
