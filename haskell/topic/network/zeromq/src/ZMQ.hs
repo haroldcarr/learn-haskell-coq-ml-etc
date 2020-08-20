@@ -93,9 +93,10 @@ sender TransportEnv{..} !cc0 = do
   forever $ do
     (OutBoundMsg !addrs !msg) <- liftIO $! U.readChan teOutboxRead -- GET MSGS FROM SYSTEM
     l teLogInfo ["sending to", show addrs, "MSG", show msg]
-    !cc            <- liftIO (takeMVar ccMvar)
-    (_, !cs, !cc') <- getOrMakeConnection cc addrs
-    mapM_ (\(_,!s) -> send s [] msg) cs -- GIVE MSGS TO ZMQ
+    !cc             <- liftIO (takeMVar ccMvar)
+    (es, !cs, !cc') <- getOrMakeConnection cc addrs
+    forM_ es (\e -> l teLogErr ["could not connect to", show e])
+    forM_ cs (\(_,!s) -> send s [] msg) -- GIVE MSGS TO ZMQ
     liftIO (putMVar ccMvar cc')
     l teLogInfo ["sent msg"]
 

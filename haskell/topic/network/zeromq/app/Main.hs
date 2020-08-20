@@ -13,6 +13,6 @@ import           System.Environment
 
 main :: IO ()
 main  = getArgs >>= \case
-  ("b" :_) -> Example.main (Proxy :: Proxy 'BlockingChannel)
-  ("nb":_) -> Example.main (Proxy :: Proxy 'NonBlockingChannel)
-  _        -> error "wrong args"
+  ("b" :i:_) -> Example.main (Proxy :: Proxy 'BlockingChannel)    (read i)
+  ("nb":i:_) -> Example.main (Proxy :: Proxy 'NonBlockingChannel) (read i)
+  _          -> Example.main (Proxy :: Proxy 'BlockingChannel)    25000

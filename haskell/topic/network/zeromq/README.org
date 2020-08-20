@@ -1,13 +1,13 @@
-> time stack exec m -- b
-["receive","decoded","RPC 250000"]
+> time stack exec m -- b 1000000
+["receive","decoded","RPC 1000000"]
 
-real	0m1.378s
-user	0m2.717s
-sys	0m0.905s
+real	0m4.800s
+user	0m11.769s
+sys	0m3.598s
 
-> time stack exec m -- nb
-["receive","decoded","RPC 250000"]
+> time stack exec m -- nb 1000000
+["receive","decoded","RPC 1000000"]
 
-real	0m2.004s
-user	0m2.726s
-sys	0m0.970s
+real	0m4.821s
+user	0m11.183s
+sys	0m3.811s

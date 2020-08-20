@@ -14,18 +14,14 @@ import           ZMQ
 ------------------------------------------------------------------------------
 import qualified Control.Concurrent.Chan.Unagi as U
 import qualified Data.Serialize                as S
-import qualified Data.Text                     as T
 import           Protolude                     hiding (to)
 ------------------------------------------------------------------------------
-
-limit :: Int
-limit  = 250000
 
 newtype RPC = RPC Int deriving (Eq, Generic, Show)
 instance S.Serialize RPC
 
-main :: forall chanType. Channel chanType => Proxy chanType -> IO ()
-main chanType = do
+main :: forall chanType. Channel chanType => Proxy chanType -> Int -> IO ()
+main chanType limit = do
   let a          = "tcp://127.0.0.1:10000"
       b          = "tcp://127.0.0.1:10001"
       le _ _     = pure ()

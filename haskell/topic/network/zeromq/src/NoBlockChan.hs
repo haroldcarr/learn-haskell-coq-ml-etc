@@ -36,7 +36,7 @@ instance Channel 'BlockingChannel where
 instance Channel 'NonBlockingChannel where
   mkC    _     = newNoBlockChan
   writeC _     = UNB.writeChan
-  readC  _ c i = tryGetMsgs c i >>= \x -> do threadDelay 10000; pure x
+  readC  _     = tryGetMsgs
 
 newNoBlockChan :: IO (UNB.InChan a, MVar (UNB.Stream a))
 newNoBlockChan = do
