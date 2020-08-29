@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7fd6583fffdc2850e4d81635d5cb28f78f28b1ae62b2ffd319cffa335916ac2b
+-- hash: b139e737ff047019be3e8e0cb62d58ee0ace8eea5a9490e0afbf9bee0c08e4f0
 
 name:           hc-reader-and-monad-write-state-io
 version:        0.1.0.0
@@ -20,11 +20,51 @@ library
       Paths_hc_reader_and_monad_write_state_io
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -O2 -fno-ignore-asserts
   build-depends:
       base >=4.7 && <5
     , lens
     , mtl
     , protolude
     , template-haskell
+    , transformers
+  default-language: Haskell2010
+
+test-suite tests-unit
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      XSpec
+      Paths_hc_reader_and_monad_write_state_io
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , hc-reader-and-monad-write-state-io
+    , hspec
+    , lens
+    , mtl
+    , protolude
+    , template-haskell
+    , transformers
+  default-language: Haskell2010
+
+benchmark benchmarks
+  type: exitcode-stdio-1.0
+  main-is: Bench.hs
+  other-modules:
+      Paths_hc_reader_and_monad_write_state_io
+  hs-source-dirs:
+      benchmark
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , criterion
+    , hc-reader-and-monad-write-state-io
+    , lens
+    , mtl
+    , protolude
+    , template-haskell
+    , transformers
   default-language: Haskell2010

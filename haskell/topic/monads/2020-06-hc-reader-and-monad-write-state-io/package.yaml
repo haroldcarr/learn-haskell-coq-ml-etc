@@ -15,8 +15,33 @@ dependencies:
 - base >= 4.7 && < 5
 - protolude
 - lens
+- transformers
 - mtl
 - template-haskell
 
 library:
   source-dirs: src
+  ghc-options:
+  - -O2
+  - -fno-ignore-asserts
+
+tests:
+  tests-unit:
+    source-dirs:         test
+    main:                hspec.hs
+    dependencies:
+    - hc-reader-and-monad-write-state-io
+    - hspec
+
+benchmarks:
+  benchmarks:
+    source-dirs:         benchmark
+    main:                Bench.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - criterion
+    - hc-reader-and-monad-write-state-io
+
