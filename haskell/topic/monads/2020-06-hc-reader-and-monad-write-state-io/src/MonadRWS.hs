@@ -38,11 +38,13 @@ instance Monoid w => MonadWriter w (RWSIO r w s) where
     (w, s)     <- liftIO (readIORef ref)
     liftIO (writeIORef ref (w<>x, s))
     pure ()
+
   listen m = do
     x@(_, ref) <- ask
     (w, _s)    <- liftIO (readIORef ref)
     a          <- liftIO (runRWSIO m x)
     pure (a, w)
+
   pass m = do
     x@(_, ref) <- ask
     (w, s)     <- liftIO (readIORef ref)
