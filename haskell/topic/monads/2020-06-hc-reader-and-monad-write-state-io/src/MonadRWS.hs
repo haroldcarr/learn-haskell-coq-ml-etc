@@ -5,6 +5,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE Strict                #-}
+{-# LANGUAGE StrictData            #-}
 {-# LANGUAGE TupleSections         #-}
 
 module MonadRWS where
@@ -17,7 +19,7 @@ import           Protolude
 type RWSRef r w s = (r, IORef (w, s))
 
 newtype RWSIO r w s a = RWSIO { runRWSIO :: RWSRef r w s -> IO a }
-  deriving ( Functor, Applicative, Monad, MonadIO, MonadReader (RWSRef r w s) )
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (RWSRef r w s))
   via ReaderT (RWSRef r w s) IO
 
 instance MonadState s (RWSIO r w s) where
@@ -66,4 +68,35 @@ initMonadRWS r s = (r,) <$> liftIO (newIORef (mempty, s))
 resetMonadRWS :: (MonadIO m, Monoid w) => RWSRef r w s -> s -> m ()
 resetMonadRWS (_, ref) s =
   liftIO (writeIORef ref (mempty, s))
+
+runMonadRWS0
+  :: (MonadIO m, Monoid w)
+  => RWSIO r w s a -> r -> s
+  -> m (a, s, w, RWSRef r w s)
+runMonadRWS0 act r s = do
+  x@(_,ref) <- initMonadRWS r s
+  a         <- liftIO (runRWSIO act x)
+  (w, s')   <- liftIO (readIORef ref)
+  pure (a, s', w, x)
+
+-- | Typical usage: 'initMonadRWS' followed by one or more 'runMonadRWS'
+runMonadRWS
+  :: MonadIO m
+  => RWSIO r w s a -> RWSRef r w s
+  -> m (a, s, w, RWSRef r w s)
+runMonadRWS act x@(_,ref) = do
+  a         <- liftIO (runRWSIO act x)
+  (w, s')   <- liftIO (readIORef ref)
+  pure (a, s', w, x)
+
+runMonadRWS'
+  :: (MonadIO m, Monoid w)
+  => RWSIO r w s a -> s -> RWSRef r w s
+  -> m (a, s, w, RWSRef r w s)
+runMonadRWS' act s x@(_,ref) = do
+  liftIO (resetMonadRWS x s)
+  a         <- liftIO (runRWSIO act x)
+  (w, s')   <- liftIO (readIORef ref)
+  pure (a, s', w, x)
+
 
