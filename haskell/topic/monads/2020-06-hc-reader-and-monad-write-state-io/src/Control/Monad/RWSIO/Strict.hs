@@ -3,22 +3,36 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE Strict                #-}
 {-# LANGUAGE StrictData            #-}
 {-# LANGUAGE TupleSections         #-}
 
-module MonadRWS where
+module Control.Monad.RWSIO.Strict
+  ( MonadRWS
+  , RWSRef
+  , RWSIO (..)
+  , ask', get, tell, put
+  , initMonadRWS
+  , resetMonadRWS
+  , resetMonadRWSWriter
+  , runMonadRWS0
+  , runMonadRWS
+  , runMonadRWS'
+  )
+where
 
-import           Control.Monad.Writer.Strict
+import           Control.Monad.IO.Class
+import           Control.Monad.Reader.Class (MonadReader, ask)
+import           Control.Monad.State.Class  (MonadState, get, put)
+import           Control.Monad.Trans.Reader (ReaderT (..))
+import           Control.Monad.Writer.Class (MonadWriter (..), tell)
 import           Data.IORef
-import           Protolude
 ------------------------------------------------------------------------------
 
 type RWSRef r w s = (r, IORef (w, s))
 
-newtype RWSIO r w s a = RWSIO { runRWSIO :: RWSRef r w s -> IO a }
+newtype RWSIO r w s a = RWSIO { unRWSIO :: RWSRef r w s -> IO a }
   deriving (Functor, Applicative, Monad, MonadIO, MonadReader (RWSRef r w s))
   via ReaderT (RWSRef r w s) IO
 
@@ -44,13 +58,13 @@ instance Monoid w => MonadWriter w (RWSIO r w s) where
   listen m = do
     x@(_, ref) <- ask
     (w, _s)    <- liftIO (readIORef ref)
-    a          <- liftIO (runRWSIO m x)
+    a          <- liftIO (unRWSIO m x)
     pure (a, w)
 
   pass m = do
     x@(_, ref) <- ask
     (w, s)     <- liftIO (readIORef ref)
-    (a, f)     <- liftIO (runRWSIO m x)
+    (a, f)     <- liftIO (unRWSIO m x)
     liftIO (writeIORef ref (f w, s))
     pure a
 
@@ -69,23 +83,28 @@ resetMonadRWS :: (MonadIO m, Monoid w) => RWSRef r w s -> s -> m ()
 resetMonadRWS (_, ref) s =
   liftIO (writeIORef ref (mempty, s))
 
+resetMonadRWSWriter :: (MonadIO m, Monoid w) => RWSRef r w s -> m ()
+resetMonadRWSWriter (_, ref) =
+  liftIO (modifyIORef' ref (\(_, s) -> (mempty, s)))
+
 runMonadRWS0
   :: (MonadIO m, Monoid w)
   => RWSIO r w s a -> r -> s
   -> m (a, s, w, RWSRef r w s)
 runMonadRWS0 act r s = do
   x@(_,ref) <- initMonadRWS r s
-  a         <- liftIO (runRWSIO act x)
+  a         <- liftIO (unRWSIO act x)
   (w, s')   <- liftIO (readIORef ref)
   pure (a, s', w, x)
 
 -- | Typical usage: 'initMonadRWS' followed by one or more 'runMonadRWS'
 runMonadRWS
-  :: MonadIO m
+  :: (MonadIO m, Monoid w)
   => RWSIO r w s a -> RWSRef r w s
   -> m (a, s, w, RWSRef r w s)
 runMonadRWS act x@(_,ref) = do
-  a         <- liftIO (runRWSIO act x)
+  liftIO (resetMonadRWSWriter x)
+  a         <- liftIO (unRWSIO act x)
   (w, s')   <- liftIO (readIORef ref)
   pure (a, s', w, x)
 
@@ -95,7 +114,7 @@ runMonadRWS'
   -> m (a, s, w, RWSRef r w s)
 runMonadRWS' act s x@(_,ref) = do
   liftIO (resetMonadRWS x s)
-  a         <- liftIO (runRWSIO act x)
+  a         <- liftIO (unRWSIO act x)
   (w, s')   <- liftIO (readIORef ref)
   pure (a, s', w, x)
 

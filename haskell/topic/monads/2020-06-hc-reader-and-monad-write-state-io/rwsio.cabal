@@ -4,20 +4,18 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b139e737ff047019be3e8e0cb62d58ee0ace8eea5a9490e0afbf9bee0c08e4f0
+-- hash: 06e9ede0419256e9a283684a0f5805514f442c3a577ee0c78b3962b117b964ca
 
-name:           hc-reader-and-monad-write-state-io
+name:           rwsio
 version:        0.1.0.0
 build-type:     Simple
 
 library
   exposed-modules:
-      MonadRWS
-      MyMakeClassy
-      Use
-      ZScratch
+      Control.Monad.RWSIO.Strict
+      Control.Monad.RWSIO.StrictX
   other-modules:
-      Paths_hc_reader_and_monad_write_state_io
+      Paths_rwsio
   hs-source-dirs:
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -O2 -fno-ignore-asserts
@@ -25,7 +23,6 @@ library
       base >=4.7 && <5
     , lens
     , mtl
-    , protolude
     , template-haskell
     , transformers
   default-language: Haskell2010
@@ -34,18 +31,23 @@ test-suite tests-unit
   type: exitcode-stdio-1.0
   main-is: hspec.hs
   other-modules:
+      DataForTest
+      MyMakeClassy
+      UseRWSIO
+      UseRWST
+      UseRWSTIO
       XSpec
-      Paths_hc_reader_and_monad_write_state_io
+      ZScratch
+      Paths_rwsio
   hs-source-dirs:
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
   build-depends:
       base >=4.7 && <5
-    , hc-reader-and-monad-write-state-io
     , hspec
     , lens
     , mtl
-    , protolude
+    , rwsio
     , template-haskell
     , transformers
   default-language: Haskell2010
@@ -54,17 +56,25 @@ benchmark benchmarks
   type: exitcode-stdio-1.0
   main-is: Bench.hs
   other-modules:
-      Paths_hc_reader_and_monad_write_state_io
+      DataForTest
+      MyMakeClassy
+      UseRWSIO
+      UseRWST
+      UseRWSTIO
+      XSpec
+      ZScratch
+      Paths_rwsio
   hs-source-dirs:
       benchmark
+      test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , criterion
-    , hc-reader-and-monad-write-state-io
+    , hspec
     , lens
     , mtl
-    , protolude
+    , rwsio
     , template-haskell
     , transformers
   default-language: Haskell2010

@@ -1,10 +1,10 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# OPTIONS_GHC -fno-warn-type-defaults      #-}
-
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE Strict     #-}
+{-# LANGUAGE StrictData #-}
 
 ------------------------------------------------------------------------------
-import           Use
+import           UseRWSIO
+import           UseRWSTIO
+import           UseRWST
 ------------------------------------------------------------------------------
 import           Criterion.Main
 ------------------------------------------------------------------------------
@@ -13,8 +13,10 @@ main :: IO ()
 main =
   defaultMain
     [ bgroup "RWS"
-      [ bench "top1" $ whnfIO (top1 False)
-      , bench "top2" $ whnfIO (top2 False)
-      , bench "top3" $ whnfIO (top3 False)
+      [ bench "runMonadRWSInts" $ whnfIO (runMonadRWSInts False)
+      , bench "runRWSTIOInts"   $ whnfIO (runRWSTIOInts   False)
+      , bench "runRWSTInts"     $ whnfIO (runRWSTInts     False)
+      , bench "runMonadRWSData" $ whnfIO (runMonadRWSData False)
+      , bench "runRWSTData"     $ whnfIO (runRWSTData     False)
       ]
     ]

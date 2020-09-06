@@ -1,4 +1,4 @@
-name:                hc-reader-and-monad-write-state-io
+name:                rwsio
 version:             0.1.0.0
 
 ghc-options:
@@ -13,10 +13,9 @@ ghc-options:
 
 dependencies:
 - base >= 4.7 && < 5
-- protolude
 - lens
-- transformers
 - mtl
+- transformers
 - template-haskell
 
 library:
@@ -30,12 +29,14 @@ tests:
     source-dirs:         test
     main:                hspec.hs
     dependencies:
-    - hc-reader-and-monad-write-state-io
     - hspec
+    - rwsio
 
 benchmarks:
   benchmarks:
-    source-dirs:         benchmark
+    source-dirs:
+    - benchmark
+    - test
     main:                Bench.hs
     ghc-options:
     - -threaded
@@ -43,5 +44,6 @@ benchmarks:
     - -with-rtsopts=-N
     dependencies:
     - criterion
-    - hc-reader-and-monad-write-state-io
+    - hspec
+    - rwsio
 

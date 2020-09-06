@@ -4,14 +4,17 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module ZScratch where
 
-import Data.IORef
-import Protolude
-import Control.Monad.Writer.Strict
+------------------------------------------------------------------------------
+import           Control.Monad.IO.Class
+import           Control.Monad.Reader.Class (MonadReader, ask)
+import           Control.Monad.State.Class  (MonadState, get, put)
+import           Control.Monad.Trans.Reader (ReaderT (..))
+import           Control.Monad.Writer.Class (MonadWriter (..), tell)
+import           Data.IORef
 ------------------------------------------------------------------------------
 
 newtype RWSIO r w s a = RWSIO { runRWSIO :: IORef (r, w, s) -> IO a }

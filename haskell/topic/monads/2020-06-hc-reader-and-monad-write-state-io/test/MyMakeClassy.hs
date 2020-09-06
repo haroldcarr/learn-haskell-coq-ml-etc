@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module MyMakeClassy where
@@ -8,7 +7,6 @@ import           Control.Lens
 import qualified Control.Lens.Internal.FieldTH    as FTH
 import qualified Language.Haskell.TH.Lib.Internal as THLI
 import qualified Language.Haskell.TH.Syntax       as THS
-import           Protolude                        hiding (get, gets, round, to)
 ------------------------------------------------------------------------------
 
 myMakeClassy :: THS.Name -> THLI.DecsQ
