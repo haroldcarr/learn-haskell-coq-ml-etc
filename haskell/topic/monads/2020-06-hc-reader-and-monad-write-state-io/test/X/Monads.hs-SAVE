@@ -1,0 +1,59 @@
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+module X.Monads where
+
+------------------------------------------------------------------------------
+import qualified Control.Concurrent                  as CC
+import           Control.Concurrent.Classy.STM.TChan
+import qualified Control.Monad.Conc.Class            as Conc
+import qualified Control.Monad.STM                   as STM
+import           Data.Text                           as T
+import           Test.DejaFu.Conc                    (ConcIO)
+import qualified Test.DejaFu.Types                   as TDT
+------------------------------------------------------------------------------
+
+-- | INTRA-peer communication.
+class Monad m => MonadMsgChan m where
+  type ChanType m input
+  readMsgChan  :: ChanType m input          -> m input
+  writeMsgChan :: ChanType m input -> input -> m ()
+
+instance MonadMsgChan     IO where
+  type ChanType     IO input = TChan (Conc.STM     IO) input
+  readMsgChan       =  STM.atomically . readTChan
+  writeMsgChan chan =  STM.atomically . writeTChan chan
+
+instance MonadMsgChan ConcIO where
+  type ChanType ConcIO input = TChan (Conc.STM ConcIO) input
+  readMsgChan       = Conc.atomically . readTChan
+  writeMsgChan chan = Conc.atomically . writeTChan chan
+
+newtype ThreadRole = ThreadRole Text deriving Show
+
+-- | So deja-fu can intercept fork.
+class Monad m => MonadForker m where
+  type ThreadIdType m
+  forkIt
+    :: ThreadRole     -- ^ The role of the current thread being forked
+    -> m ()           -- ^ The computation to fork
+    -> m (ThreadIdType m)
+  killIt
+    :: ThreadIdType m
+    -> m ()
+  showTid
+    :: ThreadIdType m
+    -> m Text
+
+instance MonadForker IO where
+  type ThreadIdType IO = CC.ThreadId
+  forkIt _ = CC.forkIO
+  killIt   = CC.killThread
+  showTid  = pure . T.pack . show
+
+instance MonadForker ConcIO where
+  type ThreadIdType ConcIO = TDT.ThreadId
+  forkIt r = Conc.forkN (show r)
+  killIt   = Conc.killThread
+  showTid  = pure . T.pack . show

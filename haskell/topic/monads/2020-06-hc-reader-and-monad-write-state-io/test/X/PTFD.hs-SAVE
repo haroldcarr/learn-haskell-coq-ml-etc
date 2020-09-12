@@ -1,0 +1,66 @@
+{-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE UndecidableInstances       #-}
+
+module X.PTFD where
+
+------------------------------------------------------------------------------
+import           X.Monads
+------------------------------------------------------------------------------
+import           Control.Concurrent.Classy.STM.TChan
+import           Control.Lens
+import qualified Control.Monad.Conc.Class            as Conc
+import           Control.Monad.Fail
+import           Control.Monad.IO.Class
+import           Control.Monad.Reader
+import           Control.Monad.State
+import           Control.Monad.Trans.RWS.Strict      as RWST
+import           Data.Map.Strict                     as M
+import           Data.Text
+------------------------------------------------------------------------------
+
+newtype PeerId           pid       = PeerId { peerId :: pid } deriving (Eq, Ord, Show)
+type    PeerChan       m     input = TChan (Conc.STM m)                input
+type    PeerChans      m pid input = Map   (PeerId pid) (PeerChan    m input)
+
+type ScheduledInputKey = Text -- maybe parameterize key?
+
+data PeerState         m     appState = PeerState
+  { _psScheduledInputs :: Map ScheduledInputKey (ThreadIdType m)
+  , _psAppState        :: appState
+  }
+instance Show appState => Show (PeerState m appState) where
+  show (PeerState e s) = "PeerState " ++ show (M.keys e) ++ " " ++ show s
+
+type    PeerStates     m pid appState = Map   (PeerId pid) (PeerState  m     appState)
+makeLenses ''PeerState
+
+newtype PeerT m pid appEnv input appState a = PeerT
+  { unPeerT :: ReaderT (PeerEnv m pid appEnv input) (StateT (PeerState m appState) m) a
+  } deriving ( Functor, Applicative, Monad, MonadIO, MonadFail
+             , MonadReader (PeerEnv m pid appEnv input)
+             , MonadState  (PeerState m appState) )
+
+data PeerEnv m pid appEnv input = PeerEnv
+  { _peMe        :: pid
+  , _pePeerChans :: PeerChans m pid input
+  , _peAppEnv    :: appEnv
+  }
+makeLenses ''PeerEnv
+
+type InputHandler m pid appEnv input output appState
+  =  Monad m
+  => input
+  -> RWST appEnv [output] appState (PeerT m pid appEnv input appState) ()

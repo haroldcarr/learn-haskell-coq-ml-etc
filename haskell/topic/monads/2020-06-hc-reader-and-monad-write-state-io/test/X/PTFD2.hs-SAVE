@@ -1,0 +1,50 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE RankNTypes          #-}
+
+module X.PTFD2 where
+{-
+------------------------------------------------------------------------------
+import           X.PTFD hiding (InputHandler)
+------------------------------------------------------------------------------
+import           Control.Monad.IO.Class
+import           Control.Monad.RWSIO.Strict
+------------------------------------------------------------------------------
+
+type InputHandler m pid appEnv input output appState
+  =  (Monad m, MonadRWS appEnv [output] appState (PeerT m pid appEnv input appState))
+  => input
+  -> m ()
+
+type InputHandler m pid appEnv input output appState
+  =  Monad m
+  => input
+  -> RWSIO appEnv [output] appState (PeerT m pid appEnv input appState ())
+
+runPeer
+  :: MonadIO m
+  => InputHandler m pid appEnv input output appState
+  -> input
+  -> RWSRef appEnv [output] appState
+  -> m (appState, [output])
+runPeer inputHandler input ref = do
+  (_pt,appState,output,_ref) <- runMonadRWS (inputHandler input) ref
+  pure (appState, output)
+
+ih :: InputHandler m String Int Char [String] Double
+ih _i = programInts 10
+
+programInts
+  :: MonadRWS Int [Int] Int m
+  => Int
+  -> m ()
+programInts stop = do
+  x  <- ask'
+  n  <- get
+  put (n + 1)
+  n' <- get
+  tell [n'+x]
+  if n' == stop
+    then pure ()
+    else programInts stop
+-}

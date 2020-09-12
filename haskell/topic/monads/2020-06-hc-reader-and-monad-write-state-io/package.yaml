@@ -31,6 +31,12 @@ tests:
     dependencies:
     - hspec
     - rwsio
+    # PTFD
+    #- concurrency
+    #- containers
+    #- dejafu
+    #- stm
+    #- text
 
 benchmarks:
   benchmarks:

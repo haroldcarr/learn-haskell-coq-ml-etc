@@ -1,0 +1,129 @@
+Created       : 2014 Jul 22 (Tue) 17:25:11 by Harold Carr.
+Last Modified : 2019 Oct 21 (Mon) 13:54:49 by Harold Carr.
+
+------------------------------------------------------------------------------
+Subject: FM'19 - thanks for coming!
+From: "J.N. Oliveira" <jno@di.uminho.pt>
+Date: Sat, 12 Oct 2019 16:24:54 +0100
+CC: Lisandra Maria Pereira da Silva <a73559@alunos.uminho.pt>
+To: <harold.carr@oracle.com>, <mark.moir@oracle.com>
+
+Dear Harold and Mark
+
+It was great to know you in person at FM’19.
+
+The current version of the “book” is at http://www4.di.uminho.pt/~jno/ps/pdbc.pdf
+
+In the last year I added chapters 5, 6 and 7. FM’19 forced me to stop at section 7.9.
+
+These chapters are what I teach to my 4th year students (Lisandra, who was among the best in the 
+class, had this still in slide form).
+
+It is more practical to use relations (the Kleisli category of the powerset monad) than keeping using
+functions as in chapters 2 to 4. "Functions are special cases of relations", all maths books say 
+But they not tell about the monadic flavour of the “aphorism".
+
+About music: the slides I mentioned are http://www4.di.uminho.pt/~jno/ps/cehum13-en.pdf
+
+The “afterthought” in slide 38 eventually became a paper: “Programming from Metaphorisms”
+which was fun to write (https://www.sciencedirect.com/science/article/pii/S2352220817301645)
+
+Let us keep in touch. I promise to be back once I find some “Lisandra 2.0” among my students.
+It is difficult but sometimes miracles happen
+
+Meanwhile, I will study blockchain.
+
+@Mark: see you on Wednesday
+
+All the best and thanks for attending FM’19!
+
+jno
+
+
+
+The papers
+
+- [[file:./Point_free_Program_Transformation.pdf]]
+- [[file:./Program_Comprehension_by_Refactorig.pdf]]
+- [[http://www.researchgate.net/publication/221600606_A_Framework_for_Point-Free_Program_Transformation]]
+  - file:./A_Framework_for_Point-Free_Program_Transformation.pdf
+- [[https://code.google.com/p/pointfree/wiki/Pointfree]]
+
+define many things used in the paper this directory is about:
+
+- [[file:./Program_Design_by_Calculation-Oliveira.pdf]].
+
+
+------------------------------------------------------------------------------
+
+Abstract for LambdaConf 2015
+
+TITLE : Programming and Math
+
+ABSTRACT:
+
+Design patterns are a useful way to organize software.  Unfortunately,
+"gang-of-four"-like patterns are not composable, due to side-effects.
+In a pure (i.e., no side-effects) language, functions can be composed.
+That makes it possible to leverage patterns from mathematics.  This
+talk shows an algebra of function composition, identity functions,
+isomorphisms, (co)products (gluing functions that do not compose) and
+functors.  It shows how this algebra relates to real-world
+programming.  The goal of this talk is to provide an initial intuition
+of how to apply patterns from math to programming and to motivate you
+to continue studying on your own (perhaps by looking at the "uber"
+patterns of Category Theory).  Note: knowing these patterns is NOT
+necessary for getting work done in a functional language, but this
+talk should give a glimpse of why they may be useful.  The talk
+illustrates ideas using Haskell.  It is aimed at FP beginners.
+
+BIO:
+
+Harold Carr is architect of InfiniBand usage in WebLogic Server at
+Oracle.  He also designed and implemented the pluggable transports,
+the asynchronous client and service APIs, and streaming I/O used in
+Oracle's SOAP stack.  At Sun Microsystems he worked on RMI-IIOP
+load-balancing and fail-over, the architecture of Sun's CORBA ORB and
+JAX-WS 2.0, and the scalable NIO communications architecture (aka
+Grizzly).  He worked on distributed Lisp and C++ with Hewlett-Packard
+Research Laboratories and Schlumberger Research Laboratories, was
+Chief Architect of Lisp technology at Autodesk, and did logic
+simulation for Cirrus Logic. He holds a Ph.D., in Computer Science
+from the University of Utah.
+
+WEBSITE: http://haroldcarr.com/
+
+TWITTER: @haroldcarr
+
+PHOTO: attached
+
+------------------------------------------------------------------------------
+
+Note to review committee:
+
+This is based on chapter 2 of:
+
+    http://www3.di.uminho.pt/~jno/ps/pdbc_part.pdf
+alternate link:
+    https://github.com/haroldcarr/learn-haskell-coq-ml-etc/blob/master/haskell/book/Program_Design_by_Calculation-Oliveira/Program_Design_by_Calculation-Oliveira.pdf
+
+The (very) raw material of the talk:
+
+    https://github.com/haroldcarr/learn-haskell-coq-ml-etc/tree/master/haskell/book/Program_Design_by_Calculation-Oliveira
+
+
+------------------------------------------------------------------------------
+
+https://skillsmatter.com/meetups/6957-design-patterns-in-the-21st-century
+
+http://talks.samirtalwar.com/design-patterns-in-the-21st-century.html
+
+Design patterns are guides to clean, simple and practical solutions.
+
+Many of the classic OO Gang of Four's patterns are workarounds for the
+lack of functional programming constructs such as lambdas and
+higher-order functions.
+
+The majority of design patterns can be simplified via FP.
+- using pure functions to reduce the proliferation of classes that are used once and thrown away
+- removing boilerplate, focus on behaviour

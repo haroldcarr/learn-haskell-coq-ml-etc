@@ -1,0 +1,21 @@
+Name: prettyjson
+
+Version: 0.1
+
+Synopsis: JSON pretty printing library from RWH
+
+Description:
+  Illustrates how to develop a Haskell library.
+
+Author: Real World Haskell
+
+Maintainer: nobody@realworldhaskell.org
+
+Cabal-Version: >= 1.2
+
+library
+  Exposed-Modules: Prettify
+                   PrettyJSON
+                   SimpleJSON
+  Build-Depends: base >= 2.0, haskell98
+
