@@ -1,0 +1,21 @@
+name:                fizzbuzz
+version:             0.1.0.0
+
+dependencies:
+- base >= 4.7 && < 5
+- ieee754
+- text
+
+library:
+  source-dirs: src
+
+executables:
+  m:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - fizzbuzz

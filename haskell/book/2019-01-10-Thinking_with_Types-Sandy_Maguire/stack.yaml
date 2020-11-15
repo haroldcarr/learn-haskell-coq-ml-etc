@@ -6,7 +6,7 @@ packages:
 # extra-package-dbs: []
 # system-ghc: true
 # require-stack-version: -any # Default
-# require-stack-version: ">=1.9"
+# require-stack-version: ">=2.5"
 # arch: i386
 # arch: x86_64
 # extra-include-dirs: [/path/to/dir]

@@ -1,0 +1,21 @@
+CHEAT SHEET
+https://github.com/alhassy/AgdaCheatSheet
+
+TUTORIALS
+https://agda.readthedocs.io/en/v2.6.1.1/getting-started/tutorial-list.html
+
+PLFA
+~/ftptmp/ebooks-music-pics/tech/programming-language/agda/book/Programming_Language_Foundations_in_Agda/0-Notes.org
+
+------------------------------------------------------------------------------
+REAL WORLD
+
+https://github.com/alhassy/AgdaCheatSheet#interacting-with-the-real-world-compilation-haskell-and-io
+https://agda.readthedocs.io/en/latest/getting-started/hello-world.html
+https://jozefg.bitbucket.io/posts/2014-06-28-real-world-agda.html
+https://wiki.portal.chalmers.se/agda/pmwiki.php?n=ReferenceManual2.Compilation
+https://agda.readthedocs.io/en/latest/getting-started/quick-guide.html#compiling-agda-programs
+
+agda --compile --ghc-dont-call-ghc fizzbuzz.agda
+
+

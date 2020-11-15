@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.0.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7e3880fac0d165a8a290237826257e48c2cb96a8287ef88d413413afda333d65
+-- hash: 442809f410fefcd489f2de85ef72227506e580fff0ee95a6502dce6a4c1796bf
 
 name:           hc-dhall
 version:        0.1.0.0
@@ -17,7 +17,7 @@ library
       Paths_hc_dhall
   hs-source-dirs:
       src
-  ghc-options: -Wall
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
   build-depends:
       base >=4.7 && <5
     , dhall
@@ -30,7 +30,7 @@ executable m
       Paths_hc_dhall
   hs-source-dirs:
       app
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , dhall
@@ -46,7 +46,7 @@ test-suite test
       Paths_hc_dhall
   hs-source-dirs:
       test
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , dhall

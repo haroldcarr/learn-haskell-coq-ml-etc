@@ -1,0 +1,23 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 5f797ea3f0fe72b70b30a7fb105a7f3ae662dd201aaae7a1ee48e020b07b74d3
+
+name:           twt
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Ch01
+  other-modules:
+      Paths_twt
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010

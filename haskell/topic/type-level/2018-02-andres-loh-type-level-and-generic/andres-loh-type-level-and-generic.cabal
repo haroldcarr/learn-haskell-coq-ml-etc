@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f24c84551af8a00ef48194d8c683313e47ab0355e097642a58a25d97e01f39da
+-- hash: 1becb7947787acd45d294797dd9a278f6dae39783058f984b99241163f9582cc
 
 name:           andres-loh-type-level-and-generic
 version:        0.1.0.0
@@ -13,6 +13,7 @@ build-type:     Simple
 library
   exposed-modules:
       HC
+      HC2
       NP
       NS
       Use
