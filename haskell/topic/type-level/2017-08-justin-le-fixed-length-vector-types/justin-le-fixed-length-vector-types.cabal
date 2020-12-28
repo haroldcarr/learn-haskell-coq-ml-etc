@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: da964fb6fff0e338d1e042d6aa4f46e9ce93bfc1a4e7a493664d7dc7324fd1eb
+-- hash: e2ac707baf4c39c5f0f49eb4289fa92bfed50d336f89872a741f4fca817960a2
 
 name:           justin-le-fixed-length-vector-types
 version:        0.1.0.0
@@ -12,7 +12,8 @@ build-type:     Simple
 
 library
   exposed-modules:
-      Lib
+      L1
+      L2
   other-modules:
       Paths_justin_le_fixed_length_vector_types
   hs-source-dirs:

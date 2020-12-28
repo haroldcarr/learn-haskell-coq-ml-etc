@@ -1,0 +1,24 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e628a62dfb163624cf267d4c9382743ab7ad87013f42bff3cbbeb63d9858c997
+
+name:           hc-stm
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      X
+  other-modules:
+      Paths_hc_stm
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , stm
+  default-language: Haskell2010

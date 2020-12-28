@@ -6,10 +6,10 @@ naturals : inductive datatype
 
 definition as a pair of inference rules:
 
-    --------
-    zero : ℕ
+    ---------
+    zero  : ℕ
 
-    m : ℕ        -- assuming m is Natural
+    m     : ℕ    -- assuming m is Natural
     ---------
     suc m : ℕ    -- then suc m is also a Natural
 
@@ -17,8 +17,8 @@ Agda definition in Agda:
 -}
 
 data ℕ : Set where
-  zero : ℕ      -- base case
-  suc  : ℕ → ℕ  -- inductive case
+  zero :     ℕ -- base case
+  suc  : ℕ → ℕ -- inductive case
 
 -- #### Exercise Write out `7` in longhand.
 
@@ -67,7 +67,7 @@ from the Agda standard library:
 -}
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open Eq             using (_≡_; refl)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _∎)
 
 {-
@@ -79,16 +79,16 @@ open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _∎)
 Take these as givens for now, but will see how they are defined in Chapter Equality
 
 underbars indicate where terms appear
-- infix   : `_≡_` and `_≡⟨⟩_`
-- prefix  : `begin_` is prefix
-- postfix : `_∎`
+- `_≡_` and `_≡⟨⟩_`  : terms on each side
+- `begin_` is prefix : terms after
+- : `_∎`             : terms before
 
 ------------------------------------------------------------------------------
 ## Operations on naturals are recursive functions
 -}
 
 _+_ : ℕ → ℕ → ℕ
-zero    + n =          n  -- base case      : 0       + n  ≡  n
+zero    + n =          n  -- base case      :  0      + n  ≡  n
 (suc m) + n = suc (m + n) -- inductive case : (1 + m) + n  ≡  1 + (m + n) : associativity
 
 {-
@@ -103,11 +103,11 @@ _ =
   ≡⟨⟩    -- is shorthand for
     (suc (suc zero)) + (suc (suc (suc zero)))
   ≡⟨⟩    -- inductive case
-    suc ((suc zero) + (suc (suc (suc zero))))
+    suc ((suc zero)  + (suc (suc (suc zero))))
   ≡⟨⟩    -- inductive case
-    suc (suc (zero + (suc (suc (suc zero)))))
+    suc (suc (zero   + (suc (suc (suc zero)))))
   ≡⟨⟩    -- base case
-    suc (suc (suc (suc (suc zero))))
+    suc (suc           (suc (suc (suc zero))))
   ≡⟨⟩    -- is longhand for
     5
   ∎ -- ∎ is QED
@@ -119,11 +119,11 @@ _ =
   begin
     2 + 3
   ≡⟨⟩
-    suc (1 + 3)
+    suc      (1 + 3)
   ≡⟨⟩
     suc (suc (0 + 3))
   ≡⟨⟩
-    suc (suc 3)
+    suc (suc      3)
   ≡⟨⟩
     5
   ∎
@@ -146,9 +146,7 @@ Duality of interpretation
 - type as a proposition
 - term as evidence (aka proof)
 
-
 #### Exercise `+-example` Compute `3 + 4`
-
 -}
 
 _ : 3 + 4 ≡ 7
@@ -156,13 +154,13 @@ _ =
   begin
     3 + 4
   ≡⟨⟩
-    suc (2 + 4)
+    suc           (2 + 4)
   ≡⟨⟩
-    suc (suc (1 + 4))
+    suc (suc      (1 + 4))
   ≡⟨⟩
     suc (suc (suc (0 + 4)))
   ≡⟨⟩
-    suc (suc (suc 4))
+    suc (suc (suc      4))
   ≡⟨⟩
     7
   ∎
@@ -179,7 +177,7 @@ _ = refl
 -}
 
 _*_ : ℕ → ℕ → ℕ
-zero    * n  =  zero        -- 0       * n  ≡  0
+zero    * n  =  zero        --  0      * n  ≡  0
 (suc m) * n  =  n + (m * n) -- (1 + m) * n  ≡  n + (m * n)
 
 {-
@@ -189,14 +187,14 @@ Computing `m * n` returns the sum of `m` copies of `n`.
 
     (m + n) * p  ≡  (m * p) + (n * p)
 
-We get the second equation from the third by taking `m` to be `1`, `n`
-to be `m`, and `p` to be `n`, and then using the fact that one is an
-identity for multiplication, so `1 * n ≡ n`.
+We get the second equation from the third by
+- taking `m` to be `1`
+- `n` to be `m`
+- `p` to be `n`
+- then use fact that one is identity for multiplication, so
+- `1 * n ≡ n`
 
-well founded : multiplication of larger numbers is defined
- in terms of multiplication of smaller numbers.
-
-For example, let's multiply two and three:
+well founded : _*_ of larger numbers is defined in terms of _*_ of smaller numbers
 -}
 
 _ : 2 * 3 ≡ 6
@@ -215,8 +213,49 @@ _ =
 
 {-
 #### Exercise `*-example` Compute `3 * 4` TODO
-(You do not need to step through the evaluation of `+`.)
+-}
 
+_ : 3 * 4 ≡ 12
+_ =
+  begin
+    3 * 4
+  ≡⟨⟩
+    4 + (2 * 4)
+  ≡⟨⟩
+    4 + (4 + (1 * 4))
+  ≡⟨⟩
+    4 + (4 + (4 + (0 * 4)))
+  ≡⟨⟩   -- base case
+    4 + (4 + (4 +  0))
+  ≡⟨⟩   -- addition
+    12
+  ∎
+
+-- HC
+
+_*hc_ : ℕ → ℕ → ℕ
+n *hc zero    =  zero
+n *hc (suc m) =  (m * n) + n
+
+_ : 2 *hc 3 ≡ 6
+_ =
+  begin
+    2  *hc 3
+  ≡⟨⟩
+    (2 *hc 2)              + 2
+  ≡⟨⟩
+    ((1 *hc 2)         + 2) + 2
+  ≡⟨⟩
+    (((0 *hc 2)  + 2)  + 2) + 2
+  ≡⟨⟩
+     ((0         + 2)  + 2) + 2
+  ≡⟨⟩
+     (             2   + 2) + 2
+  ≡⟨⟩
+    6
+  ∎
+
+{-
 ------------------------------------------------------------------------------
 #### Exercise `_^_` (recommended) Define exponentiation
 - given by the following equations:
@@ -228,14 +267,13 @@ Check that `3 ^ 4` is `81`.
 -}
 
 _^_ : ℕ → ℕ → ℕ
-m    ^ 0        =  1
-m    ^ (suc n)  =  m * (m ^ n)
+m ^ 0       = 1
+m ^ (suc n) = m * (m ^ n)
 
 _ : 3 ^ 4 ≡ 81
 _ = refl
 
 {-
-
 ------------------------------------------------------------------------------
 ## Monus subtraction
 
@@ -274,16 +312,44 @@ _ =
   ∎
 
 {-
-#### Exercise Compute `5 ∸ 3` and `3 ∸ 5`, reasoning as a chain of equations. TODO
+#### Exercise Compute `5 ∸ 3` and `3 ∸ 5`, reasoning as a chain of equations.
+-}
 
+_ =
+  begin
+    5 ∸ 3
+  ≡⟨⟩
+    4 ∸ 2
+  ≡⟨⟩
+    3 ∸ 1
+  ≡⟨⟩
+    2 ∸ 0
+  ≡⟨⟩
+    2
+  ∎
+
+_ =
+  begin
+    3 ∸ 5
+  ≡⟨⟩
+    2 ∸ 4
+  ≡⟨⟩
+    1 ∸ 3
+  ≡⟨⟩
+    0 ∸ 2
+  ≡⟨⟩
+    0
+  ∎
+
+{-
 ------------------------------------------------------------------------------
 ## Precedence to avoid writing parentheses
 
-Application higher than operators : `suc m + n` means `(suc m) + n`
+Application higher than operators   : `suc m + n` means `(suc m) + n`
 
 multiplication higher than addition : `n + m * n` means `n + (m * n)`
 
-addition _associates to the left_ : `m + n + p` means `(m + n) + p`
+addition _associates to the left_   : `m + n + p` means `(m + n) + p`
 
 declare precedence and associativity of infix operators
 -}
@@ -305,22 +371,20 @@ a function of two arguments in terms of
 Function arrows associate to the right : `ℕ → ℕ → ℕ` stands for `ℕ → (ℕ → ℕ)`
 Application associates to the left     : `_+_ 2 3` stands for `(_+_ 2) 3`
 
-
 Named for Haskell Curry.
 
 The idea actually appears in the _Begriffsschrift_ of Gottlob Frege, published in 1879.
 
 ## The story of creation, revisited
 
-Just as our inductive definition defines the naturals in terms of the
-naturals, so does our recursive definition define addition in terms
-of addition.
+inductive definition defines naturals in terms of naturals
+recursive definition defines addition in terms of addition
 
-    n : ℕ
+           n : ℕ
     --------------
     zero + n  =  n
 
-    m + n  =  p
+         m  + n  =      p
     ---------------------
     (suc m) + n  =  suc p
 
@@ -328,113 +392,21 @@ of addition.
 skipped
 
 ------------------------------------------------------------------------------
-## Writing definitions interactively
-
-    _+_ : ℕ → ℕ → ℕ
-    m + n = ?
-
-? tells Agda to fill in that part of the code.
-`C-c C-l`
-? replaced:
-
-    _+_ : ℕ → ℕ → ℕ
-    m + n = { }0
-
-empty braces : a "numbered" *hole*
-Emacs will also create a window displaying the text
-
-    ?0 : ℕ
-
-to indicate that hole 0 is to be filled in with a term of type `ℕ`.
-
-`C-c C-f` (for **f**orward) will move you into the next hole.
-
-To define addition by recursion on the first argument.
-Move the cursor into the hole and type `C-c C-c` (for **c**ase).
-You will be given the prompt:
-
-    pattern variables to case (empty for split on result):
-
-Typing `m` will cause a split on that variable, resulting in an update to the code:
-
-    _+_ : ℕ → ℕ → ℕ
-    zero + n = { }0
-    suc m + n = { }1
-
-There are now two holes, and the window at the bottom tells you the required type of each:
-
-    ?0 : ℕ
-    ?1 : ℕ
-
-Going into hole 0 and type `C-c C-,` will display information on the
-required type of the hole, and what free variables are available:
-
-    Goal: ℕ
-    ————————————————————————————————————————————————————————————
-    n : ℕ
-
-This strongly suggests filling the hole with `n`.  After the hole is
-filled, you can type `C-c C-space`, which will remove the hole:
-
-    _+_ : ℕ → ℕ → ℕ
-    zero + n = n
-    suc m + n = { }1
-
-Again, going into hole 1 and type `C-c C-,` will display information on the
-required type of the hole, and what free variables are available:
-
-    Goal: ℕ
-    ————————————————————————————————————————————————————————————
-    n : ℕ
-    m : ℕ
-
-Going into the hole and type `C-c C-r` (for **r**efine) will fill it in
-with a constructor (if there is a unique choice) or tell you what constructors
-you might use, if there is a choice.  In this case, it displays the following:
-
-    Don't know which constructor to introduce of zero or suc
-
-Filling the hole with `suc ?` and typing `C-c C-space` results in the following:
-
-    _+_ : ℕ → ℕ → ℕ
-    zero + n = n
-    suc m + n = suc { }1
-
-Going into the new hole and typing `C-c C-,` gives similar information to before:
-
-    Goal: ℕ
-    ————————————————————————————————————————————————————————————
-    n : ℕ
-    m : ℕ
-
-We can fill the hole with `m + n` and type `C-c C-space` to complete the program:
-
-    _+_ : ℕ → ℕ → ℕ
-    zero + n = n
-    suc m + n = suc (m + n)
-
-Exploiting interaction to this degree is probably not helpful for a program this
-simple, but the same techniques can help with more complex programs.  Even for
-a program this simple, using `C-c C-c` to split cases can be helpful.
-
-------------------------------------------------------------------------------
 ## More pragmas
 -}
 
-{-# BUILTIN NATPLUS _+_ #-}
+{-# BUILTIN NATPLUS  _+_ #-}
 {-# BUILTIN NATTIMES _*_ #-}
 {-# BUILTIN NATMINUS _∸_ #-}
 
 {-
-tells Agda that these three operators correspond to the usual ones,
-and enables it to perform these computations using the corresponding
-Haskell operators on the arbitrary-precision integer type.
+tells Agda correspondance between operators correspond and the usual ones.
+Enables using corresponding Haskell operators on arbitrary-precision integer type.
 
 ------------------------------------------------------------------------------
 #### Exercise `Bin` (stretch) {name=Bin}
 
-A more efficient representation of natural numbers uses a binary rather than a unary system.
-We represent a number as a bitstring:
+represent nat as bitstring
 -}
 
 data Bin : Set where
@@ -446,11 +418,11 @@ data Bin : Set where
 bitstring 1011 (eleven) encoded as ⟨⟩ I O I I
 or, with leading zeros,        ⟨⟩ O O I O I I
 
-Define a function
+define
 
     inc : Bin → Bin
 
-that converts a bitstring to the bitstring for the next higher number.
+converts bitstring to bitstring for next higher number
 -}
 
 inc : Bin → Bin
@@ -467,27 +439,26 @@ _ = refl
 
 -- Confirm correct answer for the bitstrings encoding zero through four.
 
-_ : inc (⟨⟩   O) ≡ ⟨⟩     I
+_ : inc (⟨⟩     O) ≡ ⟨⟩     I
 _ = refl
-
-_ : inc (⟨⟩   I) ≡ ⟨⟩   I O
+_ : inc (⟨⟩     I) ≡ ⟨⟩   I O
 _ = refl
-
-_ : inc (⟨⟩ I O) ≡ ⟨⟩   I I
+_ : inc (⟨⟩   I O) ≡ ⟨⟩   I I
 _ = refl
-
-_ : inc (⟨⟩ I I) ≡ ⟨⟩ I O O
+_ : inc (⟨⟩   I I) ≡ ⟨⟩ I O O
 _ = refl
-
+_ : inc (⟨⟩ I O O) ≡ ⟨⟩ I O I
+_ = refl
 
 {-
-Using the above, define a pair of functions to convert between the two representations.
+using above, define
 
     to   : ℕ → Bin
     from : Bin → ℕ
 
-For `to`, have no leading zeros if it represents a positive natural, and represent zero by `⟨⟩ O`.
-Confirm that these both give the correct answer for zero through four.
+`to` should not have leading zeros, except represent zero as `⟨⟩ O`
+
+confirm for zero through four
 -}
 
 to : ℕ → Bin
@@ -499,6 +470,28 @@ from     ⟨⟩ = 0
 from (b  O) = 2 * from b
 from (b  I) = 2 * from b + 1
 
+_ : from (⟨⟩     O) ≡ 0
+_ = refl
+_ : from (⟨⟩     I) ≡ 1
+_ = refl
+_ : from (⟨⟩   I O) ≡ 2
+_ = refl
+_ : from (⟨⟩   I I) ≡ 3
+_ = refl
+_ : from (⟨⟩ I O O) ≡ 4
+_ = refl
+
+_ : to 0 ≡ (⟨⟩     O)
+_ = refl
+_ : to 1 ≡ (⟨⟩     I)
+_ = refl
+_ : to 2 ≡ (⟨⟩   I O)
+_ = refl
+_ : to 3 ≡ (⟨⟩   I I)
+_ = refl
+_ : to 4 ≡ (⟨⟩ I O O)
+_ = refl
+
 _ : from (to 12) ≡ 12
 _ = refl
 
@@ -506,7 +499,6 @@ _ : to (from (⟨⟩ I I O O)) ≡ ⟨⟩ I I O O
 _ = refl
 
 {-
-
 ------------------------------------------------------------------------------
 ## Standard library
 
