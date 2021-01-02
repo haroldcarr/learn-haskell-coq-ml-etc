@@ -205,11 +205,11 @@ recursive invocation `+-assoc m n p`
 A relation is a CONGRUENCE for a given function if the relation
 is preserved by applying the function.
 
-If `e` is evidence that `x ≡ y`, then `cong f e` is evidence `f x ≡ f y`, for any `f`
+if `e` is evidence that `x ≡ y`, then `cong f e` is evidence `f x ≡ f y`, for any `f`
 
-Here the inductive hypothesis is not assumed.
+here the inductive hypothesis is not assumed
 
-Instead, proved by recursive invocation of the function being defined, `+-assoc m n p`
+instead, proved by recursive invocation of the function being defined, `+-assoc m n p`
 
 well founded : associativity of larger numbers is proved in of associativity of smaller numbers.
 
@@ -425,6 +425,8 @@ Agda requires defining identifiers before use, thus lemmas before props using th
      m + ((n  +  p)  + q)
   ≡⟨ sym (+-assoc m (n + p) q) ⟩
     (m +  (n  +  p)) + q
+  ≡⟨⟩
+     m +  (n  +  p)  + q
   ∎
 
 {-
@@ -527,37 +529,17 @@ rewriting by a given equation
 
 {-
 ------------------------------------------------------------------------------
-HC: https://proofwiki.org/wiki/Axiom:Axiomatization_of_1-Based_Natural_Numbers
+HC
 -}
 
-{-
-*-z : ∀ (m n : ℕ) → m * zero ≡ zero
-*-z m zero 
--}
-
-
--- axiom A
 *-identityʳ : ∀ (n : ℕ) → n * 1 ≡ n
 *-identityʳ zero = refl
 *-identityʳ (suc n) rewrite *-identityʳ n = refl
 
-*-identityL    : ∀ (n : ℕ) → 1 * n ≡ n
+*-identityL : ∀ (n : ℕ) → 1 * n ≡ n
 *-identityL zero = refl
 *-identityL (suc n) rewrite *-identityL n = refl
-{-
-axiomB : ∀ (m n : ℕ) → m * (n + 1) ≡ (m * n) + m
-axiomB m zero  =
-  begin
-    m * (zero + 1)
-  ≡⟨⟩
-    m *         1
-  ≡⟨ *-identityʳ m ⟩
-    m
-  ≡⟨⟩
-    m
-  ∎
-axiomB m (suc n) = {!!}
--}
+
 {-
 ------------------------------------------------------------------------------
 #### Exercise `+-swap` (recommended) {name=plus-swap}
@@ -594,13 +576,28 @@ Show multiplication distributes over addition
     (m + n) * p ≡ m * p + n * p
 
 for all naturals `m`, `n`, and `p`.
+
+https://proofwiki.org/wiki/Natural_Number_Multiplication_Distributes_over_Addition
 -}
-{- RIGHT HERE
+{-
+_*R_ : ℕ → ℕ → ℕ
+m *R zero    = zero        --  m  *  0      ≡  0
+m *R (suc n) = m + (n * m) --  m  * (1 + n) ≡  m + (n * m)
+
+*-eq-*R : ∀ (m n : ℕ)
+        -> m *  n
+        ≡  m *R n
+*-eq-*R zero n    =
+  begin
+    zero * n
+*-eq-*R (suc m) n = {!!}
+-}
+{-
 *-distrib-+ : ∀ (m n p : ℕ)
             → (m     + n) * p
             ≡  m * p + n  * p
-*-distrib-+  zero   n p = refl
-*-distrib-+ (suc m) n p =
+*-distrib-+ m n  zero   = {!!}
+*-distrib-+ m n (suc p) = {!!}
 -}
 {-
 ------------------------------------------------------------------------------
@@ -611,8 +608,9 @@ Show multiplication is associative, that is,
     (m * n) * p ≡ m * (n * p)
 
 for all naturals `m`, `n`, and `p`.
+TODO
 -}
-
+{-
 *-assoc : ∀ (m n p : ℕ)
         → (m *  n) * p
         ≡  m * (n  * p)
@@ -621,8 +619,7 @@ for all naturals `m`, `n`, and `p`.
 *-assoc zero n p = refl
 -- inductive case : show: (suc m *  n) * p
 --                       ≡ suc m * (n  * p)
-{-
-*-assoc (suc m) n p =
+*-assoc (suc m) n p = {!!}
   begin
     (suc   m *  n)  * p
   ≡⟨⟩
