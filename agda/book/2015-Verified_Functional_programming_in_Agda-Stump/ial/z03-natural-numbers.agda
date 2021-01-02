@@ -156,8 +156,10 @@ z    |   |
    x * z |
        y * z
 -}
-*distribr (suc x) y z rewrite *distribr x y z =
-  +assoc z (x * z) (y * z)
+*distribr (suc x) y z
+  rewrite
+    *distribr x y z
+  = +assoc z (x * z) (y * z)
 
 ------------------------------------------------------------------------------
 -- p 65 * COMMUTATIVITY

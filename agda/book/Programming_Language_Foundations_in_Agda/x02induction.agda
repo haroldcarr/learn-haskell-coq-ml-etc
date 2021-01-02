@@ -400,12 +400,6 @@ second lemma does same for `suc` on 2nd arg:
     suc  n +     m
   ∎
 
--- HC: minimal
-
-+-comm' : ∀ (m n : ℕ) → m + n ≡ n + m
-+-comm' m zero    = +-identityʳ m
-+-comm' m (suc n) = +-comm m (suc n) -- TODO
-
 {-
 Agda requires defining identifiers before use, thus lemmas before props using them.
 
@@ -512,20 +506,25 @@ rewriting by a given equation
 ## Commutativity with rewrite
 -}
 
-+-identity′ : ∀ (n : ℕ) → n + zero ≡ n
-+-identity′ zero = refl
-+-identity′ (suc n) rewrite +-identity′ n = refl
++-identityL : ∀ (n : ℕ) → n + zero ≡ n
++-identityL zero = refl
++-identityL (suc n) rewrite +-identityL n = refl
 
 +-suc′ : ∀ (m n : ℕ) → m + suc n ≡ suc (m + n)
 +-suc′ zero n = refl
 +-suc′ (suc m) n rewrite +-suc′ m n = refl
 
 +-comm′ : ∀ (m n : ℕ) → m + n ≡ n + m
-+-comm′ m zero rewrite +-identity′ m = refl
++-comm′ m zero rewrite +-identityL m = refl
 -- rewriting with two equations indicated by separating the two proofs
 -- of the relevant equations by a vertical bar
 -- left rewrite performed before right
-+-comm′ m (suc n) rewrite +-suc′ m n | +-comm′ m n = refl
++-comm′ m (suc n)  -- m + suc n ≡ suc  n + m
+                   -- m + suc n ≡ suc (n + m) -- def/eq
+  rewrite
+    +-suc′  m n    -- suc (m + n) ≡ suc (n + m)
+  | +-comm′ m n    -- suc (n + m) ≡ suc (n + m)
+  = refl
 
 {-
 ------------------------------------------------------------------------------
@@ -576,29 +575,39 @@ Show multiplication distributes over addition
     (m + n) * p ≡ m * p + n * p
 
 for all naturals `m`, `n`, and `p`.
-
-https://proofwiki.org/wiki/Natural_Number_Multiplication_Distributes_over_Addition
 -}
 {-
-_*R_ : ℕ → ℕ → ℕ
-m *R zero    = zero        --  m  *  0      ≡  0
-m *R (suc n) = m + (n * m) --  m  * (1 + n) ≡  m + (n * m)
+_*r_ : ℕ → ℕ → ℕ
+m *r zero    = zero        --  m  *  0      ≡  0
+m *r (suc n) = m + (n * m) --  m  * (1 + n) ≡  m + (n * m)
 
-*-eq-*R : ∀ (m n : ℕ)
-        -> m *  n
-        ≡  m *R n
-*-eq-*R zero n    =
-  begin
-    zero * n
-*-eq-*R (suc m) n = {!!}
--}
-{-
+*0 : ∀ (m : ℕ) -> m * 0 ≡ 0
+*0 zero = refl
+*0 (suc m) rewrite *0 m = refl
+
 *-distrib-+ : ∀ (m n p : ℕ)
             → (m     + n) * p
             ≡  m * p + n  * p
-*-distrib-+ m n  zero   = {!!}
-*-distrib-+ m n (suc p) = {!!}
+*-distrib-+ m n zero    -- (m + n) * zero ≡ m * zero + n * zero
+  rewrite
+    *0 (m + n)          --              0 ≡ m * 0    + n * 0
+  | *0 m                --              0 ≡            n * 0
+  | *0 n                --              0 ≡                0
+  = refl
+*-distrib-+ m n (suc p) -- (m + n) * suc p ≡ m * suc p + n * suc p
+  = {!!}
 -}
+
+*-distrib-+r : ∀ (m n p : ℕ)
+             → (m     + n) * p
+             ≡  m * p + n  * p
+*-distrib-+r  zero   y z = refl
+*-distrib-+r (suc x) y z -- (suc x     + y) * z  ≡ suc x * z + y * z
+                         -- z + (x     + y) * z  ≡ z + x * z + y * z
+  rewrite
+    *-distrib-+r x y z   -- z + (x * z + y  * z) ≡ z + x * z + y * z
+  = (sym (+-assoc z (x * z) (y * z)))
+
 {-
 ------------------------------------------------------------------------------
 #### Exercise `*-assoc` (recommended) {name=times-assoc}
