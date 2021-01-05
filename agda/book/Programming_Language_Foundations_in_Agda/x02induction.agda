@@ -606,7 +606,7 @@ m *r (suc n) = m + (n * m) --  m  * (1 + n) ≡  m + (n * m)
                          -- z + (x     + y) * z  ≡ z + x * z + y * z
   rewrite
     *-distrib-+r x y z   -- z + (x * z + y  * z) ≡ z + x * z + y * z
-  = (sym (+-assoc z (x * z) (y * z)))
+  = sym (+-assoc z (x * z) (y * z))
 
 {-
 ------------------------------------------------------------------------------
@@ -617,26 +617,34 @@ Show multiplication is associative, that is,
     (m * n) * p ≡ m * (n * p)
 
 for all naturals `m`, `n`, and `p`.
-TODO
 -}
-{-
 *-assoc : ∀ (m n p : ℕ)
         → (m *  n) * p
         ≡  m * (n  * p)
 -- base case : show: (zero *  n) * p
 --                  ≡ zero * (n  * p)
-*-assoc zero n p = refl
+*-assoc zero n p = refl      -- zero * n * p        ≡ zero * (n * p)
+                             -- zero                ≡ zero -- def/eq
 -- inductive case : show: (suc m *  n) * p
 --                       ≡ suc m * (n  * p)
-*-assoc (suc m) n p = {!!}
-  begin
-    (suc   m *  n)  * p
-  ≡⟨⟩
-    (n +  (m *  n)) * p
-  ≡⟨⟩
-    suc m * (n  * p)
-  ∎
+*-assoc (suc m) n p          --     suc m * n  * p  ≡     suc m * (n * p)
+                             --    (n + m * n) * p  ≡ n * p + m * (n * p) -- def/eq
+  rewrite
+    *-distrib-+r n (m * n) p -- n * p + m *  n * p  ≡ n * p + m * (n * p)
+  | *-assoc m n p            -- n * p + m * (n * p) ≡ n * p + m * (n * p)
+  = refl
+{-
+------------------------------------------------------------------------------
+HC
 -}
+
+0* : ∀ (m : ℕ) → 0 * m ≡ 0
+0* m = refl
+
+*0 : ∀ (m : ℕ) → m * 0 ≡ 0
+*0 zero    = refl
+*0 (suc m) = *0 m
+
 {-
 ------------------------------------------------------------------------------
 #### Exercise `*-comm` (practice) {name=times-comm}
@@ -647,11 +655,29 @@ Show multiplication is commutative, that is,
 
 for all naturals `m` and `n`.  As with commutativity of addition,
 you will need to formulate and prove suitable lemmas.
+-}
 
-```
--- Your code goes here
-```
+*-suc : ∀ (x y : ℕ) → x * (suc y) ≡ x + (x * y)
+*-suc zero y = refl
+*-suc (suc x) y               --       suc x * suc y  ≡ suc  x +  suc  x * y
+                              -- suc (y  + x * suc y) ≡ suc (x + (y +  x * y))
+  rewrite
+    +-comm y (x * suc y)      -- suc (x  * suc y + y) ≡ suc (x + (y +  x * y))
+  | *-suc x y                 -- suc (x + x  * y + y) ≡ suc (x + (y +  x * y))
+  | +-comm y (x * y)          -- suc (x + x  * y + y) ≡ suc (x + (x *  y + y))
+  | sym (+-assoc x (x * y) y) -- suc (x + x  * y + y) ≡ suc (x +  x *  y + y)
+  = refl
 
+*-comm : ∀ (m n : ℕ) → m * n  ≡ n * m
+*-comm m zero rewrite *0 m = refl
+*-comm m (suc n) -- m * suc n ≡ suc n * m
+                 -- m * suc n ≡ m + n * m
+  rewrite
+    *-suc m n    -- m + m * n ≡ m + n * m
+  | *-comm m n   -- m + n * m ≡ m + n * m
+  = refl
+
+{-
 ------------------------------------------------------------------------------
 #### Exercise `0∸n≡0` (practice) {name=zero-monus}
 
@@ -660,11 +686,13 @@ Show
     zero ∸ n ≡ zero
 
 for all naturals `n`. Did your proof require induction?
+-}
 
-```
--- Your code goes here
-```
+0∸n≡0 : ∀ (n : ℕ) → 0 ∸ n ≡ 0
+0∸n≡0  zero   = refl
+0∸n≡0 (suc n) = refl
 
+{-
 ------------------------------------------------------------------------------
 #### Exercise `∸-|-assoc` (practice) {name=monus-plus-assoc}
 
@@ -673,13 +701,25 @@ Show that monus associates with addition, that is,
     m ∸ n ∸ p ≡ m ∸ (n + p)
 
 for all naturals `m`, `n`, and `p`.
+-}
 
-```
--- Your code goes here
-```
+∸-|-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
+∸-|-assoc      m       n   zero   --     m ∸     n ∸ zero   ≡     m ∸     (n + zero)
+                                  --     m ∸     n          ≡     m ∸     (n + zero)
+  rewrite +-identityʳ n = refl    --     m ∸     n          ≡     m ∸      n
+∸-|-assoc      m   zero   (suc p) --     m ∸  zero ∸ suc p  ≡     m ∸  (zero + suc p)
+  = refl                          --     m ∸         suc p  ≡     m ∸          suc p
+∸-|-assoc  zero   (suc n) (suc p) --  zero ∸ suc n ∸ suc p  ≡  zero ∸ (suc n + suc p)
+  = refl                          --  zero                  ≡  zero
+∸-|-assoc (suc m) (suc n) (suc p) -- suc m ∸ suc n ∸ suc p  ≡ suc m ∸ (suc n + suc p)
+                                  --     m ∸     n ∸ suc p  ≡     m ∸     (n + suc p)
+  rewrite
+    ∸-|-assoc m n (suc p)         --     m ∸    (n + suc p) ≡     m ∸     (n + suc p)
+  = refl
 
+{-
 ------------------------------------------------------------------------------
-#### Exercise `+*^` (stretch)
+#### Exercise `+*^` (stretch) TODO
 
 Show the following three laws
 
@@ -690,7 +730,7 @@ Show the following three laws
 for all `m`, `n`, and `p`.
 
 ------------------------------------------------------------------------------
-#### Exercise `Bin-laws` (stretch) {name=Bin-laws}
+#### Exercise `Bin-laws` (stretch) {name=Bin-laws} TODO
 
 Recall that
 Exercise [Bin](/Naturals/#Bin)
