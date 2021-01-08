@@ -212,7 +212,7 @@ _ =
   ∎
 
 {-
-#### Exercise `*-example` Compute `3 * 4` TODO
+#### Exercise `*-example` Compute `3 * 4`
 -}
 
 _ : 3 * 4 ≡ 12
@@ -269,6 +269,9 @@ Check that `3 ^ 4` is `81`.
 _^_ : ℕ → ℕ → ℕ
 m ^ 0       = 1
 m ^ (suc n) = m * (m ^ n)
+
+_ : 2 ^ 3 ≡ 8
+_ = refl
 
 _ : 3 ^ 4 ≡ 81
 _ = refl
@@ -426,7 +429,7 @@ converts bitstring to bitstring for next higher number
 -}
 
 inc : Bin → Bin
-inc  ⟨⟩    = ⟨⟩
+inc  ⟨⟩    = ⟨⟩      I
 inc (⟨⟩ O) = ⟨⟩      I
 inc (⟨⟩ I) = ⟨⟩   I  O
 inc (b  O) =      b  I
@@ -480,6 +483,9 @@ _ : from (⟨⟩   I I) ≡ 3
 _ = refl
 _ : from (⟨⟩ I O O) ≡ 4
 _ = refl
+_ : from (⟨⟩ I I O) ≡ 6
+_ = refl
+
 
 _ : to 0 ≡ (⟨⟩     O)
 _ = refl
@@ -491,12 +497,102 @@ _ : to 3 ≡ (⟨⟩   I I)
 _ = refl
 _ : to 4 ≡ (⟨⟩ I O O)
 _ = refl
+_ : to 6 ≡ (⟨⟩ I I O)
+_ = refl
 
 _ : from (to 12) ≡ 12
 _ = refl
 
 _ : to (from (⟨⟩ I I O O)) ≡ ⟨⟩ I I O O
 _ = refl
+
+-- 842 exercise
+
+_bin-+_ : Bin → Bin → Bin
+⟨⟩     bin-+ ⟨⟩     = ⟨⟩
+⟨⟩     bin-+ b      = b
+b      bin-+ ⟨⟩     = b
+(bl O) bin-+ (br O) = let r = bl bin-+ br in      r  O
+(bl O) bin-+ (br I) = let r = bl bin-+ br in      r  I
+(bl I) bin-+ (br O) = let r = bl bin-+ br in      r  I
+(bl I) bin-+ (br I) = let r = bl bin-+ br in (inc r) O
+
+_ : (⟨⟩)       bin-+ (⟨⟩)     ≡ (⟨⟩)
+_ = refl
+_ : (⟨⟩)       bin-+ (⟨⟩   O) ≡ (⟨⟩       O)
+_ = refl
+_ : (⟨⟩     O) bin-+ (⟨⟩)     ≡ (⟨⟩       O)
+_ = refl
+_ : (⟨⟩     O) bin-+ (⟨⟩   O) ≡ (⟨⟩       O)
+_ = refl
+_ : (⟨⟩     O) bin-+ (⟨⟩   I) ≡ (⟨⟩       I)
+_ = refl
+_ : (⟨⟩     I) bin-+ (⟨⟩   I) ≡ (⟨⟩     I O)
+_ = refl
+_ : (⟨⟩   I O) bin-+ (⟨⟩ I O) ≡ (⟨⟩   I O O)
+_ = refl
+_ : (⟨⟩   I I) bin-+ (⟨⟩ I I) ≡ (⟨⟩   I I O)
+_ = refl
+_ : (⟨⟩ I O I) bin-+ (⟨⟩   I) ≡ (⟨⟩   I I O)
+_ = refl
+_ : (⟨⟩ I I I) bin-+ (⟨⟩   I) ≡ (⟨⟩ I O O O)
+_ = refl
+
+------------------------------------------------------------------------------
+-- hc exercise
+
+z1-bin-+ : ∀ (b1 b2 : Bin)
+        → b1          ≡ ⟨⟩
+        → b1 bin-+ b2 ≡ b2
+z1-bin-+ b1 ⟨⟩ p     -- (b1 bin-+  ⟨⟩)    ≡ ⟨⟩
+  rewrite
+    p                -- (⟨⟩ bin-+  ⟨⟩)    ≡ ⟨⟩
+                     --            ⟨⟩     ≡ ⟨⟩
+  = refl
+z1-bin-+ b1 (⟨⟩ O) p -- (b1 bin-+ (⟨⟩ O)) ≡ (⟨⟩ O)
+  rewrite
+    p                -- (⟨⟩ bin-+ (⟨⟩ O)) ≡ (⟨⟩ O)
+                     --           (⟨⟩ O)  ≡ (⟨⟩ O)
+  = refl
+z1-bin-+ b1 (b O) p  -- (b1 bin-+ (b  O)) ≡ (b  O)
+  rewrite
+    p                -- (⟨⟩ bin-+  (b O)) ≡ (b  O)
+                     --            (b O)  ≡ (b  O)
+  = refl
+z1-bin-+ b1 (b I) p  -- (b1 bin-+  (b I)) ≡ (b  I)
+  rewrite
+    p                -- (⟨⟩ bin-+  (b I)) ≡ (b  I)
+                     --            (b I)  ≡ (b  I)
+  = refl
+
+z-bin-+ : ∀ (b1 b2 : Bin)
+        → b1          ≡ (⟨⟩ O)
+        → b1 bin-+ b2 ≡ b2
+z-bin-+ b1 ⟨⟩ p     -- (b1     bin-+ ⟨⟩)     ≡ ⟨⟩
+  rewrite
+    p               -- ((⟨⟩ O) bin-+ ⟨⟩)     ≡ ⟨⟩
+                    --  (⟨⟩ O)               ≡ ⟨⟩
+  = {!!}
+z-bin-+ b1 (⟨⟩ O) p -- (b1     bin-+ (⟨⟩ O)) ≡ (⟨⟩ O)
+  rewrite
+    p               -- ((⟨⟩ O) bin-+ (⟨⟩ O)) ≡ (⟨⟩ O)
+                    --               (⟨⟩ O)  ≡ (⟨⟩ O)
+  = refl
+z-bin-+ b1 (b O) p  -- (b1     bin-+ (b  O)) ≡ (b  O)
+  rewrite
+    p               -- ((⟨⟩ O) bin-+ (b  O)) ≡ (b  O)
+                    -- ((⟨⟩    bin-+ b)  O)  ≡ (b  O)
+  = {!!}
+z-bin-+ b1 (b I) p  -- (b1     bin-+ (b  I)) ≡ (b  I)
+  rewrite
+    p               -- ((⟨⟩ O) bin-+ (b  I)) ≡ (b  I)
+                    -- ((⟨⟩    bin-+ b)  I)  ≡ (b  I)
+  = {!!}
+
+hc : ∀ (m n : ℕ) →  from (to m bin-+ to n) ≡ m + n
+hc  zero   n     -- from (to zero bin-+ to n) ≡ zero + n
+  = {!!}         -- from ( (⟨⟩ O) bin-+ to n) ≡        n
+hc (suc m) n = {!!}
 
 {-
 ------------------------------------------------------------------------------

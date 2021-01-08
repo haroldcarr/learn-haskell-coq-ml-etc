@@ -5,7 +5,7 @@ module x02induction where
 import      Relation.Binary.PropositionalEquality as Eq
 open        Eq             using (_≡_; refl; cong; sym)
 open        Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
-open import Data.Nat       using (ℕ; zero; suc; _+_; _*_; _∸_)
+open import Data.Nat       using (ℕ; zero; suc; _+_; _*_; _∸_; _^_)
 
 {-
 ------------------------------------------------------------------------------
@@ -506,16 +506,12 @@ rewriting by a given equation
 ## Commutativity with rewrite
 -}
 
-+-identityL : ∀ (n : ℕ) → n + zero ≡ n
-+-identityL zero = refl
-+-identityL (suc n) rewrite +-identityL n = refl
-
 +-suc′ : ∀ (m n : ℕ) → m + suc n ≡ suc (m + n)
 +-suc′ zero n = refl
 +-suc′ (suc m) n rewrite +-suc′ m n = refl
 
 +-comm′ : ∀ (m n : ℕ) → m + n ≡ n + m
-+-comm′ m zero rewrite +-identityL m = refl
++-comm′ m zero rewrite +-identityʳ m = refl
 -- rewriting with two equations indicated by separating the two proofs
 -- of the relevant equations by a vertical bar
 -- left rewrite performed before right
@@ -575,27 +571,6 @@ Show multiplication distributes over addition
     (m + n) * p ≡ m * p + n * p
 
 for all naturals `m`, `n`, and `p`.
--}
-{-
-_*r_ : ℕ → ℕ → ℕ
-m *r zero    = zero        --  m  *  0      ≡  0
-m *r (suc n) = m + (n * m) --  m  * (1 + n) ≡  m + (n * m)
-
-*0 : ∀ (m : ℕ) -> m * 0 ≡ 0
-*0 zero = refl
-*0 (suc m) rewrite *0 m = refl
-
-*-distrib-+ : ∀ (m n p : ℕ)
-            → (m     + n) * p
-            ≡  m * p + n  * p
-*-distrib-+ m n zero    -- (m + n) * zero ≡ m * zero + n * zero
-  rewrite
-    *0 (m + n)          --              0 ≡ m * 0    + n * 0
-  | *0 m                --              0 ≡            n * 0
-  | *0 n                --              0 ≡                0
-  = refl
-*-distrib-+ m n (suc p) -- (m + n) * suc p ≡ m * suc p + n * suc p
-  = {!!}
 -}
 
 *-distrib-+r : ∀ (m n p : ℕ)
@@ -719,7 +694,7 @@ for all naturals `m`, `n`, and `p`.
 
 {-
 ------------------------------------------------------------------------------
-#### Exercise `+*^` (stretch) TODO
+#### Exercise `+*^` (stretch)
 
 Show the following three laws
 
@@ -728,7 +703,74 @@ Show the following three laws
      (m ^ n) ^ p ≡ m ^ (n * p)        (^-*-assoc)
 
 for all `m`, `n`, and `p`.
+-}
 
+-------------------------
+-- this can be shortened
+^-distribˡ-|-* : ∀ (m n p : ℕ)
+               →  m ^ (n  +      p)
+               ≡ (m ^  n) * (m ^ p)
+^-distribˡ-|-* m n zero              -- (m ^ (n + zero))        ≡ (m ^ n) * (m ^ zero)
+                                     -- (m ^ (n + zero))        ≡ (m ^ n) * 1
+  rewrite
+    +-identityʳ n                    -- (m ^  n)                ≡ (m ^ n) * 1
+  | *-identityʳ (m ^ n)              -- (m ^  n)                ≡ (m ^ n)
+  = refl
+^-distribˡ-|-* m n (suc p)           -- (m ^ (n + suc p))       ≡ (m ^ n) *      (m ^ suc p)
+                                     -- (m ^ (n + suc p))       ≡ (m ^ n) * (m * (m ^     p))
+  rewrite
+    *-comm m (m ^ p)                 -- (m ^ (n + suc p))       ≡ (m ^ n) *     ((m ^     p) * m)
+  | sym (*-assoc (m ^ n) (m ^ p) m)  -- (m ^ (n + suc p))       ≡ (m ^ n) *      (m ^     p) * m
+  | +-comm n (suc p)                 -- (m ^ suc (p + n))       ≡ (m ^ n) *      (m ^     p) * m
+                                     -- m * (m ^ (p + n))       ≡ (m ^ n) *      (m ^     p) * m
+  | *-comm ((m ^ n) * (m ^     p)) m -- m * (m ^ (p + n))       ≡  m * ((m ^ n) * (m ^ p))
+  | sym (*-assoc m (m ^ n) (m ^ p))  -- m * (m ^ (p + n))       ≡  m *  (m ^ n) * (m ^ p)
+  | ^-distribˡ-|-* m p n             -- m * ((m ^ p) * (m ^ n)) ≡  m *  (m ^ n) * (m ^ p)
+  | sym (*-comm (m ^ n) (m ^ p))     -- m * ((m ^ n) * (m ^ p)) ≡  m *  (m ^ n) * (m ^ p)
+  | *-assoc m (m ^ n) (m ^ p)        -- m * ((m ^ n) * (m ^ p)) ≡  m * ((m ^ n) * (m ^ p))
+  = refl
+
+-------------------------
+^-distribʳ-* : ∀ (m n p : ℕ)
+             → (m * n) ^ p
+             ≡ (m ^ p) * (n ^ p)
+^-distribʳ-* m n zero = refl
+^-distribʳ-* m n (suc p)            --      ((m * n) ^ suc p)      ≡(m ^ suc p) * (n ^ suc p)
+                                    -- m * n * ((m      *  n) ^ p) ≡ m * (m ^ p) * (n * (n ^ p))
+  rewrite
+    ^-distribʳ-* m n p              -- m * n * ((m ^ p) * (n ^ p)) ≡ m * (m ^ p) * (n * (n ^ p))
+  | *-comm (m * (m ^ p)) (n * (n ^ p))
+                                    -- m * n * ((m ^ p) * (n ^ p)) ≡ n * (n ^ p) * (m * (m ^ p))
+  | *-assoc m n ((m ^ p) * (n ^ p)) -- m *(n * ((m ^ p) * (n ^ p)))≡ n * (n ^ p) * (m * (m ^ p))
+  | *-comm m (n * ((m ^ p) * (n ^ p)))
+                                    -- n *((m ^ p) * (n ^ p))* m  ≡ n * (n ^ p) * (m * (m ^ p))
+  | *-comm (m ^ p) (n ^ p)          -- n *((n ^ p) * (m ^ p))* m  ≡ n * (n ^ p) * (m * (m ^ p))
+  | sym (*-assoc n (n ^ p) (m ^ p)) -- n * (n ^ p) * (m ^ p) * m  ≡ n * (n ^ p) * (m * (m ^ p))
+  | *-assoc n (n ^ p) (m * (m ^ p)) -- n * (n ^ p) * (m ^ p) * m  ≡ n *((n ^ p) * (m * (m ^ p)))
+  | *-comm m (m ^ p)                -- n * (n ^ p) * (m ^ p) * m  ≡ n *((n ^ p) * ((m ^ p) * m))
+  | *-assoc n (n ^ p) (m ^ p)       -- n *((n ^ p) * (m ^ p))* m  ≡ n *((n ^ p) * ((m ^ p) * m))
+  | *-assoc n ((n ^ p) * (m ^ p)) m -- n *((n ^ p) * (m ^ p) * m) ≡ n *((n ^ p) * ((m ^ p) * m))
+  | *-assoc (n ^ p) (m ^ p) m       -- n *((n ^ p) *((m ^ p) * m))≡ n *((n ^ p) * ((m ^ p) * m))
+  = refl
+
+-------------------------
+^-*-assoc : ∀ (m n p : ℕ)
+          → (m ^  n) ^ p
+          ≡  m ^ (n  * p)
+^-*-assoc m n  zero                 --        ((m ^ n) ^ zero) ≡ (m ^ (n * zero))
+                                    --                      1  ≡ (m ^ (n * zero))
+  rewrite *0 n                      --                      1  ≡ (m ^ 0)
+                                    --                      1  ≡ 1
+  = refl
+^-*-assoc m n (suc p)               --       ((m ^ n) ^ suc p) ≡ (m ^ (n * suc p))
+                                    -- (m ^ n) * ((m ^ n) ^ p) ≡ (m ^ (n * suc p))
+  rewrite
+    *-suc n p                       -- (m ^ n) * ((m ^ n) ^ p) ≡ (m ^ (n + n * p))
+  | ^-distribˡ-|-* m n (n * p)      -- (m ^ n) * ((m ^ n) ^ p) ≡ (m ^ n) * (m ^ (n * p))
+  | sym (^-*-assoc m n p)           -- (m ^ n) * ((m ^ n) ^ p) ≡ (m ^ n) * ((m ^ n) ^ p)
+  = refl
+
+{-
 ------------------------------------------------------------------------------
 #### Exercise `Bin-laws` (stretch) {name=Bin-laws} TODO
 
@@ -736,11 +778,45 @@ Recall that
 Exercise [Bin](/Naturals/#Bin)
 defines a datatype `Bin` of bitstrings representing natural numbers,
 and asks you to define functions
+-}
 
-    inc   : Bin → Bin
-    to    : ℕ → Bin
-    from  : Bin → ℕ
+-- duplicated from x01 (can't import because of "duplicate" pragma)
 
+data Bin : Set where
+  ⟨⟩ : Bin
+  _O : Bin → Bin
+  _I : Bin → Bin
+
+inc : Bin → Bin
+inc  ⟨⟩    = ⟨⟩      I
+inc (b  O) =      b  I
+inc (b  I) = (inc b) O
+
+_ : inc (⟨⟩ I O I I) ≡ ⟨⟩ I I O O
+_ = refl
+
+dbl : ℕ → ℕ
+dbl   zero  = zero
+dbl (suc m) = suc (suc (dbl m))
+
+to : ℕ → Bin
+to   zero  = ⟨⟩ O
+to (suc m) = inc (to m)
+
+-- THIS IS THE CRITICAL STEP : defining in terms of 'dbl'
+-- Got hint from : https://cs.uwaterloo.ca/~plragde/842/
+from : Bin → ℕ
+from     ⟨⟩ = 0
+from (b  O) =      dbl (from b)
+from (b  I) = suc (dbl (from b))
+
+_ : to 6 ≡ ⟨⟩ I I O
+_ = refl
+
+_ : from (⟨⟩ I I O) ≡ 6
+_ = refl
+
+{-
 Consider the following laws, where `n` ranges over naturals and `b`
 over bitstrings:
 
@@ -749,11 +825,108 @@ over bitstrings:
     from (to n) ≡ n
 
 For each law: if it holds, prove; if not, give a counterexample.
+-}
 
-```
--- Your code goes here
-```
+-------------------------
 
++1 : ∀ (x : ℕ) → x + 1 ≡ suc x
++1 zero = refl
++1 (suc n) rewrite +1 n = refl
+
+fromInc≡sucFrom : ∀ (b : Bin)
+                → from (inc b) ≡ suc (from b)
+fromInc≡sucFrom ⟨⟩       --       from (inc ⟨⟩)      ≡ suc (from ⟨⟩)
+                         --                        1 ≡ 1
+  = refl
+fromInc≡sucFrom (⟨⟩ I)   --       from (inc (⟨⟩ I))  ≡ suc (from (⟨⟩ I))
+                         --                        2 ≡ 2
+  = refl
+fromInc≡sucFrom (b O)    --       from (inc (b O))   ≡ suc (from (b O))
+                         --       dbl (from b) + 1   ≡ suc (dbl (from b))
+  rewrite
+    +1 (dbl (from b))    --       suc (dbl (from b)) ≡ suc (dbl (from b))
+  = refl
+fromInc≡sucFrom (b I)    --       from (inc (b I))   ≡ suc (from (b I))
+                         --       dbl (from (inc b)) ≡ suc (dbl (from b) + 1)
+  rewrite
+    +1 (dbl (from b))    --       dbl (from (inc b)) ≡ suc (suc (dbl (from b)))
+  | fromInc≡sucFrom b    --       dbl (suc (from b)) ≡ suc (suc (dbl (from b)))
+                         -- suc (suc (dbl (from b))) ≡ suc (suc (dbl (from b)))
+  = refl
+
+-------------------------
+
+-- NOT USED
+xx : ∀ (b : Bin)
+   → (dbl (from b)) ≡ from (b O)
+xx ⟨⟩        -- dbl (from ⟨⟩) ≡ from (⟨⟩ O)
+             -- zero ≡ zero
+  = refl
+xx (b O)     -- dbl (from (b O)) ≡ from ((b O) O)
+             -- dbl (dbl (from b)) ≡ dbl (dbl (from b))
+  = refl
+xx (b I)     -- dbl (from (b I)) ≡ from ((b I) O)
+             -- suc (suc (dbl (dbl (from b)))) ≡ suc (suc (dbl (dbl (from b))))
+  = refl
+
+-- TODO
+yy : ∀ (b : Bin)
+   → to (dbl (from b)) ≡ (b O)
+yy ⟨⟩        --                  to (dbl (from ⟨⟩)) ≡ (⟨⟩ O)
+             --                              (⟨⟩ O) ≡ (⟨⟩ O)
+  = refl
+yy (b O)     --           to (dbl (from (b O)))     ≡ ((b O) O)
+             --           to (dbl (dbl (from b)))   ≡ ((b O) O)
+  rewrite
+    yy b
+  = {!!}
+yy (b I)     --           to (dbl (from (b I)))     ≡ ((b I) O)
+             -- inc (inc (to (dbl (dbl (from b))))) ≡ ((b I) O)
+  = {!!}
+
+to-from : ∀ (b : Bin)
+       → to (from b) ≡ b
+to-from ⟨⟩       --       to (from ⟨⟩)      ≡ ⟨⟩
+                 --               (⟨⟩ O)    ≡ ⟨⟩ -- *****
+  = {!!}
+to-from (⟨⟩ I)   --       to (from (⟨⟩ I))  ≡ (⟨⟩ I)
+                 --       (⟨⟩ I)            ≡ (⟨⟩ I)
+  = refl
+to-from (b O)    --       to (from (b O))   ≡ (b O)
+                 --       to (dbl (from b)) ≡ (b O)
+  rewrite
+    yy b         --                   (b O) ≡ (b O)
+  = refl
+to-from (b I)    --         to (from (b I)) ≡ (b I)
+                 -- inc (to (dbl (from b))) ≡ (b I)
+  rewrite
+    yy b         --                   (b I) ≡ (b I)
+  = refl
+
+-------------------------
+
+-- https://github.com/billyang98/plfa/blob/master/plfa/Induction.agda
+
+from-inc≡suc-from : ∀ x
+        → from (inc x) ≡ suc (from x)
+from-inc≡suc-from ⟨⟩ = {!!}
+from-inc≡suc-from (x O) = refl
+from-inc≡suc-from (x I)  --         from (inc (x I)) ≡ suc           (from (x I))
+                         --    dbl (from (inc  x))   ≡ suc (suc (dbl (from  x)))
+  rewrite
+    from-inc≡suc-from x  -- suc (suc (dbl (from x))) ≡ suc (suc (dbl (from x)))
+  = refl
+
+from-to : ∀ n → from (to n) ≡ n
+from-to zero = refl
+from-to (suc n)              -- from (to (suc n)) ≡ suc n
+                             -- from (inc (to n)) ≡ suc n
+  rewrite
+    from-inc≡suc-from (to n) -- suc (from (to n)) ≡ suc n
+  | cong suc (from-to n)     -- suc           n   ≡ suc n
+  = refl
+
+{-
 ------------------------------------------------------------------------------
 ## Standard library
 
@@ -778,3 +951,52 @@ Similar to `\r`, the command `\^r` gives access to a variety of
 superscript rightward arrows, and also a superscript letter `r`.
 The command `\'` gives access to a range of primes (`′ ″ ‴ ⁗`).
 -}
+
+
+-- ============================================================================
+
+-- since `1100` encodes twelve, we should have:
+
+_ : inc (⟨⟩ I O I I) ≡ ⟨⟩ I I O O
+_ = refl
+
+-- Confirm correct answer for the bitstrings encoding zero through four.
+
+_ : inc (⟨⟩     O) ≡ ⟨⟩     I
+_ = refl
+_ : inc (⟨⟩     I) ≡ ⟨⟩   I O
+_ = refl
+_ : inc (⟨⟩   I O) ≡ ⟨⟩   I I
+_ = refl
+_ : inc (⟨⟩   I I) ≡ ⟨⟩ I O O
+_ = refl
+_ : inc (⟨⟩ I O O) ≡ ⟨⟩ I O I
+_ = refl
+
+_ : from (⟨⟩     O) ≡ 0
+_ = refl
+_ : from (⟨⟩     I) ≡ 1
+_ = refl
+_ : from (⟨⟩   I O) ≡ 2
+_ = refl
+_ : from (⟨⟩   I I) ≡ 3
+_ = refl
+_ : from (⟨⟩ I O O) ≡ 4
+_ = refl
+
+_ : to 0 ≡ (⟨⟩     O)
+_ = refl
+_ : to 1 ≡ (⟨⟩     I)
+_ = refl
+_ : to 2 ≡ (⟨⟩   I O)
+_ = refl
+_ : to 3 ≡ (⟨⟩   I I)
+_ = refl
+_ : to 4 ≡ (⟨⟩ I O O)
+_ = refl
+
+_ : from (to 12) ≡ 12
+_ = refl
+
+_ : to (from (⟨⟩ I I O O)) ≡ ⟨⟩ I I O O
+_ = refl
