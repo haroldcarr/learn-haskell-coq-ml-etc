@@ -9,7 +9,7 @@ open import Data.Nat       using (ℕ; zero; suc; _+_; _*_; _∸_; _^_)
 
 {-
 ------------------------------------------------------------------------------
-## Properties of operators
+## Properties of operators : identity, associativity, commutativity, distributivity
 
 * _Identity_.   left/right/both; sometimes called _unit_
 
@@ -39,32 +39,23 @@ HC not associative; right identity
 -}
 _ =
   begin
-    (3 ∸ 1) ∸ 1 ∸ 0
-  ≡⟨⟩
-     2      ∸ 1 ∸ 0
-  ≡⟨⟩
-     1          ∸ 0
-  ≡⟨⟩
+    (3 ∸ 1) ∸ 1 ∸ 0 ≡⟨⟩
+     2      ∸ 1 ∸ 0 ≡⟨⟩
+     1          ∸ 0 ≡⟨⟩
      1          ∸ 0
   ∎
 {-
 ------------------------------------------------------------------------------
-## ASSOCIATIVITY
-
-    (m + n) + p ≡ m + (n + p)
+## ASSOCIATIVITY of ADDITION : (m + n) + p ≡ m + (n + p)
 -}
 
 _ : (3 + 4) + 5 ≡ 3 + (4 + 5)
 _ =
   begin
-    (3 +  4) + 5
-  ≡⟨⟩
-     7       + 5
-  ≡⟨⟩
-    12
-  ≡⟨⟩
-     3 +  9
-  ≡⟨⟩
+    (3 +  4) + 5  ≡⟨⟩
+     7       + 5  ≡⟨⟩
+    12            ≡⟨⟩
+     3 +  9       ≡⟨⟩
      3 + (4  + 5)
   ∎
 
@@ -77,14 +68,13 @@ Why should `7 + 5` be the same as `3 + 9`?
 Perhaps gather more evidence, testing the proposition by choosing other numbers.
 But infinite naturals so testing can never be complete.
 
-## Proof by induction
+## PROOF BY INDUCTION
 
-definition of naturals has
-- _base case_
-- _inductive case_
+natural definition has
+- base case
+- inductive case
 
-proof by induction follows structure of that definition
-prove two cases
+inductive proof follows structure of definition: prove two cases
 - _base case_ : show property holds for `zero`
 - _inductive case_ :
   - assume property holds for an arbitrary natural `m` (the _inductive hypothesis_)
@@ -121,13 +111,14 @@ prove two cases
 the process continues: property `P n` first appears on day _n+1_
 
 ------------------------------------------------------------------------------
-## ASSOCIATIVITY
+## PROVE ASSOCIATIVITY of ADDITION
 
-to prove associativity, take `P m` to be the property:
+take `P m` to be the property:
 
     (m + n) + p ≡ m + (n + p)
 
 `n` and `p` are arbitrary natural numbers
+
 show the equation holds for all `m` it will also hold for all `n` and `p`
 
 
@@ -139,7 +130,6 @@ show the equation holds for all `m` it will also hold for all `n` and `p`
     ---------------------------------
     (suc m + n) + p ≡ suc m + (n + p)
 
-
 demonstrate both of above, then associativity of addition follows by induction
 -}
 
@@ -148,35 +138,31 @@ demonstrate both of above, then associativity of addition follows by induction
         → (m +  n) + p
         ≡  m + (n  + p)
 
--- Evidence is a function that accepts three natural numbers, binds them to `m`, `n`, and `p`,
--- and returns evidence for the corresponding instance of the equation.
+-- Evidence is a function that
+-- - takes three natural numbers, binds them to `m`, `n`, and `p`
+-- - returns evidence for the corresponding instance of the equation
 
 -- base case : show: (zero +  n) + p
 --                  ≡ zero + (n  + p)
 +-assoc zero n p =
   begin
-    (zero +  n) + p
-  ≡⟨⟩
-             n  + p  -- using _+_ base case : "simplifying" both sides yields n + p ≡ n + p
-  ≡⟨⟩
-     zero + (n  + p)
+  (zero +  n) + p ≡⟨⟩ -- _+_ base case
+           n  + p ≡⟨⟩
+   zero + (n  + p)
   ∎
 
 -- inductive case : show: (suc m +  n) + p
 --                       ≡ suc m + (n  + p)
 +-assoc (suc m) n p =
   begin
-    (suc   m +  n) + p
-  ≡⟨⟩
-     suc  (m +  n) + p  -- via _+_ inductive case (left to right)
-  ≡⟨⟩
-     suc ((m +  n) + p) -- simplifying both sides : suc ((m + n) + p) ≡ suc (m + (n + p))
-                        -- follows by prefacing `suc` to both sides of the induction hypothesis:
-                        --                               (m + n) + p  ≡      m + (n + p)
-  ≡⟨ cong suc (+-assoc m n p) ⟩
-     suc  (m + (n  + p))
-  ≡⟨⟩
-     suc   m + (n  + p) -- via _+_ inductive case (right to left)
+  (suc   m +  n) + p   ≡⟨⟩ -- _+_ inductive case (left to right)
+   suc  (m +  n) + p   ≡⟨⟩
+   suc ((m +  n) + p)  ≡⟨ cong suc (+-assoc m n p) ⟩
+                           -- simplifying both sides : suc ((m + n) + p) ≡ suc (m + (n + p))
+                           -- follows by prefacing `suc` to both sides of the induction hypothesis:
+                           --                               (m + n) + p  ≡      m + (n + p)
+   suc  (m + (n  + p)) ≡⟨⟩ -- _+_ inductive case (right to left)
+   suc   m + (n  + p)
   ∎
 
 -- HC minimal version
@@ -184,7 +170,7 @@ demonstrate both of above, then associativity of addition follows by induction
 +-assoc' : ∀ (m n p : ℕ)
         → (m +  n) + p
         ≡  m + (n  + p)
-+-assoc' zero    n p = refl
++-assoc'   zero  n p = refl
 +-assoc' (suc m) n p = cong suc (+-assoc m n p)
 
 {-
@@ -202,8 +188,8 @@ recursive invocation `+-assoc m n p`
 - has type of the induction hypothesis
 - `cong suc` prefaces `suc` to each side of inductive hypothesis
 
-A relation is a CONGRUENCE for a given function if the relation
-is preserved by applying the function.
+A relation is a CONGRUENCE for a given function
+if the relation is preserved by applying the function.
 
 if `e` is evidence that `x ≡ y`, then `cong f e` is evidence `f x ≡ f y`, for any `f`
 
@@ -211,7 +197,7 @@ here the inductive hypothesis is not assumed
 
 instead, proved by recursive invocation of the function being defined, `+-assoc m n p`
 
-well founded : associativity of larger numbers is proved in of associativity of smaller numbers.
+WELL FOUNDED : associativity of larger numbers is proved in of associativity of smaller numbers.
 
 e.g., `assoc (suc m) n p` is proved using `assoc m n p`.
 
@@ -226,38 +212,28 @@ Concrete example of how induction corresponds to recursion : instantiate `m` to 
           ≡  2 + (n  + p)
 +-assoc-2 n p =
   begin
-         (2 +  n) + p
-  ≡⟨⟩
-    suc  (1 +  n) + p
-  ≡⟨⟩
-    suc ((1 +  n) + p)
-  ≡⟨ cong suc (+-assoc-1 n p) ⟩
-    suc  (1 + (n  + p))
-  ≡⟨⟩
+         (2 +  n) + p   ≡⟨⟩
+    suc  (1 +  n) + p   ≡⟨⟩
+    suc ((1 +  n) + p)  ≡⟨ cong suc (+-assoc-1 n p) ⟩
+    suc  (1 + (n  + p)) ≡⟨⟩
           2 + (n  + p)
   ∎
  where
   +-assoc-1 : ∀ (n p : ℕ) → (1 + n) + p ≡ 1 + (n + p)
   +-assoc-1 n p =
     begin
-           (1 +  n) + p
-    ≡⟨⟩
-      suc  (0 +  n) + p
-    ≡⟨⟩
-      suc ((0 +  n) + p)
-    ≡⟨ cong suc (+-assoc-0 n p) ⟩
-      suc  (0 + (n  + p))
-    ≡⟨⟩
+           (1 +  n) + p   ≡⟨⟩
+      suc  (0 +  n) + p   ≡⟨⟩
+      suc ((0 +  n) + p)  ≡⟨ cong suc (+-assoc-0 n p) ⟩
+      suc  (0 + (n  + p)) ≡⟨⟩
             1 + (n  + p)
     ∎
    where
     +-assoc-0 : ∀ (n p : ℕ) → (0 + n) + p ≡ 0 + (n + p)
     +-assoc-0 n p =
       begin
-        (0 + n) + p
-      ≡⟨⟩
-             n  + p
-      ≡⟨⟩
+        (0 + n) + p  ≡⟨⟩
+             n  + p  ≡⟨⟩
         0 + (n  + p)
       ∎
 {-
@@ -286,9 +262,7 @@ differ from function type such as `ℕ → ℕ → ℕ`
 - hence called _DEPENDENT functions_
 
 ------------------------------------------------------------------------------
-## COMMUTATIVITY
-
-    m + n ≡ n + m
+## COMMUTATIVITY of ADDITION : m + n ≡ n + m
 
 two lemmas used in proof
 
@@ -311,8 +285,7 @@ First lemma states that zero is also a right-identity:
 --  ≡ zero
 +-identityʳ zero =
   begin
-    zero + zero
-  ≡⟨⟩ -- via _+_ base
+    zero + zero ≡⟨⟩ -- _+_ base
     zero
   ∎
 
@@ -321,14 +294,13 @@ First lemma states that zero is also a right-identity:
 --    = suc m
 +-identityʳ (suc m) =
   begin
-    suc  m + zero
-  ≡⟨⟩
-    suc (m + zero)              -- via _+_ inductive
-  ≡⟨ cong suc (+-identityʳ m) ⟩ -- recursive invocation `+-identityʳ m`
-                                -- has type of induction hypothesis
-                                --      m + zero  ≡     m
-                                -- `cong suc` prefaces `suc` to each side of that type, yielding
-                                -- suc (m + zero) ≡ suc m
+    suc  m + zero  ≡⟨⟩ -- _+_ inductive
+    suc (m + zero) ≡⟨ cong suc (+-identityʳ m) ⟩
+                       -- recursive invocation `+-identityʳ m`
+                       -- has type of induction hypothesis
+                       --      m + zero  ≡     m
+                       -- `cong suc` prefaces `suc` to each side of that type, yielding
+                       -- suc (m + zero) ≡ suc m
     suc  m
   ∎
 {-
@@ -355,56 +327,44 @@ second lemma does same for `suc` on 2nd arg:
 -- base case
 +-suc zero n =
   begin
-         zero + suc n
-  ≡⟨⟩
-                suc n  -- via _+_ base
-  ≡⟨⟩
-    suc (zero +     n) -- via _+_ base
+         zero + suc n  ≡⟨⟩ -- _+_ base
+                suc n  ≡⟨⟩ -- _+_ base
+    suc (zero +     n)
   ∎
 -- inductive case : show:      suc m + suc n
 --                      ≡ suc (suc m +     n)
 +-suc (suc m) n =
   begin
-    suc       m + suc n
-  ≡⟨⟩
-    suc      (m + suc n)    -- via _+_ inductive
-  ≡⟨ cong suc (+-suc m n) ⟩
-    suc (suc (m +     n))   -- induction
-  ≡⟨⟩
-    suc (suc  m +     n)    -- via _+_ inductive
+    suc       m + suc n   ≡⟨⟩                       -- _+_ inductive
+    suc      (m + suc n)  ≡⟨ cong suc (+-suc m n) ⟩ -- induction
+    suc (suc (m +     n)) ≡⟨⟩                       -- _+_ inductive
+    suc (suc  m +     n)
   ∎
 
-{-
-------------------------------------------------------------------------------
--}
+-------------------------
 
 +-comm : ∀ (m n : ℕ)
        → m + n
        ≡ n + m
 +-comm m zero =
   begin
-           m + zero
-  ≡⟨ +-identityʳ m ⟩
-           m
-  ≡⟨⟩
+           m + zero ≡⟨ +-identityʳ m ⟩
+           m        ≡⟨⟩
     zero + m
   ∎
 +-comm m (suc n) =
   begin
-         m + suc n           -- _+_ inductive
-  ≡⟨ +-suc m n ⟩
-    suc (m +     n)          -- via +-suc
-  ≡⟨ cong suc (+-comm m n) ⟩ -- congruence and induction hypothesis
-    suc (n +     m)          -- _+_ inductive
-  ≡⟨⟩
+         m + suc n  ≡⟨ +-suc m n ⟩
+    suc (m +     n) ≡⟨ cong suc (+-comm m n) ⟩ -- congruence and induction hypothesis
+    suc (n +     m) ≡⟨⟩                        -- _+_ inductive
     suc  n +     m
   ∎
 
 {-
-Agda requires defining identifiers before use, thus lemmas before props using them.
+definition required BEFORE using them
 
 ------------------------------------------------------------------------------
-## COROLLARY: REARRANGING : apply associativity to rearrange parentheses
+## COROLLARY: REARRANGING : apply associativity to rearrange parentheses (SYM; sections)
 -}
 
 +-rearrange : ∀ (m n p q : ℕ)
@@ -412,25 +372,22 @@ Agda requires defining identifiers before use, thus lemmas before props using th
             ≡  m + (n  +  p) + q
 +-rearrange m n p q =
   begin
-    (m +   n) + (p   + q)
-  ≡⟨ +-assoc m n (p + q) ⟩
-     m +  (n  + (p   + q))
-  ≡⟨ cong (m +_) (sym (+-assoc n p q)) ⟩
-     m + ((n  +  p)  + q)
-  ≡⟨ sym (+-assoc m (n + p) q) ⟩
-    (m +  (n  +  p)) + q
-  ≡⟨⟩
+    (m +   n) + (p   + q)  ≡⟨ +-assoc m n (p + q) ⟩
+     m +  (n  + (p   + q)) ≡⟨ cong (m +_) (sym (+-assoc n p q)) ⟩
+     m + ((n  +  p)  + q)  ≡⟨ sym (+-assoc m (n + p) q) ⟩
+    (m +  (n  +  p)) + q   ≡⟨⟩
      m +  (n  +  p)  + q
   ∎
 
 {-
 no induction is required
-A few points are worthy of note.
+
+NOTE:
 
 addition is left associative : m + (n + p)  + q
                             = (m + (n + p)) + q
 
-`sym` : interchange sides of an equation, e.g.,
+SYM : interchange sides of an equation, e.g.,
 - `+-assoc n p q` shifts parens right to left:
 
     (n + p) + q ≡ n + (p + q)
@@ -443,7 +400,7 @@ general
 - if `e` provides evidence for `x ≡ y`
 - then `sym e` provides evidence for `y ≡ x`
 
-_section_ notation (introduced by Richard Bird) : `(x +_)`    `(_+ x)`
+SECTION NOTATION (introduced by Richard Bird) : `(x +_)`    `(_+ x)`
 
 ------------------------------------------------------------------------------
 ## Creation, one last time
@@ -465,18 +422,14 @@ using inductive case
 there is a finite approach to generating the same equations (following exercise)
 
 ------------------------------------------------------------------------------
-#### Exercise `finite-|-assoc` (stretch) {name=finite-plus-assoc}
+#### Exercise `finite-|-assoc` (stretch) {name=finite-plus-assoc} TODO
 
 Write out what is known about associativity of addition on each of the
 first four days using a finite story of creation, as
 [earlier](/Naturals/#finite-creation).
 
-```
--- TODO
-```
-
 ------------------------------------------------------------------------------
-## proof of Associativity using `rewrite` (rather than chains of equations)
+## proof of ASSOCIATIVITY using `rewrite` (rather than chains of equations)
 
 avoids chains of equations and the need to invoke `cong`
 -}
@@ -503,7 +456,7 @@ rewriting by a given equation
 - followed by a proof of that equation
 
 ------------------------------------------------------------------------------
-## Commutativity with rewrite
+## COMMUTATIVITY with rewrite
 -}
 
 +-suc′ : ∀ (m n : ℕ) → m + suc n ≡ suc (m + n)
@@ -522,20 +475,126 @@ rewriting by a given equation
   | +-comm′ m n    -- suc (n + m) ≡ suc (n + m)
   = refl
 
++-comm′′ : ∀ (m n : ℕ) → m + n ≡ n + m
++-comm′′ m   zero rewrite +-identityʳ m = refl
++-comm′′ m (suc n) =
+  begin
+    m +  suc n  ≡⟨ +-suc′  m n ⟩
+    suc (m + n) ≡⟨ cong suc (+-comm′′ m n) ⟩
+    suc (n + m) ≡⟨⟩ -- def/eq
+    suc  n + m
+  ∎
+
 {-
 ------------------------------------------------------------------------------
 HC
 -}
 
-*-identityʳ : ∀ (n : ℕ) → n * 1 ≡ n
-*-identityʳ zero = refl
-*-identityʳ (suc n) rewrite *-identityʳ n = refl
+*0 : ∀ (m : ℕ) → m * 0 ≡ 0
+*0 zero    = refl
+*0 (suc m) = *0 m
 
-*-identityL : ∀ (n : ℕ) → 1 * n ≡ n
-*-identityL zero = refl
-*-identityL (suc n) rewrite *-identityL n = refl
+0* : ∀ (m : ℕ) → 0 * m ≡ 0
+0* m = refl
+
+*1 : ∀ (n : ℕ) → n * 1 ≡ n
+*1 zero = refl
+*1 (suc n) rewrite *1 n = refl
+
+1* : ∀ (n : ℕ) → 1 * n ≡ n
+1* zero = refl
+1* (suc n) rewrite 1* n = refl
 
 {-
+------------------------------------------------------------------------------
+## Building proofs interactively
+
+    +-assoc′ : ∀ (m n p : ℕ) → (m + n) + p ≡ m + (n + p)
+    +-assoc′ m n p = ?
+
+C-c C-l
+
+    +-assoc′ : ∀ (m n p : ℕ) → (m + n) + p ≡ m + (n + p)
+    +-assoc′ m n p = { }0
+
+new window at the bottom:
+
+    ?0 : ((m + n) + p) ≡ (m + (n + p))
+
+indicates hole 0 needs to be filled with a proof of the stated judgment
+
+to prove the proposition by induction on `m`
+move cursor into hole
+C-c C-c
+prompt: pattern variables to case (empty for split on result):
+
+type `m` to case split on that variable
+
+    +-assoc′ : ∀ (m n p : ℕ) → (m + n) + p ≡ m + (n + p)
+    +-assoc′ zero n p = { }0
+    +-assoc′ (suc m) n p = { }1
+
+There are now two holes, and the window at the bottom tells you what
+each is required to prove:
+
+    ?0 : ((zero + n) + p) ≡ (zero + (n + p))
+    ?1 : ((suc m + n) + p) ≡ (suc m + (n + p))
+
+goto hole 0
+C-c C-,
+
+    Goal: (n + p) ≡ (n + p)
+    ————————————————————————————————————————————————————————————
+    p : ℕ
+    n : ℕ
+
+indicates that after simplification the goal for hole 0 is as stated,
+ and that variables `p` and `n` of the stated types are available to use in the proof.
+
+the proof of the given goal is simple
+goto goal
+C-c C-r
+fills in with refl
+C-c C-l renumbers remaining hole to 0:
+
+    +-assoc′ : ∀ (m n p : ℕ) → (m + n) + p ≡ m + (n + p)
+    +-assoc′ zero n p = refl
+    +-assoc′ (suc m) n p = { }0
+
+goto hole 0
+C-c C-,
+
+    Goal: suc ((m + n) + p) ≡ suc (m + (n + p))
+    ————————————————————————————————————————————————————————————
+    p : ℕ
+    n : ℕ
+    m : ℕ
+
+gives simplified goal and available variables
+
+need to rewrite by the induction hypothesis
+
+    +-assoc′ : ∀ (m n p : ℕ) → (m + n) + p ≡ m + (n + p)
+    +-assoc′ zero n p = refl
+    +-assoc′ (suc m) n p rewrite +-assoc′ m n p = { }0
+
+goto hole
+C-c C-,
+
+    Goal: suc (m + (n + p)) ≡ suc (m + (n + p))
+    ————————————————————————————————————————————————————————————
+    p : ℕ
+    n : ℕ
+    m : ℕ
+
+goto goal
+C-c C-r
+fills in, completing proof
+
+    +-assoc′ : ∀ (m n p : ℕ) → (m + n) + p ≡ m + (n + p)
+    +-assoc′ zero n p = refl
+    +-assoc′ (suc m) n p rewrite +-assoc′ m n p = refl
+
 ------------------------------------------------------------------------------
 #### Exercise `+-swap` (recommended) {name=plus-swap}
 
@@ -553,46 +612,47 @@ for all naturals `m`, `n`, and `p`
        ≡ n + (m + p)
 +-swap m n p =
   begin
-     m + (n  + p)
-  ≡⟨ sym (+-assoc m n p) ⟩
-    (m +  n) + p
-  ≡⟨ cong (_+ p) (sym (+-comm n m)) ⟩
-    (n +  m) + p
-  ≡⟨ +-assoc n m p ⟩
+     m + (n  + p) ≡⟨ sym (+-assoc m n p) ⟩
+    (m +  n) + p  ≡⟨ cong (_+ p) (sym (+-comm n m)) ⟩
+    (n +  m) + p  ≡⟨ +-assoc n m p ⟩
      n + (m  + p)
   ∎
 
 {-
 ------------------------------------------------------------------------------
-#### Exercise `*-distrib-+` (recommended) {name=times-distrib-plus}
-
-Show multiplication distributes over addition
-
-    (m + n) * p ≡ m * p + n * p
-
-for all naturals `m`, `n`, and `p`.
+#### Exercise `*-distrib-+` (recommended) {name=times-distrib-plus} (m + n) * p ≡ m * p + n * p
 -}
 
 *-distrib-+r : ∀ (m n p : ℕ)
              → (m     + n) * p
              ≡  m * p + n  * p
 *-distrib-+r  zero   y z = refl
-*-distrib-+r (suc x) y z -- (suc x     + y) * z  ≡ suc x * z + y * z
-                         -- z + (x     + y) * z  ≡ z + x * z + y * z
+*-distrib-+r (suc x) y z            -- (suc x     + y) * z  ≡ suc x * z + y * z
+                                    -- z + (x     + y) * z  ≡ z + x * z + y * z
   rewrite
-    *-distrib-+r x y z   -- z + (x * z + y  * z) ≡ z + x * z + y * z
-  = sym (+-assoc z (x * z) (y * z))
+    *-distrib-+r x y z              -- z + (x * z + y  * z) ≡ z + x * z + y * z
+  | sym (+-assoc z (x * z) (y * z)) -- z +  x * z + y  * z  ≡ z + x * z + y * z
+  = refl
 
+{- TODO: agda loops on this
+*-distrib-+r' : ∀ (m n p : ℕ)
+             → (m     + n) * p
+             ≡  m * p + n  * p
+*-distrib-+r'  zero   y z = refl
+*-distrib-+r' (suc x) y z
+  begin
+    (suc x     + y) * z  ≡⟨⟩
+    z + (x     + y) * z  ≡⟨ *-distrib-+r' x y z ⟩
+    z + (x * z + y  * z) ≡⟨ sym (+-assoc z (x * z) (y * z)) ⟩
+    z +  x * z + y  * z  ≡⟨⟩
+     suc x * z + y  * z
+  ∎
+-}
 {-
 ------------------------------------------------------------------------------
-#### Exercise `*-assoc` (recommended) {name=times-assoc}
-
-Show multiplication is associative, that is,
-
-    (m * n) * p ≡ m * (n * p)
-
-for all naturals `m`, `n`, and `p`.
+#### Exercise `*-assoc` (recommended) {name=times-assoc} (m * n) * p ≡ m * (n * p)
 -}
+
 *-assoc : ∀ (m n p : ℕ)
         → (m *  n) * p
         ≡  m * (n  * p)
@@ -603,33 +663,15 @@ for all naturals `m`, `n`, and `p`.
 -- inductive case : show: (suc m *  n) * p
 --                       ≡ suc m * (n  * p)
 *-assoc (suc m) n p          --     suc m * n  * p  ≡     suc m * (n * p)
-                             --    (n + m * n) * p  ≡ n * p + m * (n * p) -- def/eq
+                             --    (n + m * n) * p  ≡ n * p + m * (n * p)
   rewrite
     *-distrib-+r n (m * n) p -- n * p + m *  n * p  ≡ n * p + m * (n * p)
   | *-assoc m n p            -- n * p + m * (n * p) ≡ n * p + m * (n * p)
   = refl
-{-
-------------------------------------------------------------------------------
-HC
--}
-
-0* : ∀ (m : ℕ) → 0 * m ≡ 0
-0* m = refl
-
-*0 : ∀ (m : ℕ) → m * 0 ≡ 0
-*0 zero    = refl
-*0 (suc m) = *0 m
 
 {-
 ------------------------------------------------------------------------------
-#### Exercise `*-comm` (practice) {name=times-comm}
-
-Show multiplication is commutative, that is,
-
-    m * n ≡ n * m
-
-for all naturals `m` and `n`.  As with commutativity of addition,
-you will need to formulate and prove suitable lemmas.
+#### Exercise `*-comm` (practice) {name=times-comm} MULTIPLICATION is COMMUTATIVE : m * n ≡ n * m
 -}
 
 *-suc : ∀ (x y : ℕ) → x * (suc y) ≡ x + (x * y)
@@ -654,11 +696,7 @@ you will need to formulate and prove suitable lemmas.
 
 {-
 ------------------------------------------------------------------------------
-#### Exercise `0∸n≡0` (practice) {name=zero-monus}
-
-Show
-
-    zero ∸ n ≡ zero
+#### Exercise `0∸n≡0` (practice) {name=zero-monus} : Show zero ∸ n ≡ zero
 
 for all naturals `n`. Did your proof require induction?
 -}
@@ -669,13 +707,9 @@ for all naturals `n`. Did your proof require induction?
 
 {-
 ------------------------------------------------------------------------------
-#### Exercise `∸-|-assoc` (practice) {name=monus-plus-assoc}
+#### Exercise `∸-|-assoc` (practice) {name=monus-plus-assoc} : m ∸ n ∸ p ≡ m ∸ (n + p)
 
-Show that monus associates with addition, that is,
-
-    m ∸ n ∸ p ≡ m ∸ (n + p)
-
-for all naturals `m`, `n`, and `p`.
+show that monus associates with addition
 -}
 
 ∸-|-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
@@ -696,13 +730,9 @@ for all naturals `m`, `n`, and `p`.
 ------------------------------------------------------------------------------
 #### Exercise `+*^` (stretch)
 
-Show the following three laws
-
-     m ^ (n + p) ≡ (m ^ n) * (m ^ p)  (^-distribˡ-|-*)
-     (m * n) ^ p ≡ (m ^ p) * (n ^ p)  (^-distribʳ-*)
-     (m ^ n) ^ p ≡ m ^ (n * p)        (^-*-assoc)
-
-for all `m`, `n`, and `p`.
+     m ^ (n  + p) ≡ (m ^  n) * (m ^ p)  (^-distribˡ-|-*)
+     (m * n) ^ p  ≡ (m ^  p) * (n ^ p)  (^-distribʳ-*)
+     (m ^ n) ^ p  ≡  m ^ (n  *  p)      (^-*-assoc)
 -}
 
 -------------------------
@@ -714,7 +744,7 @@ for all `m`, `n`, and `p`.
                                      -- (m ^ (n + zero))        ≡ (m ^ n) * 1
   rewrite
     +-identityʳ n                    -- (m ^  n)                ≡ (m ^ n) * 1
-  | *-identityʳ (m ^ n)              -- (m ^  n)                ≡ (m ^ n)
+  | *1 (m ^ n)                       -- (m ^  n)                ≡ (m ^ n)
   = refl
 ^-distribˡ-|-* m n (suc p)           -- (m ^ (n + suc p))       ≡ (m ^ n) *      (m ^ suc p)
                                      -- (m ^ (n + suc p))       ≡ (m ^ n) * (m * (m ^     p))
@@ -772,7 +802,7 @@ for all `m`, `n`, and `p`.
 
 {-
 ------------------------------------------------------------------------------
-#### Exercise `Bin-laws` (stretch) {name=Bin-laws} TODO
+#### Exercise `Bin-laws` (stretch) {name=Bin-laws}
 
 Recall that
 Exercise [Bin](/Naturals/#Bin)
@@ -780,7 +810,7 @@ defines a datatype `Bin` of bitstrings representing natural numbers,
 and asks you to define functions
 -}
 
--- duplicated from x01 (can't import because of "duplicate" pragma)
+-- begin duplicated from x01 (can't import because of "duplicate" pragma)
 
 data Bin : Set where
   ⟨⟩ : Bin
@@ -794,6 +824,8 @@ inc (b  I) = (inc b) O
 
 _ : inc (⟨⟩ I O I I) ≡ ⟨⟩ I I O O
 _ = refl
+
+-- end duplicated
 
 dbl : ℕ → ℕ
 dbl   zero  = zero
@@ -907,9 +939,8 @@ to-from (b I)    --         to (from (b I)) ≡ (b I)
 
 -- https://github.com/billyang98/plfa/blob/master/plfa/Induction.agda
 
-from-inc≡suc-from : ∀ x
-        → from (inc x) ≡ suc (from x)
-from-inc≡suc-from ⟨⟩ = {!!}
+from-inc≡suc-from : ∀ x → from (inc x) ≡ suc (from x)
+from-inc≡suc-from ⟨⟩    = refl
 from-inc≡suc-from (x O) = refl
 from-inc≡suc-from (x I)  --         from (inc (x I)) ≡ suc           (from (x I))
                          --    dbl (from (inc  x))   ≡ suc (suc (dbl (from  x)))
@@ -955,12 +986,10 @@ The command `\'` gives access to a range of primes (`′ ″ ‴ ⁗`).
 
 -- ============================================================================
 
--- since `1100` encodes twelve, we should have:
+-- this is here to ensure the Bin/in/from/to does not get broken if changed above
 
 _ : inc (⟨⟩ I O I I) ≡ ⟨⟩ I I O O
 _ = refl
-
--- Confirm correct answer for the bitstrings encoding zero through four.
 
 _ : inc (⟨⟩     O) ≡ ⟨⟩     I
 _ = refl

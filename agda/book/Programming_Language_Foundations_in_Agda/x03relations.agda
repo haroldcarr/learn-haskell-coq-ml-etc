@@ -1,13 +1,13 @@
 module x03relations where
 
 import      Relation.Binary.PropositionalEquality as Eq
-open        Eq                  using (_≡_; refl; cong)
+open        Eq                  using (_≡_; refl; cong; sym)
 open import Data.Nat            using (ℕ; zero; suc; _+_; _*_)
-open import Data.Nat.Properties using (+-comm; +-identityʳ; *-comm)
+open import Data.Nat.Properties using (+-comm; +-identityʳ; *-comm; +-suc)
 
 {-
 ------------------------------------------------------------------------------
--- DEFINING RELATIONS
+-- DEFINING RELATIONS : INEQUALITY ≤
 
 z≤n --------
     zero ≤ n
@@ -85,7 +85,7 @@ use it to invert rule
 inv-s≤s : ∀ {m n : ℕ}
   → suc m ≤ suc n
     -------------
-  → m ≤ n
+  →     m ≤     n
 inv-s≤s (s≤s m≤n) = m≤n
 {-           ^
           variable name  (m ≤ n (with spaces) is a type)
@@ -98,8 +98,8 @@ not every rule is invertible
 e.g., rule for z≤n has no non-implicit hypotheses, so nothing to invert
 
 another example inversion
-
 -}
+
 inv-z≤n : ∀ {m : ℕ}
   → m ≤ zero
     --------
@@ -157,11 +157,10 @@ TRANSITIVITY
 
 -- inductive proof using evidence m ≤ n
 ≤-trans : ∀ {m n p : ℕ}
-  → m ≤ n
-  → n ≤ p
-    -----
-  → m ≤ p
-
+        → m ≤ n
+        → n ≤ p
+          -----
+        → m ≤ p
 
 -- base
 -- 1st first inequality holds by z≤n
@@ -180,10 +179,12 @@ inductive
             v         v -}
 ≤-trans (s≤s m≤n) (s≤s n≤p) = s≤s (≤-trans m≤n n≤p)
 {-
-that provides
-      suc m ≤ suc n
-                suc n ≤ suc p
-must now show suc m ≤ suc p
+1st proves
+   suc m ≤ suc n
+2nd proves
+           suc n ≤ suc p
+must now show
+   suc m         ≤ suc p
 
 IH '≤-trans m≤n n≤p' establishes m ≤ p
 
@@ -197,10 +198,10 @@ ALTERNATIVE with explicit implicits
 -}
 
 ≤-trans′ : ∀ (m n p : ℕ)
-  → m ≤ n
-  → n ≤ p
-    -----
-  → m ≤ p
+         → m ≤ n
+         → n ≤ p
+         -----
+         → m ≤ p
 ≤-trans′   zero       _       _       z≤n         _  = z≤n
 ≤-trans′ (suc m) (suc n) (suc p) (s≤s m≤n) (s≤s n≤p) = s≤s (≤-trans′ m n p m≤n n≤p)
 
@@ -217,10 +218,10 @@ ANTI-SYMMETRY
 
 -- proof via induction over the evidence that m ≤ n and n ≤ m hold
 ≤-antisym : ∀ {m n : ℕ}
-  → m ≤ n
-  → n ≤ m
-    -----
-  → m ≡ n
+          → m ≤ n
+          → n ≤ m
+          -----
+          → m ≡ n
 ≤-antisym      z≤n       z≤n  =  refl
 ≤-antisym (s≤s m≤n) (s≤s n≤m) =  cong suc (≤-antisym m≤n n≤m)
 
@@ -259,8 +260,8 @@ data Total (m n : ℕ) : Set where
       n ≤ m
       ---------
     → Total m n
-{-
 
+{-
 Evidence that Total m n holds is either of the form
 - forward m≤n or
 - flipped n≤m
@@ -315,9 +316,10 @@ uses WITH
 ...                        | flipped n≤m  =  flipped (s≤s n≤m)
 
 {-
-WITH expression and one or more subsequent lines, each line begins ... | followed by pattern and right-hand side
+WITH expression and one or more subsequent lines
+each line begins ... | followed by pattern and right-hand side
 
-WITH equivalent to defining a helper function
+WITH equivalent to defining a helper function:
 -}
 
 ≤-total′ : ∀ (m n : ℕ) → Total m n
@@ -333,14 +335,16 @@ WITH equivalent to defining a helper function
 WHERE
 
 vars bound on the left-hand side of the preceding equation (e.g., m n) in scope in nested def
-any identifiers bound in nested definition (e.g., helper) in scope in right-hand side of preceding equation
+any identifiers bound in nested definition (e.g., helper)
+in scope in right-hand side of preceding equation
 
-If both arguments are equal, then both cases hold and we could return evidence of either. In the code above we return the forward case, but there is a variant that returns the flipped case:
+If both arguments are equal, then both cases hold and we could return evidence of either.
+In the code above we return the forward case, but there is a variant that returns the flipped case:
 -}
 
 ≤-total″ : ∀ (m n : ℕ) → Total m n
-≤-total″ m       zero                      =  flipped z≤n
-≤-total″ zero    (suc n)                   =  forward z≤n
+≤-total″      m    zero                    =  flipped z≤n
+≤-total″   zero  (suc n)                   =  forward z≤n
 ≤-total″ (suc m) (suc n) with ≤-total″ m n
 ...                        | forward m≤n   =  forward (s≤s m≤n)
 ...                        | flipped n≤m   =  flipped (s≤s n≤m)
@@ -399,7 +403,6 @@ via previous result and commutativity of addition:
 ------------------------------------------------------------------------------
 Exercise *-mono-≤ (stretch) Show that multiplication is monotonic with regard to inequality.
 -}
-
 -------------------------
 -- multiplication is monotonic on the right
 *-monoʳ-≤ : ∀ (n p q : ℕ)
@@ -455,11 +458,355 @@ Exercise *-mono-≤ (stretch) Show that multiplication is monotonic with regard 
 -------------------------
 
 *-mono-≤ : ∀ (m n p q : ℕ)
-  → m ≤ n
-  → p ≤ q
+  → m     ≤ n
+  →     p ≤     q
     -------------
   → m * p ≤ n * q
 *-mono-≤ m n p q m≤n p≤q
   = ≤-trans
     (*-monoˡ-≤ m n p m≤n)
     (*-monoʳ-≤ n p q p≤q)
+
+{-
+------------------------------------------------------------------------------
+STRICT INEQUALITY <
+-}
+
+infix 4 _<_
+
+data _<_ : ℕ → ℕ → Set where
+
+  z<s : ∀ {n : ℕ}
+      ------------
+    → zero < suc n -- diff from '≤' : 'zero ≤ n'
+
+  s<s : ∀ {m n : ℕ}
+    →     m <     n
+      -------------
+    → suc m < suc n
+
+{-
+NOT REFLEXIVE
+
+IRREFLEXIVE : n < n never holds for any n
+
+TRANSITIVE
+
+NOT TOTAL
+
+TRICHOTOMY: ∀ m n, one of m < n, m ≡ n, or m > n holds
+- where m > n hold when n < m
+
+MONOTONIC with regards to ADDITION and MULTIPLICATION
+
+negation required to prove (so deferred to Chapter Negation)
+- irreflexivity
+- trichotomy case are mutually exclusive
+
+------------------------------------------------------------------------------
+show suc m ≤ n implies m < n (and conversely)
+-}
+
+m≤n→m<n : ∀ {m n : ℕ}
+        → suc m ≤ n
+          ---------
+        →     m < n
+m≤n→m<n  {zero}  {zero} ()
+m≤n→m<n  {zero} {suc n} m≤n = z<s
+m≤n→m<n {suc m} {suc n} m≤n = s<s (m≤n→m<n {m} {n} (inv-s≤s m≤n))
+
+inv-s<s : ∀ {m n : ℕ}
+        → suc m < suc n
+          -------------
+        →     m <     n
+inv-s<s (s<s m<n) = m<n
+
+m<n→m≤n : ∀ {m n : ℕ}
+        → m < n
+        → m ≤ n
+m<n→m≤n  {zero} {suc n} m<n = z≤n
+m<n→m≤n {suc m} {suc n} m<n = s≤s (m<n→m≤n {m} {n} (inv-s<s m<n))
+
+{-
+can then give an alternative derivation of the properties of strict inequality
+(e.g., transitivity) by exploiting the corresponding properties of inequality
+
+------------------------------------------------------------------------------
+Exercise <-trans (recommended) : strict inequality is transitive.
+-}
+
+<-trans : ∀ {m n p : ℕ}
+        → m < n
+        → n < p
+          -----
+        → m < p
+<-trans  {zero}     {n}     {p}      z<s  (s<s n<p) = z<s
+<-trans {suc m} {suc n} {suc p} (s<s m<n) (s<s n<p) = s<s (<-trans {m} {n} {p} m<n n<p)
+
+<-trans' : ∀ {m n p : ℕ}
+         → m < n
+         → n < p
+           -----
+         → m < p
+<-trans'      z<s  (s<s n<p) = z<s
+<-trans' (s<s m<n) (s<s n<p) = s<s (<-trans' m<n n<p)
+
+{-
+------------------------------------------------------------------------------
+Exercise trichotomy (practice)
+
+Show that strict inequality satisfies a weak version of trichotomy,
+in the sense that for any m and n that one of the following holds:
+- m < n
+- m ≡ n
+- m > n
+
+Define m > n to be the same as n < m.
+
+Need a data declaration, similar to that used for totality.
+(Later will show that the three cases are exclusive after negation is introduced.)
+-}
+
+-- from 842
+data Trichotomy (m n : ℕ) : Set where
+  is-< : m < n → Trichotomy m n
+  is-≡ : m ≡ n → Trichotomy m n
+  is-> : n < m → Trichotomy m n
+
+-- hc
+<-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
+<-trichotomy   zero    zero  = is-≡ refl
+<-trichotomy   zero  (suc n) = is-< z<s
+<-trichotomy (suc m)   zero  = is-> z<s
+<-trichotomy (suc m) (suc n) = helper (<-trichotomy m n)
+ where
+  helper : Trichotomy m n -> Trichotomy (suc m) (suc n)
+  helper (is-< x) = is-< (s<s x)
+  helper (is-≡ x) = is-≡ (cong suc x)
+  helper (is-> x) = is-> (s<s x)
+
+{-
+------------------------------------------------------------------------------
+Exercise +-mono-< (practice)
+
+Show that addition is monotonic with respect to strict inequality.
+As with inequality, some additional definitions may be required.
+-}
+
+-- HC
+-- these proof are literal cut/paste/change '≤' to '<'
+-- no additional defs were required
+
++-monoʳ-< : ∀ (n p q : ℕ)
+  → p < q
+    -------------
+  → n + p < n + q
++-monoʳ-< zero    p q p<q  =  p<q
++-monoʳ-< (suc n) p q p<q  =  s<s (+-monoʳ-< n p q p<q)
+
++-monoˡ-< : ∀ (m n p : ℕ)
+  → m < n
+    -------------
+  → m + p < n + p
++-monoˡ-< m n p m<n
+  rewrite
+    +-comm m p
+  | +-comm n p
+ = +-monoʳ-< p m n m<n
+
++-mono-< : ∀ (m n p q : ℕ)
+  → m < n
+  → p < q
+    -------------
+  → m + p < n + q
++-mono-< m n p q m<n p<q
+  = <-trans
+    (+-monoˡ-< m n p m<n)
+    (+-monoʳ-< n p q p<q)
+
+{-
+------------------------------------------------------------------------------
+Exercise ≤-iff-< (recommended) : suc m ≤ n implies m < n, and conversely
+-}
+
+sucm≤n→m<n : ∀ {m n : ℕ}
+  → suc m ≤ n
+  →     m < n
+sucm≤n→m<n  {zero} {suc n} sucm≤n = z<s
+sucm≤n→m<n {suc m} {suc n} sucm≤n = s<s (sucm≤n→m<n {m} {n} (inv-s≤s sucm≤n))
+
+{-
+------------------------------------------------------------------------------
+Exercise <-trans-revisited (practice) TODO
+
+Give an alternative proof that strict inequality is transitive,
+using the relation between strict inequality and inequality
+and the fact that inequality is transitive.
+
+-- Your code goes here
+
+------------------------------------------------------------------------------
+EVEN and ODD : MUTUALLY RECURSIVE DATATYPE DECLARATION and OVERLOADED CONSTRUCTORS
+
+inequality and strict inequality are binary relations
+
+even and odd are unary relations, sometimes called PREDICATES
+-}
+
+-- identifier must be defined before it is used, so declare both before giving constructors.
+data even : ℕ → Set
+data odd  : ℕ → Set
+
+data even where
+
+  zero :           -- overloaded with nat def
+      ---------
+      even zero
+
+  suc  : ∀ {n : ℕ}
+    → odd       n
+      ------------
+    → even (suc n)
+
+data odd where
+
+  suc  : ∀ {n : ℕ} -- suc is overloaded with one above and nat def
+    → even     n
+      -----------
+    → odd (suc n)
+{-
+overloading constructors is OK (handled by type inference
+overloading defined names NOT OK
+best practice : only overload related meanings
+-}
+
+-- mutually recursive proof functions
+
+-- sum of two even numbers is even
+e+e≡e : ∀ {m n : ℕ}
+  → even m
+  → even n
+    ------------
+  → even (m + n)
+
+-- sum of even and odd is odd
+o+e≡o : ∀ {m n : ℕ}
+  → odd m
+  → even n
+    -----------
+  → odd (m + n)
+
+-- given: zero is evidence that 1st is even
+-- given: 2nd is even
+-- result: even because 2nd is even
+e+e≡e zero     en = en
+-- given: 1st is even because it is suc of odd
+-- given: 2nd is even
+-- result: even because it is suc of sum of odd and even number, which is odd
+e+e≡e (suc om) en = suc (o+e≡o om en)
+
+-- given: 1st odd because it is suc of even
+-- given: 2nd is event
+-- result: odd because it is suc of sum of two evens, which is even
+o+e≡o (suc em) en = suc (e+e≡e em en)
+
+------------------------------------------------------------------------------
+-- Exercise o+o≡e (stretch) : sum of two odd numbers is even
+-- 842 Hint: need to define another theorem and prove both by mutual induction
+
+-- sum of odd and even is odd
+e+o≡o : ∀ {m n : ℕ}
+  → even m
+  → odd n
+    -----------
+  → odd (m + n)
+
+-- sum of odd and odd is even
+o+o≡e : ∀ {m n : ℕ}
+  → odd m
+  → odd n
+  --------------
+  → even (m + n)
+
+e+o≡o    zero  on = on
+e+o≡o (suc em) on = suc (o+o≡e em on)
+
+o+o≡e (suc om) on = suc (e+o≡o om on)
+
+{-
+------------------------------------------------------------------------------
+Exercise Bin-predicates (stretch) TODO
+
+representations not unique due to leading zeros
+
+eleven:
+  ⟨⟩     I O I I --     canonical
+  ⟨⟩ O O I O I I -- not canonical
+-}
+
+data Bin : Set where
+  ⟨⟩ : Bin
+  _O : Bin → Bin
+  _I : Bin → Bin
+
+-- https://www.reddit.com/r/agda/comments/hrvk07/plfa_quantifiers_help_with_binisomorphism/
+
+-- holds if bistring has a leading one
+data One : Bin → Set where
+  one    : One (⟨⟩ I)
+  _withO : ∀ {b} → One b → One (b O)
+  _withI : ∀ {b} → One b → One (b I)
+
+-- over bitstrings, holds if bitstring is canonical
+-- - if it has a leading one (representing a positive number) or
+-- - if it consists of a single zero (representing zero)
+data Can : Bin → Set where
+  zero : Can (⟨⟩ O)
+
+  lone : ∀ {b : Bin}
+    → One b
+      -----
+    → Can b
+
+{-
+Hint: to prove below TODO
+- first state/prove properties of One
+- prove if One b then 1 is less or equal to the result of from b
+
+--------------------------------------------------
+Show that increment preserves canonical bitstrings: TODO
+
+Can b
+------------
+Can (inc b)
+
+--------------------------------------------------
+Show that converting a natural to a bitstring always yields a canonical bitstring: TODO
+
+----------
+Can (to n)
+
+--------------------------------------------------
+Show that converting a canonical bitstring to a natural and back is the identity: TODO
+
+Can b
+---------------
+to (from b) ≡ b
+
+------------------------------------------------------------------------------
+Standard library
+
+defs in this chapter in standard library:
+
+import Data.Nat using (_≤_; z≤n; s≤s)
+import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-antisym; ≤-total;
+                                  +-monoʳ-≤; +-monoˡ-≤; +-mono-≤)
+
+------------------------------------------------------------------------------
+Unicode
+
+≤  U+2264  LESS-THAN OR EQUAL TO    (\<=, \le)
+≥  U+2265  GREATER-THAN OR EQUAL TO (\>=, \ge)
+ˡ  U+02E1  MODIFIER LETTER SMALL L  (\^l)
+ʳ  U+02B3  MODIFIER LETTER SMALL R  (\^r)
+-}
