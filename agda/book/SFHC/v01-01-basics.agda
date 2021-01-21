@@ -376,7 +376,6 @@ bin-to-nat     Z  = 0
 bin-to-nat (B₀ x) =     2 * (bin-to-nat x)
 bin-to-nat (B₁ x) = 1 + 2 * (bin-to-nat x)
 
-
 _ :     (incr (B₁ Z))  ≡     B₀ (B₁ Z)
 _ = refl
 _ : (incr (B₀ (B₁ Z))) ≡     B₁ (B₁ Z)

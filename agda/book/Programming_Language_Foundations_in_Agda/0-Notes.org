@@ -1,5 +1,5 @@
 https://plfa.github.io/
 
 https://cs.uwaterloo.ca/~plragde/842/
-
+https://cs.uwaterloo.ca/~plragde/842/handouts/notes.html
 

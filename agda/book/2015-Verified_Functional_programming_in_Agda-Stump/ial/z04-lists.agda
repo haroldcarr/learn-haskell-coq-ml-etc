@@ -12,7 +12,8 @@ open import logic -- needed for filter-idem
 
 'data' : datatype declaration
 '𝕃'    : name of type being declared
-{ℓ}    : element type (polymorphic)
+{ℓ}    : level
+A      : element type (polymorphic)
 
 𝕃 is a type level function
 - takes a type (bound to 'A') - at level ℓ
@@ -31,7 +32,7 @@ data  𝕃 {ℓ} (A : Set ℓ) : Set ℓ where
 -- p 77
 
 length : ∀ {ℓ} {A : Set ℓ } → 𝕃 A → ℕ
-length [] = 0
+length       []  = 0
 length (x :: xs) = suc (length xs)
 
 -- 78
@@ -50,18 +51,18 @@ map f (x :: xs) = f x :: map f xs
 
 filter : ∀ {ℓ} {A : Set ℓ} → (A → 𝔹) → 𝕃 A → 𝕃 A
 filter p       []  = []
-filter p (x :: xs) =
-  let r = filter p xs
-   in if p x then x :: r else r
+filter p (x :: xs) = if p x then x :: r else r
+ where
+  r = filter p xs
 
 -- p 81
 
-remove : ∀ {ℓ}{A : Set ℓ}(eq : A → A → 𝔹) (a : A) (l : 𝕃 A) → 𝕃 A
+remove : ∀ {ℓ} {A : Set ℓ} (eq : A → A → 𝔹) (a : A) (l : 𝕃 A) → 𝕃 A
 remove eq a l = filter (λ x → ~ (eq a x)) l
 
 -- p 82
 
-data maybe {ℓ}(A : Set ℓ) : Set ℓ where
+data maybe {ℓ} (A : Set ℓ) : Set ℓ where
   just    : A → maybe A
   nothing :     maybe A
 
@@ -136,7 +137,7 @@ length-filter p      []         -- length (filter p []) ≤ length [] ≡ tt
                                 --                   0  ≤         0 ≡ tt
   = refl
 
--- Need to consider cases where predicate returns tt or ff.
+-- Consider cases where predicate returns tt or ff.
 -- The predicate return value is NOT an input to length-filter.
 -- WITH : extend pattern on left side with an additional pattern, here : | tt     and   | ff
 length-filter p (x :: l) with p x
@@ -162,7 +163,7 @@ lf p (x :: l) -- length                  (filter p (x :: l))                ≤ 
 
 filtering a list twice using same predicate gives the same result as filtering it once
 
-cannot use WITH because Agda only applies the p  ≡ tt to the goal once, not the next iteration
+cannot use WITH because Agda only applies the p ≡ tt to the goal once, not the next iteration
 (see page 92 for more details)
 
 'with keep (p x)' : make additional variable (here p') available

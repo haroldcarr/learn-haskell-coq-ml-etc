@@ -540,7 +540,7 @@ _ = refl
 _ : to (from (⟨⟩ I I O O)) ≡ ⟨⟩ I I O O
 _ = refl
 
--- 842 exercise
+-- 842 exercise : bin-+
 
 _bin-+_ : Bin → Bin → Bin
 ⟨⟩     bin-+ ⟨⟩     = ⟨⟩

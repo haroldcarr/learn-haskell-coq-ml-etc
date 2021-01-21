@@ -372,9 +372,9 @@ definition required BEFORE using them
             ≡  m + (n  +  p) + q
 +-rearrange m n p q =
   begin
-    (m +   n) + (p   + q)  ≡⟨ +-assoc m n (p + q) ⟩
-     m +  (n  + (p   + q)) ≡⟨ cong (m +_) (sym (+-assoc n p q)) ⟩
-     m + ((n  +  p)  + q)  ≡⟨ sym (+-assoc m (n + p) q) ⟩
+    (m +   n) + (p   + q)  ≡⟨                   +-assoc m n   (p + q) ⟩
+     m +  (n  + (p   + q)) ≡⟨ cong (m +_) (sym (+-assoc n p        q)) ⟩
+     m + ((n  +  p)  + q)  ≡⟨              sym (+-assoc m (n + p)  q) ⟩
     (m +  (n  +  p)) + q   ≡⟨⟩
      m +  (n  +  p)  + q
   ∎
@@ -860,6 +860,7 @@ For each law: if it holds, prove; if not, give a counterexample.
 -}
 
 -------------------------
+-- fromInc≡sucFrom
 
 +1 : ∀ (x : ℕ) → x + 1 ≡ suc x
 +1 zero = refl
@@ -887,6 +888,7 @@ fromInc≡sucFrom (b I)    --       from (inc (b I))   ≡ suc (from (b I))
   = refl
 
 -------------------------
+-- to-from≡b -- cannot be proved because there are TWO representations of ZERO
 
 -- NOT USED
 xx : ∀ (b : Bin)
@@ -982,7 +984,6 @@ Similar to `\r`, the command `\^r` gives access to a variety of
 superscript rightward arrows, and also a superscript letter `r`.
 The command `\'` gives access to a range of primes (`′ ″ ‴ ⁗`).
 -}
-
 
 -- ============================================================================
 

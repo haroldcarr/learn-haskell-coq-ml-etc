@@ -48,13 +48,13 @@ _ = s≤s (s≤s z≤n) -- no explicit 'n'     arg  to z≤n because implicit
 
 -- can be explicit
 
-_ : 2 ≤ 4
+_ : 2 ≤ 4 -- with implicit args
 _ = s≤s {1} {3} (s≤s {0} {2} (z≤n {2}))
 
-_ : 2 ≤ 4
+_ : 2 ≤ 4 -- with named implicit args
 _ = s≤s {m = 1} {n = 3} (s≤s {m = 0} {n = 2} (z≤n {n = 2}))
 
-_ : 2 ≤ 4
+_ : 2 ≤ 4 -- with some implicit named args
 _ = s≤s {n = 3} (s≤s {n = 2} z≤n)
 
 -- infer explicit term via _
@@ -145,7 +145,7 @@ REFLEXIVITY
 ≤-refl : ∀ {n : ℕ} -- implicit arg to make it easier to invoke
     -----
   → n ≤ n
-  --
+
 ≤-refl {zero}  = z≤n        -- zero  ≤ zero
 -- inductive case applies IH '≤-refl {n}' for a proof of n ≤ n to 's≤s' giving proof suc n ≤ suc n
 ≤-refl {suc n} = s≤s ≤-refl -- suc n ≤ suc n
@@ -157,10 +157,10 @@ TRANSITIVITY
 
 -- inductive proof using evidence m ≤ n
 ≤-trans : ∀ {m n p : ℕ}
-        → m ≤ n
-        → n ≤ p
-          -----
-        → m ≤ p
+  → m ≤ n
+  → n ≤ p
+    -----
+  → m ≤ p
 
 -- base
 -- 1st first inequality holds by z≤n
@@ -194,14 +194,13 @@ goal follows by applying s≤s
 - 1st inequality implies middle value is suc n
 - 2nd inequality implies that it is zero
 
-ALTERNATIVE with explicit implicits
 -}
 
-≤-trans′ : ∀ (m n p : ℕ)
-         → m ≤ n
-         → n ≤ p
-         -----
-         → m ≤ p
+≤-trans′ : ∀ (m n p : ℕ) -- ALTERNATIVE with explicit args
+  → m ≤ n
+  → n ≤ p
+    -----
+  → m ≤ p
 ≤-trans′   zero       _       _       z≤n         _  = z≤n
 ≤-trans′ (suc m) (suc n) (suc p) (s≤s m≤n) (s≤s n≤p) = s≤s (≤-trans′ m n p m≤n n≤p)
 
@@ -216,14 +215,24 @@ is often used
 ANTI-SYMMETRY
 -}
 
+-- 842
+-- proof via rewrite
+≤-antisym' : ∀ {m n : ℕ}
+  → m ≤ n
+  → n ≤ m
+    -----
+  → m ≡ n
+≤-antisym'      z≤n       z≤n  = refl
+≤-antisym' (s≤s m≤n) (s≤s n≤m) rewrite ≤-antisym' m≤n n≤m = refl
+
 -- proof via induction over the evidence that m ≤ n and n ≤ m hold
 ≤-antisym : ∀ {m n : ℕ}
-          → m ≤ n
-          → n ≤ m
-          -----
-          → m ≡ n
-≤-antisym      z≤n       z≤n  =  refl
-≤-antisym (s≤s m≤n) (s≤s n≤m) =  cong suc (≤-antisym m≤n n≤m)
+  → m ≤ n
+  → n ≤ m
+    -----
+  → m ≡ n
+≤-antisym      z≤n       z≤n  = refl
+≤-antisym (s≤s m≤n) (s≤s n≤m) = cong suc (≤-antisym m≤n n≤m)
 
 {-
 base : both inequalities hold by z≤n
@@ -293,7 +302,9 @@ Parameterised declarations are shorter, easier to read,
 and occasionally aid Agda’s termination checker.
 Use them in preference to indexed types when possible.
 
-prove totality: by induction over 1st and 2nd args
+-------------------------
+
+show ≤ is a total order by induction over 1st and 2nd args
 
 uses WITH
 -}
@@ -301,19 +312,19 @@ uses WITH
 ≤-total : ∀ (m n : ℕ) → Total m n
 
 -- base : 1st arg zero so forward case holds with z≤n as evidence that zero ≤ n
-≤-total zero    n                         =  forward z≤n
+≤-total   zero       n = forward z≤n
 
 -- base : 2nd arg zero so flipped case holds with z≤n as evidence that zero ≤ suc m
-≤-total (suc m) zero                      =  flipped z≤n
+≤-total (suc m)   zero = flipped z≤n
 
 -- inductive : IH establishes one of
 ≤-total (suc m) (suc n) with ≤-total m n
 -- forward case of IH with m≤n as evidence that m ≤ n
 -- follows that forward case of prop holds with s≤s m≤n as evidence that suc m ≤ suc n
-...                        | forward m≤n  =  forward (s≤s m≤n)
+... | forward m≤n = forward (s≤s m≤n)
 -- flipped case of IH with n≤m as evidence that n ≤ m
 -- follows that flipped case of prop holds with s≤s n≤m as evidence that suc n ≤ suc m
-...                        | flipped n≤m  =  flipped (s≤s n≤m)
+... | flipped n≤m = flipped (s≤s n≤m)
 
 {-
 WITH expression and one or more subsequent lines
@@ -323,13 +334,13 @@ WITH equivalent to defining a helper function:
 -}
 
 ≤-total′ : ∀ (m n : ℕ) → Total m n
-≤-total′ zero    n        =  forward z≤n
-≤-total′ (suc m) zero     =  flipped z≤n
-≤-total′ (suc m) (suc n)  =  helper (≤-total′ m n)
-  where
+≤-total′   zero       n  = forward z≤n
+≤-total′ (suc m)   zero  = flipped z≤n
+≤-total′ (suc m) (suc n) = helper (≤-total′ m n)
+ where
   helper : Total m n → Total (suc m) (suc n)
-  helper (forward m≤n)  =  forward (s≤s m≤n)
-  helper (flipped n≤m)  =  flipped (s≤s n≤m)
+  helper (forward m≤n) = forward (s≤s m≤n)
+  helper (flipped n≤m) = flipped (s≤s n≤m)
 
 {-
 WHERE
@@ -343,11 +354,11 @@ In the code above we return the forward case, but there is a variant that return
 -}
 
 ≤-total″ : ∀ (m n : ℕ) → Total m n
-≤-total″      m    zero                    =  flipped z≤n
-≤-total″   zero  (suc n)                   =  forward z≤n
+≤-total″      m    zero  = flipped z≤n
+≤-total″   zero  (suc n) = forward z≤n
 ≤-total″ (suc m) (suc n) with ≤-total″ m n
-...                        | forward m≤n   =  forward (s≤s m≤n)
-...                        | flipped n≤m   =  flipped (s≤s n≤m)
+... | forward m≤n = forward (s≤s m≤n)
+... | flipped n≤m = flipped (s≤s n≤m)
 
 -- differs from original : pattern matches on 2nd arg before 1st
 
@@ -360,7 +371,7 @@ proof by induction on 1st arg
 -}
 
 +-monoʳ-≤ : ∀ (n p q : ℕ)
-  → p ≤ q
+  →     p ≤     q
     -------------
   → n + p ≤ n + q
 -- base      : 1st is zero;        zero + p  ≤   zero + q
@@ -378,7 +389,7 @@ addition is monotonic on the left
 via previous result and commutativity of addition:
 -}
 +-monoˡ-≤ : ∀ (m n p : ℕ)
-  → m ≤ n
+  → m     ≤ n
     -------------
   → m + p ≤ n + p
 +-monoˡ-≤ m n p m≤n         -- m + p ≤ n + p
@@ -390,8 +401,8 @@ via previous result and commutativity of addition:
 -- combine above results:
 
 +-mono-≤ : ∀ (m n p q : ℕ)
-  → m ≤ n
-  → p ≤ q
+  → m     ≤ n
+  →     p ≤     q
     -------------
   → m + p ≤ n + q
 +-mono-≤ m n p q m≤n p≤q
@@ -536,18 +547,18 @@ Exercise <-trans (recommended) : strict inequality is transitive.
 -}
 
 <-trans : ∀ {m n p : ℕ}
-        → m < n
-        → n < p
-          -----
-        → m < p
+  → m < n
+  → n < p
+    -----
+  → m < p
 <-trans  {zero}     {n}     {p}      z<s  (s<s n<p) = z<s
 <-trans {suc m} {suc n} {suc p} (s<s m<n) (s<s n<p) = s<s (<-trans {m} {n} {p} m<n n<p)
 
 <-trans' : ∀ {m n p : ℕ}
-         → m < n
-         → n < p
-           -----
-         → m < p
+  → m < n
+  → n < p
+    -----
+  → m < p
 <-trans'      z<s  (s<s n<p) = z<s
 <-trans' (s<s m<n) (s<s n<p) = s<s (<-trans' m<n n<p)
 
@@ -629,11 +640,39 @@ As with inequality, some additional definitions may be required.
 Exercise ≤-iff-< (recommended) : suc m ≤ n implies m < n, and conversely
 -}
 
+-- 842 exercise: LEtoLTS (1 point) ≤-<-to
+
+m≤n→m<sucn : ∀ {m n : ℕ}
+  → m ≤     n
+  → m < suc n
+m≤n→m<sucn  {zero}         m≤n = z<s
+m≤n→m<sucn {suc m} {suc n} m≤n = s<s (m≤n→m<sucn {m} {n} (inv-s≤s m≤n))
+
+-- 842 exercise: LEStoLT (1 point) ≤-<--to′
+
 sucm≤n→m<n : ∀ {m n : ℕ}
   → suc m ≤ n
   →     m < n
 sucm≤n→m<n  {zero} {suc n} sucm≤n = z<s
 sucm≤n→m<n {suc m} {suc n} sucm≤n = s<s (sucm≤n→m<n {m} {n} (inv-s≤s sucm≤n))
+
+-- 842 exercise: LTtoSLE (1 point) ≤-<-from
+
+m<n→sucm≤n : ∀ {m n : ℕ}
+  →     m < n
+  → suc m ≤ n
+m<n→sucm≤n  {zero} {suc n} m<n = s≤s z≤n
+m<n→sucm≤n {suc m} {suc n} m<n = s≤s (m<n→sucm≤n {m} {n} (inv-s<s m<n))
+
+-- 842 exercise: LTStoLE (1 point) ≤-<-from′
+
+m<sucn→m≤n : ∀ {m n : ℕ}
+  → m < suc n
+  → m ≤     n
+m<sucn→m≤n  {zero}              z<n  = z≤n
+m<sucn→m≤n {suc m} {suc n} (s<s m<n) = s≤s (m<sucn→m≤n {m} {n} m<n)
+--                          ^
+--                   critical move
 
 {-
 ------------------------------------------------------------------------------
@@ -643,14 +682,33 @@ Give an alternative proof that strict inequality is transitive,
 using the relation between strict inequality and inequality
 and the fact that inequality is transitive.
 
--- Your code goes here
+-- 842: use the above to give a proof of <-trans that uses ≤-trans
+-}
 
+n<p→n<sucp : ∀ {n p : ℕ}
+  → n <     p
+  → n < suc p
+n<p→n<sucp                 z<s = z<s
+n<p→n<sucp {suc n} {suc p} n<p = s<s (n<p→n<sucp {n} {p} (inv-s<s n<p))
+
+<-trans'' : ∀ {m n p : ℕ}
+  → m < n
+  → n < p
+    -----
+  → m < p
+<-trans''  {zero} {suc n} {suc p}      z<s         _  = z<s
+<-trans'' {suc m} {suc n} {suc p} (s<s m<n) (s<s n<p)
+  = sucm≤n→m<n
+      (≤-trans (m<n→sucm≤n (s<s             m<n))
+               (m<sucn→m≤n (s<s (n<p→n<sucp n<p))))
+
+{-
 ------------------------------------------------------------------------------
 EVEN and ODD : MUTUALLY RECURSIVE DATATYPE DECLARATION and OVERLOADED CONSTRUCTORS
 
-inequality and strict inequality are binary relations
+inequality and strict inequality are BINARY RELATIONS
 
-even and odd are unary relations, sometimes called PREDICATES
+even and odd are UNARY RELATIONS, sometimes called PREDICATES
 -}
 
 -- identifier must be defined before it is used, so declare both before giving constructors.
@@ -680,7 +738,7 @@ overloading defined names NOT OK
 best practice : only overload related meanings
 -}
 
--- mutually recursive proof functions
+-- mutually recursive proof functions : give types first, then impls
 
 -- sum of two even numbers is even
 e+e≡e : ∀ {m n : ℕ}
@@ -749,50 +807,136 @@ data Bin : Set where
   _O : Bin → Bin
   _I : Bin → Bin
 
--- https://www.reddit.com/r/agda/comments/hrvk07/plfa_quantifiers_help_with_binisomorphism/
+inc : Bin → Bin
+inc  ⟨⟩    = ⟨⟩      I
+inc (b  O) =      b  I
+inc (b  I) = (inc b) O
 
--- holds if bistring has a leading one
+to : ℕ → Bin
+to   zero  = ⟨⟩ O
+to (suc m) = inc (to m)
+
+dbl : ℕ → ℕ
+dbl   zero  = zero
+dbl (suc m) = suc (suc (dbl m))
+
+from : Bin → ℕ
+from     ⟨⟩ = 0
+from (b  O) =      dbl (from b)
+from (b  I) = suc (dbl (from b))
+
+-- httpS://www.reddit.com/r/agda/comments/hrvk07/plfa_quantifiers_help_with_binisomorphism/
+
+-- holds if bitstring has a leading one
 data One : Bin → Set where
-  one    : One (⟨⟩ I)
-  _withO : ∀ {b} → One b → One (b O)
-  _withI : ∀ {b} → One b → One (b I)
-
--- over bitstrings, holds if bitstring is canonical
--- - if it has a leading one (representing a positive number) or
--- - if it consists of a single zero (representing zero)
-data Can : Bin → Set where
-  zero : Can (⟨⟩ O)
-
-  lone : ∀ {b : Bin}
-    → One b
-      -----
-    → Can b
+  one    :                 One (⟨⟩ I)
+  _withO : ∀ {b} → One b → One  (b O)
+  _withI : ∀ {b} → One b → One  (b I)
 
 {-
-Hint: to prove below TODO
+Hint: to prove below
 - first state/prove properties of One
-- prove if One b then 1 is less or equal to the result of from b
+-}
 
+n≤1+n : ∀ (n : ℕ) → n ≤ 1 + n
+n≤1+n   zero  = z≤n
+n≤1+n (suc n) = s≤s (n≤1+n n)
+
+dbl-mono : ∀ (n : ℕ) → n ≤ dbl n
+dbl-mono  zero   = z≤n
+dbl-mono (suc n) = s≤s (≤-trans (dbl-mono n) (n≤1+n (dbl n)))
+
+-- next one (and its cleaned up version) I thought would be useful - but not used
+-- first try
+n≤fromb→n≤dblfromb' : ∀ {n : ℕ} {b : Bin} → n ≤ from b → n ≤ dbl (from b)
+n≤fromb→n≤dblfromb'  {zero} {b}        p  = z≤n
+n≤fromb→n≤dblfromb' {suc n} {b O}      p  =
+                ≤-trans p (dbl-mono      (from (b O)))
+n≤fromb→n≤dblfromb' {suc n} {b I} (s≤s p) =
+  s≤s (≤-trans (≤-trans p (dbl-mono (dbl (from b))))
+               (n≤1+n (dbl (dbl (from b)))))
+
+-- cleaned up
+n≤fromb→n≤dblfromb : ∀ {n : ℕ} {b : Bin}
+  → n ≤      from b
+  → n ≤ dbl (from b)
+n≤fromb→n≤dblfromb {_} {b} p = ≤-trans p (dbl-mono (from b))
+
+-- HINT: prove if One b then 1 is less or equal to the result of from b
+oneb→1≤fromb : ∀ {b : Bin} → One b → 1 ≤ from b
+oneb→1≤fromb {b I}        _  = s≤s z≤n
+oneb→1≤fromb {b O} (p withO) = ≤-trans (oneb→1≤fromb p) (dbl-mono (from b))
+
+oneb→0<fromb : ∀ {b : Bin} → One b → 0 < from b
+oneb→0<fromb p = m≤n→m<n (oneb→1≤fromb p)
+
+num-trailing-zeros : (b : Bin) {p : One b} → ℕ
+num-trailing-zeros (b I)           = 0
+num-trailing-zeros (b O) {p withO} = 1 + num-trailing-zeros b {p}
+
+do-dbls : ℕ -> ℕ
+do-dbls   zero  = suc zero
+do-dbls (suc n) = dbl (do-dbls n)
+
+xxx : {b : Bin} {n : ℕ}
+  → (p : One b)
+  →         n ≡ num-trailing-zeros b {p}
+  → do-dbls n ≤ from b
+xxx {⟨⟩ I}  {zero}       one  ntz = s≤s z≤n
+xxx {b  I}  {zero} (ob withI) ntz = s≤s z≤n
+xxx {b  O}  {zero} (ob withO) ntz = ≤-trans (oneb→1≤fromb ob) (dbl-mono (from b))
+xxx {b  O} {suc n} (ob withO) ntz = {!!}
+
+-- bitstring is canonical if
+data Can : Bin → Set where
+  czero : Can (⟨⟩ O)  -- it consists of a single zero (representing zero)
+
+  cone : ∀ {b : Bin}
+    → One b           -- it has a leading one (representing a positive number)
+      -----
+    → Can b
+{-
 --------------------------------------------------
 Show that increment preserves canonical bitstrings: TODO
+-}
 
-Can b
-------------
-Can (inc b)
+one→inc-one : ∀ {b : Bin} → One b -> One (inc b)
+one→inc-one {⟨⟩}   ()
+one→inc-one {b  O} (ob withO) = {!!}
+one→inc-one {b  I} (ob withI) = (one→inc-one {b} ob) withO
+one→inc-one {⟨⟩ I}       one  = one→inc-one {!!} withO
 
+canb→canincb : ∀ {b : Bin}
+  → Can      b
+    ----------
+  → Can (inc b)
+canb→canincb {⟨⟩ O}   czero  = cone {!!}
+canb→canincb {b  O} (cone x) = cone {!!}
+canb→canincb {b  I} (cone x) = {!!}
+
+{-
 --------------------------------------------------
 Show that converting a natural to a bitstring always yields a canonical bitstring: TODO
+-}
 
-----------
-Can (to n)
+can-to-n : ∀ {n : ℕ} → Can (to n)
+can-to-n  {zero} = czero
+can-to-n {suc n} = {!!}
 
+{-
 --------------------------------------------------
 Show that converting a canonical bitstring to a natural and back is the identity: TODO
+-}
 
-Can b
----------------
-to (from b) ≡ b
+canb→tofromb≡b : ∀ {b : Bin}
+  → Can      b
+    ---------------
+  → to (from b) ≡ b
+canb→tofromb≡b   czero  = refl
+canb→tofromb≡b {b O} (cone x) = {!!}
+canb→tofromb≡b {b I} (cone x) = {!!}
 
+{-
 ------------------------------------------------------------------------------
 Standard library
 
