@@ -78,17 +78,12 @@ test-&&-same2 = &&-same3 {tt}
 to express an assumption, write fun that
 - takes a proof of assumption
 - returns proof of desired result
-
-if b1 || b2 is false, then b1 must be false
-
-||≡ff₁ : ∀ {b1 b2}
-       →  b1 || b2  ≡ ff
-       →  b1        ≡ ff
-with parens added:
 -}
+
+-- if b1 || b2 is false, then b1 must be false
 ||≡ff₁ : ∀ {b1 b2}
-       → ((b1 || b2) ≡ ff) -- assumption
-       →  (b1        ≡ ff) -- desired result
+       → b1 || b2 ≡ ff -- assumption
+       → b1       ≡ ff -- desired result
 
 -- 1st (implicit) arg is 'ff'
 -- 2nd (explicit) arg is ((b1 || b2) ≡ ff) bound to 'p' (but not used)
@@ -96,6 +91,7 @@ with parens added:
 
 -- absurd pattern '()'
 ||≡ff₁ {tt} ()       -- no '=' sign because impossible
+
 {-
 To prove the impossible, but only if some impossible assumption is true,
 use absurd, since that impossible assumption can never be satisfied by a use of this theorem.
@@ -103,7 +99,7 @@ use absurd, since that impossible assumption can never be satisfied by a use of 
 
 -- p 41 alternative
 
-||≡ff₁-2 : ∀ {b1 b2} → ((b1 || b2) ≡ ff) → b1 ≡ ff
+||≡ff₁-2 : ∀ {b1 b2} → b1 || b2 ≡ ff → b1 ≡ ff
 ||≡ff₁-2 {ff} p = refl
 ||≡ff₁-2 {tt} p = p -- 'p' is equal to 'tt ≡ ff' -- the desired result of 'b1' instantiated to 'tt'
 
@@ -120,9 +116,9 @@ Congruence holds for definitional equality automatically.
 Congruence must be proved for PROPOSITIONAL equalities 'a ≡ b'
 -}
 
-||-cong₁ : ∀ {b1 b1’ b2}              -- implicit args
-         →  (b1        ≡  b1’)        -- explicit arg
-         → ((b1 || b2) ≡ (b1’ || b2)) -- desired result
+||-cong₁ : ∀ {b1 b1’ b2}        -- implicit args
+         → b1       ≡ b1’       -- explicit arg
+         → b1 || b2 ≡ b1’ || b2 -- desired result
 ||-cong₁ refl = refl
 
 {-
@@ -161,18 +157,19 @@ b1, b1’, and b2 are implicit arguments above.
 
 To include them in the pattern on the left-hand side of the equation:
 
-||-cong₁ : ∀ {b1 b1’ b2}              -- implicit args
-         →  (b1        ≡  b1’)        -- explicit arg
-         → ((b1 || b2) ≡ (b1’ || b2)) -- desired result
+||-cong₁ : ∀ {b1 b1’ b2}        -- implicit args
+         → b1       ≡ b1’       -- explicit arg
+         → b1 || b2 ≡ b1’ || b2 -- desired result
 ||-cong₁ {b1}{b1’}{b2} refl = refl
 
 but Agda will complain because to type check this pattern, b1 and b1' can NOT be distinct.
 Agda deduces b1 and b1’ to be definitionally equal.
 
 Workaround : dot pattern:
-||-cong₁ : ∀ {b1 b1’ b2}              -- implicit args
-         →  (b1        ≡  b1’)        -- explicit arg
-         → ((b1 || b2) ≡ (b1’ || b2)) -- desired result
+
+||-cong₁ : ∀ {b1 b1’ b2}        -- implicit args
+         → b1       ≡ b1’       -- explicit arg
+         → b1 || b2 ≡ b1’ || b2 -- desired result
 ||-cong₁ {b1}{.b1}{b2} refl = refl
 
 Writing “.” in front of term in pattern tells Agda that term is not a subpattern to match.
@@ -183,8 +180,8 @@ Rather it has a form which is dictated by the type of the whole pattern.
 -- p 44 2.4.4 The REWRITE directive
 
 ||-cong₂ : ∀ {b1 b2 b2'}
-         →  (b2        ≡  b2')
-         → ((b1 || b2) ≡ (b1 || b2'))
+         → b2       ≡ b2'
+         → b1 || b2 ≡ b1 || b2'
 ||-cong₂ p rewrite p = refl
 
 {-
@@ -227,7 +224,7 @@ the given ITE holds
 ite-same : ∀ {ℓ} {A : Set ℓ}    -- two implicit args
                                 --     so no patterns needed on left hand side of equations
          → ∀ (b : 𝔹) (x : A)    -- two explicit args
-         → (if b then x else x)
+         → if b then x else x
          ≡ x
 -- reason by cases on 'b'
 ite-same tt _ = refl -- x ≡ x

@@ -246,7 +246,7 @@ inductive
 - IH '≤-antisym m≤n n≤m' establishes m ≡ n
 - goal follows by congruence
 
-Exercise ≤-antisym-cases (practice) TODO
+Exercise ≤-antisym-cases (practice) TODO : describe why missing case OK
 
 The above proof omits cases where one argument is z≤n and one argument is s≤s.
 Why is it ok to omit them?
@@ -676,7 +676,7 @@ m<sucn→m≤n {suc m} {suc n} (s<s m<n) = s≤s (m<sucn→m≤n {m} {n} m<n)
 
 {-
 ------------------------------------------------------------------------------
-Exercise <-trans-revisited (practice) TODO
+Exercise <-trans-revisited (practice)
 
 Give an alternative proof that strict inequality is transitive,
 using the relation between strict inequality and inequality
@@ -793,7 +793,7 @@ o+o≡e (suc om) on = suc (e+o≡o om on)
 
 {-
 ------------------------------------------------------------------------------
-Exercise Bin-predicates (stretch) TODO
+Exercise Bin-predicates (stretch)
 
 representations not unique due to leading zeros
 
@@ -846,8 +846,7 @@ dbl-mono : ∀ (n : ℕ) → n ≤ dbl n
 dbl-mono  zero   = z≤n
 dbl-mono (suc n) = s≤s (≤-trans (dbl-mono n) (n≤1+n (dbl n)))
 
--- next one (and its cleaned up version) I thought would be useful - but not used
--- first try
+-- not used; I thought it would be useful; first try
 n≤fromb→n≤dblfromb' : ∀ {n : ℕ} {b : Bin} → n ≤ from b → n ≤ dbl (from b)
 n≤fromb→n≤dblfromb'  {zero} {b}        p  = z≤n
 n≤fromb→n≤dblfromb' {suc n} {b O}      p  =
@@ -856,7 +855,7 @@ n≤fromb→n≤dblfromb' {suc n} {b I} (s≤s p) =
   s≤s (≤-trans (≤-trans p (dbl-mono (dbl (from b))))
                (n≤1+n (dbl (dbl (from b)))))
 
--- cleaned up
+-- not used; above cleaned up
 n≤fromb→n≤dblfromb : ∀ {n : ℕ} {b : Bin}
   → n ≤      from b
   → n ≤ dbl (from b)
@@ -895,46 +894,86 @@ data Can : Bin → Set where
     → One b           -- it has a leading one (representing a positive number)
       -----
     → Can b
+
 {-
 --------------------------------------------------
-Show that increment preserves canonical bitstrings: TODO
+show that increment preserves canonical bitstrings
 -}
 
-one→inc-one : ∀ {b : Bin} → One b -> One (inc b)
-one→inc-one {⟨⟩}   ()
-one→inc-one {b  O} (ob withO) = {!!}
-one→inc-one {b  I} (ob withI) = (one→inc-one {b} ob) withO
-one→inc-one {⟨⟩ I}       one  = one→inc-one {!!} withO
+oneb→one-incb : ∀ {b : Bin} → One b → One (inc b)
+oneb→one-incb      one  =             one withO
+oneb→one-incb (p withO) =               p withI
+oneb→one-incb (p withI) = oneb→one-incb p withO
 
 canb→canincb : ∀ {b : Bin}
   → Can      b
     ----------
   → Can (inc b)
-canb→canincb {⟨⟩ O}   czero  = cone {!!}
-canb→canincb {b  O} (cone x) = cone {!!}
-canb→canincb {b  I} (cone x) = {!!}
+canb→canincb {.(⟨⟩ O)}   czero  = cone one
+canb→canincb       {b} (cone p) = cone (oneb→one-incb p)
 
 {-
 --------------------------------------------------
-Show that converting a natural to a bitstring always yields a canonical bitstring: TODO
+show that converting a natural to a bitstring always yields a canonical bitstring
 -}
 
 can-to-n : ∀ {n : ℕ} → Can (to n)
 can-to-n  {zero} = czero
-can-to-n {suc n} = {!!}
+can-to-n {suc n} = canb→canincb (can-to-n {n})
 
 {-
 --------------------------------------------------
-Show that converting a canonical bitstring to a natural and back is the identity: TODO
+show that converting a canonical bitstring to a natural and back is the identity TODO
 -}
 
-canb→tofromb≡b : ∀ {b : Bin}
+ww : ∀ {b : Bin} {n : ℕ}
+  → One b
+  → 1 ≤ from b
+  → b ≡ to n
+  → to (dbl (from b)) ≡ (b O)
+ww {.(⟨⟩ I)} {suc n}       one  (s≤s fb) tn = refl
+ww {.(_  O)}  {zero} (ob withO)      fb  tn = {!!}
+ww {.(_  O)} {suc n} (ob withO)      fb  tn = {!!}
+ww {.(_  I)} {suc n} (ob withI)      fb  tn = {!!}
+
+xxxx : ∀ {b : Bin} {n : ℕ}
+  → b ≡ (⟨⟩ I)
+  → b ≡ to n
+  → n ≡ 1
+  → (⟨⟩ I O) ≡ to (dbl n)
+xxxx p1 p2 p3 rewrite p3 = refl
+
+zz : ∀ {b : Bin} {n : ℕ}
+  → One b
+  →  b    ≡ to      n
+  → (b O) ≡ to (dbl n)
+zz {.(⟨⟩ I)} {n}       one  p = {!!}
+zz {.(_  O)} {n} (ob withO) p = {!!}
+zz {.(_  I)} {n} (ob withI) p = {!!}
+
+xx : ∀ {b : Bin} → One b -> to (dbl (from b)) ≡ (b O)
+xx      one  = refl
+xx {b O} (p withO)              --             to (dbl (from (b O)))     ≡ ((b O) O)
+                                --             to (dbl (dbl (from b)))   ≡ ((b O) O)
+  rewrite
+    sym (xx p)                  --             to (dbl (dbl (from b)))   ≡ (to (dbl (from b)) O)
+  = {!!}
+xx (p withI)                    --             to (dbl (from (b I))      ≡ ((b I) O)
+                                --   inc (inc (to (dbl (dbl (from b))))) ≡ ((b I) O)
+  = {!!}
+
+canb→to-from-b≡b : ∀ {b : Bin}
   → Can      b
     ---------------
   → to (from b) ≡ b
-canb→tofromb≡b   czero  = refl
-canb→tofromb≡b {b O} (cone x) = {!!}
-canb→tofromb≡b {b I} (cone x) = {!!}
+canb→to-from-b≡b             czero  = refl
+canb→to-from-b≡b {.⟨⟩ I} (cone one) = refl
+canb→to-from-b≡b {b O} (cone (p withO)) --      to (dbl (from b))  ≡ (b O)
+  = xx p
+
+canb→to-from-b≡b {b I} (cone (p withI)) -- inc (to (dbl (from b))) ≡ (b I)
+  rewrite xx p                          --                   (b I) ≡ (b I)
+  = refl
 
 {-
 ------------------------------------------------------------------------------

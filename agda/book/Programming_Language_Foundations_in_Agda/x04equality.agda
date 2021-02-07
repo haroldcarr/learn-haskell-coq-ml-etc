@@ -3,7 +3,7 @@ module x04equality where
 ------------------------------------------------------------------------------
 -- EQUALITY
 
--- for any type A
+-- for any      type A
 -- for any x of type A
 -- refl constructor provides evidence that x ≡ x
 -- i.e., every value is equal to itself
@@ -15,7 +15,7 @@ infix 4 _≡_
 {-
 Note:
 - 1st arg to _≡_ is parameter (x : A)
-  - informal policy: using parameters when possible
+  - informal policy: use parameters when possible
   - can be a parameter because it does not vary
 - 2nd arg by an index in A → Set
   - must be an index, so it can be required to be equal to the first
@@ -31,8 +31,8 @@ sym : ∀ {A : Set} {x y : A}
   → x ≡ y  -- arg has type x ≡ y
     -----
   → y ≡ x
-sym refl -- LHS :instantiates arg to the refl CONSTRUCTOR (only one possible)
-         -- refl constructor requires x y to be the same
+sym refl -- LHS :instantiates arg to refl CONSTRUCTOR (only one possible)
+         -- refl requires x y to be the same
   = refl -- RHS : need a term of type x ≡ x, so refl
 
 -- transitive
@@ -41,29 +41,29 @@ trans : ∀ {A : Set} {x y z : A}
   → y ≡ z
     -----
   → x ≡ z
-trans refl refl  =  refl
+trans refl refl = refl
 
 ------------------------------------------------------------------------------
 -- EQUALITY SATISFIES CONGRUENCE
 
 -- If two terms are equal, they remain so after the same function is applied to both
 cong : ∀ {A B : Set} (f : A → B) {x y : A}
-  → x ≡ y
+  →   x ≡   y
     ---------
   → f x ≡ f y
 cong f refl = refl
 
 -- where f takes two args
 cong₂ : ∀ {A B C : Set} (f : A → B → C) {u x : A} {v y : B}
-  → u ≡ x
-  → v ≡ y
+  →   u   ≡   x
+  →     v ≡     y
     -------------
   → f u v ≡ f x y
 cong₂ f refl refl  =  refl
 
--- ff two functions are equal, then applying them to the same term yields equal terms
+-- if two functions are equal, then applying them to the same term yields equal terms
 cong-app : ∀ {A B : Set} {f g : A → B}
-  → f ≡ g
+  →             f   ≡ g
     ---------------------
   → ∀ (x : A) → f x ≡ g x
 cong-app refl x = refl
@@ -71,7 +71,7 @@ cong-app refl x = refl
 ------------------------------------------------------------------------------
 -- EQUALITY SATISFIES SUBSTITUTION
 
--- ff two values are equal and a predicate holds of the first then it also holds of the second
+-- if two values are equal and a predicate holds of the first then it also holds of the second
 subst : ∀ {A : Set} {x y : A} (P : A → Set)
   → x ≡ y
     ---------
@@ -88,25 +88,26 @@ module ≡-Reasoning {A : Set} where
   infixr 2 _≡⟨⟩_ _≡⟨_⟩_
   infix  3 _∎
 
+  -- identity : this is just used to make proof look nice
   begin_ : ∀ {x y : A}
     → x ≡ y
       -----
     → x ≡ y
-  begin x≡y  =  x≡y
+  begin x≡y = x≡y
 
-  -- can think of _≡⟨⟩_ as equivalent to _≡⟨ refl ⟩_
+  -- think of _≡⟨⟩_ as equivalent to _≡⟨ refl ⟩_
   _≡⟨⟩_ : ∀ (x : A) {y : A}
     → x ≡ y
       -----
     → x ≡ y
-  x ≡⟨⟩ x≡y  =  x≡y
+  x ≡⟨⟩ x≡y = x≡y
 
   _≡⟨_⟩_ : ∀ (x : A) {y z : A}
     → x ≡ y
     → y ≡ z
       -----
     → x ≡ z
-  x ≡⟨ x≡y ⟩ y≡z  =  trans x≡y y≡z
+  x ≡⟨ x≡y ⟩ y≡z = trans x≡y y≡z
 
   _∎ : ∀ (x : A)
       -----
@@ -137,7 +138,7 @@ Hint: look at the definition of _≡⟨_⟩_
 
 ------------------------------------------------------------------------------
 Chains of equations, another example : addition is commutative
-POSTULATE : specifies a signature but no definition. Use with care. DON'T postulate something false
+POSTULATE : specifies a signature but no def. Use with care. DON'T postulate something false!
 -}
 
 data ℕ : Set where
@@ -152,7 +153,7 @@ zero    + n  =  n
 
 infixl 6  _+_
 
--- To save space, postulate (rather than prove) two lemmas:
+-- to save space, postulate (rather than prove) two lemmas:
 postulate
   +-identity : ∀ (m   : ℕ) → m + zero  ≡ m
   +-suc      : ∀ (m n : ℕ) → m + suc n ≡ suc (m + n)
@@ -176,13 +177,12 @@ postulate
 ------------------------------------------------------------------------------
 Exercise ≤-Reasoning (stretch)
 
-Proof of monotonicity from Chapter Relations can be written in a more readable form
-using an analogue of our notation for ≡-Reasoning.
+rewrite proof of +-monoʳ-≤ (from Chapter Relations) using an analogue of ≡-Reasoning
 
-Define ≤-Reasoning analogously
+define ≤-Reasoning
 
-Use it to write out an alternative proof that addition is monotonic with regard to inequality.
-Rewrite all of +-monoˡ-≤, +-monoʳ-≤, and +-mono-≤.
+use it to write out proof that addition is monotonic with regard to inequality
+by rewriting all of +-monoˡ-≤, +-monoʳ-≤, and +-mono-≤
 -}
 
 module ≤-Reasoning {A : Set} where
@@ -220,14 +220,14 @@ module ≤-Reasoning {A : Set} where
     → x ≤ y
       -----
     → x ≤ y
-  x ≤⟨⟩ x≤y  =  x≤y
+  x ≤⟨⟩ x≤y = x≤y
 
   _≤⟨_⟩_ : ∀ (x : ℕ) {y z : ℕ}
     → x ≤ y
     → y ≤ z
       -----
     → x ≤ z
-  x ≤⟨ x≤y ⟩ y≤z  =  ≤-trans x≤y y≤z
+  x ≤⟨ x≤y ⟩ y≤z = ≤-trans x≤y y≤z
 
   _∎≤ : ∀ (x : ℕ)
       -----
@@ -327,10 +327,10 @@ even-comm : ∀ (m n : ℕ)
   → even (m + n)
     ------------
   → even (n + m)
-even-comm m n ev  rewrite +-comm n m  =  ev
+even-comm m n ev rewrite +-comm n m  =  ev
 
 {-
-In general, keyword REWRITE is followed by evidence of an equality.
+Generally, keyword REWRITE followed by evidence of an equality.
 That equality is used to rewrite the type of the goal and of any variable in scope.
 -}
 

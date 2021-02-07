@@ -20,7 +20,7 @@ open import Data.Nat       using (ℕ; zero; suc; _+_; _*_; _∸_; _^_)
 * _Distributivity_.  e.g., from the left  `(m + n) * p ≡ (m * p) + (n * p)`
                            from the right `m * (p + q) ≡ (m * p) + (m * q)`
 
-#### Exercise `operators` (practice) {name=operators} TODO
+#### Exercise `operators` (practice) {name=operators} TODO : ops with different properties - no proofs
 
 pair of operators
 - have an identity
@@ -422,7 +422,7 @@ using inductive case
 there is a finite approach to generating the same equations (following exercise)
 
 ------------------------------------------------------------------------------
-#### Exercise `finite-|-assoc` (stretch) {name=finite-plus-assoc} TODO
+#### Exercise `finite-|-assoc` (stretch) {name=finite-plus-assoc} TODO - first four days of creation - description, not proof
 
 Write out what is known about associativity of addition on each of the
 first four days using a finite story of creation, as
@@ -634,7 +634,7 @@ for all naturals `m`, `n`, and `p`
   | sym (+-assoc z (x * z) (y * z)) -- z +  x * z + y  * z  ≡ z + x * z + y * z
   = refl
 
-{- TODO: agda loops on this
+{- TODO: agda loops on this : *-distrib-+r done with chain reasoning
 *-distrib-+r' : ∀ (m n p : ℕ)
              → (m     + n) * p
              ≡  m * p + n  * p
@@ -903,7 +903,7 @@ xx (b I)     -- dbl (from (b I)) ≡ from ((b I) O)
              -- suc (suc (dbl (dbl (from b)))) ≡ suc (suc (dbl (dbl (from b))))
   = refl
 
--- TODO
+-- CANNOT BE PROVED BECAUSE TWO REPRESENTATIONS OF ZERO : (⟨⟩) and (⟨⟩ O)
 yy : ∀ (b : Bin)
    → to (dbl (from b)) ≡ (b O)
 yy ⟨⟩        --                  to (dbl (from ⟨⟩)) ≡ (⟨⟩ O)
