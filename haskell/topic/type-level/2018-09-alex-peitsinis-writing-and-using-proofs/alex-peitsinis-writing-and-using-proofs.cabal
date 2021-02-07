@@ -1,0 +1,36 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 62c0eb8c1dd1bbc60ea845fbdc107536c017841b64bfb7273a08e02189945ae6
+
+name:           alex-peitsinis-writing-and-using-proofs
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_alex_peitsinis_writing_and_using_proofs
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -O2
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010
+
+test-suite alex-peitsinis-writing-and-using-proofs-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_alex_peitsinis_writing_and_using_proofs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      alex-peitsinis-writing-and-using-proofs
+    , base >=4.7 && <5
+  default-language: Haskell2010

@@ -1,0 +1,22 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: a7d41f8985bd44437bd7fe1e462760b82747c20ea7b5bbe6bc686fa533574956
+
+name:           interview-aaaabbbcca
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_interview_aaaabbbcca
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010
