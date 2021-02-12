@@ -869,14 +869,16 @@ oneb→1≤fromb {b O} (p withO) = ≤-trans (oneb→1≤fromb p) (dbl-mono (fro
 oneb→0<fromb : ∀ {b : Bin} → One b → 0 < from b
 oneb→0<fromb p = m≤n→m<n (oneb→1≤fromb p)
 
+-- not used
 num-trailing-zeros : (b : Bin) {p : One b} → ℕ
 num-trailing-zeros (b I)           = 0
 num-trailing-zeros (b O) {p withO} = 1 + num-trailing-zeros b {p}
 
+-- not used
 do-dbls : ℕ -> ℕ
 do-dbls   zero  = suc zero
 do-dbls (suc n) = dbl (do-dbls n)
-
+{-
 xxx : {b : Bin} {n : ℕ}
   → (p : One b)
   →         n ≡ num-trailing-zeros b {p}
@@ -885,7 +887,7 @@ xxx {⟨⟩ I}  {zero}       one  ntz = s≤s z≤n
 xxx {b  I}  {zero} (ob withI) ntz = s≤s z≤n
 xxx {b  O}  {zero} (ob withO) ntz = ≤-trans (oneb→1≤fromb ob) (dbl-mono (from b))
 xxx {b  O} {suc n} (ob withO) ntz = {!!}
-
+-}
 -- bitstring is canonical if
 data Can : Bin → Set where
   czero : Can (⟨⟩ O)  -- it consists of a single zero (representing zero)
@@ -926,15 +928,28 @@ can-to-n {suc n} = canb→canincb (can-to-n {n})
 show that converting a canonical bitstring to a natural and back is the identity TODO
 -}
 
-ww : ∀ {b : Bin} {n : ℕ}
-  → One b
-  → 1 ≤ from b
-  → b ≡ to n
-  → to (dbl (from b)) ≡ (b O)
-ww {.(⟨⟩ I)} {suc n}       one  (s≤s fb) tn = refl
-ww {.(_  O)}  {zero} (ob withO)      fb  tn = {!!}
-ww {.(_  O)} {suc n} (ob withO)      fb  tn = {!!}
-ww {.(_  I)} {suc n} (ob withI)      fb  tn = {!!}
+ob→obO : ∀ {b : Bin} → One b → One (b O)
+ob→obI : ∀ {b : Bin} → One b → One (b I)
+
+ob→obI {.(⟨⟩ I)}     one  =           one withI
+ob→obI {.(_ O)} (p withO) = ob→obO      p withI
+ob→obI  {(b I)} (p withI) = ob→obI  {b} p withI
+
+ob→obO {.(⟨⟩ I)}     one  =           one  withO
+ob→obO {.(_ O)} (p withO) = (ob→obO     p) withO
+ob→obO  {(b I)} (p withI) =  ob→obI {b} p  withO
+
+dblb : Bin → Bin
+dblb   ⟨⟩    = ⟨⟩
+dblb  (⟨⟩ O) = ⟨⟩ O
+dblb    b     = b O
+
+dblbo : ∀ {b} → One b → Bin → Bin
+dblbo _ b = b O
+
+dblbc : ∀ {b} → Can b → Bin → Bin
+dblbc   czero  _ = ⟨⟩ O
+dblbc (cone _) b =  b O
 
 xxxx : ∀ {b : Bin} {n : ℕ}
   → b ≡ (⟨⟩ I)
@@ -943,36 +958,28 @@ xxxx : ∀ {b : Bin} {n : ℕ}
   → (⟨⟩ I O) ≡ to (dbl n)
 xxxx p1 p2 p3 rewrite p3 = refl
 
-zz : ∀ {b : Bin} {n : ℕ}
-  → One b
-  →  b    ≡ to      n
-  → (b O) ≡ to (dbl n)
-zz {.(⟨⟩ I)} {n}       one  p = {!!}
-zz {.(_  O)} {n} (ob withO) p = {!!}
-zz {.(_  I)} {n} (ob withI) p = {!!}
-
-xx : ∀ {b : Bin} → One b -> to (dbl (from b)) ≡ (b O)
+xx : ∀ {b : Bin} → One b -> to (dbl (from b)) ≡ b O
 xx      one  = refl
 xx {b O} (p withO)              --             to (dbl (from (b O)))     ≡ ((b O) O)
                                 --             to (dbl (dbl (from b)))   ≡ ((b O) O)
   rewrite
     sym (xx p)                  --             to (dbl (dbl (from b)))   ≡ (to (dbl (from b)) O)
   = {!!}
-xx (p withI)                    --             to (dbl (from (b I))      ≡ ((b I) O)
+xx {b I} (p withI)              --             to (dbl (from (b I))      ≡ ((b I) O)
                                 --   inc (inc (to (dbl (dbl (from b))))) ≡ ((b I) O)
   = {!!}
 
-canb→to-from-b≡b : ∀ {b : Bin}
+can-b→to-from-b≡b : ∀ {b : Bin}
   → Can      b
     ---------------
   → to (from b) ≡ b
-canb→to-from-b≡b             czero  = refl
-canb→to-from-b≡b {.⟨⟩ I} (cone one) = refl
-canb→to-from-b≡b {b O} (cone (p withO)) --      to (dbl (from b))  ≡ (b O)
+can-b→to-from-b≡b             czero  = refl
+can-b→to-from-b≡b {.⟨⟩ I} (cone one) = refl
+can-b→to-from-b≡b {b O} (cone (p withO)) --      to (dbl (from b))  ≡ (b O)
   = xx p
 
-canb→to-from-b≡b {b I} (cone (p withI)) -- inc (to (dbl (from b))) ≡ (b I)
-  rewrite xx p                          --                   (b I) ≡ (b I)
+can-b→to-from-b≡b {b I} (cone (p withI)) -- inc (to (dbl (from b))) ≡ (b I)
+  rewrite xx p                           --                   (b I) ≡ (b I)
   = refl
 
 {-

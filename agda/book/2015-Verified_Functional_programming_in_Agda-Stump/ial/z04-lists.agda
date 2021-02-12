@@ -140,6 +140,7 @@ length-filter p      []         -- length (filter p []) ≤ length [] ≡ tt
 -- Consider cases where predicate returns tt or ff.
 -- The predicate return value is NOT an input to length-filter.
 -- WITH : extend pattern on left side with an additional pattern, here : | tt     and   | ff
+
 length-filter p (x :: l) with p x
 length-filter p (x :: l) | tt   --    length (filter p l)  <      length l
                                 -- || length (filter p l) =ℕ      length l  ≡ tt
