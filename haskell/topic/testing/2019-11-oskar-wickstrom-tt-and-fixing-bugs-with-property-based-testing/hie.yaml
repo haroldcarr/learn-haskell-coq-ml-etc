@@ -1,0 +1,11 @@
+cradle:
+  stackYaml: "./stack.yaml"
+  stack:
+    - path: "./src"
+      component: "oskar-wickstrom-tt-and-fixing-buggs-with-property-based-testing:lib"
+
+    - path: "./app/Main.hs"
+      component: "oskar-wickstrom-tt-and-fixing-buggs-with-property-based-testing:exe:main"
+
+    - path: "./test"
+      component: "oskar-wickstrom-tt-and-fixing-buggs-with-property-based-testing:test:test"

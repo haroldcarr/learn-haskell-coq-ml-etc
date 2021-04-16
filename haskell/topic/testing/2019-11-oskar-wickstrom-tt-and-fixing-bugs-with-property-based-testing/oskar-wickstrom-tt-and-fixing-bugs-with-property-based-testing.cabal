@@ -1,0 +1,66 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 6fdb2df780c8f09013993fdc7ff24d860579d561538a60cec20d860c973e2836
+
+name:           oskar-wickstrom-tt-and-fixing-bugs-with-property-based-testing
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+    , either
+    , hedgehog
+    , protolude
+    , text
+    , time
+    , validation
+  default-language: Haskell2010
+
+executable main
+  main-is: Main.hs
+  other-modules:
+      
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , either
+    , hedgehog
+    , oskar-wickstrom-tt-and-fixing-bugs-with-property-based-testing
+    , protolude
+    , text
+    , time
+    , validation
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , either
+    , hedgehog
+    , oskar-wickstrom-tt-and-fixing-bugs-with-property-based-testing
+    , protolude
+    , text
+    , time
+    , validation
+  default-language: Haskell2010
