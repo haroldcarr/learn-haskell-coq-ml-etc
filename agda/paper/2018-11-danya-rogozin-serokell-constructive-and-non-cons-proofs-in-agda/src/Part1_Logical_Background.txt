@@ -1,0 +1,316 @@
+https://serokell.io/blog/logical-background
+
+Constructive and Non-Constructive Proofs in Agda (Part 1): Logical Background
+
+Danya Rogozin (work at Serokell on a blockchain framework called Snowdrop).
+Wednesday, November 14th, 2018
+
+------------------------------------------------------------------------------
+Outline
+- Logical background
+  - to see the connection between proof theory and dependently typed programming
+- Brief introduction to Agda : a constructive formal system
+- Examples : both constructively and non-constructively (by adding non-constructive postulates)
+
+------------------------------------------------------------------------------
+Logical background
+
+Classical logic : Aristotle’s works [1], G. Boole’s [2], G. Frege’s [3]
+
+Establish the truth of a given statement from its form.
+
+Forming complex statements from atomic statements via parts of speech by abstracting from
+specific meanings that can vary from context to context.
+
+Atomic statements are propositional variables that can take a value from the two-element set
+
+ { false, true }
+
+Parts of speech are logical connectives: conjunction, disjunction, implication, negation
+
+Classical proof is a syntactical way to establish the truth of a proposition
+from a two-valued point of view.
+
+Define axioms and inference rules.
+
+Single inference rule : Modus Ponens. Modus Ponens claims that
+  if implication (A → B)
+  and
+  assumption A
+  are true
+  then the conclusion B
+  is true.
+
+------------------------------------------------------------------------------
+Definition 1 : language of a classical propositional calculus:
+Let V = {p0, p1, ...,} be set of propositional variables. Thus:
+
+1. Any propositional variable is a formula;
+2. If A is a formula, then ¬A is a formula;
+3. If A,B are formulas, then (A ∨ B), (A ∧ B) and (A → B) are formulas.
+
+------------------------------------------------------------------------------
+Definition 2 (Classical propositional calculus)
+Classical propositional calculus (CPC) is defined by the following
+list of axiom schemes and inference rules:
+
+1. (A → (B → C)) → ((A → B) → (A → C))
+2. A → (B → A)
+3. A → (B → (A ∧ B))
+4. (A ∧ B) → A
+5. (A ∧ B) → B
+6. (A → C) → ((B → C) → ((A ∨ B) → C))
+7. A → (A ∨ B)
+8. B → (A ∨ B)
+9. (A → B) → ((A → ¬ B) → ¬ A)
+10. ¬ ¬ A → A
+11. Inference rule, Modus Ponens: A   A → B
+                                  ---------
+                                          B
+Equivalently, we may define classical propositional logic as the smallest set L
+that consists of all special cases of these schemas and is closed under Modus Ponens rule,
+i.e. if A ∈ L  and A → B ∈ L, then B ∈ L.
+
+------------------------------------------------------------------------------
+Definition 3 (Formal proof)
+A (classical propositional) proof is a finite sequence of formulas,
+each of which is an axiom, or follows from the previous formulas by Modus Ponens rule.
+
+Example: prove A → A
+
+(1) (A→((A→A)→A)) → (((A→(A→A))→(A→A))
+    Axiom schema
+(2) A → ((A→A)→A)
+    Axiom schema
+(3) ((A→(A→A)) → (A→A)
+    1, 2, Modus Ponens
+(4) A → (A→A)
+    Axiom schema
+(5) A → A
+    1, 2, Modus Ponens
+
+Law of excluded middle initially formulated in Aristotle’s works [1].
+Claims only one statement of A and ¬A is true and the other is false (no third option).
+
+  A ∨ ¬ A
+
+Exercise : prove the law of excluded middle in CPC.
+
+Equivalent formulation : law of double negation elimination:
+Any statement is equivalent to its double negation:
+If it is false that A is false, then A is true.
+
+------------------------------------------------------------------------------
+First-order logic
+
+Classical propositional logic has weak expressive possibilities.
+It does not include the structure of propositions.
+The structure of a statement often plays a role in establishing the truth of this statement.
+Example,
+
+“A sequence of real numbers x1, x2, ... is a Cauchy sequence,
+if for all ε > 0 there exists a natural number N, such that for all i,j > N, |xi − xj| < ε”.
+
+No way to establish trust of “for all ε > 0  …” only looking on connectives.
+Need to deal with internal structure.
+
+First-order logic (FOL) is a richer formal system than (classical) propositional logic
+that enables expressing the internal structure of basic propositions in more detail.
+
+The language of FOL extends the language of classical propositional logic.
+In addition to logical connectives, there are
+
+- variables        : infinite set of letters x,y,z,...
+                     range over some domain
+- constants        : a,b,c,...
+                     denote special elements of a domain
+- relation symbols : set of letters P,Q,R, ...
+                     an infinite collection of n-ary relation symbols for every n ∈ N
+                     symbols are symbols that represent relations
+- function symbols : set of letters f,g,h,...
+                     an infinite collection of n-ary function symbols for any natural number n;
+                     symbols that denote operations
+- quantifiers      : “for all” ∀, “there exists” ∃
+
+
+Note : any propositional variable is 0-ary relation symbol.
+       any constant is 0-ary function symbol
+       (i.e., propositional variables and constants are not strictly necessary)
+
+First-order formulas are built via:
+
+A first-order signature is a pair Ω = ⟨Fn,Pr⟩,
+where Fn is a set of function symbols
+and   Pr is a set of relation symbols.
+
+Definition 4 (Terms)
+
+- Any variable is a term
+- Any constant is a term
+- If x1,…,xn are terms and f ∈ Fn is a function symbol of valence n, then f(x1,…,xn) is a term
+
+Definition 5 (Formulas)
+
+- If x1,…,xn are terms and P ∈ Pr is a relation symbol of valence n, then P(x1,…,xn) is a formula
+- If A is a formula, then ¬A is a formula
+- If A,B are formulas, then (AαB) is a formula, where α ∈ →, ∧, ∨
+- If A is a formula and x is a variable, then ∀x:A (for all x, A holds)
+  and ∃x:A (exists x, such that A holds) are formulas
+
+------------------------------------------------------------------------------
+Define first-order logic axiomatically as first-order predicate calculus:
+
+Definition 6 (Classical first-order predicate calculus)
+
+1. CPC axioms;
+2. ∀x A(x) → A(a)
+3. A(a) → ∃x A(x)
+4. Modus Ponens
+5. 1st Bernays’ rule: A → B
+                      -----
+                     A → ∀x B'
+6. 2nd Bernays’ rule: A → B
+                      -----
+                     ∃x A → B
+   where A, B are metavariables on formulas.
+
+A proof is a finite sequence of formulas, each of which is an axiom,
+or follows from the previous formulas by inference rules (Modus Ponens and Bernays’ rules).
+
+∃x A is equivalent to ¬(∀x¬A)
+∀x A is equivalent to ¬(∃x¬A)
+(i.e., . quantifiers are mutually expressible in classical first-order logic)
+
+------------------------------------------------------------------------------
+Constructive logic
+
+Constructive (or intuitionistic) mathematics arose at the beginning of
+the 20th century, by Dutch mathematician L. E. J. Brouwer to provide
+an answer to the paradoxes of naive set theory such as Russell’s
+paradox [4].
+
+Brouwer claimed that paradoxes are the evidence that classical
+mathematics and its foundation are unsafe.
+
+Misgivings about ways of reasoning on mathematical objects and their introduction [5].
+E.g., examples of theorems claiming the existence of an object with some desired property
+but proved without any explicit presentation of this object.
+
+Example : "There exist irrational numbers a and b such that a^b is a rational number.
+(Proof not shown.)
+Such proofs are often based on the law of excluded middle (A∨¬A)
+and/or do not propose any concrete object (here, specific rational numbers).
+
+By the definition, a proof A ∨ ¬A is either proof of A or proof of ¬A,
+but classically A ∨ ¬A is true without any proof of A or ¬A.
+
+Rejection of the law of excluded middle.
+
+A statement is proved if we have some explicit construction
+that solves some desired mathematical problem.
+
+Logical connectives are understood as follows (in Haskell notation):
+
+- A proof of (a, b) is an ordered pair (x, y), where x :: a and y :: b.
+  To prove both statements, then must prove each of them;
+- A proof of Either a b is either Left x or Right y, where x :: a and y :: b.
+  To prove a disjunction, then must must prove at least one of members.
+- A proof of a -> b is a function f such that for all x :: a, f x :: b.
+  To prove this implication, must have a method that reduces any proof of b to the proof of a;
+- A proof ¬ a is a proof of a -> Void, where Void is an empty type.
+
+Logically, Void denotes the absurdity, the statement that has no proof
+- e.g., 0 = 1
+- To prove the negation of a, must show that any proof of a leads to the contradiction
+
+E.g., 4 = 5 → 0 = 1 is equivalent to ¬(4 = 5)
+
+
+Type-theoretically, Void is a type of contradiction and has no values
+as far as the contradiction is not provable (if the system is consistent).
+a -> Void may be considered as a type of function with an empty range of values.
+
+This way of the interpretation of logical constants is called
+Brouwer-Heyting-Kolmogorov semantics (BHK-semantics) [7].
+
+------------------------------------------------------------------------------
+Intuitionistic propositional logic axiomatically
+Definition 7 (Intuitionistic propositional logic)
+
+ 1. (A → (B → C)) → ((A → B) → (A → C))
+ 2. A → (B → A)
+ 3. A → (B → (A ∧ B))
+ 4. (A ∧ B) → A
+ 5. (A ∧ B) → B
+ 6. (A → C) → ((B → C) → ((A ∨ B) → C))
+ 7. A → (A ∨ B)
+ 8. B → (A ∨ B)
+ 9. (A → B) → ((A → ¬ B) → ¬ A)
+10. A → (¬ A → B)
+11. Inference rule, Modus Ponens: A   A → B
+                                  ---------
+                                          B
+
+In other words, replace the last axioms of classical propositional logic
+   ¬ ¬ A → A
+with weaker axiom
+  A → (¬ A → B)
+to obtain intuitionistic propositional logic.
+
+Moreover, there is Theorem 2 Disjunction property
+ (Gödel [1932], Gentzen [1934], Kleene [1945]) [8] [9] [10]
+A v B is provable intuitionistically if and only if either
+- A is provable intuitionistically or
+- B is provable intuitionistically.
+
+FWIW: unprovability of the law of excluded middle may be considered to
+be the consequence of the disjunction property:
+
+A v ¬ A cannot be provable generally, because no possibility to establish the
+provability of this disjunction knowing nothing about A.
+
+Note that the disjunction property doesn’t work in classical logic,
+where A v ¬ A is provable and true regardless of what A is
+
+------------------------------------------------------------------------------
+Intuitionistic propositional logic extended to intuitionistic first-order logic
+Definition 8 Intuitionistic first-order predicate calculus
+
+1. IPC axioms
+2. ∀x A(x) → A(a)
+3. A(a) → ∃x A(x)
+4. Modus Ponens
+5. Bernays’ rules
+
+Note that, quantifiers are not mutually expressible in contrast to classical first-order logic.
+
+There is the following theorem about intuitionistic first-order logic
+which is wrong for classical first-order logic:
+
+Theorem 3 (Existence property [9])
+
+If ∃x A(x) is provable in intuitionistic first-order logic with signature Ω,
+then there exists some term t, such that A(t) is provable.
+
+Existence should be proved explicitly from an intuitionistic point of view.
+
+See [11] to read more about philosophical distinctions between
+classical and intuitionistic logic in more detail.
+
+Also, The statement formulated in Theorem 1 has a constructive proof (not shown).
+
+------------------------------------------------------------------------------
+References
+
+[1] Smith, R. (tr. & comm.). Aristotle’s Prior Analytics, Indianapolis: Hackett, 1989.
+[2] Boole, G. An Investigation of the Laws of Thought. London: Walton & Maberly, 1854.
+[3] Frege, G. Begriffsschrift, eine der arithmetischen nachgebildete Formelsprache des reinen Denkens. Halle, 1879.
+[4] Russell, B. The principles of mathematics. London, 1903.
+[5] Brouwer, L.E.J… Collected works I, A. Heyting (ed.). Amsterdam: North-Holland, 1975.
+[6] Heyting, A. Intuitionism, an introduction. Amsterdam: North-Holland, 1956.
+[7] Troelstra, A.S. Constructivism and Proof Theory. Illc, University of Amsterdam, 2003.
+[8] Gödel, K. Zum intuitionistischen Aussagenkalkül, Anzeiger der Akademie der Wissenschaftischen in Wien, v. 69, 1932.
+[9] Gentzen, G. Untersuchungen über das logische Schließen. I, Mathematische Zeitschrift v. 39 n. 2, 1934.
+[10] Kleene S.C. On the interpretation of intuitionistic number theory, Journal of Symbolic Logic, vol. 10, 1945.
+[11] Dummett, M. Elements of Intuitionism. Oxford University Press, 1977.
+[12] Gelfond, A. Sur le septième Problème de Hilbert, Bulletin de l’Académie des Sciences de l’URSS. Classe des sciences mathématiques et na. VII (4), 1934.

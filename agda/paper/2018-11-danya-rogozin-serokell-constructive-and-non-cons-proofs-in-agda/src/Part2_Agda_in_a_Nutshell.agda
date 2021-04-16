@@ -1,3 +1,5 @@
+module Part2_Agda_in_a_Nutshell where
+
 {-
 https://serokell.io/blog/agda-in-nutshell
 
@@ -28,8 +30,8 @@ data Writers    : Set where Wilde Shelley Byron Sartre Camus                    
 data Literature : Set where DorianGrey Alastor ChildeHarold LaNausée L’Étranger : Literature
 
 data ℕ : Set where
-  zero : ℕ
-  suc : ℕ → ℕ
+  zero :     ℕ
+  suc  : ℕ → ℕ
 
 {-
 Parameterized and indexed datatypes
@@ -41,14 +43,14 @@ parameterized datatype
 -}
 
 data List (A : Set) : Set where
-  Nil  : List A
+  Nil  :              List A
   Cons : A → List A → List A
 
 -- can have indexes that could differ from constructor to constructor
 
 -- Vec is parameterized by A and indexed by ℕ.
 data Vec (A : Set) : ℕ → Set where
-  Nil : Vec A zero
+  Nil  :                         Vec A  zero
   -- n is an implicit argument of the constructor.
   -- Cons is an example of a dependent function.
   Cons : {n : ℕ} → A → Vec A n → Vec A (suc n)
@@ -57,7 +59,7 @@ data Vec (A : Set) : ℕ → Set where
 -- Fin is a datatype indexed by a natural number.
 data Fin : ℕ → Set where
   -- zero reflects an empty set which is an element of any finite set
-  zero : {n : ℕ} → Fin (suc n)
+  zero : {n : ℕ} →         Fin (suc n)
   -- suc applies the finite set i and yields a new finite set, larger than i on one element.
   suc  : {n : ℕ} → Fin n → Fin (suc n)
 
@@ -98,25 +100,29 @@ WriterToCountry Sartre  = France
 WriterToCountry Camus   = France
 
 WriterToCity : (w : Writers) → WriterToCountry w
-WriterToCity Wilde      = Dublin
-WriterToCity Shelley    = London
-WriterToCity Byron      = London
-WriterToCity Sartre     = Paris
-WriterToCity Camus      = Paris
+WriterToCity    Wilde   = Dublin
+WriterToCity    Shelley = London
+WriterToCity    Byron   = London
+WriterToCity    Sartre  = Paris
+WriterToCity    Camus   = Paris
 
 {-
 WriterToCity is a dependent function, because the type of the result depends on the argument.
 The type of a dependent function is called a Π-type.
 
-Generally, given function P: A → Set, then Π-type is a type of the function
-that assigns to every term t : A some object of type P t.
+Generally, given function P: A → Set,
+then Π-type is a type of the function that assigns
+to every term t : A
+some object of type P t.
 
 In Agda : (t : A) → P t for some {A : Set} {P : A → Set} in context.
 
 Logically Π-type encodes intuitionistic universal quantifier.
 
-P is a predicate and some function of a type (t : A) → P t
-is a proof that for each t : A the property P has established.
+P is a predicate and
+some function of a type (t : A) → P t
+is a proof that
+for each t : A the property P has established.
 
 ------------------------------------------------------------------------------
 Dependent pairs : Σ-type
@@ -226,11 +232,12 @@ record Functor {a} (F : Set a → Set a) : Set (suc a) where
   field
     fmap : ∀ {A B} → (A → B) → F A → F B
 
--- Instances may be declared either by constructing a record explicitly or by using copatterns:
-
+-- Instances may be declared either
+-- by constructing a record explicitly:
 instance
   ListFunctor₁ : Functor List
   ListFunctor₁ = record { fmap = map }
+-- or by using copatterns:
 instance
   ListFunctor₂ : Functor List
   fmap {{ListFunctor₂}} = map

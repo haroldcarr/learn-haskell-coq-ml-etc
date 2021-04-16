@@ -1,0 +1,49 @@
+Dependently Typed Programming in Agda
+- http://www.cse.chalmers.se/~ulfn/papers/afp08/tutorial.pdf
+- Aimed at functional programmers
+
+Agda Meta-Tutorial and The Agda Wiki
+- https://agda.readthedocs.io/en/v2.6.0.1/getting-started/tutorial-list.html
+- https://wiki.portal.chalmers.se/agda/pmwiki.php
+
+Agda by Example: Sorting
+- https://mazzo.li/posts/AgdaSort.html
+- One of the best introductions to Agda
+
+Programming Language Foundations in Agda
+- https://plfa.github.io/
+- Online, well-organised, and accessible book
+
+Graphs are to categories as lists are to monoids
+- https://alhassy.github.io/PathCat/
+- A brutal second tutorial
+
+Brutal {Meta}Introduction to Dependent Types in Agda
+- https://oxij.org/note/BrutalDepTypes/
+- A terse but accessible tutorial
+
+Learn You An Agda (and achieve enlightenment)
+- http://learnyouanagda.liamoc.net/
+- Enjoyable graphics
+
+The Agda Github Umbrella
+- https://github.com/agda
+- Some Agda libraries
+
+The Power of Pi
+- https://cs.ru.nl/~wouters/Publications/ThePowerOfPi.pdf
+- Design patterns for dependently-typed languages, namely Agda
+
+Making Modules with Meta-Programmed Meta-Primitives
+- https://alhassy.github.io/next-700-module-systems/prototype/package-former.html
+- An Emacs editor extension for Agda
+
+A gentle introduction to reflection in Agda —Tactics!
+- https://github.com/alhassy/gentle-intro-to-reflection
+
+Epigram: Practical Programming with Dependent Type
+- http://dx.doi.org/10.1007/11546382_3
+- “If it typechecks, ship it!” . . .
+- Maybe not; e.g., if null xs then tail xs else xs
+- We need a static language capable of expressing the significance of particular
+  values in legitimizing some computations rather than other

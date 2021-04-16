@@ -17,7 +17,7 @@ data Literature = DorianGrey | Alastor | ChildeHarold | LaNausée | LEtranger
 data ℕ = Zero | Succ ℕ
 
 data Vec :: Type -> ℕ -> Type where
-  Nil  :: Vec a 'Zero
+  Nil  ::                 Vec a  'Zero
   Cons :: a -> Vec a n -> Vec a ('Succ n)
 
 data Fin :: ℕ -> Type where
@@ -32,11 +32,11 @@ data Fin :: ℕ -> Type where
 -- https://www.parsonsmatt.org/2017/04/26/basic_type_level_programming_in_haskell.html
 
 const₁ :: forall a b. a -> b -> a
-const₁ x y = x
+const₁ x _y = x
 
 -- Haskell doesn't have dependent quantification at term level, but does have it at type level.
 -- So implement comparable functions as closed type families.
--- Similarly, we promote values of type Writers into the type level via DataKinds.
+-- Similarly, promote values of type Writers into the type level via DataKinds.
 
 data Ireland = Dublin
 data France  = Paris
@@ -51,11 +51,11 @@ type family WriterToCountry (a :: Writers) :: Type where
 
 -- This function can be implemented via PolyKinds since GHC 8.6.
 type family WriterToCity (a :: Writers) :: WriterToCountry a where
-  WriterToCity 'Wilde   = 'Dublin
-  WriterToCity 'Shelley = 'London
-  WriterToCity 'Byron   = 'London
-  WriterToCity 'Camus   = 'Paris
-  WriterToCity 'Sartre  = 'Paris
+  WriterToCity    'Wilde   = 'Dublin
+  WriterToCity    'Shelley = 'London
+  WriterToCity    'Byron   = 'London
+  WriterToCity    'Camus   = 'Paris
+  WriterToCity    'Sartre  = 'Paris
 
 s :: forall a b c. (a -> b -> c) -> (a -> b) -> a -> c
 s f g x = f x (g x)
