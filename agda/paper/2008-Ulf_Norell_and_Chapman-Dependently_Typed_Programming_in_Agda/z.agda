@@ -3,9 +3,8 @@ module z where
 -- http://www.cse.chalmers.se/~ulfn/papers/afp08/tutorial.pdf
 {-
 Dependently Typed Programming in Agda
-Ulf Norell1, Chalmers University, Gothenburg ulfn@chalmers.se
-2
-James Chapman2, Institute of Cybernetics, Tallinn james@cs.ioc.ee
+Ulf Norell1   : Chalmers University, Gothenburg   : ulfn@chalmers.se
+James Chapman : Institute of Cybernetics, Tallinn : james@cs.ioc.ee
 
 ------------------------------------------------------------------------------
 1 Introduction
@@ -13,24 +12,25 @@ James Chapman2, Institute of Cybernetics, Tallinn james@cs.ioc.ee
 In Hindley-Milner languages (Haskell, ML) : separation between types and values.
 
 Dependently typed : types can contain (depend on) arbitrary values and
-                    appear as arguments and results of ordinary functions.
+                    appear as arguments and results of ordinary functions
 
 Dependent types enables types to talk about values,
-so can encode properties of values as types whose elements
-are proofs that the property is true.
+so can encode properties of values as types
+whose elements are proofs that the property is true.
 
 So dependently typed programming language can be used as a logic.
 
 To be consistent programs must be total.
 
 ------------------------------------------------------------------------------
-2 Agda Basics
+2 BASICS
 
 based on intuitionistic type theory[4]
 
 --------------------------------------------------
-2.1 Datatypes and pattern matching
+2.1 DATATYPES AND PATTERN MATCHING
 -}
+
 data Bool : Set where
   true  : Bool
   false : Bool
@@ -47,12 +47,12 @@ not true  = false
 not false = true
 
 data Nat : Set where
- zero : Nat
+ zero :       Nat
  suc  : Nat → Nat
 {-# BUILTIN NATURAL Nat #-}
 
 _+_ : Nat → Nat → Nat
-zero  + m = m
+zero  + m =          m
 suc n + m = suc (n + m)
 infixl 40 _+_
 
@@ -95,13 +95,13 @@ data _⋆ (α : Set) : Set where
 whitespace important
 
 --------------------------------------------------
-2.2 Dependent functions
+2.2 DEPENDENT FUNCTIONS
 
 result type depends on VALUE of an arg
   (x : A) → B for the
 type of functions
-- taking an arg x of type A
-- returning a result of type B
+- given   : arg x of type A
+- returns : result of type B
   - where x may appear in B
 
 special case is when x itself is a type, e.g.,
@@ -115,10 +115,11 @@ zero’ = identity Nat zero
 
 {-
 identity is a dependent function
-- taking
+- given
   - a type argument A and
   - an element of A
-- returns the element
+- returns
+  - the element
 
 This is how polymorphic functions are encoded in Agda.
 
@@ -129,14 +130,16 @@ apply : (A : Set) (B : A → Set) → ((x : A) → B x) → (a : A) → B a
 apply A B f a = f a
 
 {-
-short hands for dependent function types:
+shorthand for dependent function types:
 
-  (x : A) (y : B) → C      for     (x : A) → (y : B) → C
+        (x : A)   (y : B) → C
+for     (x : A) → (y : B) → C
 
-  (x y : A) → B            for     (x : A) (y : A) → B
+        (x y : A)       → B
+for     (x : A) (y : A) → B
 
 
-The elements of dependent function types are lambda terms which may carry explicit type info.
+elements of dependent function types are lambda terms which may carry explicit type info
 
 alternative ways to identity
 identity function above are:
@@ -153,16 +156,16 @@ identity4 = \(A : Set) x → x
 
 {-
 --------------------------------------------------
-2.3 Implicit arguments
+2.3 IMPLICIT ARGUMENTS
 
 Previous section showed how dependent functions taking types as
 arguments used to model polymorphic types.
 
-But it is not necessary to say at which it is applied - that can be inferred.
+But it is not necessary to say at which point it is applied - that can be inferred.
 
 The identity functions above explicitly provide the type argument.
 
-Avoid type arg via implicit arguments using {}
+Avoid explicit type arg via implicit arguments using {}
 -}
 
 id : {A : Set} → A → A
@@ -175,8 +178,7 @@ true’ = id true
 No restrictions on what arguments can be made implicit.
 Not guarantees that an implicit argument can be inferred.
 
-by the type checker. For instance, we could be silly and make the second
-argument of the identity function implicit as well:
+E.g., make 2nd arg of identity function implicit as well:
 -}
 
 silly : {A : Set} {x : A} → A -- but type checker cannot figure out 2nd arg
@@ -210,7 +212,7 @@ _++_ : {A : Set} → List A → List A → List A
 
 {-
 --------------------------------------------------
--- 2.4 Datatype families
+-- 2.4 DATATYPE FAMILIES
 
 So far, only used dependent types is to represent polymorphism
 -}
@@ -222,25 +224,24 @@ data Vec (A : Set) : Nat → Set where
 {-
 type of Vec A is Nat → Set
 - means that Vec A is a family of types indexed by natural numbers
-- for each natural number n, Vec A n is a type
-
-constructors are free to construct elements in an arbitrary type of the family.
+- for each Nat n, Vec A n is a type
 - []   constructs an element in Vec A zero
 - _::_ constructs an element in Vec A (suc n) for some n
 
-distinction between parameters and indices of a datatype.
-- parameterised by a type A
-- indexed over natural numbers
+distinction between parameters and indices of a datatype
+- parameterised by type A
+- indexed over Nat
 
-type of _::_ is a dependent function type.
-- 1st arg is an implicit natural number n
+type of _::_ is a dependent function type
+- 1st arg is an implicit Nat n
+- returns type that depends on n 'suc n'
 
-Same constructor names for Vec as for List.
--  Constructor names are not required to be distinct between different datatypes.
+same constructor names for Vec as for List
+-  constructor names are not required to be distinct between different datatypes
 -}
 
 -- safe head
-head : {A : Set} {n : Nat} → Vec A (suc n) → A
+head : {A : Set} {n : Nat} → Vec A (suc n) →     A
 head (x :: xs) = x
 
 tail : {A : Set} {n : Nat} → Vec A (suc n) → Vec A n
@@ -248,24 +249,27 @@ tail (x :: xs) = xs
 
 {-
 rule for when to include a particular case is:
-  if it is type correct you have to include it.
+  if it is type correct you have to include it
 -}
 
--- DOT PATTERNS
+--------------------------------------------------
+-- DOT PATTERNS : indicate value of an arg deduced by type checking, not pattern matching
+
 vmap : {A B : Set} {n : Nat} → (A → B) → Vec A n → Vec B n
-vmap f [] = []
+vmap f       []  = []
 vmap f (x :: xs) = f x :: vmap f xs
 
 {-
-map on Vec is exactly the same map on List. only change is the type
+map on Vec is exactly the same map on List
+only change is the type
 
-behind the scenes, what happens with the length argument pattern matching on the list?
+behind the scenes, what happens with the length argument when pattern matching
 
-to see this, define new versions of Vec and vmap with fewer implicit arguments:
+to see, define new versions of Vec and vmap with fewer implicit arguments:
 -}
 
 data Vec2 (A : Set) : Nat → Set where
-  nil  :                               Vec2 A  zero
+  nil  :                            Vec2 A  zero
   cons : (n : Nat) → A → Vec2 A n → Vec2 A (suc n)
 
 vmap2 : {A B : Set} (n : Nat) → (A → B) → Vec2 A n → Vec2 B n
@@ -274,25 +278,26 @@ vmap2 .(suc n) f (cons n x xs) = cons n (f x) (vmap2 n f xs)
 
 {-
 pattern matching on list argument reveals its length
-- if nil then zero
+- if nil  then zero
 - if cons then suc n
 
-to indicate the value of an argument has been deduced by type checking,
-rather than observed by pattern matching, it is prefixed by a dot (.).
+to indicate value of an arg deduced by type checking,
+rather than observed by pattern matching,
+it is prefixed by a dot (.)
 
 could choose to define vmap by first pattern matching on the length rather than on the list
 -}
 
-vmap3 : {A B : Set}(n : Nat) → (A → B) → Vec2 A n → Vec2 B n
+vmap3 : {A B : Set} (n : Nat) → (A → B) → Vec2 A n → Vec2 B n
 vmap3  zero   f  nil           = nil
 vmap3 (suc n) f (cons .n x xs) = cons n (f x) (vmap3 n f xs)
 
 {-
 rule for when arg should be dotted:
-- if there is a unique type correct value for the argument it should be dotted.
+- if there is a unique type correct value for the argument it should be dotted
 
-above, the terms under the dots were valid patterns,
-but in general they can be arbitrary terms.
+above, the terms under the dots were valid patterns
+- in general they can be arbitrary terms
 e.g.,
 -}
 
@@ -311,7 +316,7 @@ inv f .(f x) (im x) = x
 
 {-
 --------------------------------------------------
-Absurd patterns
+ABSURD PATTERNS
 -}
 
 -- family of numbers smaller than a given natural number
@@ -362,13 +367,13 @@ _!_ : {n : Nat} {A : Set} → Vec A n → Fin n → A
 {-
 types ensure no danger of indexing outside the list
 
-reflected in case of empty list : no possible values for the index
+reflected in use of absurd in empty case : no possible values for the index
 -}
 
--- Constructing a list given a function from indices to elements
+-- constructing a list given a function from indices to elements
 tabulate : {n : Nat} {A : Set} → (Fin n → A) → Vec A n
 tabulate  {zero} f = []
-tabulate {suc n} f = f fzero :: tabulate (f ◦ fsuc)
+tabulate {suc n} f = f fzero :: tabulate (f ◦ fsuc) -- recursive call implicitly gets 'n'
 
 {-
 tabulate is defined by recursion over the length of the result list,
@@ -377,7 +382,7 @@ even though it is an implicit argument.
 In general, no correspondance between implicit data and computationally irrelevant data.
 
 ------------------------------------------------------------------------------
--- 2.5 Programs as proofs
+-- 2.5 PROGRAMS AS PROOFS
 
 Type system can represent propositions as types whose elements are proofs of the proposition.
 -}
@@ -386,25 +391,36 @@ data   False : Set where -- datatype with no constructors
 record True  : Set where -- record type with no fields
                          -- has a single element : the empty record
 
-trivial : True
-trivial = _
-
 {-
 Could have defined True as datatype with a single element.
 But using record def lets checker know there is a unique element of True
 and will fill in any implicit arguments of type True with this element.
 
-Exploited in trivial where right hand is underscore.
+exploited in trivial:
+-}
 
-To write the element of True : record {}
+trivial : True
+trivial = _
 
-These two propositions enable working with decidable propositions.
+trivial' : True
+trivial' = record {}
+
+{-
+where right hand is underscore,
+instead of explicitly writing 'record {}'
+
+The 'False' and 'True' propositions enable working with decidable propositions.
 Can model decidable propositions as booleans and define
 -}
 
+-- takes a VALUE of type Bool
+-- returns a Set (i.e., a TYPE)
 isTrue : Bool → Set
 isTrue true  = True
 isTrue false = False
+
+isFalse : Bool → Set
+isFalse x = isTrue (not x)
 
 {-
 isTrue b is the type of proofs that b equals true.
@@ -413,6 +429,8 @@ This technique enables defining safe list lookup function in a different way,
 working on simply typed lists and numbers.
 -}
 
+-- takes   Nat  VALUES
+-- returns Bool VALUES
 _<_ : Nat → Nat → Bool
 _     < zero  = false
 zero  < suc n = true
@@ -422,6 +440,8 @@ length : {A : Set} → List A → Nat
 length        [] = zero
 length (x :: xs) = suc (length xs)
 
+--                                             |
+--                                             v
 lookup : {A : Set} (xs : List A) (n : Nat) → isTrue (n < length xs) → A
 lookup       []       n ()
 lookup (x :: xs)  zero   p = x
@@ -431,31 +451,32 @@ lookup (x :: xs) (suc n) p = lookup xs n p
 Rather than there being no index into the empty list,
 there is no proof that a number n is smaller than zero.
 
-In this example, using indexed types to capture the precondition is a little bit nicer,
-since do not have to pass an explicit proof object.
+In this example, using indexed types to capture the precondition,
+as done in '_!_' above, is a little bit nicer,
+since do not have to pass an explicit proof object
+as done in 'lookup' above.
 
-But some properties cannot be easily captured by indexed types,
-in which case this is a nice alternative.
+When properties cannot be easily captured by indexed types, this is a useful alternative.
 
-Can also use datatype families to define propositions.
+--------------------------------------------------
+DEFINE PROPOSITIONS USING DATATYPE FAMILIES
 -}
 
 -- family of proofs of “being equal to x”
-data _==_ {A : Set} (x : A) : A → Set where
-  refl : x == x -- is only inhabited at index x where the single proof is refl
+-- specify the type by giving it two args
+-- type can only be constructed when the two args reduce to the same thing
+data _≡_ {A : Set} (x : A) : A → Set where
+  refl : x ≡ x -- only inhabited at index x where the single proof is refl
 
-{-
-Can be defined as a boolean function, like _<_ above,
-but can define it inductively:
--}
-
+-- another exampla
+-- compare to def of '_<_' above
 data _≤_ : Nat → Nat → Set where
-  leq-zero :   {n : Nat} →           zero ≤     n
+  leq-zero :   {n : Nat} →         zero  ≤     n
   leq-suc  : {m n : Nat} → m ≤ n → suc m ≤ suc n
 
 {-
 advantage of this approach
-- pattern match on proof object
+- PATTERN MATCH ON PROOF OBJECT
 - makes proving properties of _≤_ easier
 - e.g.,
 -}
@@ -466,23 +487,15 @@ leq-trans (leq-suc p) (leq-suc q) = leq-suc (leq-trans p q)
 
 {-
 ------------------------------------------------------------------------------
--- 2.6 More on pattern matching
-
-seen pattern matching  on fun args
-
-sometimes need pattern match on result of intermediate computation
+-- 2.6 WITH : PATTERN MATCH ON RESULT OF INTERMEDIATE COMPUTATION
 
 Haskell : done on right hand side using case
 
-matching expression in dependently typed language, learn
-- shape of the expression
+when matching expression in dependently typed language, learn
+- shape of expression
 - things about other expressions
   - e.g., matching 'Vec A n' reveals info about n
 - not captured by usual case expression
-- Agda provides way of matching on intermediate computations on left hand side
-
--------------------------
-WITH
 
 to pattern match on an expression e in the def of fun f
 - abstract f over value of e
@@ -500,10 +513,8 @@ Can abstract over multiple expressions at same time, separated by vertical bars.
 
 Can nest with abstractions.
 
-In case pattern matching on arg to with (e.g., x < y)
-then no need to match on args again.
-To avoid repeating the left hand side, use ...
-bit tedious.
+When matching on arg using WITH, no need to match on args again:
+- use ...
 -}
 
 filter : {A : Set} → (A → Bool) → List A → List A
@@ -522,31 +533,36 @@ explanation of why they are not equal.
 -}
 
 data _≠_ : Nat → Nat → Set where
-  z≠s :   {n : Nat} →           zero ≠ suc n -- different if one is zero and other suc
-  s≠z :   {n : Nat} →          suc n ≠ zero  -- ditto
+  z≠s :   {n : Nat} →          zero ≠ suc n -- different if one is zero and other suc
+  s≠z :   {n : Nat} →         suc n ≠ zero  -- vice versa
   s≠s : {m n : Nat} → m ≠ n → suc m ≠ suc n -- both suc but their predecessors are different
 
 data Equal? (n m : Nat) : Set where
-  eq  : n == m → Equal? n m
-  neq : n ≠  m → Equal? n m
+  eq  : n ≡ m → Equal? n m
+  neq : n ≠ m → Equal? n m
 
--- now function equal?
+-- now function that returns the explanation
 
 equal? : (n m : Nat) → Equal? n m
-equal?   zero   zero   = eq refl
-equal?   zero  (suc m) = neq z≠s
-equal? (suc n)  zero   = neq s≠z
+--                                  Equal? zero zero
+--                                      zero ≡ zero
+equal?  zero    zero             = eq  refl
+equal?  zero   (suc _)           = neq z≠s
+equal? (suc _)  zero             = neq s≠z
 equal? (suc n) (suc m) with equal? n m -- matching on proof reveals if predecessors are equal
-equal? (suc n) (suc .n) | eq refl = eq refl
-equal? (suc n) (suc m)  | neq p   = neq (s≠s p)
+equal? (suc _) (suc _) | eq refl = eq refl
+--                                 Equal? (suc n) (suc m)
+--                                      suc n ≠ suc m
+--                                          n ≠     m
+equal? (suc _) (suc _) | neq p   = neq (s≠s p)
 
 {-
-using WITH : expression is abstracted from the entire context
+using WITH : expression is abstracted from entire context
 
-means that if expression occurs in type of arg to the function or in result type,
+means that if expression occurs in type of arg to function or in result type,
 occurrence is replaced by the with-argument on the left hand side.
 
-e.g., prove something 'filter' : it only may remove some elements
+e.g., prove 'filter' only removes some elements
 -}
 
 -- to make a sublist, each element can either be dropped or kept
@@ -559,22 +575,22 @@ data _⊆_ {A : Set} : List A → List A → Set where
 {-
 When checker can infer type of an arg in fun type, then can use forall:
 – forall {x y} a b → A    shorthand for   {x : _} {y : _} (a : _) (b : _) → A
-
--- proof that filter computes a sublist of its argument:
 -}
 
-lem-filter : {A : Set} (p : A → Bool) (xs : List A) → filter p xs ⊆ xs
-lem-filter p [] = stop
+-- proof that filter computes a sublist of its argument:
+lem-filter : {A : Set} (p : A → Bool) (xs : List A)
+           → filter p xs ⊆ xs
+lem-filter p       [] = stop
 lem-filter p (x :: xs) with p x
-... | true      = keep (lem-filter p xs)
-... | false     = drop (lem-filter p xs)
+... | true            = keep (lem-filter p xs)
+... | false           = drop (lem-filter p xs)
 
 {-
 to prove     lem-filter p (x :: xs)
 
 need to prove : (filter p (x :: xs) | p x) ⊆ x :: xs
 
-when abstracting over p x it will be abstracted from the goal type, giving
+when abstracting over p x it will be abstracted from goal type, giving
              lem-filter p (x :: xs) with p x
              ... | px = ?
 
@@ -587,25 +603,24 @@ match px reduce call to filter
              ... | true  = ? {- x :: filter p xs ⊆ x :: xs -}
              ... | false = ? {-      filter p xs ⊆ x :: xs -}
 
-
 Sometimes WITH useful to abstract over expr that will not be matched,
 e.g., expect expr to be instantiated by matching on something else
 -}
 
-lem-plus-zero : (n : Nat) → n + zero == n
+lem-plus-zero : (n : Nat) → n + zero ≡ n
 lem-plus-zero zero = refl
 lem-plus-zero (suc n) with n + zero | lem-plus-zero n
-... | .n | refl = refl
+... | _ | refl = refl -- suc n ≡ suc n
 
 {-
-In suc ("step" case) : match on induction hypothesis : n + zero == n
-to prove suc n + zero == suc n
+In suc ("step" case) : match on induction hypothesis : n + zero ≡ n
+to prove suc n + zero ≡ suc n
 
 but n + zero does not unify with n
 
-so abstract over n + zero, calling it m,
-left with the induction hypothesis m == n and goal suc m == suc n
-Now match on induction hypothesis, instantiating m to n
+so abstract over n + zero, calling it _,
+left with the induction hypothesis m ≡ n and goal suc m ≡ suc n
+Now match on induction hypothesis, instantiating _ to n
 
 --------------------------------------------------
 -- 2.7 Modules TODO
@@ -671,32 +686,32 @@ mapM’ Mon f xs = Monad.mapM Mon f xs
 Matrix : Set → Nat → Nat → Set
 Matrix A n m = Vec (Vec A n) m
 
--- (a) function to compute a vector containing n copies of an element x.
+-- (a) function to compute vector containing n copies of element x
 
 vec : {n : Nat} {A : Set} → A → Vec A n
 vec  {zero} x = []
 vec {suc n} x = x :: vec {n} x
 
-vecTest : Vec Nat (suc (suc (suc zero)))
+vecTest : Vec Nat 3
 vecTest = vec zero
 
--- (b) point-wise application of a vector of functions to a vector of arguments.
+-- (b) point-wise application of vector of functions to vector of arguments
 
 infixl 90 _$_
 _$_ : {n : Nat} {A B : Set} → Vec (A → B) n → Vec A n → Vec B n
 _$_       []        []  = []
 _$_ (f :: fs) (x :: xs) = f x :: fs $ xs
 
-$TestInputFs : Vec (Nat → Nat) (suc (suc zero))
-$TestInputFs = (_+ suc zero) :: (_* suc (suc zero)) :: []
+$TestInputFs : Vec (Nat → Nat) 2
+$TestInputFs = (_+ 1) :: (_* 2) :: []
 
-$TestInputXs : Vec Nat (suc (suc zero))
-$TestInputXs =     zero ::           suc (suc zero)   :: []
+$TestInputXs : Vec Nat 2
+$TestInputXs =     0 ::      2  :: []
 
-$TestOutput  : Vec Nat (suc (suc zero))
-$TestOutput  = suc zero :: suc (suc (suc (suc zero))) :: []
+$TestOutput  : Vec Nat 2
+$TestOutput  =     1 ::      4  :: []
 
-$Test : $TestInputFs $ $TestInputXs == suc zero :: suc (suc (suc (suc zero))) :: []
+$Test : $TestInputFs $ $TestInputXs ≡ $TestOutput
 $Test = refl
 
 -- (c) matrix transposition in terms of 'vec' and _$_
@@ -705,45 +720,55 @@ transpose : forall {A n m} → Matrix A n m → Matrix A m n
 transpose         []  = vec []
 transpose (xs :: xss) = (vmap _::_ xs) $ (transpose xss)
 
-transposeTestInput : Matrix Nat (suc (suc zero)) (suc (suc (suc zero)))
+transposeTestInput : Matrix Nat 2 3
 transposeTestInput = r1 :: r2 :: r3 :: []
  where
-  r1 =                     suc zero     ::                     suc (suc zero)     :: []
-  r2 =           suc (suc (suc zero))   ::           suc (suc (suc (suc zero)))   :: []
-  r3 = suc (suc (suc (suc (suc zero)))) :: suc (suc (suc (suc (suc (suc zero))))) :: []
+  r1 = 1 :: 2 :: []
+  r2 = 3 :: 4 :: []
+  r3 = 5 :: 6 :: []
 
-transposeTestOuput : Matrix Nat (suc (suc (suc zero)))  (suc (suc zero))
-transposeTestOuput =
-  (     suc zero  ::      suc (suc (suc zero))  ::      suc (suc (suc (suc (suc zero))))  :: [])
-  ::
-  (suc (suc zero) :: suc (suc (suc (suc zero))) :: suc (suc (suc (suc (suc (suc zero))))) :: [])
-  :: []
+transposeTestOuput : Matrix Nat 3 2
+transposeTestOuput = r1 :: r2 :: []
+ where
+  r1 = 1 ::  3 :: 5 :: []
+  r2 = 2  :: 4 :: 6 :: []
 
-transposeTest : transpose transposeTestInput == transposeTestOuput
+transposeTest : transpose transposeTestInput ≡ transposeTestOuput
 transposeTest = refl
 
 -------------------------
 -- Exercise 2.2. Vector lookup
 
+-- function composition
+_∘_  : ∀ {A B C : Set} → (B → C) → (A → B) → (A → C)
+(g ∘ f) x = g (f x)
+
 -- prove 'tabulate' and '!' are each other’s inverses
 
 -- (a) relatively easy
-lem-!-tab : ∀ {A n} (f : Fin n → A) (i : Fin n)
-          → ((tabulate f) ! i) == f i
-lem-!-tab f  fzero   = refl
-lem-!-tab f (fsuc i) = lem-!-tab (\x → f (fsuc x)) i
+lem-!-tab : ∀ {A n}
+          → (f : Fin n → A) → (i : Fin n)
+          → ((tabulate f) ! i) ≡ f i
+lem-!-tab f  fzero   = refl                   -- (tabulate f ! fzero)  ≡ f  fzero
+lem-!-tab f (fsuc i) = lem-!-tab (f ∘ fsuc) i -- (tabulate f ! fsuc i) ≡ f (fsuc i)
 
 -- (b) trickier
-lem-tab-! : forall {A n} (xs : Vec A n)
-          → tabulate (xs !_) == xs
+lem-tab-! : forall {A n}
+          → (xs : Vec A n)
+          → tabulate (xs !_) ≡ xs
 lem-tab-!       [] = refl
-lem-tab-! (x :: xs) with tabulate (xs !_) | lem-tab-! xs
-... | .xs | refl = refl
+lem-tab-! (x :: xs) -- tabulate (_!_ (x :: xs)) ≡ (x :: xs)
+  with tabulate (xs !_) | lem-tab-! xs
+... | _y     | refl = refl -- (x :: _y) ≡ (x :: xs)
+--    ^        ^
+-- Vec A n     _y ≡ xs
 
 -------------------------
 -- Exercise 2.3. Sublists (see def above)
 
 -- (a) prove reflexivity and transitivity of ⊆
+
+-- need to name implicits since the interesting one does not come first
 ⊆-refl : {A : Set} {xs : List A}
        → xs ⊆ xs
 ⊆-refl {xs =       []} = stop
@@ -763,37 +788,32 @@ lem-tab-! (x :: xs) with tabulate (xs !_) | lem-tab-! xs
         → xs ⊆ ys
         →      ys ⊆ zs
         → xs ⊆      zs
+--       []   []    []
+⊆-trans  stop      stop     = stop
 
---      [],         [],                    []
---      []⊆[]       []⊆[]               []⊆[]
-⊆-trans  stop        stop             = stop
+--       []   []   [z]
+--      [z]  [z] [z,z]
+⊆-trans       xy  (drop yz) = drop (⊆-trans xy yz)
 
---      [],         [],                    z::?
---                                           []⊆zs
---      []⊆[]       []⊆z::zs            []⊆z::zs      []⊆[]           []⊆zs
-⊆-trans  stop       (drop q)          = drop (⊆-trans  stop           q)
+--      []   [z]   [z]
+--     [z] [z,z] [z,z]
+⊆-trans (drop xy) (keep yz) = drop (⊆-trans xy yz)
 
---      xs,         y::xs                  z::y::xs
---                                           xs⊆zs          xs⊆ys
---      xs⊆y::ys    y::ys⊆z::zs         xs⊆z::zs      xs⊆y::ys        y::ys⊆zs
-⊆-trans (drop p)    (drop q)          = drop (⊆-trans (drop p)        q)
+--     [z]   [z]   [z]
+⊆-trans (keep xy) (keep yz) = keep (⊆-trans xy yz)
 
---      xs,         z::y::xs,              z::z::y::xs
---                                           xs⊆zs
---      xs⊆y::ys    y::y::ys⊆z::zs      xs⊆z::zs            xs⊆ys     y::ys⊆zs
-⊆-trans (drop p)    (keep q)          = drop (⊆-trans       p         q)
+⊆-trans' : {A : Set} {xs ys zs : List A}
+        → xs ⊆ ys
+        →      ys ⊆ zs
+        → xs ⊆      zs
+⊆-trans'  stop        stop     = stop
+⊆-trans'  stop       (drop yz) = drop (⊆-trans'  stop     yz)
+⊆-trans' (drop xy)   (drop yz) = drop (⊆-trans' (drop xy) yz)
+⊆-trans' (drop xy)   (keep yz) = drop (⊆-trans'       xy  yz)
+⊆-trans' (keep xy)   (drop yz) = drop (⊆-trans' (keep xy) yz)
+⊆-trans' (keep xy)   (keep yz) = keep (⊆-trans'       xy  yz)
 
---      x::xs       x::xs::ys              z::x::xs::ys
---                                                          xs⊆ys
---      x::xs⊆y::ys y::ys⊆z::zs         xs⊆z::zs      x::xs⊆y::ys     ys⊆zs
-⊆-trans (keep p)    (drop q)          = drop (⊆-trans (keep p)        q)
-
---      x::xs       z::y::x::xs,           z::z::y::x::xs
---      x::xs⊆y::ys y::y::ys⊆z::zs                          xs⊆ys
-⊆-trans (keep p)    (keep q)          = keep (⊆-trans       p         q)
-
--- alternative to existing sublist relation
--- sublist type
+-- sublist TYPE of a specific list (compare to existing sublist RELATION above)
 infixr 30 _:::_
 data SubList {A : Set} : List A → Set where
   []    : SubList []
@@ -854,10 +874,10 @@ module ComplementTest where
   sl2 : SubList ll
   sl2 = filter' p2 ll
 
-  sl1Test : sl1 == skip (2 ::: 3 ::: 4 ::: [])
+  sl1Test : sl1 ≡ skip (2 ::: 3 ::: 4 ::: [])
   sl1Test = refl
 
-  sl2Test : sl2 == skip (2 ::: skip (4 ::: []))
+  sl2Test : sl2 ≡ skip (2 ::: skip (4 ::: []))
   sl2Test = refl
 
   c1 : SubList ll
@@ -866,9 +886,240 @@ module ComplementTest where
   c2 : SubList ll
   c2 = complement sl2
 
-  cTest1 : c1 == 1 ::: skip (skip (skip []))
+  cTest1 : c1 ≡ 1 ::: skip (skip (skip []))
   cTest1 = refl
 
-  cTest2 : c2 == 1 ::: skip (3 ::: skip [])
+  cTest2 : c2 ≡ 1 ::: skip (3 ::: skip [])
   cTest2 = refl
+
+-- https://medium.com/@angerman/powersets-in-haskell-1df9684db52a
+-- (f) compute all sublists of a given list
+sublists : {A : Set}
+         → (xs : List A)
+         → List (SubList xs)
+sublists        [] = [] :: []
+sublists (x :: xs) = map (x :::_) (sublists xs) ++ (map skip (sublists xs))
+
+-- 2^3 elements - expected output MUST be in same element ORDER as function result
+sublistsTest : sublists (1 :: 2 :: 3 :: []) ≡
+  (1 ::: 2 ::: 3 ::: [])  ::
+  (1 ::: 2 ::: skip  [])  ::
+  (1 ::: skip (3 ::: [])) ::
+  (1 ::: skip (skip  [])) ::
+  skip  (2 ::: 3 ::: [])  ::
+  skip  (2 ::: skip  [])  ::
+  skip  (skip (3 ::: [])) ::
+  skip  (skip (skip  [])) ::
+  []
+sublistsTest = refl
+
+{-
+------------------------------------------------------------------------------
+3 Programming Techniques : VIEWS and UNIVERSE constructions
+
+--------------------------------------------------
+3.1 VIEWS
+
+matching can reveal info about term being matched AND terms INSIDE the type matched term
+
+VIEW[5]: datatypes whose purpose is to reveal info about its indices
+
+to use a view, define a view function
+- computes an element of the view for arbitrary indices
+-}
+
+-- view datatype expressing
+-- any Nat can be expressed as 2k or 2k + 1 for some k
+-- element of Parity n says if n is even or odd and what k is
+data Parity : Nat → Set where
+  even : (k : Nat) → Parity     (k * 2)
+  odd  : (k : Nat) → Parity (1 + k * 2)
+
+parity : (n : Nat) → Parity n
+parity  zero = even zero
+parity (suc n) with parity n
+...  | even k = odd k
+...  | odd  k = even (suc k)
+{-
+parity (suc     .(k * 2)) | even k = odd k
+parity (suc .(1 + k * 2)) | odd  k = even (suc k)
+-}
+
+half : Nat → Nat
+half n with parity n
+...  | even k = k
+...  | odd  k = k
+{-
+-- Note that k is bound in the pattern for the view,
+-- not in the dotted pattern for the natural number.
+half     .(k * 2) | even k = k
+half .(1 + k * 2) | odd  k = k
+-}
+
+-------------------------
+-- FINDING AN ELEMENT IN A LIST
+
+-- given predicate and list
+-- returns if P holds for all elements
+-- A proof of All P xs is a list of proofs of P x for each element x of xs.
+-- P does not have to be a decidable predicate.
+infixr 30 _:all:_
+data All {A : Set} (P : A → Set) : List A → Set where
+  all[]   :                                  All P       []
+  _:all:_ : forall {x xs} → P x → All P xs → All P (x :: xs)
+
+-- to turn a decidable predicate into a general predicate, define:
+satisfies : {A : Set} → (A → Bool) → A → Set
+satisfies p x = isTrue (p x)
+
+-------------------------
+-- exercise : use All to prove 2nd part of correctness of filter
+-- - all elements of result satisfies the predicate
+--    All (satisfies p) (filter p xs)
+
+-- https://www.javaer101.com/en/article/18631037.html
+{-
+open import Relation.Binary.PropositionalEquality
+
+filter-lem-b : {A : Set} → (p : A → Bool) → (xs : List A) → All (satisfies p) (filter p xs)
+filter-lem-b p []        = vacuo
+filter-lem-b p (x :: xs) with p x | inspect p x
+... | true  | [ eq ] = holds _ _ (subst isTrue (sym eq) _) (filter-lem-b p xs)
+... | false | [ eq ] = filter-lem-b p xs
+-}
+
+-- https://stackoverflow.com/questions/38572464/agda-type-isnt-simplified-in-with-block
+lem-all-filter : {A : Set}
+               → (p : A → Bool) → (xs : List A)
+               → All (satisfies p) (filter p xs)
+lem-all-filter p [] = all[]
+--                                           isTrue   (p x)
+lem-all-filter p (x :: xs) with p x | λ (y : satisfies p x) → y :all: lem-all-filter p xs
+-- onTrue : (y : True) → All (λ x₁ → isTrue (p x₁)) (x :: filter p xs)
+... | true  | onTrue = onTrue _
+... | false |      _ = lem-all-filter p xs
+
+-------------------------
+-- VIEWS ON LISTS
+
+-- given : decidable predicate on elements of list
+-- find element in list that satisfies  predicate,
+--  or else all elements satifies negation of the predicate
+
+data Find {A : Set} (p : A → Bool) : List A → Set where
+  -- does NOT specify which element to use as a witness in the found case.
+  -- (If the view was always to return first (or last) matching element,
+  -- force elements of xs (or ys) to satisfy the negation of p.)
+  found     : (xs : List A) → (y : A) → satisfies p y → (ys : List A)
+            → Find p (xs ++ y :: ys)
+  not-found : forall {xs} → All (satisfies (not ◦ p)) xs
+            → Find p  xs
+
+-- view function computing an element of Find p xs for any p and xs
+
+-- 1st attempt
+{-
+find1 : {A : Set} (p : A → Bool) (xs : List A) → Find p xs
+find1 p [] = not-found all[]
+find1 p (x :: xs) with p x
+-- Need to return found on first match.
+-- ({ }) is isTrue (p x), even though already matched on p x and found out that it was true.
+-- Problem : when abstracting over p x did not know that needed to use the found constructor,
+--    so there were no p x to abstract over.
+-- WITH does not remember connection between the with-term and the pattern.
+... | true  = found [] x {! !} xs
+... | false = {! !}
+-}
+
+{-
+A solution : make this connection explicit with a proof object.
+Do NOT abstract over the term itself
+- instead rather over arbitrary term of same type
+  AND a proof that it is equal to the original term
+-}
+
+-- type of elements of type A AND proofs they are equal to some given x in A
+data Inspect {A : Set} (x : A) : Set where
+  it : (y : A) → x ≡ y → Inspect x
+
+-- construct an element of Inspect x by picking x as thing which is equal to x.
+inspect : {A : Set} → (x : A) → Inspect x
+inspect x = it x refl
+
+-- lemmas
+trueIsTrue   : {x : Bool} → x ≡ true  → isTrue  x
+falseIsFalse : {x : Bool} → x ≡ false → isFalse x
+trueIsTrue   refl = _
+falseIsFalse refl = _
+
+{-
+now define find by abstracting over inspect (p x) rather than p x
+provide either a proof of p x == true or a proof of p x == false
+- can be use in args to 'found' and 'not-found
+-}
+
+find : {A : Set}
+     → (p : A → Bool) → (xs : List A)
+     → Find p xs
+find p       [] = not-found all[]
+find p (x :: xs) with inspect (p x)
+-- When p x is true, inspect (p x) matches 'it true prf' where prf : p x == true.
+-- Use lemma to turn into proof of isTrue (p x) needed by 3rd arg of 'found'
+... | it true  prf = found [] x (trueIsTrue prf) xs
+... | it false prf with find p xs
+find p (x :: ._) | it false _   | found xs y py ys = found (x :: xs) y py ys
+-- p x is false : use lemma
+find p (x :: xs) | it false prf | not-found npxs   = not-found (falseIsFalse prf :all: npxs)
+
+-------------------------
+-- INDEXING INTO A LIST
+
+{-
+Previously showed two ways of safely indexing into a list.
+Both cases used type system to guarantee the index didn’t point outside the list.
+
+In situations where there is no control over value of index (i.e., it might be outside)
+a solution is to wrap result of lookup in MAYBE, but MAYBE provides no info.
+-}
+
+-- type of proofs that an element x is in a list xs.
+data _∈_ {A : Set} (x : A) : List A → Set where
+  hd : forall   {xs} →          x ∈ x :: xs -- 1st el is a member
+  tl : forall {y xs} → x ∈ xs → x ∈ y :: xs -- any el in tail is member
+
+
+-- Given proof of x ∈ xs, compute index where x occurs.
+-- Count number of tls in proof.
+index : forall {A} {x : A} {xs} → x ∈ xs → Nat
+index  hd    = zero
+index (tl p) = suc (index p)
+
+-- view on Nat with respect to list
+data Lookup {A : Set} (xs : List A) : Nat → Set where
+  inside  : (x : A) → (p : x ∈ xs) → Lookup xs (index p)
+  outside : (m : Nat)              → Lookup xs (length xs + m)
+
+{-
+When n is valid, get element at that position and guarantee that element is returned.
+No way for 'lookup' to cheat.
+
+When n is outside, get out-of-bounds proof showing by how much.
+-}
+
+-- now, guaranteed 'lookup' function
+_!'_ : {A : Set}
+     → (xs : List A) → (n : Nat)
+     → Lookup xs n
+[] !' n           = outside n
+(x :: xs) !' zero = inside x hd
+(x :: xs) !' suc n with xs !' n
+...                               | inside y p = inside y (tl p)
+(x :: xs) !' suc .(length xs + n) | outside n  = outside n
+{-
+(x :: xs) !' suc .(index p)       | inside y p = inside y (tl p)
+(x :: xs) !' suc .(length xs + n) | outside n  = outside n
+-}
+
+--------------------------------------------------
+-- TYPE CHECKER FOR λ-CALCULUS
 

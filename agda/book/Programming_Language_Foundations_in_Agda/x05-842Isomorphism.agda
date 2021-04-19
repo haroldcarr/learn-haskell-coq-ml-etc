@@ -10,8 +10,8 @@ open import Data.Nat.Properties using (+-comm; +-suc; +-identityʳ) -- added las
 
 -- Function composition.
 
-_∘_ : ∀ {A B C : Set} → (B → C) → (A → B) → (A → C)
-(g ∘ f) x = g (f x)
+_∘_  : ∀ {A B C : Set} → (B → C) → (A → B) → (A → C)
+(g ∘ f)    x = g (f x)
 
 _∘′_ : ∀ {A B C : Set} → (B → C) → (A → B) → (A → C)
 g ∘′ f = λ x → g (f x)

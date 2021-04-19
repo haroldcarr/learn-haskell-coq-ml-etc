@@ -19,3 +19,83 @@ https://agda.readthedocs.io/en/latest/getting-started/quick-guide.html#compiling
 agda --compile --ghc-dont-call-ghc fizzbuzz.agda
 
 
+==============================================================================
+
+* logic
+
+** → is implication
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** × (i.e., product, pair) is conjuction
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** unit type : corresponds to truth
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** empty type : corresponds to falsity
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** negation
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** coproduct (e.g., either) : corresponds to disjunction
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** decidable types : A type A is decidable when it is known whether it is inhabited or not
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** Π-types : corresponds to universal quantification
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** Σ-types : corresponds to bounded existential quantification
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** the axiom of choice
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** predicates
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** relations
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+** inductive predicates (predicates defined by induction)
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+isEven, ≤, ≤-refl, ≤-trans
+
+** equality
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+≡, sym, trans, cong, subst
+
+suc-injective, +-suc
+
+** reasoning
+
+../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+
+begin_, _≡⟨⟩_, _≡⟨_⟩_, _∎
+
++-zero, +-comm
+
+
+
+
+
+
+
