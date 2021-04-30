@@ -12,18 +12,21 @@ data _≡_ {A : Set} (x : A) : A → Set where
 
 infix 4 _≡_
 
+-- tell Agda which type corresponds to equality
+{-# BUILTIN EQUALITY _≡_ #-}
+
 {-
 Note:
-- 1st arg to _≡_ is parameter (x : A)
-  - informal policy: use parameters when possible
+- 1st arg to _≡_ is PARAMETER (x : A)
+  - BEST PRACTICE: use parameters when possible
   - can be a parameter because it does not vary
-- 2nd arg by an index in A → Set
+- 2nd arg is an INDEX in A → Set
   - must be an index, so it can be required to be equal to the first
 
 ------------------------------------------------------------------------------
 -- EQUALITY is an EQUIVALENCE RELATION (reflexive, symmetric, transitive)
 
-reflexivity in the def equality, via refl constructor
+reflexivity in the def of equality, via refl constructor
 -}
 
 -- symmetry
@@ -38,15 +41,15 @@ sym refl -- LHS :instantiates arg to refl CONSTRUCTOR (only one possible)
 -- transitive
 trans : ∀ {A : Set} {x y z : A}
   → x ≡ y
-  → y ≡ z
+  →     y ≡ z
     -----
-  → x ≡ z
+  → x ≡     z
 trans refl refl = refl
 
 ------------------------------------------------------------------------------
 -- EQUALITY SATISFIES CONGRUENCE
 
--- If two terms are equal, they remain so after the same function is applied to both
+-- if two terms are equal, they remain so after same function is applied to both
 cong : ∀ {A B : Set} (f : A → B) {x y : A}
   →   x ≡   y
     ---------
@@ -59,9 +62,9 @@ cong₂ : ∀ {A B C : Set} (f : A → B → C) {u x : A} {v y : B}
   →     v ≡     y
     -------------
   → f u v ≡ f x y
-cong₂ f refl refl  =  refl
+cong₂ f refl refl = refl
 
--- if two functions are equal, then applying them to the same term yields equal terms
+-- if two functions are equal, then applying them to same term yields equal terms
 cong-app : ∀ {A B : Set} {f g : A → B}
   →             f   ≡ g
     ---------------------
@@ -71,16 +74,16 @@ cong-app refl x = refl
 ------------------------------------------------------------------------------
 -- EQUALITY SATISFIES SUBSTITUTION
 
--- if two values are equal and a predicate holds of the first then it also holds of the second
+-- if two values are equal and a predicate holds of first then it also holds of second
 subst : ∀ {A : Set} {x y : A} (P : A → Set)
-  → x ≡ y
+  →   x ≡  y
     ---------
   → P x
-  → P y
+  →     P y
 subst P refl px = px
 
 ------------------------------------------------------------------------------
---  CHAINS OF EQUATIONS
+--  CHAINS OF EQUATIONS (aka EQUATIONAL REASONING)
 
 module ≡-Reasoning {A : Set} where
 
@@ -112,15 +115,15 @@ module ≡-Reasoning {A : Set} where
   _∎ : ∀ (x : A)
       -----
     → x ≡ x
-  x ∎  =  refl
+  x ∎ = refl
 
 open ≡-Reasoning
 
 trans′ : ∀ {A : Set} {x y z : A}
   → x ≡ y
-  → y ≡ z
+  →     y ≡ z
     -----
-  → x ≡ z
+  → x ≡     z
 trans′ {A} {x} {y} {z} x≡y y≡z =
   begin          -- Goal: x ≡ z   ; y≡z : y ≡ z; x≡y : x ≡ y
     x ≡⟨ x≡y ⟩   -- Goal: y ≡ z
@@ -138,7 +141,6 @@ Hint: look at the definition of _≡⟨_⟩_
 
 ------------------------------------------------------------------------------
 Chains of equations, another example : addition is commutative
-POSTULATE : specifies a signature but no def. Use with care. DON'T postulate something false!
 -}
 
 data ℕ : Set where
@@ -148,12 +150,13 @@ data ℕ : Set where
 {-# BUILTIN NATURAL ℕ #-}
 
 _+_ : ℕ → ℕ → ℕ
-zero    + n  =  n
-(suc m) + n  =  suc (m + n)
+zero    + n = n
+(suc m) + n = suc (m + n)
 
 infixl 6  _+_
 
 -- to save space, postulate (rather than prove) two lemmas:
+-- POSTULATE : specifies a signature but no def. Use with care. DON'T postulate something false!
 postulate
   +-identity : ∀ (m   : ℕ) → m + zero  ≡ m
   +-suc      : ∀ (m n : ℕ) → m + suc n ≡ suc (m + n)
@@ -177,12 +180,12 @@ postulate
 ------------------------------------------------------------------------------
 Exercise ≤-Reasoning (stretch)
 
-rewrite proof of +-monoʳ-≤ (from Chapter Relations) using an analogue of ≡-Reasoning
+redo proof of +-monoʳ-≤ (from Chapter Relations) using an analogue of ≡-Reasoning
 
 define ≤-Reasoning
 
 use it to write out proof that addition is monotonic with regard to inequality
-by rewriting all of +-monoˡ-≤, +-monoʳ-≤, and +-mono-≤
+by redoing all of +-monoˡ-≤, +-monoʳ-≤, and +-mono-≤
 -}
 
 module ≤-Reasoning {A : Set} where
@@ -213,7 +216,7 @@ module ≤-Reasoning {A : Set} where
     → x ≤ y
       -----
     → x ≤ y
-  begin≤ x≤y  =  x≤y
+  begin≤ x≤y = x≤y
 
   -- can think of _≤⟨⟩_ as equivalent to _≤⟨ refl ⟩_
   _≤⟨⟩_ : ∀ (x : ℕ) {y : ℕ}
@@ -301,13 +304,13 @@ data even where
   even-zero : even zero
 
   even-suc : ∀ {n : ℕ}
-    → odd n
+    → odd       n
       ------------
     → even (suc n)
 
 data odd where
   odd-suc : ∀ {n : ℕ}
-    → even n
+    → even     n
       -----------
     → odd (suc n)
 
@@ -316,21 +319,19 @@ given even (m + n) holds
 prove even (n + m) holds
 
 REWRITE: notation to support this kind of reasoning
-
-to enable, tell Agda which type corresponds to equality:
 -}
-
-{-# BUILTIN EQUALITY _≡_ #-}
 
 -- then use rewrite
 even-comm : ∀ (m n : ℕ)
   → even (m + n)
     ------------
   → even (n + m)
-even-comm m n ev rewrite +-comm n m  =  ev
+even-comm m n ev      -- even (n + m)
+  rewrite +-comm n m  -- Goal: even (m + n); ev : even (m + n)
+  = ev
 
 {-
-Generally, keyword REWRITE followed by evidence of an equality.
+keyword REWRITE : followed by evidence of an equality
 That equality is used to rewrite the type of the goal and of any variable in scope.
 -}
 
@@ -341,12 +342,11 @@ even-comm' : ∀ (m n : ℕ)
 even-comm' m n ev        -- Goal: even (n + m)  ; ev : even (m + n)
   rewrite
     +-comm m n           -- Goal: even (n + m)  ; ev : even (n + m) <-- rewrites evidence
-  = ev
+  = ev --   ^
+--          note: arg order diff than 'even-comm' above
 
-{-
 ------------------------------------------------------------------------------
 -- Multiple rewrites : each separated by a vertical bar
--}
 
 +-comm′ : ∀ (m n : ℕ) → m + n ≡ n + m
 +-comm′ zero    n        --    zero + n ≡ n + zero
@@ -383,7 +383,7 @@ Proofs as chains of equalities are easier to follow.
 
 {-
 ------------------------------------------------------------------------------
--- Rewriting expanded : rewrite is shorthand of 'WITH'
+--rewrite is shorthand for 'WITH'
 -}
 
 even-comm′ : ∀ (m n : ℕ)
@@ -407,14 +407,23 @@ DOT PATTERN : .(n + m)
 Here: m + n ≡ n + m justified by matching +-comm m n with refl
 
 ------------------------------------------------------------------------------
--- SUBSTITUTION
+-- using SUBSTITUTION instead of REWRITE
 -}
 
 even-comm″ : ∀ (m n : ℕ)
   → even (m + n)
     ------------
   → even (n + m)
-even-comm″ m n  =  subst even (+-comm m n)
+even-comm″ m n
+  --      m + n ≡ n + m
+  --            v
+--= subst even {!!}
+--= subst {!!}  (+-comm m n)
+--         ^
+-- Constraints
+-- ?0 (n + m) =< even (n + m)
+-- even (m + n) =< ?0 (m + n)
+  = subst even (+-comm m n)
 
 {-
 ------------------------------------------------------------------------------
@@ -463,7 +472,7 @@ Leibniz equality is reflexive, transitive, symmetric
 -- reflexiviity follows by a variant of the identity function
 refl-≐ : ∀ {A : Set} {x : A}
   → x ≐ x
-refl-≐ P Px  =  Px
+refl-≐ P Px = Px
 
 -- transitivity follows by a variant of function composition
 trans-≐ : ∀ {A : Set} {x y z : A}
@@ -471,7 +480,7 @@ trans-≐ : ∀ {A : Set} {x y z : A}
   → y ≐ z
     -----
   → x ≐ z
-trans-≐ x≐y y≐z P Px  =  y≐z P (x≐y P Px)
+trans-≐ x≐y y≐z P Px = y≐z P (x≐y P Px)
 
 -- show that if P x implies P y for all predicates P
 -- then         P y implies P x
@@ -479,7 +488,7 @@ sym-≐ : ∀ {A : Set} {x y : A}
   → x ≐ y           -- given x ≐ y
     -----
   → y ≐ x
-sym-≐ {A} {x} {y} x≐y P  =  Qy -- TODO : where is 'P' in the signature?
+sym-≐ {A} {x} {y} x≐y P = Qy -- TODO : where is 'P' in the signature?
   where
     Q : A → Set     -- instantiate the equality with a predicate Q such that Q z holds
     Q z = P z → P x -- if P z implies P x
@@ -505,7 +514,7 @@ follows from substitution
   → x ≡ y
     -----
   → x ≐ y
-≡-implies-≐ x≡y P  =  subst P x≡y
+≡-implies-≐ x≡y P = subst P x≡y
 
 {-
 ------------------------------------------------------------------------------
@@ -521,7 +530,7 @@ proof is similar to that for symmetry of Leibniz equality
   → x ≐ y
     -----
   → x ≡ y
-≐-implies-≡ {A} {x} {y} x≐y  =  Qy
+≐-implies-≡ {A} {x} {y} x≐y = Qy
   where
     Q : A → Set   -- Q is predicate that holds of z if x ≡ z
     Q z = x ≡ z
@@ -539,7 +548,7 @@ draft/2017
 by Andreas Abel, Jesper Cockx, Dominique Devries, Andreas Nuyts, and Philip Wadler
 
 ------------------------------------------------------------------------------
-Universe polymorphism
+UNIVERSE POLYMORPHISM (aka LEVELs)
 
 every type belongs somewhere in the hierarchy Set₀, Set₁, Set₂, ...
 
@@ -609,7 +618,7 @@ Most other functions in the standard library are also generalised to arbitrary l
 -- definition of composition.
 _∘_ : ∀ {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Set ℓ₁} {B : Set ℓ₂} {C : Set ℓ₃}
   → (B → C) → (A → B) → A → C
-(g ∘ f) x  =  g (f x)
+(g ∘ f) x = g (f x)
 
 {-
 ------------------------------------------------------------------------------

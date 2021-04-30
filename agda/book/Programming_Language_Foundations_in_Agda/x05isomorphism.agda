@@ -1,15 +1,16 @@
 module x05isomorphism where
+
 {-
 ------------------------------------------------------------------------------
 Isomorphism: Isomorphism and Embedding
 
 isomorphism
-- way of asserting that two types are equal
+- way of asserting two types are equal
 
 embedding
 - way of asserting that one type is smaller than another
 
-apply isomorphisms in next chapter to show ops product and sum satisfy properties
+apply isomorphisms in next chapter to show 'product' and 'sum' satisfy properties
 similar to associativity, commutativity, and distributivity
 -}
 
@@ -18,9 +19,10 @@ open        Eq                  using (_≡_; refl; cong; cong-app)
 open        Eq.≡-Reasoning
 open import Data.Nat            using (ℕ; zero; suc; _+_)
 open import Data.Nat.Properties using (+-comm)
+
 {-
 ------------------------------------------------------------------------------
-Lambda expressions : anonymous funs
+LAMBDA EXPRESSIONS : ANONYMOUS FUNS
 
 λ{ P₁ → N₁; ⋯ ; Ppₙ → Np }
 
@@ -61,9 +63,9 @@ g ∘′ f  =  λ x → g (f x)
 
 {-
 ------------------------------------------------------------------------------
-Extensionality : only way to distinguish functions is by applying them
+EXTENSIONALITY : only way to distinguish functions is by applying them
 
-If two functions applied to the same arg always yield same result, then they are same.
+If two functions applied to same arg always give same result, then they are same.
 
 converse of cong-app
 
@@ -81,17 +83,14 @@ Postulating extensionality does not lead to difficulties.
 It is known to be consistent with the theory that underlies Agda.
 
 example
-
-need results from two libraries
-- one where addition is defined (Chapter Naturals)
-- one where it is defined the other way around
 -}
 
+-- version that matches on right
 _+′_ : ℕ → ℕ → ℕ
 m +′ zero  = m
 m +′ suc n = suc (m +′ n)
 
--- applying commutativity, can show both operators always return same result for same arguments:
+-- using commutativity, show + and +′ always return same result for same arg
 same-app : ∀ (m n : ℕ) → m +′ n ≡ m + n
 same-app m n                --     (m +′ n) ≡      m + n
   rewrite +-comm m n        --     (m +′ n) ≡      n + m
@@ -102,13 +101,13 @@ same-app m n                --     (m +′ n) ≡      m + n
   helper m (suc n)          -- suc (m +′ n) ≡ suc (n + m)
     = cong suc (helper m n)
 
--- instead, assert the two operators are indistinguishable via two applications of extensionality:
+-- now assert + and +′ to be indistinguishable (via two applications of extensionality)
 same : _+′_ ≡ _+_
 same = extensionality (λ m → extensionality (λ n → same-app m n))
-{-
-We occasionally need to postulate extensionality in what follows.
 
-More generally, to postulate extensionality for dependent functions.
+{-
+to postulate extensionality in what follows
+(and to postulate extensionality for dependent functions):
 -}
 
 -- type of f and g has changed from A → B to ∀ (x : A) → B x
@@ -120,12 +119,14 @@ postulate
 
 {-
 ------------------------------------------------------------------------------
-Isomorphism : sets are isomorphic if they are in one-to-one correspondence (via RECORDS)
+ISOMORPHISM : sets are isomorphic if they are in one-to-one correspondence
 
 formal definition:
 -}
 
 infix 0 _≃_
+
+-- RECORD
 -- isomorphism between sets A and B consists of four things
 record _≃_ (A B : Set) : Set where
   field
@@ -173,13 +174,12 @@ record
 corresponds to using the constructor of the corresponding inductive type
 
 mk-≃′ f g g∘f f∘g
-where f, g, g∘f, and f∘g are values of appropriate types
 
 ------------------------------------------------------------------------------
-Isomorphism is an equivalence : reflexive, symmetric, and transitive
-
-REFLEXIVE
+ISOMORPHISM is an EQUIVALENCE : REFLEXIVE, SYMMETRIC, and TRANSITIVE
 -}
+
+-- REFLEXIVE
 ≃-refl : ∀ {A : Set}
     -----
   → A ≃ A
@@ -199,8 +199,8 @@ REFLEXIVE
   → B ≃ A
 ≃-sym A≃B =
   record
-    { to      = from A≃B
-    ; from    = to   A≃B
+    { to      = from    A≃B
+    ; from    = to      A≃B
     ; from∘to = to∘from A≃B
     ; to∘from = from∘to A≃B
     }
@@ -232,10 +232,11 @@ REFLEXIVE
      }
 {-
 ------------------------------------------------------------------------------
-Equational reasoning for isomorphism
+EQUATIONAL REASONING FOR ISOMORPHISM
 
 Essentially copy previous definition of equality for isomorphism.
-Omit the form that corresponds to _≡⟨⟩_, since simple isomorphisms arise less often than simple equalities
+Omit the form that corresponds to _≡⟨⟩_,
+since simple isomorphisms arise less often than simple equalities
 -}
 
 module ≃-Reasoning where
@@ -266,8 +267,8 @@ open ≃-Reasoning
 
 {-
 ------------------------------------------------------------------------------
-Embedding : weakening of isomorphism : embedding shows 1st type included in second;
-or, equivalently, there is a many-to-one correspondence between the second type and the first.
+EMBEDDING : WEAKENING of ISOMORPHISM : EMBEDDING SHOWS 1ST TYPE INCLUDED IN SECOND
+i.e., there is many-to-one correspondence between second type and first
 -}
 
 infix 0 _≲_
@@ -277,11 +278,12 @@ record _≲_ (A B : Set) : Set where
     from    : B → A
     from∘to : ∀ (x : A) → from (to x) ≡ x
 open _≲_
+
 {-
 same as isomorphism, except it omits 'to∘from' field
 - says 'from' is left-inverse for 'to', but not a right-inverse
 
-Embedding is not symmetric
+EMBEDDING IS NOT SYMMETRIC
 
 proofs of REFLEXIVE and TRANSITIVE same as ISOMORPHISM except omitting one unneeded case
 -}
@@ -357,9 +359,9 @@ module ≲-Reasoning where
 
   _≲⟨_⟩_ : ∀ (A : Set) {B C : Set}
     → A ≲ B
-    → B ≲ C
+    →     B ≲ C
       -----
-    → A ≲ C
+    → A ≲     C
   A ≲⟨ A≲B ⟩ B≲C = ≲-trans A≲B B≲C
 
   _≲-∎ : ∀ (A : Set)

@@ -157,7 +157,7 @@ to/from-corr m n m≡tn = {!!}
 
 -- 842 exercise: DblBInc (1 point)
 
-dblb∘inc : ∀ (m : Bin-ℕ) → dblb (inc m) ≡ inc (inc (dblb m)) 
+dblb∘inc : ∀ (m : Bin-ℕ) → dblb (inc m) ≡ inc (inc (dblb m))
 dblb∘inc m = {!!}
 
 -- 842 exercise: ToDbl (1 point)

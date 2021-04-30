@@ -127,6 +127,7 @@ m∸0≡m m = refl
   rewrite sym (∸-+-assoc m n (suc p)) -- m ∸ n ∸ suc p ≡ m ∸  n ∸ suc p
   = refl
 
+------------------------------------------------------------------------------
 -- Properties of binary representation.
 
 -----
