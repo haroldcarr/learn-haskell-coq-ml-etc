@@ -40,7 +40,7 @@ inv-s≤s : ∀ {m n : ℕ}
   → suc m ≤ suc n
     -------------
   →     m ≤     n
-inv-s≤s (s≤s x) = x
+inv-s≤s (s≤s m≤n) = m≤n
 
 inv-z≤n : ∀ {m : ℕ}
   → m ≤ zero
@@ -265,9 +265,9 @@ m≡n→sucm≡sucn (suc m) (suc n) p = cong suc (m≡n→sucm≡sucn m n (suc-i
 <-trichotomy  zero   (suc n) = is-< z<s
 <-trichotomy (suc m)  zero   = is-> z<s
 <-trichotomy (suc m) (suc n) with <-trichotomy m n
-... | is-< x = is-< (s<s x)
-... | is-≡ x = is-≡ (m≡n→sucm≡sucn m n x)
-... | is-> x = is-> (s<s x)
+... | is-< m<n = is-< (s<s m<n)
+... | is-≡ m≡n = is-≡ (m≡n→sucm≡sucn m n m≡n)
+... | is-> n<m = is-> (s<s n<m)
 
 
 ------------------------------------------------------------------------------

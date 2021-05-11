@@ -1,6 +1,6 @@
 module x07-747Negation-hc where
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst) -- added last
+open import Relation.Binary.PropositionalEquality using (_≡_; cong; refl; subst; sym) -- added last
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -100,17 +100,31 @@ data _<_ : ℕ → ℕ → Set where
 ¬n<n    (suc n) = λ { (s<s n<n) → ¬n<n n n<n }
 
 -- 747/PLFA exercise: LTTrich (3 points)
--- Show that strict inequality satisfies trichotomy,
--- in the sense that exactly one of the three possibilities holds.
--- Here is the expanded definition of trichotomy.
-
+-- Prove that strict inequality satisfies trichotomy : exactly one of the three possibilities holds.
 data Trichotomy (m n : ℕ) : Set where
   is-< : m < n → ¬ m ≡ n → ¬ n < m → Trichotomy m n
   is-≡ : m ≡ n → ¬ m < n → ¬ n < m → Trichotomy m n
   is-> : n < m → ¬ m ≡ n → ¬ m < n → Trichotomy m n
 
+open import x03-842Relations-hc-2 using (suc-injective; m≡n→sucm≡sucn)
+
+inv-s<s : ∀ {m n : ℕ}
+  → suc m < suc n
+    -------------
+  →     m <     n
+inv-s<s (s<s m<n) = m<n
+
 <-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
-<-trichotomy m n = {!!}
+<-trichotomy zero     zero   = is-≡ refl (λ ()) (λ ())
+<-trichotomy zero    (suc n) = is-< z<s  (λ ()) (λ ())
+<-trichotomy (suc m)  zero   = is-> z<s  (λ ()) (λ ())
+<-trichotomy (suc m) (suc n) with <-trichotomy m n
+... | is-< m<n ¬m≡n ¬n<m = is-< (s<s m<n)               (λ sucm≡sucn → ¬m≡n (suc-injective sucm≡sucn))
+                                                        (λ sucn<sucm → ¬n<m (inv-s<s       sucn<sucm))
+... | is-≡ m≡n ¬m<n ¬n<m = is-≡ (m≡n→sucm≡sucn m n m≡n) (λ sucm<sucn → ¬m<n (inv-s<s       sucm<sucn))
+                                                        (λ sucn<sucm → ¬n<m (inv-s<s       sucn<sucm))
+... | is-> n<m ¬m≡n ¬m<n = is-> (s<s n<m)               (λ sucm≡sucn → ¬m≡n (suc-injective sucm≡sucn))
+                                                        (λ sucm<sucn → ¬m<n (inv-s<s       sucm<sucn))
 
 -- PLFA exercise: one of DeMorgan's Laws as isomorphism
 -- ⊎-dual-× : ∀ {A B : Set} → ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)
