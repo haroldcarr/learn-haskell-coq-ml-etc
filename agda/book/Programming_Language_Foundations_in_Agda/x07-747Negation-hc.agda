@@ -126,7 +126,7 @@ inv-s<s (s<s m<n) = m<n
 ... | is-> n<m ¬m≡n ¬m<n = is-> (s<s n<m)               (λ sucm≡sucn → ¬m≡n (suc-injective sucm≡sucn))
                                                         (λ sucm<sucn → ¬m<n (inv-s<s       sucm<sucn))
 
--- PLFA exercise: one of DeMorgan's Laws as isomorphism
+-- PLFA exercise: one of DeMorgan's Laws as isomorphism TODO
 -- ⊎-dual-× : ∀ {A B : Set} → ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)
 -- Expand negation as implies-false, then look in 747Relations
 -- for a law of which this is a special case.
@@ -136,27 +136,22 @@ inv-s<s (s<s m<n) = m<n
 
 -- Intuitionistic vs classical logic.
 
--- The law of the excluded middle (LEM, or just em) cannot be
--- proved in intuitionistic logic.
--- But we can add it, and get classical logic.
+-- The law of the excluded middle (LEM, or just em) cannot be proved in intuitionistic logic.
+-- LEM can be added to intuitionistic logic to get classical logic.
 
 -- postulate
 --  em : ∀ {A : Set} → A ⊎ ¬ A
 
--- How do we know this does not give a contradiction?
--- The following theorem of intuitionistic logic demonstrates this.
--- (The proof is compact, but takes some thought.)
-
+-- 'em-irrefutable' theorem of intuitionistic logic demonstrates
+-- that 'em' does not give a contradiction?
 em-irrefutable : ∀ {A : Set} → ¬ ¬ (A ⊎ ¬ A)
 em-irrefutable = λ z → z (inj₂ (λ x → z (inj₁ x)))
 
--- PLFA exercise: classical equivalences
--- Excluded middle cannot be proved in intuitionistic logic,
--- but adding it is consistent and gives classical logic.
--- Here are four other classical theorems with the same property.
--- You can show that each of them is logically equivalent to all the others.
--- You do not need to prove twenty implications, since implication is transitive.
--- But there is a lot of choice as to how to proceed!
+-- PLFA exercise: classical equivalences TODO
+-- Here are four other classical theorems that can be added and are consisstent in IT.
+-- Prove each is logically equivalent to all the others.
+-- It is NOT necessary to prove twenty implications, since implication is transitive.
+-- There is a lot of choice as to how to proceed.
 
 -- Excluded Middle
 em = ∀ {A : Set} → A ⊎ ¬ A
@@ -165,10 +160,10 @@ em = ∀ {A : Set} → A ⊎ ¬ A
 dne = ∀ {A : Set} → ¬ ¬ A → A
 
 -- Peirce’s Law
-peirce =  ∀ {A B : Set} → ((A → B) → A) → A
+peirce = ∀ {A B : Set} → ((A → B) → A) → A
 
 -- Implication as disjunction
-iad =  ∀ {A B : Set} → (A → B) → ¬ A ⊎ B
+iad = ∀ {A B : Set} → (A → B) → ¬ A ⊎ B
 
 -- De Morgan:
 dem = ∀ {A B : Set} → ¬ (¬ A × ¬ B) → A ⊎ B

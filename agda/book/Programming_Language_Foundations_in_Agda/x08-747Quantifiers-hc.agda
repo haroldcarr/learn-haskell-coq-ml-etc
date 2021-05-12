@@ -1,4 +1,4 @@
-module x08-747Quantifiers where
+module x08-747Quantifiers-hc where
 
 -- Library
 
@@ -10,8 +10,7 @@ open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_�
 open import Data.Sum using (_⊎_; inj₁; inj₂ ) -- added inj₁, inj₂
 open import Function using (_∘_) -- added
 
--- Copied from 747Isomorphism.
-
+-- BEGIN: Copied from 747Isomorphism.
 postulate
   extensionality : ∀ {A B : Set} {f g : A → B}
     → (∀ (x : A) → f x ≡ g x)
@@ -33,11 +32,10 @@ record _⇔_ (A B : Set) : Set where
     to   : A → B
     from : B → A
 open _⇔_
+-- END: Copied from 747Isomorphism.
 
-
--- Logical forall is, not surpringly, ∀.
--- Forall elimination is also function application.
-
+-- Logical forall is ∀.
+-- Forall elimination is function application.
 ∀-elim : ∀ {A : Set} {B : A → Set}
   → (L : ∀ (x : A) → B x)
   → (M : A)
@@ -45,94 +43,98 @@ open _⇔_
   → B M
 ∀-elim L M = L M
 
--- In fact, A → B is nicer syntax for ∀ (_ : A) → B.
+-- A → B is nicer syntax for ∀ (_ : A) → B.
 
 -- 747/PLFA exercise: ForAllDistProd (1 point)
--- Show that ∀ distributes over ×.
--- (The special case of → distributes over × was shown in the Connectives chapter.)
+-- ∀ distributes over ×
+-- (note: → distributes over × was shown in Connectives)
 
 ∀-distrib-× : ∀ {A : Set} {B C : A → Set} →
-  (∀ (x : A) → B x × C x) ≃ (∀ (x : A) → B x) × (∀ (x : A) → C x)
-∀-distrib-× = {!!}
+  (∀ (a : A) → B a × C a) ≃ (∀ (a : A) → B a) × (∀ (a : A) → C a)
+to      ∀-distrib-× a→Ba×Ca         = ⟨ proj₁ ∘ a→Ba×Ca , proj₂ ∘ a→Ba×Ca ⟩
+from    ∀-distrib-× ⟨ a→ba , a→ca ⟩ = λ a → ⟨ a→ba a , a→ca a ⟩
+from∘to ∀-distrib-× a→Ba×Ca         = refl
+to∘from ∀-distrib-× ⟨ a→ba , a→ca ⟩ = refl
 
 -- 747/PLFA exercise: SumForAllImpForAllSum (1 point)
--- Show that a disjunction of foralls implies a forall of disjunctions.
-
+-- disjunction of foralls implies a forall of disjunctions
 ⊎∀-implies-∀⊎ : ∀ {A : Set} {B C : A → Set} →
-  (∀ (x : A) → B x) ⊎ (∀ (x : A) → C x)  →  ∀ (x : A) → B x ⊎ C x
-⊎∀-implies-∀⊎ ∀B⊎∀C = {!!}
+  (∀ (a : A) → B a) ⊎ (∀ (a : A) → C a)  →  ∀ (a : A) → B a ⊎ C a
+⊎∀-implies-∀⊎ (inj₁ a→ba) = inj₁ ∘ a→ba
+⊎∀-implies-∀⊎ (inj₂ a→ca) = inj₂ ∘ a→ca
 
--- Existential quantification can be defined as a pair:
--- a witness and a proof that the witness satisfies the property.
-
+-- Existential quantification
+-- a pair:
+-- - a witness and
+-- - a proof that the witness satisfies the property
 data Σ (A : Set) (B : A → Set) : Set where
-  ⟨_,_⟩ : (x : A) → B x → Σ A B
+  ⟨_,_⟩ : (a : A) → B a → Σ A B
 
--- Some convenient syntax.
+-- convenient syntax
 
 Σ-syntax = Σ
 infix 2 Σ-syntax
 syntax Σ-syntax A (λ x → B) = Σ[ x ∈ A ] B
 
--- Unfortunately, we can use the RHS syntax in code,
--- but the LHS will show up in displays of goal and context.
-
--- This is equivalent to defining a dependent record type.
+-- can use the RHS syntax in code,
+-- but LHS will show up in displays of goal and context.
+-- This syntqx is equivalent to defining a dependent record type.
 
 record Σ′ (A : Set) (B : A → Set) : Set where
   field
     proj₁′ : A
     proj₂′ : B proj₁′
 
--- By convention, the library uses ∃ when the domain of the bound variable is implicit.
+-- convention : library uses ∃ when domain of bound variable is implicit
 
 ∃ : ∀ {A : Set} (B : A → Set) → Set
 ∃ {A} B = Σ A B
 
--- More special syntax.
+-- syntax
 
 ∃-syntax = ∃
 syntax ∃-syntax (λ x → B) = ∃[ x ] B
 
--- Above we saw two ways of constructing an existential.
--- We eliminate an existential with a function that consumes the
--- witness and proof and reaches a conclusion C.
-
+-- eliminate existential with a function
+-- that consumes the witness and proof
+-- and reaches a conclusion C
 ∃-elim : ∀ {A : Set} {B : A → Set} {C : Set}
-  → (∀ x → B x → C)
-  → ∃[ x ] B x
+  → (∀ a → B a → C)
+  → ∃[ a ] B a
     ---------------
   → C
-∃-elim f ⟨ x , y ⟩ = f x y
+∃-elim a→Ba→C ⟨ a , Ba ⟩ = a→Ba→C a Ba
 
--- This is a generalization of currying (from Connectives).
+-- generalization of currying (from Connectives)
 -- currying : ∀ {A B C : Set} → (A → B → C) ≃ (A × B → C)
-
 ∀∃-currying : ∀ {A : Set} {B : A → Set} {C : Set}
-  → (∀ x → B x → C) ≃ (∃[ x ] B x → C)
-_≃_.to ∀∃-currying f ⟨ x , x₁ ⟩ = f x x₁
-_≃_.from ∀∃-currying e x x₁ = e ⟨ x , x₁ ⟩
-_≃_.from∘to ∀∃-currying f = refl
-_≃_.to∘from ∀∃-currying e = extensionality λ { ⟨ x , x₁ ⟩ → refl}
+  → (∀ a → B a → C) ≃ (∃[ a ] B a → C)
+_≃_.to      ∀∃-currying a→Ba→C ⟨ a , Ba ⟩ = a→Ba→C a Ba
+_≃_.from    ∀∃-currying ∃xB a Ba          = ∃xB ⟨ a , Ba ⟩
+_≃_.from∘to ∀∃-currying a→Ba→C            = refl
+_≃_.to∘from ∀∃-currying ∃xB               = extensionality λ { ⟨ a , Ba ⟩ → refl}
 
 -- 747/PLFA exercise: ExistsDistSum (2 points)
--- Show that existentials distribute over disjunction.
-
+-- existentials distribute over disjunction
 ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
-  ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
-∃-distrib-⊎ = {!!}
+  ∃[ a ] (B a ⊎ C a) ≃ (∃[ a ] B a) ⊎ (∃[ a ] C a)
+to      ∃-distrib-⊎       ⟨ a , inj₁ Ba ⟩  = inj₁ ⟨ a ,      Ba ⟩
+to      ∃-distrib-⊎       ⟨ a , inj₂ Ca ⟩  = inj₂ ⟨ a ,      Ca ⟩
+from    ∃-distrib-⊎ (inj₁ ⟨ a ,      Ba ⟩) =      ⟨ a , inj₁ Ba ⟩
+from    ∃-distrib-⊎ (inj₂ ⟨ a ,      Ca ⟩) =      ⟨ a , inj₂ Ca ⟩
+from∘to ∃-distrib-⊎       ⟨ a , inj₁ Ba ⟩  = refl
+from∘to ∃-distrib-⊎       ⟨ a , inj₂ Ca ⟩  = refl
+to∘from ∃-distrib-⊎ (inj₁ ⟨ a ,      Ba ⟩) = refl
+to∘from ∃-distrib-⊎ (inj₂ ⟨ a ,      Ca ⟩) = refl
 
 -- 747/PLFA exercise: ExistsProdImpProdExists (1 point)
--- Show that existentials distribute over ×.
-
+-- existentials distribute over ×
 ∃×-implies-×∃ : ∀ {A : Set} {B C : A → Set} →
-  ∃[ x ] (B x × C x) → (∃[ x ] B x) × (∃[ x ] C x)
-∃×-implies-×∃ = {!!}
+  ∃[ a ] (B a × C a) → (∃[ a ] B a) × (∃[ a ] C a)
+∃×-implies-×∃ ⟨ a , ⟨ Ba , Ca ⟩ ⟩ = ⟨ ⟨ a , Ba ⟩ , ⟨ a , Ca ⟩ ⟩
 
--- An existential example: revisiting even/odd.
-
--- Recall the mutually-recursive definitions of even and odd.
-
+-- existential example: revisiting even/odd.
+-- mutually-recursive definitions of even and odd.
 data even : ℕ → Set
 data odd  : ℕ → Set
 
@@ -151,25 +153,25 @@ data odd where
       -----------
     → odd (suc n)
 
--- An number is even iff it is double some other number.
--- A number is odd iff is one plus double some other number.
--- Proofs below.
-
+-- number is even iff it is          double some other number
 even-∃ : ∀ {n : ℕ} → even n → ∃[ m ] (    m * 2 ≡ n)
+-- number is odd  iff it is one plus double some other number
 odd-∃  : ∀ {n : ℕ} →  odd n → ∃[ m ] (1 + m * 2 ≡ n)
 
-even-∃ even-zero = ⟨ zero , refl ⟩
-even-∃ (even-suc x) with odd-∃ x
-even-∃ (even-suc x) | ⟨ x₁ , refl ⟩ = ⟨ suc x₁ , refl ⟩
-odd-∃ (odd-suc x) with even-∃ x
-odd-∃ (odd-suc x) | ⟨ x₁ , refl ⟩ = ⟨ x₁ , refl ⟩
+even-∃  even-zero = ⟨ zero , refl ⟩
+even-∃ (even-suc odd-suc-x*2)
+    with odd-∃ odd-suc-x*2
+... | ⟨ x , refl ⟩ = ⟨ suc x , refl ⟩
+odd-∃  (odd-suc  even-x*2)
+    with even-∃ even-x*2
+... | ⟨ x , refl ⟩ = ⟨     x , refl ⟩
 
 ∃-even : ∀ {n : ℕ} → ∃[ m ] (    m * 2 ≡ n) → even n
 ∃-odd  : ∀ {n : ℕ} → ∃[ m ] (1 + m * 2 ≡ n) →  odd n
 
-∃-even ⟨ zero , refl ⟩ = even-zero
-∃-even ⟨ suc x , refl ⟩ = even-suc (∃-odd ⟨ x , refl ⟩)
-∃-odd ⟨ x , refl ⟩ = odd-suc (∃-even ⟨ x , refl ⟩)
+∃-even ⟨ zero  , refl ⟩ = even-zero
+∃-even ⟨ suc x , refl ⟩ = even-suc (∃-odd  ⟨ x , refl ⟩)
+∃-odd  ⟨     x , refl ⟩ = odd-suc  (∃-even ⟨ x , refl ⟩)
 
 -- PLFA exercise: what if we write the arithmetic more "naturally"?
 -- (Proof gets harder but is still doable).
@@ -200,3 +202,4 @@ odd-∃ (odd-suc x) | ⟨ x₁ , refl ⟩ = ⟨ x₁ , refl ⟩
 
 -- PLFA exercise: isomorphism between naturals and existence of canonical binary.
 -- This is essentially what we did at the end of 747Isomorphism.
+
