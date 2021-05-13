@@ -3,8 +3,9 @@ module x08-747Quantifiers-hc where
 -- Library
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open Eq using (_≡_; refl; cong; sym)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _≤_; z≤n; s≤s) -- added ≤
+-- open import Data.Nat.Properties using (≤-refl)
 open import Relation.Nullary using (¬_)
 open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩) -- added proj₂
 open import Data.Sum using (_⊎_; inj₁; inj₂ ) -- added inj₁, inj₂
@@ -177,14 +178,45 @@ odd-∃  (odd-suc  even-x*2)
 -- (Proof gets harder but is still doable).
 
 -- 747/PLFA exercise: AltLE (3 points)
--- An alternate definition of y ≤ z.
+-- alternate definition of y ≤ z
 -- (Optional exercise: Is this an isomorphism?)
++0 : ∀ (m : ℕ) → m + zero ≡ m
++0  zero   = refl
++0 (suc m) = cong suc (+0 m)
+
+open import x03-842Relations-hc-2 using (s≤s)
+
+xxx : ∀ {m n : ℕ} → m ≤ n → suc (m + zero) ≤ suc n
+xxx {m} {n} p rewrite +0 m = s≤s p
+
+≤-refl : ∀ {n : ℕ}
+    -----
+  → n ≤ n
+≤-refl {zero}  = z≤n
+≤-refl {suc n} = s≤s (≤-refl {n})
+
+zzz : ∀ {y z : ℕ} → y + zero ≡ z → y ≤ z
+zzz {y} y+x≡z rewrite +0 y | y+x≡z | sym y+x≡z = ≤-refl {y}
+
++-suc : ∀ (m n : ℕ) → m + suc n ≡ suc (m + n)
++-suc  zero   n = refl
++-suc (suc m) n = cong suc (+-suc m n)
+
+aaa : ∀ {x y z : ℕ} → y + suc x ≡ z → y ≤ z
+aaa {x} {y} y+sucx≡z rewrite sym y+sucx≡z | +-suc y x = {!!}
+
 
 ∃-≤ : ∀ {y z : ℕ} → ( (y ≤ z) ⇔ ( ∃[ x ] (y + x ≡ z) ) )
-∃-≤ = {!!}
+{-
+∃-≤ {y} {z} = record { to = λ { z≤n → ⟨ zero , {!!} ⟩ ; (s≤s y≤z) → {!!} }; from = {!!} }
+-}
+to   ∃-≤  z≤n                 = ⟨ zero , {!!} ⟩
+to   ∃-≤ (s≤s  z≤n)           = ⟨ zero , {!!} ⟩
+to   ∃-≤ (s≤s (s≤s y≤z))      = ⟨ zero , {!!} ⟩
+from ∃-≤ ⟨ zero  , y+zero≡z ⟩ = zzz y+zero≡z
+from ∃-≤ ⟨ suc x , y+sucx≡z ⟩ = {!!}
 
 -- The negation of an existential is isomorphic to a universal of a negation.
-
 ¬∃≃∀¬ : ∀ {A : Set} {B : A → Set}
   → (¬ ∃[ x ] B x) ≃ ∀ x → ¬ B x
 ¬∃≃∀¬ = {!!}
