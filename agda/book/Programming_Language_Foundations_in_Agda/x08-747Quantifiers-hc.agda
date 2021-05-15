@@ -203,32 +203,38 @@ zzz {y} y+x≡z rewrite +0 y | y+x≡z | sym y+x≡z = ≤-refl {y}
 +-suc (suc m) n = cong suc (+-suc m n)
 
 aaa : ∀ {x y z : ℕ} → y + suc x ≡ z → y ≤ z
-aaa {x} {y} y+sucx≡z rewrite sym y+sucx≡z | +-suc y x = {!!}
-
+--aaa {x} {y} y+sucx≡z rewrite sym y+sucx≡z {- | +-suc y x -} = {!!}
+aaa {zero}  {zero}  refl = z≤n
+aaa {zero}  {suc y} refl = s≤s {!!}
+aaa {suc x} {zero}  refl = z≤n
+aaa {suc x} {suc y} refl = s≤s {!!}
 
 ∃-≤ : ∀ {y z : ℕ} → ( (y ≤ z) ⇔ ( ∃[ x ] (y + x ≡ z) ) )
 {-
 ∃-≤ {y} {z} = record { to = λ { z≤n → ⟨ zero , {!!} ⟩ ; (s≤s y≤z) → {!!} }; from = {!!} }
 -}
 to   ∃-≤  z≤n                 = ⟨ zero , {!!} ⟩
-to   ∃-≤ (s≤s  z≤n)           = ⟨ zero , {!!} ⟩
-to   ∃-≤ (s≤s (s≤s y≤z))      = ⟨ zero , {!!} ⟩
+to   ∃-≤ (s≤s  z≤n)           = ⟨ suc zero , {!!} ⟩
+to   ∃-≤ (s≤s (s≤s m≤n))      = ⟨ suc (suc zero) , {!!} ⟩
 from ∃-≤ ⟨ zero  , y+zero≡z ⟩ = zzz y+zero≡z
 from ∃-≤ ⟨ suc x , y+sucx≡z ⟩ = {!!}
 
 -- The negation of an existential is isomorphic to a universal of a negation.
 ¬∃≃∀¬ : ∀ {A : Set} {B : A → Set}
-  → (¬ ∃[ x ] B x) ≃ ∀ x → ¬ B x
-¬∃≃∀¬ = {!!}
+  → (¬ ∃[ a ] B a) ≃ ∀ a → ¬ B a
+to      ¬∃≃∀¬ = λ { ¬∃B     a → λ Ba   → ¬∃B ⟨ a , Ba ⟩ }
+from    ¬∃≃∀¬ = λ { a→¬Ba ⟨ a ,   Ba ⟩ → a→¬Ba a   Ba }
+from∘to ¬∃≃∀¬ = λ   ¬∃B                → {!!} -- TODO
+to∘from ¬∃≃∀¬ = λ   a→¬Ba              → refl
 
 -- 747/PLFA exercise: ExistsNegImpNegForAll (1 point)
 -- Existence of negation implies negation of universal.
 
 ∃¬-implies-¬∀ : ∀ {A : Set} {B : A → Set}
-  → ∃[ x ] (¬ B x)
+  → ∃[ a ] (¬ B a)
     --------------
-  → ¬ (∀ x → B x)
-∃¬-implies-¬∀ ∃¬B = {!!}
+  → ¬ (∀ a → B a)
+∃¬-implies-¬∀ ⟨ a , ¬Ba ⟩ = λ a→Ba → ¬Ba (a→Ba a)
 
 -- The converse cannot be proved in intuitionistic logic.
 
