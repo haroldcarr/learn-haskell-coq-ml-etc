@@ -50,16 +50,17 @@ postulate readInt  : L.List Char → ℕ
 {-# COMPILE GHC readInt = \x -> read x :: Integer  #-}
 
 main : Primitive.IO ⊤
-main = run do putStrLn "Hello, world! I'm a compiled Agda program!"
+main = run do
+  putStrLn "Hello, world! I'm a compiled Agda program!"
 
-              putStrLn "What is your name?"
-              name ← getLine
+  IO.putStrLn "What is your name?:"
+  name ← getLine
 
-              putStrLn "Please enter a number."
-              num ← getLine
-              let tri = show $ sum $ upTo $ suc $ readInt $ S.toList num
-              putStrLn $ "The triangle number of " ++ num ++ " is " ++ tri
+  IO.putStrLn "Please enter a number:"
+  num ← getLine
 
-              putStrLn "Bye, "
-              -- IO.putStrLn∞ name  {- If we use approach (1) above. -}
-              putStrLn $ "\t" ++ name
+  let tri = show $ sum $ upTo $ suc $ readInt $ S.toList num
+  putStrLn $ "The triangle number of " ++ num ++ " is " ++ tri
+
+  putStrLn ("Bye, " ++ name)
+  -- IO.putStrLn∞ ("Bye, " ++ name)  {- If using approach (1) above. -}

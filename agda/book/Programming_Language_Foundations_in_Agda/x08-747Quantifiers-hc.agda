@@ -79,7 +79,7 @@ syntax Σ-syntax A (λ x → B) = Σ[ x ∈ A ] B
 
 -- can use the RHS syntax in code,
 -- but LHS will show up in displays of goal and context.
--- This syntqx is equivalent to defining a dependent record type.
+-- This syntax is equivalent to defining a dependent record type.
 
 record Σ′ (A : Set) (B : A → Set) : Set where
   field
@@ -195,29 +195,29 @@ xxx {m} {n} p rewrite +0 m = s≤s p
 ≤-refl {zero}  = z≤n
 ≤-refl {suc n} = s≤s (≤-refl {n})
 
-zzz : ∀ {y z : ℕ} → y + zero ≡ z → y ≤ z
-zzz {y} y+x≡z rewrite +0 y | y+x≡z | sym y+x≡z = ≤-refl {y}
-
 +-suc : ∀ (m n : ℕ) → m + suc n ≡ suc (m + n)
 +-suc  zero   n = refl
 +-suc (suc m) n = cong suc (+-suc m n)
 
-aaa : ∀ {x y z : ℕ} → y + suc x ≡ z → y ≤ z
+aaa : ∀ {x y z : ℕ} → y + suc x ≡ z → y ≤ y + suc x
 --aaa {x} {y} y+sucx≡z rewrite sym y+sucx≡z {- | +-suc y x -} = {!!}
 aaa {zero}  {zero}  refl = z≤n
-aaa {zero}  {suc y} refl = s≤s {!!}
 aaa {suc x} {zero}  refl = z≤n
+aaa {zero}  {suc y} refl = s≤s {!!}
 aaa {suc x} {suc y} refl = s≤s {!!}
+
+zzz : ∀ {y z : ℕ} → y + zero ≡ z → y ≤ z
+zzz {y} y+x≡z rewrite +0 y | y+x≡z | sym y+x≡z = ≤-refl {y}
 
 ∃-≤ : ∀ {y z : ℕ} → ( (y ≤ z) ⇔ ( ∃[ x ] (y + x ≡ z) ) )
 {-
 ∃-≤ {y} {z} = record { to = λ { z≤n → ⟨ zero , {!!} ⟩ ; (s≤s y≤z) → {!!} }; from = {!!} }
 -}
-to   ∃-≤  z≤n                 = ⟨ zero , {!!} ⟩
-to   ∃-≤ (s≤s  z≤n)           = ⟨ suc zero , {!!} ⟩
+to   ∃-≤           z≤n        = ⟨          zero  , {!!} ⟩
+to   ∃-≤      (s≤s z≤n)       = ⟨      suc zero  , {!!} ⟩
 to   ∃-≤ (s≤s (s≤s m≤n))      = ⟨ suc (suc zero) , {!!} ⟩
 from ∃-≤ ⟨ zero  , y+zero≡z ⟩ = zzz y+zero≡z
-from ∃-≤ ⟨ suc x , y+sucx≡z ⟩ = {!!}
+from ∃-≤ ⟨ suc x , y+sucx≡z ⟩ rewrite sym y+sucx≡z = {!!}
 
 -- The negation of an existential is isomorphic to a universal of a negation.
 ¬∃≃∀¬ : ∀ {A : Set} {B : A → Set}

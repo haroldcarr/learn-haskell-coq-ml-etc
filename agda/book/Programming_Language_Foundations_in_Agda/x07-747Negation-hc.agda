@@ -119,12 +119,15 @@ inv-s<s (s<s m<n) = m<n
 <-trichotomy zero    (suc n) = is-< z<s  (λ ()) (λ ())
 <-trichotomy (suc m)  zero   = is-> z<s  (λ ()) (λ ())
 <-trichotomy (suc m) (suc n) with <-trichotomy m n
-... | is-< m<n ¬m≡n ¬n<m = is-< (s<s m<n)               (λ sucm≡sucn → ¬m≡n (suc-injective sucm≡sucn))
-                                                        (λ sucn<sucm → ¬n<m (inv-s<s       sucn<sucm))
-... | is-≡ m≡n ¬m<n ¬n<m = is-≡ (m≡n→sucm≡sucn m n m≡n) (λ sucm<sucn → ¬m<n (inv-s<s       sucm<sucn))
-                                                        (λ sucn<sucm → ¬n<m (inv-s<s       sucn<sucm))
-... | is-> n<m ¬m≡n ¬m<n = is-> (s<s n<m)               (λ sucm≡sucn → ¬m≡n (suc-injective sucm≡sucn))
-                                                        (λ sucm<sucn → ¬m<n (inv-s<s       sucm<sucn))
+... | is-< m<n ¬m≡n ¬n<m = is-< (s<s m<n)
+                                (λ sucm≡sucn → ¬m≡n (suc-injective sucm≡sucn))
+                                (λ sucn<sucm → ¬n<m (inv-s<s       sucn<sucm))
+... | is-≡ m≡n ¬m<n ¬n<m = is-≡ (m≡n→sucm≡sucn m n m≡n)
+                                (λ sucm<sucn → ¬m<n (inv-s<s       sucm<sucn))
+                                (λ sucn<sucm → ¬n<m (inv-s<s       sucn<sucm))
+... | is-> n<m ¬m≡n ¬m<n = is-> (s<s n<m)
+                                (λ sucm≡sucn → ¬m≡n (suc-injective sucm≡sucn))
+                                (λ sucm<sucn → ¬m<n (inv-s<s       sucm<sucn))
 
 -- PLFA exercise: one of DeMorgan's Laws as isomorphism TODO
 -- ⊎-dual-× : ∀ {A B : Set} → ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)

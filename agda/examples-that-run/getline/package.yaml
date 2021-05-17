@@ -7,12 +7,12 @@ dependencies:
 - text
 
 library:
-  source-dirs: src
+  source-dirs: src-generated
 
 executables:
   m:
-    main:                Main.hs
     source-dirs:         app
+    main:                Main.hs
     ghc-options:
     - -threaded
     - -rtsopts
