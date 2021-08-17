@@ -7,3 +7,7 @@ old:
 https://cs.uwaterloo.ca/~plragde/842/
 https://cs.uwaterloo.ca/~plragde/842/handouts/notes.html
 
+note:
+logic and computation course (using Racket)
+https://cs.uwaterloo.ca/~plragde/245/
+https://cs.uwaterloo.ca/~plragde/245/Logistics.html#%28part._.Textbook%29

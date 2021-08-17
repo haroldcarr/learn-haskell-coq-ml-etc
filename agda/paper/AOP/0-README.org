@@ -1,0 +1,2 @@
+agda library
+https://github.com/scmu/aopa

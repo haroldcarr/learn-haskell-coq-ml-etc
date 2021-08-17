@@ -2,13 +2,13 @@
 
 module x05-842Isomorphism-hc where
 
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; cong; cong-app; sym; subst) -- added last
-open Eq.≡-Reasoning
-open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_)
-open import Data.Nat.Properties using (+-comm; +-suc; +-identityʳ) -- added last
-
-open import x02-842Induction-hc-2 hiding (+-suc; +-identityʳ)
+import      Relation.Binary.PropositionalEquality as Eq
+open        Eq                                    using (_≡_; refl; cong; cong-app; sym; subst) -- added last
+open        Eq.≡-Reasoning
+open import Data.Nat                              using (ℕ; zero; suc; _+_; _*_; _^_)
+open import Data.Nat.Properties                   using (+-comm; +-suc; +-identityʳ) -- added last
+------------------------------------------------------------------------------
+open import x02-842Induction-hc-2                 hiding (+-suc; +-identityʳ)
 
 ------------------------------------------------------------------------------
 -- Function composition.

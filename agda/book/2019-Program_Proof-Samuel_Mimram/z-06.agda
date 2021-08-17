@@ -1,8 +1,8 @@
 module z-06 where
 
-import Relation.Binary.PropositionalEquality.Core as PE
-open import Data.Nat            using (ℕ; zero; suc; _+_)
+open import Data.Nat                              using (ℕ; zero; suc; _+_; _*_; _<?_; _<_; ≤-pred)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+import      Relation.Binary.PropositionalEquality.Core as PE
 
 {-
 ------------------------------------------------------------------------------
@@ -72,10 +72,11 @@ Relation.Binary.PropositionalEquality  equality (≡)
 -- p 277 6.3.4 Postulates.
 
 for axioms (no proof)
-avoided as much as possible
+avoide as much as possible
 e.g, to work in classical logic, assume law of excluded middle with
 
-postulate lem : (A : Set) → ¬ A ⊎ A
+postulate
+  lem : (A : Set) → ¬ A ⊎ A
 
 postulates do not compute:
 - applying 'lem' to type A, will not reduce to ¬ A or A (as expected for a coproduct)
@@ -87,12 +88,16 @@ see section 6.5.6
 
 -- implementation of pairs using records
 record Pair (A B : Set) : Set where
+  constructor mkPair
   field
     fst : A
     snd : B
 
 make-pair : {A B : Set} → A → B → Pair A B
 make-pair a b = record { fst = a ; snd = b }
+
+make-pair' : {A B : Set} → A → B → Pair A B
+make-pair' a b = mkPair a b
 
 proj1 : {A B : Set} → Pair A B → A
 proj1 p = Pair.fst p
@@ -107,7 +112,6 @@ data ℕ : Set where
   suc  : ℕ → ℕ -- inductive case
 -}
 
-
 pred : ℕ → ℕ
 pred  zero   = zero
 pred (suc n) = n
@@ -118,7 +122,7 @@ zero    +' n =          n
 infixl 6  _+'_
 
 _∸'_ : ℕ → ℕ → ℕ
-zero ∸' n = zero
+zero  ∸'     n = zero
 suc m ∸' zero  = suc m
 suc m ∸' suc n = m ∸' n
 
@@ -130,24 +134,23 @@ suc m *' n = (m *' n) + n
 _mod'_ :  ℕ → ℕ → ℕ
 m mod' n with m <? n
 m mod' n | yes _ = m
-m mod' n | no _ = (m ∸' n) mod' n
+m mod' n | no  _ = (m ∸' n) mod' n
 -}
-
+-- TODO : what is going on here?
+-- mod' :  ℕ → ℕ → ℕ
+-- mod' m n with m <? n
+-- ... | x = {!!}
 {-
 ------------------------------------------------------------------------------
 -- p 280 Empty pattern matching.
 
+there is no case to pattern match on elements of this type
 use on types with no elements, e.g.,
 -}
 data ⊥'  : Set where
 
-{-
-there is no case to pattern match on elements of this type
-
-uses pattern : () -- means that no such pattern can happen
--}
-
 -- given an element of type ⊥ then "produce" anything
+-- uses pattern : () -- means that no such pattern can happen
 ⊥'-elim : {A : Set} → ⊥' → A
 ⊥'-elim ()
 
@@ -156,7 +159,7 @@ since A is arbitrary, no way, in proof, to exhibit one.
 Do not have to.
 '()'  states no cases to handle, so done
 
-Useful in negation and orther less obvious ways of constructing empty inductive types.
+Useful in negation and other less obvious ways of constructing empty inductive types.
 E.g., the type zero ≡ suc zero of equalities between 0 and 1 is also an empty inductive type.
 -}
 
@@ -174,12 +177,12 @@ pred' = λ { zero → zero ; (suc n) → n }
 ------------------------------------------------------------------------------
 -- p 281  6.4.3 The induction principle.
 
-pattern matching corresponds to the presence of a recurrence or induction principle.
+pattern matching corresponds to the presence of a recurrence or induction principle
 
 e.g.,
 f : → A
 f  zero   = t
-f (suc n) = u' -- u' might 'n' or result of recursive call f n
+f (suc n) = u' -- u' might be 'n' or result of recursive call f n
 
 recurrence principle expresses this as
 -}
@@ -188,10 +191,15 @@ rec : {A : Set} → A → (ℕ → A → A) → ℕ → A
 rec t u  zero   = t
 rec t u (suc n) = u n (rec t u n)
 
+-- same with differenct var names
+recℕ : {A : Set} → A → (ℕ → A → A) → ℕ → A
+recℕ a n→a→a   zero  = a
+recℕ a n→a→a (suc n) = n→a→a n (recℕ a n→a→a n)
+
 {-
 Same as "recursor" for including nats to simply typed λ-calculus in section 4.3.6.
 
-Any function of type ℕ → A defined using pattern matching can be re defined using this function.
+Any function of type ℕ → A defined using pattern matching can be redefined using this function.
 This recurrence function encapsulates the expressive power of pattern matching.
 e.g.,
 -}
@@ -199,11 +207,18 @@ e.g.,
 pred'' : ℕ → ℕ
 pred'' = rec zero (λ n _ → n)
 
+_ : pred'' 2 ≡ rec zero (λ n _ → n) 2
+_ = refl
+_ :            rec zero (λ n _ → n) 2 ≡ 1
+_ = refl
+_ : pred'' 2                          ≡ 1
+_ = refl
+
 {-
 logical : recurrence principle corresponds to elimination rule, so aka "eliminator"
 
 Pattern matching in Agda is more powerful
-- can be used to define functions whose return type depends on argument.
+- can be used to define functions whose return type depends on argument
 
 means must consider functions of the form
 
@@ -211,14 +226,14 @@ f : (n : ℕ) -> P n    -- P : ℕ → Set
 f  zero   = t         --   : P zero
 f (suc n) = u n (f n) --   : P (suc n)
 
-corresponding dependent variant of trecurrence principle is called the induction principle:
+corresponding dependent variant of the recurrence principle is called the induction principle:
 -}
 
 rec' : (P : ℕ → Set)
-    → P zero
-    → ((n : ℕ) → P n → P (suc n))
-    → (n : ℕ)
-    → P n
+     → P zero
+     → ((n : ℕ) → P n → P (suc n))
+     → (n : ℕ)
+     → P n
 rec' P Pz Ps  zero   = Pz
 rec' P Pz Ps (suc n) = Ps n (rec' P Pz Ps n)
 
@@ -228,14 +243,20 @@ reading type as a logical formula, it says the recurrence principle over natural
     P (0) ⇒ (∀n ∈ ℕ.P (n) ⇒ P (n + 1)) ⇒ ∀n ∈ ℕ.P (n)
 -}
 
--- proof by recurrence
-+-zero' : (n : ℕ) → n + zero ≡ n
+-- proof using recursion
++-zero' :    (n : ℕ) → n + zero ≡ n
 +-zero'  zero   = refl
-+-zero' (suc n) = PE.cong suc (+-zero' n)
++-zero' (suc n) =                                  PE.cong suc (+-zero' n)
 
--- expressed using dependent induction principle
-+-zero'' : (n : ℕ) → n + zero ≡ n
+-- proof using dependent induction principle
++-zero'' :   (n : ℕ) → n + zero ≡ n
 +-zero'' = rec' (λ n → n + zero ≡ n) refl (λ n p → PE.cong suc p)
+
+_ : +-zero'' 2 ≡ refl
+_ = refl
+_ : rec' (λ n →             n + zero ≡ n) refl (λ n p → PE.cong suc p) ≡
+          λ n → rec' (λ z → z + zero ≡ z) refl (λ n   → PE.cong (λ z → suc z)) n
+_ = refl
 
 ------------------------------------------------------------------------------
 -- p 282 Booleans
@@ -266,7 +287,10 @@ _++_ : {A : Set} → List A → List A → List A
 
 List-rec
   : {A : Set}
-  → (P : List A → Set) → P [] → ((x : A) → (xs : List A) → P xs → P (x ∷ xs)) → (xs : List A)
+  → (P : List A → Set)
+  → P []
+  → ((x : A) → (xs : List A) → P xs → P (x ∷ xs))
+  → (xs : List A)
   → P xs
 List-rec P Pe Pc      []  = Pe
 List-rec P Pe Pc (x ∷ xs) = Pc x xs (List-rec P Pe Pc xs)
@@ -304,7 +328,7 @@ head (x ∷ xs) = x
 -- - never distinguishes between two β-convertible terms
 
 _++'_ : {m n : ℕ} {A : Set}
-     → Vec A m → Vec A n → Vec A (m + n)
+      → Vec A m → Vec A n → Vec A (m + n)
 []       ++' l = l                        -- Vec A (zero + n) ≡ Vec A n
 (x ∷ xs) ++' l = x ∷ (xs ++' l)
 
@@ -361,14 +385,14 @@ above type corresponds to inductive set-theoretic definition:
     Fin (n + 1) = {0} ∪ {i + 1 | i ∈ Fin n}
 -}
 
-to : {n : ℕ} → Fin' n → ℕ
-to  fzero'   = zero
-to (fsuc' i) = suc (to i)
+finToℕ : {n : ℕ} → Fin' n → ℕ
+finToℕ  fzero'   = zero
+finToℕ (fsuc' i) = suc (finToℕ i)
 
 ------------------------------------------------------------------------------
 -- p 286 Vector lookup using Fin
 
--- Fin n typically used to index.
+-- Fin n typically used to index
 
 -- type ensures index in bounds
 lookup : {n : ℕ} {A : Set} → Fin' n → Vec A n → A
@@ -384,7 +408,6 @@ lookup' (suc i)     []  = nothing
 lookup' (suc i) (x ∷ l) = lookup' i l
 
 -- another option : add proof of i < n
-{-
 lookupP : {i n : ℕ} {A : Set}
         → i < n
         → Vec A n
@@ -392,7 +415,6 @@ lookupP : {i n : ℕ} {A : Set}
 lookupP     {i}       {.0}  ()     []
 lookupP  {zero} {.(suc _)} i<n (x ∷ l) = x
 lookupP {suc i} {.(suc _)} i<n (x ∷ l) = lookupP (≤-pred i<n) l
--}
 
 {-
 ------------------------------------------------------------------------------
@@ -407,10 +429,12 @@ What follows is a dictionary between the two.
 -- 6.5.1 Implication : corresponds to arrow (→) in types
 -}
 
+-- constant function
 -- classical formula   A ⇒ B ⇒ A  proved by
 K : {A B : Set} → A → B → A
 K x y = x
 
+-- composition
 -- classical formula     (A ⇒ B ⇒ C) ⇒ (A ⇒ B) ⇒ A ⇒ C  proved by
 S : {A B C : Set} → (A → B → C) → (A → B) → A → C
 S g f x = g x (f x)
@@ -456,8 +480,7 @@ general : when logical connectives are defined with inductive types,
 Induction principle : ELIMINATION RULE CORRESPONDS TO THE ASSOCIATED INDUCTION PRINCIPLE
 -}
 
--- for case where P does not depend on its arg,
--- below dependent induction principle (x-ind) implies simpler principle:
+-- for case where P does not depend on its arg
 ×-rec : {A B : Set}
   → (P : Set)
   → (A → B → P)
@@ -489,10 +512,8 @@ data ⊤ : Set where
   tt : ⊤ -- constructor is introduction rule
 
 {-
-    ----- (>I)
-    Γ ⊢>
-
-know from logic : there is no introduction rule associated to truth.
+    ----- (⊤I)
+    Γ ⊢ ⊤
 -}
 
 -- induction principle
@@ -504,12 +525,16 @@ know from logic : there is no introduction rule associated to truth.
 ⊤-rec P Ptt tt = Ptt
 
 {-
-    Γ ⊢ P    Γ ⊢> ⊤
-    --------------- (>E)
+know from logic there is no elimination rule associated with truth
+
+but can write rule that corresponds to induction principle:
+
+    Γ ⊢ P    Γ ⊢ ⊤
+    --------------- (⊤E)
          Γ ⊢ P
 
 not interesting from a logical point of view:
-if P holds and > holds
+if P holds and ⊤ holds
 then can deduce that P holds, which was already known
 
 ------------------------------------------------------------------------------
@@ -518,7 +543,7 @@ Data.Empty
 -}
 
 data ⊥ : Set where
-  -- no constructor, thus no introduction rule
+  -- no constructor, so no introduction rule
 
 -- dependent induction principle
 ⊥-d-elim : (P : ⊥ → Set) → (x : ⊥) → P x
@@ -546,7 +571,7 @@ Relation.Nullary
 
 -- e.g., A ⇒ ¬¬A  proved:
 nni : {A : Set} → A → ¬ (¬ A)
-nni x f = f x
+nni A ¬A = ¬A A
 
 {-
 ------------------------------------------------------------------------------
@@ -568,22 +593,20 @@ The two constructors correspond to the two introduction rules
     Γ ⊢ A ∨ B
 -}
 
--- e.g., commutativity of disjunction
+-- commutativity of disjunction
 ⊎-comm : (A B : Set) → A ⊎ B → B ⊎ A
 ⊎-comm A B (inj₁ x) = inj₂ x
 ⊎-comm A B (inj₂ y) = inj₁ y
-
 {-
--- e.g., proof of (A ∨ ¬A) ⇒ ¬¬A ⇒ A
+-- proof of (A ∨ ¬A) ⇒ ¬¬A ⇒ A
 lem-raa : {A : Set}
   → A ⊎ ¬ A
   → ¬ (¬ A)
   → A
-lem-raa (inj₁ a)  k = a
-lem-raa (inj₂ a') k = ⊥-elim (k a')
-
--- induction principle
+lem-raa (inj₁  a) _ = a
+lem-raa (inj₂ ¬a) k = ⊥-elim (k ¬a) -- ⊥ !=< Set
 -}
+-- induction principle
 ⊎-rec : {A B : Set}
   → (P : A ⊎ B → Set)
   → ((x : A) → P (inj₁ x))
@@ -654,7 +677,6 @@ Dependent function types are also called Π-types
 often written
 
     Π(x : A).B
-
 
 can be define as (note: there is builtin notation in Agda)
 -}
@@ -731,15 +753,16 @@ formally defined
 translated to with two Σ types
 - one for the comprehension
 - one for the universal quantification
+-}
 Im : {A B : Set} (f : A → B) → Set
 Im {A} {B} f = Σ B (λ y → Σ A (λ x → f x ≡ y))
 
-e.g., can show that every function f : A → B has a right inverse (or section)
-g : Im(f) → A
-
+-- e.g., can show that every function f : A → B has a right inverse (or section)
+-- g : Im(f) → A
 sec : {A B : Set} (f : A → B) → Im f → A
-sec f (y , x , p) = x
+sec f (y , (x , p)) = x
 
+{-
 ------------------------------------------------------------------------------
 -- p 293 : the axiom of choice
 
@@ -750,11 +773,12 @@ section 6.5.9 defined type Rel A B
 corresponding to relations between types A and B
 
 using Rel, can prov axiom of choice
-AC : {A B : Set} (R : Rel A B)
-  → ((x : A) → Σ B (λ y → R x y))
-  → Σ (A → B) (λ f → ∀ x → R x (f x))
-AC R f = (λ x → proj₁ (f x)) , (λ x → proj₂ (f x))
-
+-}
+-- AC : {A B : Set} (R : Rel A B) -- TODO
+--   → ((x : A) → Σ B (λ y → R x y))
+--   → Σ (A → B) (λ f → ∀ x → R x (f x))
+-- AC R f = (λ x → proj₁ (f x)) , (λ x → proj₂ (f x))
+{-
 the arg that corresponds to the proof of (6.1), is constructive
 a function which to every element x of type A
 associates a pair of an element y of B
@@ -779,9 +803,9 @@ see 9.3.4.
 ------------------------------------------------------------------------------
 -- p 293 : 6.5.9 Predicates
 
-In classical logic, the set B of booleans is the set of truth values:
+In classical logic, the set Bool of booleans is the set of truth values:
 - a predicate on a set A can either be false or true
-- modeled as a function A → B
+- modeled as a function A → Bool
 
 In Agda/intuitionistic logic
 - not so much interested in truth value of predicate
@@ -792,7 +816,7 @@ predicate P on a type A is term of type
 
   A → Set
 
-which to every element x of A associates the type of proofs of P x.
+which to every element x of A associates the type of proofs of P x
 
 ------------------------------------------------------------------------------
 -- p 294 Relations
@@ -805,26 +829,26 @@ x of A is in relation with an element y when (x, y) ∈ R
 relation on A can also be encoded as a function : A × A → 𝔹
 or, curryfication,                              : A → A → 𝔹
 
-In this representation, x is in relation with y when R(x, y) = 1
+in this representation, x is in relation with y when R(x, y) = 1
 
 In Agda/intuitionistic
 - relations between types A and B as type Rel A
 - obtained by replacing the set 𝔹 of truth values with Set in the above description:
+-}
+Rel : Set → Set₁
+Rel A = A → A → Set
 
-    Rel : Set → Set₁
-    Rel A = A → A → Set
+-- e.g.
+-- _≤_ : type Rel ℕ
+-- _≡_ : type Rel A
 
-e.g.
-- _≤_ : type Rel ℕ
-- _≡_ : type Rel A
-
+{-
 ------------------------------------------------------------------------------
 Inductive predicates (predicates defined by induction)
---e.g.,
 -}
 
 data isEven : ℕ → Set where
-  even-z : isEven zero                               -- 0 is event
+  even-z : isEven zero                               --    0 is even
   even-s : {n : ℕ} → isEven n → isEven (suc (suc n)) -- if n is even then n + 2 is even
 {-
 corresponds to def of set E ⊆ N of even numbers
@@ -867,7 +891,7 @@ _≤'_ : ℕ → ℕ → Set
 m ≤' n = Σ (λ m' → m + m' ≡eq n)
 
 another:
-
+-}
 le : ℕ → ℕ → Bool
 le   zero       n  = true
 le (suc m)   zero  = false
@@ -876,6 +900,7 @@ le (suc m) (suc n) = le m n
 _≤'_ : ℕ → ℕ → Set
 m ≤' n = le m n ≡ true
 
+{-
 EXERCISE : show reflexivity and transitivity with the alternate formalizations
 
 involved example
@@ -927,26 +952,30 @@ trans : {A : Set} {x y z : A}
   → x ≡ z
 trans refl refl = refl
 
-cong : {A B : Set} (f : A → B) {x y : A}
+cong : ∀ {A B : Set} (f : A → B) {x y : A}
   →   x ≡   y
   → f x ≡ f y
 cong f refl = refl
 
 -- substitutivity : enables transporting the elements of a type along an equality
+{-
 subst : {A : Set} (P : A → Set) → {x y : A}
   →   x ≡ y
   → P x
   → P     y
 subst P refl p = p
+-}
+-- https://stackoverflow.com/a/27789403
+subst : ∀ {a p} {A : Set a} (P : A → Set p) {x y : A}
+      → x ≡ y → P x → P y
+subst P refl p = p
 
 -- coercion : enables converting an element of type to another equal type
-{- DOES NOT COMPILE
 coe : {A B : Set}
   → A ≡ B
   → A
   → B
 coe p x = subst (λ A → A) p x
--}
 
 -- see 9.1
 
@@ -964,15 +993,15 @@ traditional notation : show  ∀n ∈ N. isEven(n) ⇒ ∃m ∈ ℕ.m + m = n
 +-suc  zero   n = refl
 +-suc (suc m) n = cong suc (+-suc m n)
 
-{- DOES NOT COMPILE
-even-half : {n : ℕ}
-  → isEven n
-  → Σ (λ m → m + m ≡ n)
-even-half  even-z = zero , refl
-even-half (even-s e) with even-half e
-even-half (even-s e) | m , p =
-  suc m , cong suc (trans (+-suc m m) (cong suc p))
+-- even-half : {n : ℕ}
+--   → isEven n
+--   → Σ (λ m → m + m ≡ n) -- TODO (m : ℕ) → Set !=< Set
+-- even-half  even-z = zero , refl
+-- even-half (even-s e) with even-half e
+-- even-half (even-s e) | m , p =
+--   suc m , cong suc (trans (+-suc m m) (cong suc p))
 
+{-
 second case : by induction have m such that m + m = n
 need to construct a half for n + 2: m + 1
 show that it is a half via
@@ -1023,7 +1052,7 @@ _∎ _ = refl
     suc (n + m)
   ∎
 
--- p 298
+-- p 297
 -- another proof using properties of equality
 +-comm' : (m n : ℕ) → m + n ≡ n + m
 +-comm' m   zero  = +-zero m
@@ -1053,7 +1082,7 @@ not ≡, but equality internal to Agda, referred to as definitional equality
 -- implies structure of definitions is important (and an art form)
 
 ------------------------------------------------------------------------------
--- p 299 6.6.6 More properties with equality
+-- p 298 6.6.6 More properties with equality
 
 -- zero is NOT the successor of any NAT
 zero-suc : {n : ℕ} → zero ≡ suc n → ⊥
@@ -1063,8 +1092,24 @@ zero-suc ()
 +-assoc  zero   n o = refl
 +-assoc (suc m) n o = cong suc (+-assoc m n o)
 
--- *-+-dist-r TODO
--- *-assoc    TODO
+-- p 299
+*-+-dist-r : (m n o : ℕ)
+           → (m + n) * o ≡ m * o + n * o
+*-+-dist-r  zero   n o = refl
+*-+-dist-r (suc m) n o
+  rewrite
+    +-comm n o
+  | *-+-dist-r m n o
+  | +-assoc o (m * o) (n * o)
+  = refl
+
+*-assoc : (m n o : ℕ) → (m * n) * o ≡ m * (n * o)
+*-assoc  zero   n o = refl
+*-assoc (suc m) n o
+  rewrite
+    *-+-dist-r n (m * n) o
+  | *-assoc m n o
+  = refl
 
 ------------------------------------------------------------------------------
 -- p 299 Lists
@@ -1086,17 +1131,19 @@ empty-++ (x ∷ l) = cong (x ∷_) (empty-++ l)
 ++-assoc      []  l2 l3 = refl
 ++-assoc (x ∷ l1) l2 l3 = cong (x ∷_) (++-assoc l1 l2 l3)
 
-{- DOES NOT COMPILE: Set₁ != Set
-++-not-comm : ¬ ({A : Set} → (l1 l2 : List A) → (l1 ++ l2) ≡ (l2 ++ l1))
-++-not-comm f with f (1 ∷ []) (2 ∷ [])
-...  | ()
--}
+-- TODO DOES NOT COMPILE: Set₁ != Set
+-- ++-not-comm : ¬ ({A : Set} → (l1 l2 : List A)
+--                  → (l1 ++ l2) ≡ (l2 ++ l1))
+-- ++-not-comm f with f (1 ∷ []) (2 ∷ [])
+-- ... | ()
 
 ++-length : {A : Set}
           → (l1 l2 : List A)
           → length (l1 ++ l2) ≡ length l1 + length l2
 ++-length      []  l2 = refl
 ++-length (x ∷ l1) l2 = cong (1 +_) (++-length l1 l2)
+
+-- p 300
 
 -- adds element to end of list
 snoc : {A : Set} → List A → A → List A
@@ -1125,7 +1172,7 @@ rev-rev (x ∷ l) = trans (rev-snoc (rev l) x)
 
 
 --------------------------------------------------
--- 6.6.7 The J rule.
+-- p 300 6.6.7 The J rule.
 
 -- equality
 data _≡'_ {A : Set} : A → A → Set where
@@ -1148,17 +1195,17 @@ so that the resulting induction principle is a variant:
 -}
 
 J' : {A : Set}
-    (x : A)
-    (P : (y : A) → x ≡' y → Set)
-    (r : P x refl')
-    (y : A)
-    (p : x ≡' y)
-  → P y p
+     (x : A)
+     (P : (y : A) → x ≡' y → Set)
+     (r : P x refl')
+     (y : A)
+     (p : x ≡' y)
+   → P y p
 J' x P r .x refl' = r
 
 {-
 --------------------------------------------------
-6.6.8 Decidable equality.
+p 301 6.6.8 Decidable equality.
 
 A type A is decidable when either A or ¬A is provable.
 
@@ -1200,9 +1247,11 @@ suc m ≟ℕ suc n with m ≟ℕ n
 
 {-
 --------------------------------------------------
-p 302 6.6.9 Heterogeneous equality : enables comparing (seemingly) distinct types
+p 301 6.6.9 Heterogeneous equality : enables comparing (seemingly) distinct types
 
 due to McBride [McB00]
+
+p 302
 
 e.g., show concatenation of vectors is associative
 
@@ -1236,20 +1285,56 @@ has type
 -- lemma : if l and l’ are propositional equal vectors,
 -- up to propositional equality of their types as above,
 -- then x : l and x : l’ are also propositionally equal:
-{- DEPENDS ON 'coe' WHICH DOES NOT COMPILE
 ∷-cong : {A : Set} → {m n : ℕ} {l1 : Vec A m} {l2 : Vec A n}
        → (x : A)
        → (p : m ≡ n)
-       → coe (cong (Vec A) p) l1 ≡ l2
-       → coe (cong (Vec A) (cong suc p)) (x ∷ l1) ≡ x ∷ l2
+       → coe (PE.cong (Vec A) p) l1 ≡ l2
+       → coe (PE.cong (Vec A) (PE.cong suc p)) (x ∷ l1) ≡ x ∷ l2
 ∷-cong x refl refl = refl
 
-++-assoc : {A : Set} {m n o : ℕ}
-         → (l1 : Vec A m)
-         → (l2 : Vec A n)
-         → (l3 : Vec A o)
-         → coe (cong (Vec A) (+-assoc m n o)))
-               ((l1 ++ l2) ++ l3) ≡ l1 ++ (l2 ++ l3)
-++-assoc                          []  l2 l3 = refl
-++-assoc {_} {suc m} {n} {o} (x : l1) l2 l3 = ∷-cong x (+-assoc m n o) (++-assoc l1 l2 l3)
+-- TODO this needs Vec ++ (only List ++ in scope)
+-- ++-assoc' : {A : Set} {m n o : ℕ}
+--           → (l1 : Vec A m)
+--           → (l2 : Vec A n)
+--           → (l3 : Vec A o)
+--           → coe (PE.cong (Vec A) (+-assoc m n o))
+--                 ((l1 ++ l2) ++ l3) ≡ l1 ++ (l2 ++ l3)
+-- ++-assoc'                          []  l2 l3 = refl
+-- ++-assoc' {_} {suc m} {n} {o} (x ∷ l1) l2 l3 = ∷-cong x (+-assoc m n o) (++-assoc' l1 l2 l3)
+
+{-
+p 303 Proof with heterogeneous equality - TODO
+
+------------------------------------------------------------------------------
+p 303 6.7 Proving programs in practice
+
+correctness means it agrees with a specification
+
+correctness properties
+- absence of errors : uses funs with args in correct domain (e.g., no divide by zero)
+- invariants : properties always satisfied during execution
+- functional properties : computes expected output on any given input
+
+p 304 6.7.1 Extrinsic vs intrinsic proofs
+
+extrinsic : first write program then prove properties about it (from "outside") e.g., sort : List ℕ →     List ℕ
+intrinsic : incorporate properties in types                                     e.g., sort : List ℕ → SortList ℕ
+
+example: length of concat of two lists is sum of their lengths
 -}
+-- extrinsic proof
+++-length' : {A : Set}
+           → (l1 l2 : List A)
+           → length (l1 ++ l2) ≡ length l1 + length l2
+++-length'      []  l2 = refl
+++-length' (x ∷ l1) l2 = PE.cong suc (++-length' l1 l2)
+
+-- intrinsic
+_V++_ : {m n : ℕ} {A : Set} → Vec A m → Vec A n → Vec A (m + n)
+[]      V++ l  = l
+(x ∷ l) V++ l' = x ∷ (l V++ l')
+
+------------------------------------------------------------------------------
+-- p 305 6.7.2 Insertion sort
+
+

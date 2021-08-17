@@ -1,0 +1,42 @@
+Created       : 2015 Oct 19 (Mon) 19:02:43 by Harold Carr.
+Last Modified : 2015 Nov 13 (Fri) 15:19:54 by Harold Carr.
+
+Harper's course : Principles of Programming Languages
+http://www.cs.cmu.edu/~rwh/courses/ppl/hws.html
+
+Frank Pfenning and Ron Garcia : Constructive Logic
+http://www.cs.cmu.edu/~fp/courses/15317-f09/
+
+Type Theory Study Group
+https://groups.google.com/forum/?utm_source=digest&utm_medium=email#!forum/type-theory-study-group/topics
+
+Hackpad
+https://ttsg.hackpad.com/Type-Theory-Study-Group-Meeting-1-oBuYSKYx4CV
+
+freenode
+#typetheory
+
+* 1. Abstract Syntax
+
+** 1.1 Abstract Syntax Trees
+
+- surface syntax             : how entered/displayed (e.g., strings of characters)
+- structural/abstract syntax : how parts are composed (e.g., lisp)
+- abstract binding           : enrich AST with identifier binding/scope
+
+AST
+- /leaves/ are variables, /nodes/ are operators whose arguments are its children
+- classified by /sorts/ (syntactic categories, e.g., expressions, commands)
+- a /variable/ is a place-hodler whose meaning is given by substitution
+- tree structure enables reasoning via /structural induction/
+  - specify all possible cases
+
+** 1.2 Abstract Binding Trees
+
+ABT
+- generalize AST by allowing an operator to bind any finite number of variables in each argument
+
+* 2. Inductive Definitions
+
+
+
