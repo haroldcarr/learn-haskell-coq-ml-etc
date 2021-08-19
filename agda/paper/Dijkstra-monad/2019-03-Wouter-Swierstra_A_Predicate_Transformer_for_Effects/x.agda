@@ -1,3 +1,5 @@
+{-# OPTIONS --type-in-type   #-} -- NOT SOUND!
+
 open import Data.Empty      using (⊥)
 open import Data.Nat        renaming (ℕ to Nat)
 open import Data.Nat.DivMod
@@ -300,7 +302,7 @@ can characterise this relation by proving:
 refinement : (f g : a → Maybe b)
            → (wpPartial f ⊑ wpPartial g) ↔ (∀ x → (f x ≡ g x) ∨ (f x ≡ Nothing))
 
-can we lemma it to relate Kleisli morphisms,
+use refinement to relate Kleisli morphisms,
 and to relate a program to a specification given by a pre- and postcondition
 
 
@@ -310,18 +312,12 @@ add top two elements; can fail fail if stack has too few elements
 
 below shows how to prove the definition meets its specification
 
-Define specification in terms of a pre- and postcondition.
+Define specification in terms of a pre/post condition.
 The specification of a function of type (x : a) → b x consists of
-- a precondition on a, and
-- a postcondition relating inputs that satisfy this precondition and the corresponding outputs
 -}
 record Spec (a : Set) (b : a → Set) : Set where
   constructor [_,_]
   field
-    pre  : a → Set
-    post : (x : a) → b x → Set
-
-
-
-
-
+    pre  : a → Set             -- a precondition on a, and
+    post : (x : a) → b x → Set -- a postcondition relating inputs that satisfy this precondition
+                               -- and the corresponding outputs
