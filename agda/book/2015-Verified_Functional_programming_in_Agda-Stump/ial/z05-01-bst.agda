@@ -86,10 +86,11 @@ bst-insert d (bst-node d' L R p1 p2) with keep (d ≤A d')
 bst-insert d (bst-node d' L R p1 p2) | tt , p with bst-insert d L
 
 bst-insert d (bst-node d' L R p1 p2) | tt , p | L' rewrite p =
-  bst-node d' L'                (bst-inc-ub R (≤A-trans p2 max-≤2)) (min2-mono p1) ≤A-refl
+  bst-node d' L'                (bst-inc-ub R (≤A-trans p2 max-≤2))
+           (min2-mono p1) ≤A-refl
 
 bst-insert d (bst-node d' L R p1 p2) | ff , p with bst-insert d R
 
 bst-insert d (bst-node d' L R p1 p2) | ff , p | R' rewrite p =
-  bst-node d' (bst-dec-lb L p1) R'                                  min-≤2         (max2-mono p2)
-
+  bst-node d' (bst-dec-lb L p1) R'
+           min-≤2         (max2-mono p2)
