@@ -1,9 +1,9 @@
-open import Base
-open import Nat
-open import PropositionalEquality using (_≡_; refl; cong; equivalence)
-open import Sort _≤?_ totalOrder
+open import x1-Base
+open import x4-Nat
+open import x3-PropositionalEquality using (_≡_; refl; cong; equivalence)
+open import x2-Sort _≤?_ totalOrder
 
-module Test where
+module x5-Test where
 
 empty : OList ⊥ ⊤
 empty = nil ⊥≤̂

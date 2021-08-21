@@ -1,6 +1,6 @@
-open import Base
+open import x1-Base
 
-module Sort
+module x2-Sort
          {X    : Set}
          {_≈_  : Rel X}
          {_≤_  : Rel X}

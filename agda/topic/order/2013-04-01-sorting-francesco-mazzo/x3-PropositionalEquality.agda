@@ -1,6 +1,6 @@
-open import Base
+open import x1-Base
 
-module PropositionalEquality where
+module x3-PropositionalEquality where
 
 data _≡_ {X} : Rel X where
   refl : ∀ {x} → x ≡ x

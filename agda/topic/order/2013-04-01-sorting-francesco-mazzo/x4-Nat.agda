@@ -1,6 +1,6 @@
-open import Base
+open import x1-Base
 
-module Nat where
+module x4-Nat where
 
 data ℕ : Set where
   zero :     ℕ
@@ -23,7 +23,7 @@ suc x ≤? suc y with x ≤? y
 ... | left  x≤y = left  (s≤s x≤y)
 ... | right x>y = right (λ sx≤sy → x>y (≤-suc sx≤sy))
 
-open import PropositionalEquality using (_≡_; refl; cong; equivalence)
+open import x3-PropositionalEquality using (_≡_; refl; cong; equivalence)
 
 antisym : ∀ {x y} → x ≤ y → y ≤ x → x ≡ y
 antisym  z≤n       z≤n      = refl
