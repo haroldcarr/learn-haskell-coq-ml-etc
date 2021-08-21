@@ -1,4 +1,4 @@
-open import AgdaSort
+open import Base
 
 module Sort
          {X    : Set}
@@ -9,8 +9,6 @@ module Sort
   where
 open TotalOrder  ord         using (total; equivalence)
 open Equivalence equivalence using (refl)
-
---Insertion sort
 
 -- represent bounded lists, but want bounds to be open
 -- so lift X in a type that contains a top and bottom elements
@@ -42,10 +40,10 @@ toList (nil _)       = []
 toList (cons x xs _) = x ∷ toList xs
 
 insert : ∀ {l u} x
-       → OList l u
-       → l ≤̂ ⟦ x ⟧
-       → ⟦ x ⟧ ≤̂ u
-       → OList l u
+       → OList l           u
+       →       l ≤̂ ⟦ x ⟧
+       →           ⟦ x ⟧ ≤̂ u
+       → OList l           u
 insert x   (nil _)             l≤̂⟦x⟧ ⟦x⟧≤̂u =
   cons x  (nil ⟦x⟧≤̂u)
           l≤̂⟦x⟧

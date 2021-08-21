@@ -1,7 +1,4 @@
-------------------------------------------------------------------------------
--- use them
-
-open import AgdaSort
+open import Base
 
 module PropositionalEquality where
 

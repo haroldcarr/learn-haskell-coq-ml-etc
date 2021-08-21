@@ -1,4 +1,4 @@
-module AgdaSort where
+module Base where
 
 data List (X : Set) : Set where
   []  :              List X

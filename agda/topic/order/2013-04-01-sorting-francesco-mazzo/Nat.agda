@@ -1,4 +1,4 @@
-open import AgdaSort
+open import Base
 
 module Nat where
 
@@ -53,10 +53,3 @@ totalOrder = record
   ; equivalence = equivalence
   }
 
-open import Sort _≤?_ totalOrder using (isort; t-sort)
-
-sl : List ℕ
-sl = t-sort (12 ∷ 3 ∷ 7 ∷ 4 ∷ 40 ∷ 5 ∷ 0 ∷ [])
-
-_ : sl ≡ (0 ∷ 3 ∷ 4 ∷ 5 ∷ 7 ∷ 12 ∷ 40 ∷ [])
-_ = refl
