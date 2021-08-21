@@ -63,7 +63,7 @@ x≡y→xR≤y {suc x} {.(suc x)} _≡_.refl = s≤s (x≤y≡tt→xR≤y (≤-r
   ; equivalence = ℕ-Equivalence
   }
 
-import z05-01-hc-slist2 as SL
+import z05-01-hc-slist2-list as SL
 open   SL {ℕ}
           {_≡_}
           {_R≤_}
@@ -85,6 +85,7 @@ l-1-5-9 = insert 1 l-5-9 (≤-lift z≤n) (≤-lift (s≤s z≤n))
 l-1-5-9' : OList ⊥ ⊤
 l-1-5-9' = isort' (9 ∷ 1 ∷ 5 ∷ [])
 
+-- cannot do because lower/upper indices different : l-1-5-9 ≡ l-1-5-9'
 _ : toList l-1-5-9 ≡ toList l-1-5-9'
 _ = eq.refl
 

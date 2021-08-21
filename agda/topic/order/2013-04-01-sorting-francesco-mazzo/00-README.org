@@ -1,0 +1,3 @@
+https://mazzo.li/posts/AgdaSort.html
+2013-04-01
+Agda by Example: Sorting

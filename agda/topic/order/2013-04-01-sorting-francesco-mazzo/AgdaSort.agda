@@ -1,9 +1,4 @@
-{-
-https://mazzo.li/posts/AgdaSort.html
-2013-04-01Agda by Example: Sorting
--}
-
-module z05-01-hc-slist2-base where
+module AgdaSort where
 
 data List (X : Set) : Set where
   []  :              List X
