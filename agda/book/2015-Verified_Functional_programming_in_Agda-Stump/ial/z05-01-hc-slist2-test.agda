@@ -88,28 +88,3 @@ l-1-5-9' = isort' (9 ∷ 1 ∷ 5 ∷ [])
 -- cannot do because lower/upper indices different : l-1-5-9 ≡ l-1-5-9'
 _ : toList l-1-5-9 ≡ toList l-1-5-9'
 _ = eq.refl
-
-{-
-
-_ : bst-search 0 empty ≡ nothing
-_ = refl
-
-_ : bst-insert 5 empty ≡ bst-node 5 (bst-leaf refl) (bst-leaf refl) refl refl
-_ = refl
-
-bst-5 : bst 0 5
-bst-5 = bst-insert 5 empty
-
-_ : maybe (Σ ℕ (λ z → (5 < z || 5 =ℕ z) && (z < 5 || z =ℕ 5) ≡ tt))
-_ = bst-search 5 bst-5
-
-_ : bst-insert 9 bst-5 ≡ bst-node 5 (bst-leaf refl)
-                           (bst-node 9 (bst-leaf refl) (bst-leaf refl) refl refl) refl refl
-_ = refl
-
-_ : bst 0 9
-_ = bst-insert 9 bst-5
-
-_ : bst 0 5
-_ = bst-dec-lb {0} {0} {5} (bst-leaf refl) refl
--}

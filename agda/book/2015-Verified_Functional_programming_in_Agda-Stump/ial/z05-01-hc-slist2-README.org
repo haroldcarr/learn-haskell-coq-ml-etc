@@ -1,0 +1,4 @@
+see agda/topic/order/2013-04-01-sorting-francesco-mazzo
+
+the version here retrofits ial types into mazzo's scheme
+
