@@ -389,42 +389,290 @@ external verification : theorems about functions proved separately
 
 -- inner vector is a row
 _by_matrix : ℕ → ℕ → Set
-numRows by lenRow matrix = 𝕍 (𝕍 ℕ lenRow) numRows
+rows by cols matrix = 𝕍 (𝕍 ℕ cols) rows
 
-matrix-to-vecvec : ∀ {numRows lenRow : ℕ} → numRows by lenRow matrix → 𝕍 (𝕍 ℕ lenRow) numRows
-matrix-to-vecvec 𝕞 = 𝕞
+matrix-to-vec-vec : ∀ {rows cols : ℕ} → rows by cols matrix → 𝕍 (𝕍 ℕ cols) rows
+matrix-to-vec-vec 𝕞 = 𝕞
 
 -- 2a
-zero-matrix : (numRows : ℕ) → (lenRow : ℕ) → numRows by lenRow matrix
-zero-matrix numRows lenRow = repeat𝕍 (repeat𝕍 0 lenRow) numRows
+zero-matrix : (rows cols : ℕ) → rows by cols matrix
+zero-matrix rows cols = repeat𝕍 (repeat𝕍 0 cols) rows
+
+_ : zero-matrix 2 3 ≡ (0 :: 0 :: 0 :: []) ::
+                      (0 :: 0 :: 0 :: []) :: []
+_ = refl
+
+_ : zero-matrix 0 0 ≡ []
+_ = refl
+_ : zero-matrix 0 1 ≡ []
+_ = refl
+_ : zero-matrix 1 0 ≡ [] :: []
+_ = refl
+_ : zero-matrix 1 1 ≡ (0 :: []) :: []
+_ = refl
+
 -- 2b
-matrix-elt : ∀ {numRows lenRow : ℕ}
-  → numRows by lenRow matrix
-  → (nr : ℕ)
-  → (lr : ℕ)
-  → nr < numRows ≡ tt
-  → lr < lenRow  ≡ tt
+matrix-elt : ∀ {rows cols : ℕ}
+  → rows by cols matrix
+  → (r : ℕ)
+  → (c : ℕ)
+  → r < rows ≡ tt
+  → c < cols ≡ tt
   → ℕ
-matrix-elt 𝕞 nr lr nr<numRows lr<lenRow = nth𝕍 lr lr<lenRow (nth𝕍 nr nr<numRows (matrix-to-vecvec 𝕞))
+matrix-elt 𝕞 r c r<rows c<cols = nth𝕍 c c<cols (nth𝕍 r r<rows (matrix-to-vec-vec 𝕞))
 
 -- 2c
 diagonal-matrix : ℕ → (n : ℕ) → n by n matrix
 diagonal-matrix d n = mkRows n n n
  where
-  mkRow : ℕ → (n : ℕ) → 𝕍 ℕ n
-  mkRow _     zero   = []
-  mkRow i sn@(suc n) = (if i =ℕ sn then d else zero) :: mkRow i n
+  -- when constructing rows/cols
+  -- - row/col param corresponds to row/col - rows/cols
+  -- - e.g., for 2 x 3 matrix
+  --   row param 2 corresponds 2 - 2 = 0
 
-  mkRows : ℕ → (n : ℕ) → (x : ℕ) → 𝕍 (𝕍 ℕ n) x
-  mkRows _ _  zero   = []
-  mkRows i n (suc x) = mkRow i n :: mkRows (i ∸ 1) n x
+  mkElt  : ℕ → ℕ → ℕ
+  mkElt i col = if i =ℕ col then d else zero
+
+  mkCols : (ℕ → ℕ) → (cols : ℕ) → 𝕍 ℕ cols
+  mkCols _     zero   = []
+  mkCols f sc@(suc c) = f sc :: mkCols f c
+
+  mkRows : ℕ → (rows : ℕ) → (cols : ℕ) → 𝕍 (𝕍 ℕ cols) rows
+  mkRows _  zero   _ = []
+  mkRows i (suc r) c = mkCols (mkElt i) c :: mkRows (i ∸ 1) r c
 
 identity-matrix : (n : ℕ) → n by n matrix
 identity-matrix = diagonal-matrix 1
 
+idm5 : 5 by 5 matrix
+idm5 = identity-matrix 5
+
+_ : idm5 ≡ (1 :: 0 :: 0 :: 0 :: 0 :: []) ::
+           (0 :: 1 :: 0 :: 0 :: 0 :: []) ::
+           (0 :: 0 :: 1 :: 0 :: 0 :: []) ::
+           (0 :: 0 :: 0 :: 1 :: 0 :: []) ::
+           (0 :: 0 :: 0 :: 0 :: 1 :: []) :: []
+_ = refl
+
+_ : matrix-elt idm5 0 0 refl refl ≡ 1
+_ = refl
+_ : matrix-elt idm5 1 1 refl refl ≡ 1
+_ = refl
+_ : matrix-elt idm5 0 1 refl refl ≡ 0
+_ = refl
+
 -- 2d
--- 1 2 3  T  1 0
--- 0 6 7     2 6
---           3 7
-transpose : ∀ {m n : ℕ} → n by m matrix →  m by n matrix
-transpose = {!!}
+-- BEGIN https://typeslogicscats.gitlab.io/posts/agda-matrix.lagda.html
+prepend-column
+  : ∀ {m n : ℕ}
+  → 𝕍 ℕ n                    -- a column
+  → n by     m matrix
+  → n by suc m matrix        -- prepends the given column to the matrix
+prepend-column      []           []  = []
+prepend-column (x :: xs) (vec :: vecs) = (x :: vec) :: (prepend-column xs vecs)
+
+-- inverse of prepend-column (NOT USED)
+unprepend-column
+  : ∀ {m n : ℕ}
+  →            n by suc m matrix
+  → (𝕍 ℕ n) × (n by     m matrix)
+unprepend-column                     [] = ([] , [])
+unprepend-column ((x :: vec) :: matrix) = let xs-vecs = unprepend-column matrix
+                                in x :: fst xs-vecs , vec :: snd xs-vecs
+
+fill-empty : (n : ℕ) → n by 0 matrix
+fill-empty       0 = []
+fill-empty (suc n) = [] :: fill-empty n
+
+transpose : ∀ {i : ℕ} {j : ℕ} → i by j matrix → j by i matrix
+transpose     {0} {j}           []  = fill-empty j
+transpose {suc _} {_} (row :: rows) = prepend-column row (transpose rows)
+-- END https://typeslogicscats.gitlab.io/posts/agda-matrix.lagda.html
+
+ex2x3 : 2 by 3 matrix
+ex2x3 = (1 :: 2 :: 3 :: []) ::
+        (0 :: 6 :: 7 :: []) :: []
+
+_ : transpose ex2x3 ≡ (1 :: 0 :: []) ::
+                      (2 :: 6 :: []) ::
+                      (3 :: 7 :: []) :: []
+_ = refl
+
+-- BEGIN HORRIBLE HACKY TRY
+postulate
+  yyy : (n : ℕ) → (rc : ℕ) → rc < n ≡ tt
+
+xx : ∀ {x y : ℕ}
+   → x =ℕ 0 ≡ ff
+   → y =ℕ 0 ≡ ff
+   → x ∸ y < x ≡ tt
+xx {x} {suc y} x≠0 y≠0
+  rewrite ∸< {x} {y} x≠0
+  = refl
+
+transpose' : ∀ {n m : ℕ} → n by m matrix → m by n matrix
+transpose'             {0}       {m} _ = zero-matrix m 0
+transpose'             {1}       {m} _ = zero-matrix m 1
+transpose' n@{suc (suc _)}    {zero} 𝕞 = zero-matrix zero n
+transpose' n@{suc (suc _)} m@{suc _} 𝕞 = mkRows m n
+ where
+  mkElt : (newRow : ℕ)
+        → newRow =ℕ 0 ≡ ff
+        → (newCol : ℕ)
+        → newCol =ℕ 0 ≡ ff
+        → ℕ
+  mkElt newRow rp newCol cp =
+    matrix-elt 𝕞 (n ∸ newCol)         (m ∸ newRow)
+--                 (xx cp refl) (xx rp refl)
+--              (yyy (n ∸ newCol) n) (yyy (m ∸ newRow) m)
+                    {!!} {!!}
+
+  mkCols : (∀ (new : ℕ) → new =ℕ 0 ≡ ff → ℕ) → (cols : ℕ) → 𝕍 ℕ cols
+  mkCols _     zero   = []
+  mkCols f sc@(suc c) = f sc refl :: mkCols f c
+
+  mkRows : (rows : ℕ) → (cols : ℕ) → 𝕍 (𝕍 ℕ cols) rows
+  mkRows     zero   _ = []
+  mkRows sr@(suc r) c = mkCols (mkElt sr refl) c :: mkRows r c
+
+_ : transpose' ex2x3 ≡ (1 :: 0 :: []) ::
+                       (2 :: 6 :: []) ::
+                       (3 :: 7 :: []) :: []
+_ = refl
+-- END HORRIBLE HACKY TRY
+
+-- 2e
+dotProduct𝕍 : ∀ {n : ℕ} → 𝕍 ℕ n → 𝕍 ℕ n → ℕ
+dotProduct𝕍       []        []  = 0
+dotProduct𝕍 (a :: as) (b :: bs) = a * b + (dotProduct𝕍 as bs)
+
+_ : dotProduct𝕍 (1 :: 3 :: 5 :: []) (4 :: 2 :: 1 :: []) ≡ 15
+_ = refl
+
+foldr : ∀ {A B : Set} {n : ℕ} → (A → B → B) → B → 𝕍 A n → B
+foldr f z       []  = z
+foldr f z (x :: xs) = f x (foldr f z xs)
+
+zipWith : ∀ {A B C : Set} {n : ℕ} → (A → B → C) → 𝕍 A n → 𝕍 B n → 𝕍 C n
+zipWith _       []        []  = []
+zipWith f (x :: xs) (y :: ys) = f x y :: zipWith f xs ys
+
+dotProduct𝕍' : ∀ {n : ℕ} → 𝕍 ℕ n → 𝕍 ℕ n → ℕ
+dotProduct𝕍' as bs = foldr _+_ 0 (zipWith _*_ as bs)
+
+_ : dotProduct𝕍' (1 :: 3 :: 5 :: []) (4 :: 2 :: 1 :: []) ≡ 15
+_ = refl
+
+-- 2f
+matrix-* : ∀ {m n p : ℕ} → m by n matrix → n by p matrix → m by p matrix
+matrix-* [] _ = []
+matrix-* {m} {n} {p} (a :: as) bs =
+  doRow {n} {p} a (transpose bs) :: matrix-* as bs
+ where
+  doRow : ∀ {n p : ℕ} → 𝕍 ℕ n → p by n matrix → 𝕍 ℕ p
+  doRow a [] = []
+  doRow {n} {p} a (b :: bs) = dotProduct𝕍 a b :: doRow a bs
+
+ma : 2 by 3 matrix
+ma = (2 :: 3 :: 4 :: []) ::
+     (1 :: 0 :: 0 :: []) :: []
+mb : 3 by 2 matrix
+mb = (0 :: 1000 :: []) ::
+     (1 ::  100 :: []) ::
+     (0 ::   10 :: []) :: []
+
+_ : matrix-* ma mb ≡ (3 :: 2340 :: []) ::
+                     (0 :: 1000 :: []) :: []
+_ = refl
+
+identity-2 : 2 by 2 matrix
+identity-2 = identity-matrix 2
+
+some-mat : 2 by 2 matrix
+some-mat =
+  (1 :: 2 :: []) ::
+  (3 :: 4 :: []) :: []
+
+some-mat-trans : 2 by 2 matrix
+some-mat-trans =
+  (1 :: 3 :: []) ::
+  (2 :: 4 :: []) :: []
+
+_ : matrix-* some-mat identity-2 ≡ some-mat
+_ = refl
+
+_ : transpose some-mat ≡ some-mat-trans
+_ = refl
+
+left-mat : 2 by 3 matrix
+left-mat =
+  (1 :: 2 :: 3 :: []) ::
+  (4 :: 5 :: 6 :: []) :: []
+
+right-mat : 3 by 2 matrix
+right-mat =
+  ( 7 ::  8 :: []) ::
+  ( 9 :: 10 :: []) ::
+  (11 :: 12 :: []) :: []
+
+product : 2 by 2 matrix
+product =
+  ( 58 ::  64 :: []) ::
+  (139 :: 154 :: []) :: []
+
+_ : matrix-* left-mat right-mat ≡ product
+_ = refl
+
+-- 3
+-- from list.agda
+data 𝕃 {ℓ} (A : Set ℓ) : Set ℓ where
+  [] : 𝕃 A
+  _::_ : (x : A) (xs : 𝕃 A) → 𝕃 A
+
+-- from vector.agda
+𝕍-to-𝕃 : ∀ {ℓ} {A : Set ℓ} {n : ℕ} → 𝕍 A n → 𝕃 A
+𝕍-to-𝕃 [] = []
+𝕍-to-𝕃 (x :: xs) = x :: (𝕍-to-𝕃 xs)
+
+𝕃-to-𝕍 : ∀ {ℓ} {A : Set ℓ} → 𝕃 A → Σ ℕ (λ n → 𝕍 A n)
+𝕃-to-𝕍 [] = (0 , [])
+𝕃-to-𝕍 (x :: xs) with 𝕃-to-𝕍 xs
+... | (n , v) = (suc n , x :: v)
+
+e3 : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
+   → (v : 𝕍 A n)
+   → 𝕃-to-𝕍 (𝕍-to-𝕃 v) ≡ n , v
+e3       [] = refl
+e3 (x :: v) with e3 v
+... | zz rewrite zz = refl
+
+-- 4. fun takes V (A × B) n ; returns pair V A n and V B n
+--    similar to Haskell unzip
+unzip : ∀ {ℓ} {A B : Set ℓ} {n : ℕ}
+      → 𝕍 (A × B) n
+      → 𝕍 A n × 𝕍 B n
+unzip       [] = [] , []
+unzip ((a , b) :: v) =
+  let rest = unzip v
+   in a :: fst rest , b :: snd rest
+
+_ : unzip ((1 , 10) :: (2 , 20) :: (3 , 30) :: []) ≡   ( 1 ::  2 ::  3 :: [])
+                                                     , (10 :: 20 :: 30 :: [])
+_ = refl
+
+{- TODO
+-- 5. Implement remove-min / remove-max functions for bst. type.
+Using remove-min, define a general remove function
+- that finds the first value isomorphic to a given one
+- and returns the bst without that value.
+For this, following the standard algorithm, it will be necessary,
+if the node holding the value has two (non-leaf) nodes as the left and right sub-trees,
+to replace the removed element with its successor.
+This is the minimum value in the right subtree.
+
+-- 6. In list-merge-sort.agda in the IAL, there is an implementation of merge-
+sort using Braun trees. State and prove some theorems about this merge-sort
+function. One that hopefully would not be too bad would be to prove that
+the length of the input list and the length of the sorted list returned by
+merge-sort are the same.
+-}
