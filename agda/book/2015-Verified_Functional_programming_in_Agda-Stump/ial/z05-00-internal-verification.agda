@@ -71,7 +71,7 @@ map𝕍 f (x :: xs) = f x :: map𝕍 f xs
 
 -- takes a vector of length m
 -- each element is vector of length n
--- concats into signle vector of length m * n
+-- concats into single vector of length m * n
 concat𝕍 : ∀{ℓ} {A : Set ℓ} {n m : ℕ} → 𝕍 (𝕍 A n) m → 𝕍 A (m * n)
 concat𝕍       []  = []
 concat𝕍 (x :: xs) = x ++𝕍 (concat𝕍 xs)
@@ -355,6 +355,76 @@ why Σ symbol for type of dependent pairs?
 for some type A and an ordering relation on that type
 values in left  subtree always ≤ value at node ℕ
 values in right subtree always > value at node ℕ
+
+see z05-01-bst-test.agda
+    z05-01-bst.agda
+
+-- p 117-120
+TODO : read/understand discussion of
+       bool-relations.agda
+       relations.agda
+
+------------------------------------------------------------------------------
+-- p 123 Internal vs. External Verification
+
+internal verification : datatypes defined with invariants; functions take proofs of preconditions
+- Datatypes with essential invariants : enforce via internal
+- Complex programs
+  - doing external of complex will cause reasoning about complexity
+    not relevant to property being proved
+  - internal weaves proofs thru code and datatype
+
+external verification : theorems about functions proved separately
+- Algebraic Properties e.g., proving associativity
+- Functions used in an internal verification's specification
+  -- e.g., min/max used in bst - need to externally prove properties about min/max
+
+------------------------------------------------------------------------------
+-- p 126 Exercises
+
+1. Nested vector type.
+   Fill in the hole to define a type for matrices of nats
+   where the type lists the dimensions of the matrix:
 -}
 
+-- inner vector is a row
+_by_matrix : ℕ → ℕ → Set
+numRows by lenRow matrix = 𝕍 (𝕍 ℕ lenRow) numRows
 
+matrix-to-vecvec : ∀ {numRows lenRow : ℕ} → numRows by lenRow matrix → 𝕍 (𝕍 ℕ lenRow) numRows
+matrix-to-vecvec 𝕞 = 𝕞
+
+-- 2a
+zero-matrix : (numRows : ℕ) → (lenRow : ℕ) → numRows by lenRow matrix
+zero-matrix numRows lenRow = repeat𝕍 (repeat𝕍 0 lenRow) numRows
+-- 2b
+matrix-elt : ∀ {numRows lenRow : ℕ}
+  → numRows by lenRow matrix
+  → (nr : ℕ)
+  → (lr : ℕ)
+  → nr < numRows ≡ tt
+  → lr < lenRow  ≡ tt
+  → ℕ
+matrix-elt 𝕞 nr lr nr<numRows lr<lenRow = nth𝕍 lr lr<lenRow (nth𝕍 nr nr<numRows (matrix-to-vecvec 𝕞))
+
+-- 2c
+diagonal-matrix : ℕ → (n : ℕ) → n by n matrix
+diagonal-matrix d n = mkRows n n n
+ where
+  mkRow : ℕ → (n : ℕ) → 𝕍 ℕ n
+  mkRow _     zero   = []
+  mkRow i sn@(suc n) = (if i =ℕ sn then d else zero) :: mkRow i n
+
+  mkRows : ℕ → (n : ℕ) → (x : ℕ) → 𝕍 (𝕍 ℕ n) x
+  mkRows _ _  zero   = []
+  mkRows i n (suc x) = mkRow i n :: mkRows (i ∸ 1) n x
+
+identity-matrix : (n : ℕ) → n by n matrix
+identity-matrix = diagonal-matrix 1
+
+-- 2d
+-- 1 2 3  T  1 0
+-- 0 6 7     2 6
+--           3 7
+transpose : ∀ {m n : ℕ} → n by m matrix →  m by n matrix
+transpose = {!!}
