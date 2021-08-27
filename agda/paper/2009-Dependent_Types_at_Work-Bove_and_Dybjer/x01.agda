@@ -16,14 +16,13 @@ intro to functional programming with dependent types
 - explain Curry-Howard identification of propositions and types
 - show a method to encode partial/general recursive functions as total functions using dependent types
 
-
 Dependent types are types that depend on elements of other types (e.g., Vec of length n)
 Invariants can also be expressed with dependent type (e.g., sorted list)
 
 Agda's dependent type system is an extension of Martin-Löf type theory [20,21,22,25].
 
 Parametrised types
-- e.g.,  [A]
+- e.g., [A]
 - usually not called dependent types
 - they are are families of types indexed by other types
   - not families of types indexed by ELEMENTS of another type
@@ -165,7 +164,7 @@ false || true  = true
 false || false = false
 infixl 60 _||_
 
--- EXERCISE: Define some more truth functions, such as conjunction and implication.
+-- EXERCISE: Define some more truth functions, such as conjunction and implication/TODO.
 
 _&&_ : Bool -> Bool -> Bool
 false && _     = false
@@ -197,6 +196,9 @@ zero   * n = zero
 succ n * m = (n * m) + m
 {-# BUILTIN NATTIMES _*_ #-}
 
+infixl 6  _+_  _∸_
+infixl 7  _*_
+
 _ : (2 * 3) + 10 PE.≡ 16
 _ = PE.refl
 {-
@@ -224,8 +226,7 @@ Martin-Löf  [21] instead considers lazy canonical forms
 -- if the second argument is greater than or equal to the first.
 -}
 _∸_ : Nat -> Nat -> Nat
-zero   ∸ succ _ = zero
-zero   ∸ zero   = zero
+zero   ∸    _   = zero
 succ n ∸ zero   = succ n
 succ n ∸ succ m = n ∸ m
 
@@ -256,10 +257,11 @@ _ = PE.refl
 {-
 2.3 Lambda Notation and Polymorphism
 
-Agda is based on the typed lambda calculus. We have already seen that applica-
-tion is written by juxtaposition. 
+Agda is based on the typed lambda calculus.
 
-Lambda abstraction is either written Curry-style without a type label on the argument x
+APPLICATION is juxtaposition
+
+lambda ABSTRACTION is either written Curry-style without a type label on the argument x
    \x -> e
 or Church-style with a type label
   \(x : A) -> e
@@ -357,29 +359,29 @@ _ : succ (succ (zero  + 2)) PE.≡
     succ (succ          2 )
 _ = PE.refl
 
-_ : succ (succ  zero) plus 2   PE.≡
-    natrec 2 (\x y -> succ y) (succ (succ zero))
+_ :                                                      succ (succ  zero) plus 2                     PE.≡
+                                                         natrec 2 (\x y -> succ y) (succ (succ zero))
 _ = PE.refl
-_ : natrec 2 (\x y -> succ y) (succ (succ zero)) PE.≡
-    (\x y -> succ y) (succ zero) (natrec 2 (\x y -> succ y) (succ zero))
+_ :                                                      natrec 2 (\x y -> succ y) (succ (succ zero)) PE.≡
+    (\x y -> succ y) (succ zero)                        (natrec 2 (\x y -> succ y)       (succ zero))
 _ = PE.refl
-_ : (\x y -> succ y) (succ zero) (natrec 2 (\x y -> succ y) (succ zero)) PE.≡
-    (\  y -> succ y)             (natrec 2 (\x y -> succ y) (succ zero))
+_ : (\x y -> succ y) (succ zero)                        (natrec 2 (\x y -> succ y)       (succ zero)) PE.≡
+    (\  y -> succ y)                                    (natrec 2 (\x y -> succ y)       (succ zero))
 _ = PE.refl
-_ : (\  y -> succ y)             (natrec 2 (\x y -> succ y) (succ zero)) PE.≡
-             succ                (natrec 2 (\x y -> succ y) (succ zero))
+_ : (\  y -> succ y)                                    (natrec 2 (\x y -> succ y)       (succ zero)) PE.≡
+             succ                                       (natrec 2 (\x y -> succ y)       (succ zero))
 _ = PE.refl
-_ :          succ                (natrec 2 (\x y -> succ y) (succ zero)) PE.≡
-             succ                ((\x y -> succ y) zero (natrec 2 (\x y -> succ y) zero))
+_ :          succ                                       (natrec 2 (\x y -> succ y)       (succ zero)) PE.≡
+             succ                ((\x y -> succ y) zero (natrec 2 (\x y -> succ y)             zero))
 _ = PE.refl
-_ :          succ                ((\x y -> succ y) zero (natrec 2 (\x y -> succ y) zero)) PE.≡
-             succ                ((\  y -> succ y)      (natrec 2 (\x y -> succ y) zero))
+_ :          succ                ((\x y -> succ y) zero (natrec 2 (\x y -> succ y)             zero)) PE.≡
+             succ                ((\  y -> succ y)      (natrec 2 (\x y -> succ y)             zero))
 _ = PE.refl
-_ :          succ                ((\  y -> succ y)      (natrec 2 (\x y -> succ y) zero)) PE.≡
-             succ                (         succ         (natrec 2 (\x y -> succ y) zero))
+_ :          succ                ((\  y -> succ y)      (natrec 2 (\x y -> succ y)             zero)) PE.≡
+             succ                (         succ         (natrec 2 (\x y -> succ y)             zero))
 _ = PE.refl
-_ :          succ                (         succ         (natrec 2 (\x y -> succ y) zero)) PE.≡
-             succ                (         succ                 2                       )
+_ :          succ                (         succ         (natrec 2 (\x y -> succ y)             zero)) PE.≡
+             succ                (         succ                 2                                   )
 _ = PE.refl
 
 {-
@@ -425,12 +427,278 @@ But PCF includes a fixed point combinator
   - therefore can define non-terminating functions in PCF.
 -}
 
--- Exercise: Define all functions previously given in the text in Gödel System T.
+-- Exercise/TODO: Define all functions previously given in the text in Gödel System T.
 
 {-
-2.6
-Parametrised Types
-As already mentioned, in Haskell we have parametrised types such as the type
-[a] of lists with elements of type a. In Agda the analogous definition is as follows:
+2.6 Parametrised Types
+
+Haskell parametrised types : [a]
 -}
+data List (A : Set) : Set where
+  []   :                List A
+  _::_ : A -> List A -> List A
+infixr 5 _::_
+{-# BUILTIN LIST List #-}
+{-
+(A : Set) to the left of the colon
+- tells Agda that A is a parameter
+- and it becomes an implicit argument to the constructors:
+  []   : {A : Set} -> List A
+  _::_ : {A : Set} -> A -> List A -> List A
+
+def only allows defining lists with elements in arbitrary SMALL types
+- cannot define lists of sets using this definition, since sets form a large type.
+-}
+
+mapL : {A B : Set} -> (A -> B) -> List A -> List B
+mapL f       []  = []
+mapL f (x :: xs) = f x :: mapL f xs
+
+-- Exercise: Define some more list combinators like for example foldl or filter.
+filter : {A : Set} -> (A -> Bool) -> List A -> List A
+filter f       []  = []
+filter f (x :: xs) = let tail = filter f xs in if f x then x :: tail else tail
+
+_ : filter (_< 4) (5 :: 4 :: 3 :: 2 :: 1 :: []) PE.≡ (3 :: 2 :: 1 :: [])
+_ = PE.refl
+
+foldl : {A B : Set} -> (B -> A -> B) -> B -> List A -> B
+foldl _ b       []  = b
+foldl f b (a :: as) = foldl f (f b a) as
+
+foldr : {A B : Set} -> (A -> B -> B) -> B -> List A -> B
+foldr f b       []  = b
+foldr f b (a :: as) = f a (foldr f b as)
+
+_ : foldl _+_ 0 (3 :: 2 :: 1 :: []) PE.≡ 6
+_ = PE.refl
+
+_ : foldl _∸_ 0 (3 :: 1 :: []) PE.≡ 0
+_ = PE.refl
+
+_ : foldr _∸_ 0 (3 :: 1 :: []) PE.≡ 2
+_ = PE.refl
+
+-- Exercise/TODO: define list recursion combinator listrec (like natrec, but for lists)
+
+-- binary Cartesian product AKA pair
+data _X_ (A B : Set) : Set where
+  <_,_> : A -> B -> A X B
+
+fst : {A B : Set} -> A X B -> A
+fst < a , b > = a
+
+snd : {A B : Set} -> A X B -> B
+snd < a , b > = b
+
+-- Usually want to zip lists of equal length.
+-- Can fix that with runtime Maybe or compiletime dependent types (later).
+zipL : {A B : Set} -> List A -> List B -> List (A X B)
+zipL       []         _  = []
+zipL (_ ::  _)       []  = []
+zipL (x :: xs) (y :: ys) = < x , y > :: zipL xs ys
+
+{-
+Exercise: Define the sum A + B of two small types with constructors: inl, inr.
+Exercise: Define a function from A + B to a small type C by cases.
+-}
+
+data Either (A B : Set) : Set where
+  inl : A -> Either A B
+  inr : B -> Either A B
+
+toC : {A B C : Set} → (A -> C) -> (B -> C) -> (Either A B) -> C
+toC ac  _ (inl a) = ac a
+toC  _ bc (inr b) = bc b
+
+{-
+2.7 Termination-checking
+
+General recursion is allowed in most languages.
+Therefore it is possible to define "partial" functions (e.g., divide by 0)
+
+How to ensure functions terminate?
+- one solution : restrict recursion to primitive recursion (like in Gödel system T)
+  - the approach taken in Martin-Löf type theory
+    where primitive recursion as a kind of structural recursion on well-founded data types
+    (see Martin-Löf’s book [22] and Dybjer’s schema for inductive definitions [10])
+  - structural recursion (in one argument at a time) is often inconvenient
+
+Agda’s termination-checker
+- generalisation of primitive recursion which is practically useful
+- enables doing pattern matching on several arguments simultaneously
+- and having recursive calls to structurally smaller arguments
+
+But Agda Repeated subtraction is rejected by the termination-checker
+although it is actually terminating.  The reason it does not recognise
+the recursive call to (m - n) as structurally smaller.  Because
+subtraction is not a constructor for natural numbers.  Further
+reasoning is required to deduce that the recursive call is actually on
+a smaller argument.
+
+Section 7 : describes how partial and general recursive functions can be represented in Agda.
+Idea is to replace a partial function by a total function with an extra argument:
+a proof that the function terminates on its arguments.
+
+------------------------------------------------------------------------------
+3 Dependent Types
+
+3.1 Vectors of a Given Length
+
+2 ways to define
+- Recursive family: by induction on n (i.e., by primitive recursion on n)
+- Inductive family: as a family of data types by declaring its constructors and their types
+  - like def of List, except length info included in types
+
+Paper mostly uses inductive families.
+
+Vectors as a Recursive Family.
+
+In math : define vectors by induction on n:
+  A   0 = 1
+  A n+1 = A × An
+In Agda (and Martin-Löf type theory):
+-}
+-- type with only one element
+data Unit : Set where
+  <> : Unit
+
+VecR : Set -> Nat -> Set
+VecR A  zero    = Unit
+VecR A (succ n) = A X VecR A n
+
+{-
+Up till now, only used primitive recursion for defining functions
+where the range is in a given set (in a given small type).
+Here, primitive recursion used for defining a family of sets
+- a family of elements in a given large type.
+-}
+
+zipR : {A B : Set} -> (n : Nat) -> VecR A n -> VecR B n -> VecR (A X B) n
+zipR  zero          v         w   = <>
+zipR (succ n) < a , v > < b , w > = < < a , b > , zipR n v w >
+
+{-
+base case : type-correct since the right hand side has type VecR (A X B) zero
+            which is defined as the type Unit
+step case : type-correct since the right hand side has type
+            VecR (A X B) (succ n) = (A X B) X (VecR (A X B) n),
+-}
+
+-- Exercise. Write the functions head, tail, and map for the recursive vectors.
+
+headR : {A : Set} {n : Nat} -> VecR A (succ n) -> A
+headR < x , _ > = x
+
+mapR : {A B : Set} -> (n : Nat) -> (A -> B) -> VecR A n -> VecR B n
+mapR  zero    _        _   = <>
+mapR (succ n) f < a , as > = < f a , mapR n f as >
+
+-- Vectors as an Inductive Family.
+
+data Vec (A : Set) : Nat -> Set where
+  [] : Vec A zero
+  _::_ : {n : Nat} -> A -> Vec A n -> Vec A (succ n)
+
+{-
+this time no induction on length
+instead give constructors which generate vectors of different lengths
+[] : length 0
+:: : length (n + 1)
+
+definition style called an inductive family, or an inductively defined family of sets.
+Terminology comes from constructive type theory,
+where data types such as Nat and (List A) are called inductive types.
+
+Remark: Beware of terminological confusion. As we have mentioned before, in
+programming languages one instead talks about recursive types for such data
+types defined by declaring the constructors with their types. This may be a bit
+confusing since we used the word recursive family for a different notion. There is
+a reason for the terminological distinction between data types in ordinary func-
+tional languages, and data types in languages where all programs terminate. In
+the latter, we will not have any non-terminating numbers or non-terminating
+lists. The set-theoretic meaning of such types is therefore simple: just build the
+set inductively generated by the constructors, see [9] for details. In a language
+with non-terminating programs, however, the semantic domains are more com-
+plex. One typically considers various kinds of Scott domains which are complete
+partially orders.
+
+(Vec A n) has two args:
+- small type A of the elements
+  - A is a parameter in the sense that it remains the same throughout the definition:
+    for a given A we define the family Vec A : Nat -> Set.
+- length n of type Nat.
+  - n is not a parameter since it varies in the types of the constructors.
+
+Non-parameters are often called indices and we can say that Vec A is an inductive family
+indexed by the natural numbers.
+
+In Agda data type definitions
+- parameters are placed to the left of the colon
+  and become implicit arguments to the constructors
+- indices are placed to the right
+-}
+
+zip : {A B : Set} -> (n : Nat) -> Vec A n -> Vec B n -> Vec (A X B) n
+zip  zero          []        []  = []
+zip (succ n) (x :: xs) (y :: ys) = < x , y > :: zip n xs ys
+
+head : {A : Set} {n : Nat} -> Vec A (succ n) -> A
+head (x :: _) = x
+
+tail : {A : Set} {n : Nat} -> Vec A (succ n) -> Vec A n
+tail (_ :: xs) = xs
+
+map : {A B : Set} {n : Nat} -> (A -> B) -> Vec A n -> Vec B n
+map f [] = []
+map f (x :: xs) = f x :: map f xs
+
+-- 3.2 Finite Sets
+
+data Fin : Nat -> Set where
+  fzero : {n : Nat} ->          Fin (succ n)
+  fsucc : {n : Nat} -> Fin n -> Fin (succ n)
+
+{-
+for each n, Fin n contains n elements
+e.g., Fin 3 contains fzero, fsucc fzero and fsucc (fsucc fzero
+
+useful to access element in a vector
+- for Vec A n
+- position given by (Fin n)
+- ensures accessing an element inside the vector
+
+For empty vector n is zero.
+So would use (Fin 0) --- which has no elements.
+There is no such case.
+Expressed in Agda via "absurd" pattern '()'
+-}
+
+_!_ : {A : Set} {n : Nat} -> Vec A n -> Fin n -> A
+[]        ! ()
+(x ::  _) ! fzero   = x
+(_ :: xs) ! fsucc i = xs ! i
+
+-- Exercise/TODO: Rewrite the function !! so that it has the following type:
+-- This eliminates the empty vector case, but other cases are needed.
+
+_!!_ : {A : Set} {n : Nat} -> Vec A (succ n) -> Fin (succ n) -> A
+_!!_ {_}   {zero} (a ::  _) fzero = a
+_!!_ {_} {succ n} (a ::  _) fzero = a
+_!!_ {_} {succ n} (_ :: as) (fsucc f) = _!!_ {n = n} as f
+
+_!!'_ : {A : Set} {n : Nat} -> Vec A (succ n) -> Fin (succ n) -> A
+_!!'_              (a ::  _)  fzero    = a
+_!!'_ {_} {succ n} (_ :: as) (fsucc f) = _!!'_ {n = n} as f
+
+-- Exercise/TODO: Give an alternative definition of Fin as a recursive family.
+
+-- 3.3 More Inductive Families
+
+-- binary trees of a certain height:
+data DBTree (A : Set) : Nat -> Set where
+  dlf :                     A                 -> DBTree A zero
+  dnd : {n : Nat} -> DBTree A n -> DBTree A n -> DBTree A (succ n)
+-- With this definition, any given (t : DBTree A n) is a perfectly balanced tree
+-- with 2n elements and information in the leaves.
 
