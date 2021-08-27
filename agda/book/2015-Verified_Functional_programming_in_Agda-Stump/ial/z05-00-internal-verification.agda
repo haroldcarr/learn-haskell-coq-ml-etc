@@ -498,6 +498,25 @@ _ : transpose ex2x3 ≡ (1 :: 0 :: []) ::
                       (3 :: 7 :: []) :: []
 _ = refl
 
+-- BEGIN https://www.cs.nott.ac.uk/~psztxa/g53cfr/solutions/ex02.agda
+vreturn : {A : Set} {n : ℕ} → A → 𝕍 A n
+vreturn {n = zero}  a = []
+vreturn {n = suc m} a = a :: vreturn {n = m} a
+
+vapp : {A B : Set} {n : ℕ} → 𝕍 (A → B) n → 𝕍 A n → 𝕍 B n
+vapp      []       []  = []
+vapp (f :: fs) (a :: as) = f a :: vapp fs as
+
+transposeX : {m n : ℕ} → m by n matrix → n by m matrix
+transposeX         []  = vreturn []
+transposeX (as :: ass) = vapp (vapp (vreturn _::_ ) as) (transposeX ass)
+
+_ : transposeX ex2x3 ≡ (1 :: 0 :: []) ::
+                       (2 :: 6 :: []) ::
+                       (3 :: 7 :: []) :: []
+_ = refl
+-- END https://www.cs.nott.ac.uk/~psztxa/g53cfr/solutions/ex02.agda
+
 -- BEGIN HORRIBLE HACKY TRY
 postulate
   yyy : (n : ℕ) → (rc : ℕ) → rc < n ≡ tt
@@ -623,6 +642,8 @@ product =
 _ : matrix-* left-mat right-mat ≡ product
 _ = refl
 
+-- TODO https://www.cs.nott.ac.uk/~psztxa/g53cfr/solutions/ex02.agda
+
 -- 3
 -- from list.agda
 data 𝕃 {ℓ} (A : Set ℓ) : Set ℓ where
@@ -663,16 +684,13 @@ _ = refl
 {- TODO
 -- 5. Implement remove-min / remove-max functions for bst. type.
 Using remove-min, define a general remove function
-- that finds the first value isomorphic to a given one
-- and returns the bst without that value.
-For this, following the standard algorithm, it will be necessary,
-if the node holding the value has two (non-leaf) nodes as the left and right sub-trees,
-to replace the removed element with its successor.
+- finds first value isomorphic to given one
+- returns bst without that value.
+If node holding that value has two (non-leaf) nodes as left and right sub-trees,
+then necessary to replace the removed element with its successor.
 This is the minimum value in the right subtree.
 
--- 6. In list-merge-sort.agda in the IAL, there is an implementation of merge-
-sort using Braun trees. State and prove some theorems about this merge-sort
-function. One that hopefully would not be too bad would be to prove that
-the length of the input list and the length of the sorted list returned by
-merge-sort are the same.
+-- 6. In list-merge-sort.agda : merge-sort using Braun trees.
+State and prove theorems about merge-sort.
+E.g., prove length of input list and length of returned sorted list are the same.
 -}

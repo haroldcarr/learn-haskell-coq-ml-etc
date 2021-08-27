@@ -48,12 +48,13 @@ bst-search : ∀ {l u : A}
            → bst l u
            → maybe (Σ A (λ d' → d iso𝔹 d' ≡ tt)) -- return that node or nothing
 bst-search d (bst-leaf _) = nothing -- could return proof not in tree instead
-                                  -- compare given element with stored element
+-- compare given element with stored element
 bst-search d (bst-node d' L R _ _) with keep (d ≤A d')
-                                  -- compare given element with stored element
+-- compare given element with stored element (other direction)
 bst-search d (bst-node d' L R _ _) | tt , p1 with keep (d' ≤A d)
-                                  -- both are true implying iso, so return that element and proof
+-- both are true implying iso, so return that element and proof
 bst-search d (bst-node d' L R _ _) | tt , p1 | tt , p2 = just (d' , iso𝔹-intro p1 p2)
+-- if either is false then search the appropriate branch
 bst-search d (bst-node d' L R _ _) | tt , p1 | ff , p2 = bst-search d L -- search in left
 bst-search d (bst-node d' L R _ _) | ff , p1           = bst-search d R -- search in right
 
