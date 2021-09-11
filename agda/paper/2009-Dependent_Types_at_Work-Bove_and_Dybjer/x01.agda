@@ -9,15 +9,16 @@ Chalmers University of Technology, Göteborg, Sweden
 
 intro to functional programming with dependent types
 
-- simply typed functional programming in the style of Haskell and ML
-- discuss differences between Agda’s type system and the Hindley-Milner type system of Haskell/ML
+- simply typed functional programming in style of Haskell and ML
+- discuss differences between Agda’s type system and Hindley-Milner type system of Haskell/ML
 - how to use dependent types for programming
-- explain ideas behind type-checking dependent types.
+- explain ideas behind type-checking dependent types
 - explain Curry-Howard identification of propositions and types
-- show a method to encode partial/general recursive functions as total functions using dependent types
+- show a method to encode partial/general recursive functions
+  as total functions using dependent types
 
 Dependent types are types that depend on elements of other types (e.g., Vec of length n)
-Invariants can also be expressed with dependent type (e.g., sorted list)
+Invariants can be expressed with dependent type (e.g., sorted list)
 
 Agda's dependent type system is an extension of Martin-Löf type theory [20,21,22,25].
 
@@ -25,7 +26,7 @@ Parametrised types
 - e.g., [A]
 - usually not called dependent types
 - they are are families of types indexed by other types
-  - not families of types indexed by ELEMENTS of another type
+  - NOT families of types indexed by ELEMENTS of another type
 - however, in dependent type theories, there is a type of small types (a universe),
   so that we have a type [A] of lists of elements of a given small type A.
 - FORTRAN could define arrays of a given dimension, so a form a dependent type on small type
@@ -35,12 +36,12 @@ Parametrised types
   ∀X.A where X ranges over all types,
   but no quantification over ELEMENTS of other types
 
-The modern development of dependently typed programming languages has
-its origins in the Curry-Howard isomorphism between propositions and types.
+development of dependently typed programming languages has
+origins in Curry-Howard isomorphism between propositions and types
 
-In the 1930’s Curry noticed the similarity between the axioms of implicational logic
+1930’s : Curry noticed similarity between axioms of implicational logic
    P ⊃ Q ⊃ P                                (P ⊃ Q ⊃ R) ⊃ (P ⊃ Q) ⊃ P ⊃ R
-and types of the combinators
+and types of combinators
    K              and                       S
    A → B → A                                (A → B → C) → (A → B) → A → C
 
@@ -54,37 +55,38 @@ corresponds to the inference rule modus ponens: from P ⊃ Q and P conclude Q
 - f a → B
 
 product types correspond to conjunctions
- sum types (disjoint unions) to disjunctions
+sum types (disjoint unions) to disjunctions
 
-To extend this correspondence to predicate logic
+to extend this correspondence to predicate logic
 Howard and de Bruijn introduced dependent types A(x) corresponding to predicates P(x).
 They formed
 indexed products Π x : D.A(x) : corresponding to universal   quantifications ∀x : D.P (x)
 indexed sums     Σ x : D.A(x) :                  existential quantifications ∃x : D.P (x)
 
-This obtains a Curry-Howard interpretation of intuitionistic predicate logic.
+this gives a Curry-Howard interpretation of intuitionistic predicate logic
 
-one-to-one correspondence between propositions and types in a type system with
-dependent types.
+one-to-one correspondence between propositions and types
+in a type system with dependent types
 
-one-to-one correspondence between proofs of a certain proposition in constructive predicate logic
-and terms of the corresponding type.
+one-to-one correspondence between
+- proofs of a certain proposition in constructive predicate logic, and
+- terms of the corresponding type
 
-to accommodate equality in predicate logic
+To accommodate equality in predicate logic
 introduce the type a == b of proofs that a and b are equal.
-Get a Curry-Howard interpretation of predicate logic with equality.
+Gives a Curry-Howard interpretation of predicate logic with equality.
 
 Can go further and add natural numbers with addition and multiplication
 to obtain a Curry-Howard version of Heyting (intuitionistic) arithmetic.
 
-Curry-Howard interpretation was basis for Martin-Löf’s intuition-istic type theory [20,21,22].
-- propositions and types are actually identified
+Curry-Howard interpretation was basis for Martin-Löf’s intuitionistic type theory [20,21,22].
+- propositions and types are identified
 - intended to be a foundational system for constructive mathematics
-- but can also be used as a programming language [21]
+- can also be used as a programming language [21]
 - from 1980’s and onwards, systems implementing variants of Martin-Löf type theory
   - NuPRL [6] : implementing an extensional version of the theory
   - Coq [33]  : implementing an intensional impredicative version
-  - Agda      : implements an intensional predicative extension
+  - Agda      : implements   an intensional predicative extension
 
 About these Notes
 
@@ -97,25 +99,24 @@ Agda's type-checking algorithm
   - Coquand, Kinoshita, Nordström, and Takeyama [8].
 
 more complete understanding of dependent type theory
-- read one of the books about Martin-Löf type theory and related systems
-- Martin-Löf’s “Intuitionistic Type Theory” [22] is a classic, although the
-  reader should be aware that it describes an extensional version of the theory.
-- Nordström, Petersson, and Smith [25] contains a description of the later
-  intensional theory on which Agda is based.
+- read a book about Martin-Löf type theory and related systems
+- Martin-Löf’s “Intuitionistic Type Theory” [22] is a classic
+  - be aware that it describes an extensional version of the theory
+- Nordström, Petersson, and Smith [25]
+  description of the later intensional theory on which Agda is based
 - variants of dependent type theory are
   - Thompson [34]
-  - by Constable et al [6] on the NuPRL-system,
-  - Bertot and Casteran [4] on the Coq-system
-- lecture notes (available from the Agda wiki [3]) by Norell complement the present notes
-  - collection of advanced examples of how to use Agda for dependently typed programming.
-- Geuvers’ lecture notes provide an introduction to type theory including
-  Barendregt’s pure type systems and their most important meta-theoretic prop-
-  erties.
-- Bertot’s notes describe how dependent types (in Coq) can be used for
-  implementing a number of concepts occurring in a course in programming lan-
-  guage theory with the focus on abstract interpretation.
-- Barthe, Grégoire, and Riba’s notes present a method for making more powerful
-  termination-checkers.
+  - Constable et al     [6] : NuPRL
+  - Bertot and Casteran [4] : Coq
+- lecture notes (Agda wiki [3]) by Norell
+  - collection of advanced examples of how to use Agda for dependently typed programming
+- Geuvers’ lecture notes : introduction to type theory
+  - including Barendregt’s pure type systems and important meta-theoretic properties
+- Bertot’s notes : how dependent types (in Coq) can be used for
+  implementing a number of concepts of programming language theory
+  - focus on abstract interpretation
+- Barthe, Grégoire, and Riba’s notes
+  - method for making termination-checkers
 
 Section 2 : ordinary functional programming
 Section 3 : basic dependent types and shows how to use them
@@ -141,8 +142,7 @@ states
   - the type of sets (using a terminology introduced by Martin-Löf [22])
     or small types (mentioned in the introduction).
 - Bool is a small type, but Set itself is not, it is a large type.
-- If we added that Set : Set, the system would actually become
-  inconsistent and hence, we would be able to prove any property.
+- allowing Set : Set, would make the system inconsistent
 -}
 not : Bool -> Bool
 not true  = false
@@ -203,20 +203,22 @@ _ : (2 * 3) + 10 PE.≡ 16
 _ = PE.refl
 {-
 + and * are defined by PRIMITIVE RECURSION in FIRST ARG.
+  - PRIMITIVE RECURSIION :
+    - upper bound of number of iterations of every loop can be determined before entering loop
+    - time complexity of PR functions bounded by the input size
 - base case for zero
 - step case for non zero defined recursively
 
 Given a first order data type
 - distinguish between
-  - canonical
+  - canonical form
     - built by constructors only
-    - e.g., true, false
-form. Moreover, zero, succ zero, succ (succ zero), . . . , are canonical forms,
+    - e.g., true, false,  zero, succ zero, succ (succ zero), ...
   - non-canonical forms
     - whereas non-canonical elements might contain defined functions
     - e.g., not true, zero + zero, zero * zero, succ (zero + zero)
 
-Martin-Löf  [21] instead considers lazy canonical forms
+Martin-Löf [21] instead considers lazy canonical forms
 - a term begins with a constructor to be considered a canonical form
 - e.g., succ (zero + zero) is a lazy canonical form, but not a “full” canonical form
 - Lazy canonical forms are appropriate for lazy functional programming languages (e.g., Haskell)
@@ -241,7 +243,7 @@ _ = PE.refl
 _ : 10 ∸  9 PE.≡  1
 _ = PE.refl
 
--- Also write some more numerical functions like < or <=
+-- EXERCISE: Also write some more numerical functions like < or <=
 
 _<_ : Nat -> Nat -> Bool
 zero   < zero   = false
@@ -254,6 +256,17 @@ _ = PE.refl
 _ : 10 < 10 PE.≡ false
 _ = PE.refl
 
+_<=_ : Nat -> Nat -> Bool
+zero   <= zero   = true
+zero   <= succ _ = true
+succ _ <= zero   = false
+succ n <= succ m = n <= m
+
+_ :  9 <= 10 PE.≡ true
+_ = PE.refl
+_ : 10 <= 10 PE.≡ true
+_ = PE.refl
+
 {-
 2.3 Lambda Notation and Polymorphism
 
@@ -261,9 +274,10 @@ Agda is based on the typed lambda calculus.
 
 APPLICATION is juxtaposition
 
-lambda ABSTRACTION is either written Curry-style without a type label on the argument x
+lambda ABSTRACTION written either
+- Curry-style (without a type label)
    \x -> e
-or Church-style with a type label
+- Church-style (with a type label)
   \(x : A) -> e
 
 a family of identity functions, one for each small type:
@@ -293,9 +307,7 @@ K _ _ x _     = x
 S : (A B C : Set) -> (A -> B -> C) -> (A -> B) -> A -> C
 S _ _ _ f g x = f x (g x)
 {-
-2.4 Implicit Arguments
-
-declared by enclosing typings in curly brackets
+2.4 Implicit Arguments : declared by enclosing typings in curly brackets
 -}
 
 id : {A : Set} -> A -> A
@@ -313,32 +325,32 @@ _ = PE.refl
 2.5 Gödel System T is a subsystem of Agda.
 
 System of primitive recursive functionals [16]
-- important in logic and a precursor to Martin-Löf type theory.
+- important in logic and a precursor to Martin-Löf type theory
 
-Recursion restricted to primitive recursion : to make sure programs terminate.
+recursion restricted to primitive recursion : to make sure programs terminate
 
 Gödel System T
 - based on simply typed lambda calculus
 - with two base types : truth values and natural numbers
-  - (Some formulations code truth values as 0 and 1.)
+  - (some formulations code truth values as 0 and 1)
 - constants for constructors true, false, zero
-- conditional and primitive recursion combinators.
+- conditional and primitive recursion combinators
 -}
 
 -- conditional
 if_then_else_ : {C : Set} -> Bool -> C -> C -> C
-if true then x else y = x
-if false then x else y = y
+if true  then x else _ = x
+if false then _ else y = y
 
 -- primitive recursion combinator for natural numbers
 -- natrec is a higher-order function defined by primitive recursion with args
 -- - (implicit) return type
--- - p : element returned in base case
--- - h : step function
+-- - c     : element returned in base case
+-- - 𝕟→c→c : step function
 -- - the Nat on which to perform the recursion
 natrec : {C : Set} -> C -> (Nat -> C -> C) -> Nat -> C
-natrec p h  zero    = p
-natrec p h (succ n) = h n (natrec p h n)
+natrec c 𝕟→c→c  zero    = c
+natrec c 𝕟→c→c (succ n) = 𝕟→c→c n (natrec c 𝕟→c→c n)
 
 -- natrec definitions of addition and multiplication
 _plus_ : Nat -> Nat -> Nat
@@ -385,36 +397,39 @@ _ :          succ                (         succ         (natrec 2 (\x y -> succ 
 _ = PE.refl
 
 {-
-To stay entirely in Gödel system T
+to stay entirely in Gödel system T
 - use terms built up by variables, application, lambda abstraction,
-- and the constants true, false, zero, succ, if_then_else_, natrec
+- and constants true, false, zero, succ, if_then_else_, natrec
 
 Gödel system T has unusual property (for a programming language)
 - all typable programs terminate
 
 not only do terms in base types Bool and Nat terminate whatever reduction is chosen,
-but also terms of function type terminate;
+but also terms of function type terminate
 
-the reduction rules are β-reduction,
-and the defining equations for if then else and natrec.
+reduction rules
+- β-reduction
+- defining equations for if_then_else and natrec
 
-Reductions can be performed anywhere in a term,
-so in fact there may be several ways to reduce a term.
+reductions can be performed anywhere in a term,
+so there may be several ways to reduce a term
 
-Therefore, Gödel system T is strongly normalising
-- any typable term reaches a normal form whatever reduction strategy is chosen.
+therefore, Gödel system T is strongly normalising
+- any typable term reaches a normal form whatever reduction strategy is chosen
 
-Even in a this restrictive Gödel system T, possible to define many numerical functions.
+Even in this restrictive Gödel system T, possible to define many numerical functions.
 Can define all primitive recursive functions
 (in the usual sense without higher-order functions).
 
 Can also define functions which are not primitive recursive, such as the Ackermann function.
 
-Gödel system T is important in the history of ideas that led to the Curry-Howard
-isomorphism and Martin-Löf type theory.
+Gödel system T is important in the history of ideas that led to
+the Curry-Howard isomorphism and Martin-Löf type theory.
 
-Gödel system T is the simply typed kernel of Martin-Löf’s constructive type theory,
-Martin-Löf type theory is the foundational system from which Agda grew.
+Gödel system T
+- is the simply typed kernel of Martin-Löf’s constructive type theory,
+Martin-Löf type theory
+- is the foundational system from which Agda grew
 
 relationship between Agda and Martin-Löf type theory is much like the
 relationship between Haskell and the simply typed lambda calculus.
@@ -428,6 +443,63 @@ But PCF includes a fixed point combinator
 -}
 
 -- Exercise/TODO: Define all functions previously given in the text in Gödel System T.
+
+-- induction principle for booleans (from Mimram)
+Bool-rec : (P : Bool → Set) → P false → P true → (b : Bool) → P b
+Bool-rec P Pf Pt false = Pf
+Bool-rec P Pf Pt true  = Pt
+
+not' : Bool -> Bool
+not' b = Bool-rec (λ bool → Bool) true false b
+
+_ : not' false PE.≡ not false
+_ = PE.refl
+_ : not' true  PE.≡ not true
+_ = PE.refl
+
+equiv' : Bool -> Bool -> Bool
+equiv' b false = Bool-rec (λ bool → Bool) true false b
+equiv' b true  = Bool-rec (λ bool → Bool) false true b
+
+_ : equiv' false false PE.≡ equiv false false
+_ = PE.refl
+_ : equiv'  true false PE.≡ equiv  true false
+_ = PE.refl
+_ : equiv' false  true PE.≡ equiv false  true
+_ = PE.refl
+_ : equiv'  true  true PE.≡ equiv  true  true
+_ = PE.refl
+
+_||'_ : Bool -> Bool -> Bool
+b ||' false = Bool-rec (λ bool → Bool)      b  b b
+b ||'  true = Bool-rec (λ bool → Bool) (not b) b b
+
+_ : false ||' false PE.≡ false || false
+_ = PE.refl
+_ : false ||'  true PE.≡ false ||  true
+_ = PE.refl
+_ :  true ||' false PE.≡  true || false
+_ = PE.refl
+_ :  true ||'  true PE.≡  true ||  true
+_ = PE.refl
+
+_&&'_ : Bool -> Bool -> Bool
+b &&' false = Bool-rec (λ bool → Bool) false false b
+b &&'  true = Bool-rec (λ bool → Bool) b     b     b
+
+_ : false &&' false PE.≡ false && false
+_ = PE.refl
+_ : false &&'  true PE.≡ false &&  true
+_ = PE.refl
+_ :  true &&' false PE.≡  true && false
+_ = PE.refl
+_ :  true &&'  true PE.≡  true &&  true
+_ = PE.refl
+
+pred' : Nat -> Nat
+pred'  zero    = natrec zero (\x y -> zero) zero
+pred' (succ n) = natrec zero (\_ _ -> n)    n
+-- test after List def
 
 {-
 2.6 Parametrised Types
@@ -447,12 +519,20 @@ infixr 5 _::_
   _::_ : {A : Set} -> A -> List A -> List A
 
 def only allows defining lists with elements in arbitrary SMALL types
-- cannot define lists of sets using this definition, since sets form a large type.
+- cannot define lists of sets using this definition, since sets form a large type
 -}
+
+-- test for pred'
+_ : (pred' 0 :: pred' 1 :: pred' 2 :: pred' 101 :: []) PE.≡ (pred 0 :: pred 1 :: pred 2 :: pred 101 :: [])
+_ = PE.refl
+
 
 mapL : {A B : Set} -> (A -> B) -> List A -> List B
 mapL f       []  = []
 mapL f (x :: xs) = f x :: mapL f xs
+
+_ : mapL succ (1 :: 2 :: []) PE.≡ (2 :: 3 :: [])
+_ = PE.refl
 
 -- Exercise: Define some more list combinators like for example foldl or filter.
 filter : {A : Set} -> (A -> Bool) -> List A -> List A
@@ -479,7 +559,41 @@ _ = PE.refl
 _ : foldr _∸_ 0 (3 :: 1 :: []) PE.≡ 2
 _ = PE.refl
 
--- Exercise/TODO: define list recursion combinator listrec (like natrec, but for lists)
+-- Exercise: define list recursion combinator listrec (like natrec, but for lists)
+-- from Mimram
+List-rec
+  : {A : Set}
+  → (P : List A → Set)
+  → P []
+  → ((x : A) → (xs : List A) → P xs → P (x :: xs))
+  → (xs : List A)
+  → P xs
+List-rec P Pe Pc       []  = Pe
+List-rec P Pe Pc (x :: xs) = Pc x xs (List-rec P Pe Pc xs)
+
+mapL' : {A B : Set} -> (A -> B) -> List A -> List B
+mapL' {_} {B} f xs = List-rec (λ _ → List B) [] (λ a _ bs → f a :: bs) xs
+
+_ : mapL' succ (1 :: 2 :: []) PE.≡ mapL succ (1 :: 2 :: [])
+_ = PE.refl
+
+filter' : {A : Set} -> (A -> Bool) -> List A -> List A
+filter' {A} f xs = List-rec (λ _ → List A) [] (λ a _ as' → if f a then a :: as' else as') xs
+
+_ : filter' (_< 4) (5 :: 4 :: 3 :: 2 :: 1 :: []) PE.≡ filter (_< 4) (5 :: 4 :: 3 :: 2 :: 1 :: [])
+_ = PE.refl
+
+foldl' : {A B : Set} -> (B -> A -> B) -> B -> List A -> B
+foldl' {_} {B} f b as = List-rec (λ _ → B) b (λ a _ b → f b a) as
+
+_ : foldl' _+_ 0 (3 :: 2 :: 1 :: []) PE.≡ foldl _+_ 0 (3 :: 2 :: 1 :: [])
+_ = PE.refl
+
+foldr' : {A B : Set} -> (A -> B -> B) -> B -> List A -> B
+foldr' {A} {B} f b as = List-rec (λ _ → B) b (λ a as b → f a b) as
+
+_ : foldr' _∸_ 0 (3 :: 1 :: []) PE.≡ foldr _∸_ 0 (3 :: 1 :: [])
+_ = PE.refl
 
 -- binary Cartesian product AKA pair
 data _X_ (A B : Set) : Set where
@@ -498,15 +612,12 @@ zipL       []         _  = []
 zipL (_ ::  _)       []  = []
 zipL (x :: xs) (y :: ys) = < x , y > :: zipL xs ys
 
-{-
-Exercise: Define the sum A + B of two small types with constructors: inl, inr.
-Exercise: Define a function from A + B to a small type C by cases.
--}
-
+-- Exercise: Define the sum A + B of two small types with constructors: inl, inr.
 data Either (A B : Set) : Set where
   inl : A -> Either A B
   inr : B -> Either A B
 
+-- Exercise: Define a function from A + B to a small type C by cases.
 toC : {A B C : Set} → (A -> C) -> (B -> C) -> (Either A B) -> C
 toC ac  _ (inl a) = ac a
 toC  _ bc (inr b) = bc b
@@ -514,27 +625,25 @@ toC  _ bc (inr b) = bc b
 {-
 2.7 Termination-checking
 
-General recursion is allowed in most languages.
-Therefore it is possible to define "partial" functions (e.g., divide by 0)
+General recursion allowed in most languages.
+Therefore possible to define "partial" functions (e.g., divide by 0)
 
 How to ensure functions terminate?
 - one solution : restrict recursion to primitive recursion (like in Gödel system T)
   - the approach taken in Martin-Löf type theory
     where primitive recursion as a kind of structural recursion on well-founded data types
     (see Martin-Löf’s book [22] and Dybjer’s schema for inductive definitions [10])
-  - structural recursion (in one argument at a time) is often inconvenient
+  - but structural recursion (in one argument at a time) is often inconvenient
 
 Agda’s termination-checker
 - generalisation of primitive recursion which is practically useful
 - enables doing pattern matching on several arguments simultaneously
 - and having recursive calls to structurally smaller arguments
 
-But Agda Repeated subtraction is rejected by the termination-checker
-although it is actually terminating.  The reason it does not recognise
-the recursive call to (m - n) as structurally smaller.  Because
-subtraction is not a constructor for natural numbers.  Further
-reasoning is required to deduce that the recursive call is actually on
-a smaller argument.
+But repeated subtraction is rejected by Agda termination-checker although it is terminating.
+Because Agda does not recognise the recursive call to (m - n) as structurally smaller.
+Because subtraction is not a constructor for natural numbers.
+Further reasoning required to deduce the recursive call is on a smaller argument.
 
 Section 7 : describes how partial and general recursive functions can be represented in Agda.
 Idea is to replace a partial function by a total function with an extra argument:
@@ -546,11 +655,13 @@ a proof that the function terminates on its arguments.
 3.1 Vectors of a Given Length
 
 2 ways to define
-- Recursive family: by induction on n (i.e., by primitive recursion on n)
-- Inductive family: as a family of data types by declaring its constructors and their types
+- Recursive family
+  - by induction on n (i.e., by primitive recursion on n)
+- Inductive family
+  - as a family of data types by declaring its constructors and their types
   - like def of List, except length info included in types
 
-Paper mostly uses inductive families.
+paper mostly uses inductive families
 
 Vectors as a Recursive Family.
 
@@ -590,6 +701,9 @@ step case : type-correct since the right hand side has type
 headR : {A : Set} {n : Nat} -> VecR A (succ n) -> A
 headR < x , _ > = x
 
+tailR : {A : Set} {n : Nat} -> VecR A (succ n) -> VecR A n
+tailR < _ ,  t > = t
+
 mapR : {A B : Set} -> (n : Nat) -> (A -> B) -> VecR A n -> VecR B n
 mapR  zero    _        _   = <>
 mapR (succ n) f < a , as > = < f a , mapR n f as >
@@ -597,12 +711,12 @@ mapR (succ n) f < a , as > = < f a , mapR n f as >
 -- Vectors as an Inductive Family.
 
 data Vec (A : Set) : Nat -> Set where
-  [] : Vec A zero
+  []   :                              Vec A  zero
   _::_ : {n : Nat} -> A -> Vec A n -> Vec A (succ n)
 
 {-
 this time no induction on length
-instead give constructors which generate vectors of different lengths
+instead : constructors generate vectors of different lengths
 [] : length 0
 :: : length (n + 1)
 
@@ -610,28 +724,34 @@ definition style called an inductive family, or an inductively defined family of
 Terminology comes from constructive type theory,
 where data types such as Nat and (List A) are called inductive types.
 
-Remark: Beware of terminological confusion. As we have mentioned before, in
-programming languages one instead talks about recursive types for such data
-types defined by declaring the constructors with their types. This may be a bit
-confusing since we used the word recursive family for a different notion. There is
-a reason for the terminological distinction between data types in ordinary func-
-tional languages, and data types in languages where all programs terminate. In
-the latter, we will not have any non-terminating numbers or non-terminating
-lists. The set-theoretic meaning of such types is therefore simple: just build the
-set inductively generated by the constructors, see [9] for details. In a language
-with non-terminating programs, however, the semantic domains are more com-
-plex. One typically considers various kinds of Scott domains which are complete
-partially orders.
+Remark: Beware of terminological confusion.
+
+In programming languages one talks about recursive types for such data
+types defined by declaring the constructors with their types.
+
+May be confusing since the word recursive family was used for a different notion.
+
+Reason for terminological distinction between data types in ordinary functional languages,
+and data types in languages where all programs terminate.
+
+In terminating languages, there will not be any non-terminating numbers
+or non-terminating lists.
+
+The set-theoretic meaning of such types is therefore simple:
+- build the set inductively generated by the constructors, see [9] for details.
+
+In non-terminating language, the semantic domains are more complex.
+One typically considers various kinds of Scott domains which are complete partially orders.
 
 (Vec A n) has two args:
 - small type A of the elements
   - A is a parameter in the sense that it remains the same throughout the definition:
-    for a given A we define the family Vec A : Nat -> Set.
+    for a given A, define the family Vec A : Nat -> Set
 - length n of type Nat.
-  - n is not a parameter since it varies in the types of the constructors.
+  - n is not a parameter since it varies in the types of the constructors
 
-Non-parameters are often called indices and we can say that Vec A is an inductive family
-indexed by the natural numbers.
+Non-parameters are often called INDICES
+- say that Vec A is an inductive family indexed by natural numbers
 
 In Agda data type definitions
 - parameters are placed to the left of the colon
@@ -682,23 +802,45 @@ _!_ : {A : Set} {n : Nat} -> Vec A n -> Fin n -> A
 -- Exercise/TODO: Rewrite the function !! so that it has the following type:
 -- This eliminates the empty vector case, but other cases are needed.
 
-_!!_ : {A : Set} {n : Nat} -> Vec A (succ n) -> Fin (succ n) -> A
-_!!_ {_}   {zero} (a ::  _) fzero = a
-_!!_ {_} {succ n} (a ::  _) fzero = a
-_!!_ {_} {succ n} (_ :: as) (fsucc f) = _!!_ {n = n} as f
+_!!_  : {A : Set} {n : Nat} -> Vec A (succ n) -> Fin (succ n) -> A
+_!!_  {_}   {zero} (a ::  _)  fzero    = a
+_!!_  {_} {succ n} (a ::  _)  fzero    = a
+_!!_  {_} {succ n} (_ :: as) (fsucc f) = _!!_ {n = n} as f
 
 _!!'_ : {A : Set} {n : Nat} -> Vec A (succ n) -> Fin (succ n) -> A
 _!!'_              (a ::  _)  fzero    = a
 _!!'_ {_} {succ n} (_ :: as) (fsucc f) = _!!'_ {n = n} as f
 
 -- Exercise/TODO: Give an alternative definition of Fin as a recursive family.
+FinR : Nat -> Set
+FinR             zero   = Unit
+FinR       (succ zero)  = Unit X Unit
+FinR (succ (succ    n)) = FinR (succ n) X FinR (succ n)
+
+sss : FinR 4 -> FinR 2
+sss < < < < <> , <> > , < <> , <> > > , < < <> , <> > , < <> , <> > > >
+    , < < < <> , <> > , < <> , <> > > , < < <> , <> > , < <> , <> > > >
+    > = < < <> , <> >
+        , < <> , <> > >
+
+_!'_ : {A : Set} {n : Nat} -> Vec A n -> FinR n -> A
+[]        !' <> = {!!}
+(x :: x₁) !' f = {!!}
+
 
 -- 3.3 More Inductive Families
 
--- binary trees of a certain height:
+-- binary trees of a certain height
+-- any given (t : DBTree A n) is a perfectly balanced tree
+-- with 2n elements and information in the leaves
 data DBTree (A : Set) : Nat -> Set where
   dlf :                     A                 -> DBTree A zero
   dnd : {n : Nat} -> DBTree A n -> DBTree A n -> DBTree A (succ n)
--- With this definition, any given (t : DBTree A n) is a perfectly balanced tree
--- with 2n elements and information in the leaves.
 
+-- Exercise/TODO: Modify DBTree def to define the height balanced binary trees
+-- i.e., binary trees where difference between heights of left and right subtree is at most one.
+
+-- Exercise/TODO: Define lambda terms as an inductive family
+-- indexed by the maximal number of free variables allowed in the term.
+
+-- Exercise/TODO: define typed lambda terms as an inductive family indexed by the type of the term.
