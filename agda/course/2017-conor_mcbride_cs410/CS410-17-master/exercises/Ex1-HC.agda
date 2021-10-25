@@ -107,7 +107,10 @@ vMap f (x ,- xs) = f x ,- vMap f xs
 vMapIdFact : {X : Set}{f : X -> X}(feq : (x : X) -> f x == x) ->
              {n : Nat}(xs : Vec X n) -> vMap f xs == xs
 vMapIdFact feq       []  = refl []
-vMapIdFact feq (x ,- xs) rewrite vMapIdFact feq xs | feq x = refl (x ,- xs)
+vMapIdFact feq (x ,- xs)
+  rewrite vMapIdFact feq xs
+  |       feq x
+  = refl (x ,- xs)
 
 vMapCpFact : {X Y Z : Set}{f : Y -> Z}{g : X -> Y}{h : X -> Z}
                (heq : (x : X) -> f (g x) == h x) ->

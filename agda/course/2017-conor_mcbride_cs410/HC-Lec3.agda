@@ -10,8 +10,11 @@ open import HC-Lec1
 open import HC-Lec2
 
 postulate
+  -- equal inputs go to equal outputs
+  -- (whereas structural equality would require equal implementations)
   extensionality : {S : Set} {T : S -> Set}
-                -> (f g : (x : S) -> T x)
+                -- 24:00 : make f and g implicit : https://www.youtube.com/watch?v=RCRddhYegzI
+                -> {f g : (x : S) -> T x}
                 -> ((x : S) -> f x == g x)
                 ->             f   == g
 
@@ -51,24 +54,24 @@ SET = record
 -- A PREORDER is a category where there is at most one arrow between any two objects.
 -- Therefore arrows are unique.
 
+-- all proofs of '>=' are equivalent
+unique->= : (m n : Nat) (p q : m >= n) -> p == q
+unique->=      m   zero   p q = refl <>
+unique->= (suc m) (suc n) p q = unique->= m n p q
+
 NAT->= : Category
 NAT->= = record
            { Obj         = Nat
            ; _~>_        = _>=_
            ; id~>        = λ {n : Nat} → refl->= n
            ; _>~>_       = λ {r s t : Nat} r>=s s>=t → trans->= r s t r>=s s>=t
-           ; law-id~>>~> = λ {m n : Nat} f → unique m n (trans->= m m n (refl->= m) f) f
-           ; law->~>id~> = λ {m n : Nat} f → unique m n (trans->= m n n f (refl->= n)) f
+           ; law-id~>>~> = λ {m n : Nat} f → unique->= m n (trans->= m m n (refl->= m) f) f
+           ; law->~>id~> = λ {m n : Nat} f → unique->= m n (trans->= m n n f (refl->= n)) f
            ; law->~>>~>  = λ {q r s t : Nat} q>=r r>=s s>=t →
-                            unique q t
+                            unique->= q t
                               (trans->= q s t (trans->= q r s q>=r r>=s) s>=t)
                               (trans->= q r t  q>=r (trans->= r s t r>=s s>=t))
            }
- where
-  -- all proofs of '>=' are equivalent
-  unique : (m n : Nat) (p q : m >= n) -> p == q
-  unique      m   zero   p q = refl <>
-  unique (suc m) (suc n) p q = unique m n p q
 
 -- 22:07
 
@@ -130,3 +133,110 @@ module FUNCTOR where
 open FUNCTOR
 
 -- https://www.youtube.com/watch?v=RCRddhYegzI
+
+
+-- 4:10
+
+vMap : {n : Nat} {S T : Set} -> (S -> T) -> Vec S n -> Vec T n
+vMap f       []  = []
+vMap f (x :: xs) = f x :: vMap f xs
+
+vMap-id : {n : Nat} {X : Set} (xs : Vec X n) -> vMap id xs == id xs
+vMap-id       []  = refl []
+vMap-id (x :: xs)
+  rewrite vMap-id xs
+  = refl (x :: xs)
+
+vMapCp : {n : Nat} {R S T : Set} {r->s : R -> S} {s->t : S -> T}
+      -> (xs : Vec R n)
+      -> vMap (r->s >> s->t) xs == vMap s->t (vMap r->s xs)
+vMapCp []  = refl []
+vMapCp {r->s = r->s} {s->t = s->t} (r :: rs)
+  with vMapCp {r->s = r->s} {s->t = s->t} rs
+...| xxx
+  rewrite xxx
+   = refl (s->t (r->s r) :: vMap s->t (vMap r->s rs))
+
+-- vector as a functor
+VEC : Nat -> SET => SET
+VEC n = record
+          { F-Obj      = λ X -> Vec X n
+          ; F-map      = vMap
+          ; F-map-id~> = extensionality vMap-id
+          ; F-map->~>  = λ {R S T : Set} (r->s : R → S) (s->t : S → T)
+                         → extensionality vMapCp
+          }
+
+-- 15:20
+
+vTakeCp : {X : Set} {m n p : Nat}
+       -> (m>=n : m >= n) -> (n>=p : n >= p) -> (xs : Vec X m)
+       -> vTake m p (trans->= m n p m>=n n>=p)                 xs
+       == vTake n p                      n>=p  (vTake m n m>=n xs)
+vTakeCp {_}     {m}     {n}  {zero} m>=n n>=p _ = refl []
+vTakeCp {_} {suc m} {suc n} {suc p} m>=n n>=p (x :: xs)
+  rewrite vTakeCp {_} {m} {n} {p} m>=n n>=p xs
+  = refl (x :: vTake n p n>=p (vTake m n m>=n xs))
+
+
+-- another way to think of vector as a functor
+VTAKE : Set -> NAT->= => SET
+VTAKE X = record
+            { F-Obj      = Vec X  -- something that turns a number into a SET
+            ; F-map      = λ {m} {n} m>=n xs -> vTake m n m>=n xs
+            ; F-map-id~> = extensionality (vTakeIdFact _)
+            ; F-map->~>  = λ r>=s s>=t → extensionality (vTakeCp r>=s s>=t)
+            }
+
+-- 24:53
+
+ADD : Nat -> NAT->= => NAT->=
+ADD d = record
+          { F-Obj = (d +N_) -- function that adds d to another number
+          ; F-map = λ {s} {t} -> f-map' d s t
+          -- two proofs of >= are equal to each other
+          ; F-map-id~> = λ {T : Nat} -> unique->= (d +N T)
+                                                  (d +N T)
+                                                  (f-map' d T T (refl->= T))
+                                                  (refl->= (d +N T))
+          ; F-map->~> = λ {R} {S} {T}f g →
+                                       unique->= (d +N R)
+                                                 (d +N T)
+                                                 (f-map' d R T (trans->= R S T f g))
+                                                 (trans->= (d +N R) (d +N S) (d +N T)
+                                                           (f-map' d R S f)
+                                                           (f-map' d S T g))
+          }
+ where
+  f-map' : ∀ d s t
+         → (NAT->= Category.~>       s)        t
+         → (NAT->= Category.~> (d +N s)) (d +N t)
+  f-map'  zero   s t s>=t =              s>=t
+  f-map' (suc d) s t s>=t = f-map' d s t s>=t
+
+-- 41:00
+
+CATEGORY : Category
+CATEGORY = record
+             { Obj         = Category
+             ; _~>_        = _=>_
+             ; id~>        = λ {T} -> record
+                                        { F-Obj      = id
+                                        ; F-map      = id
+                                        ; F-map-id~> = refl (Category.id~> T)
+                                        ; F-map->~>  = λ f g → refl ((T Category.>~> f) g)
+                                        }
+             ; _>~>_       = λ r=>s s=>t → record
+                                             { F-Obj      = F-Obj r=>s >> F-Obj s=>t
+                                             ; F-map      = F-map r=>s >> F-map s=>t
+                                             ; F-map-id~> = {!!}
+                                             ; F-map->~>  = λ f g → {!!}
+                                             }
+             ; law-id~>>~> = {!!}
+             ; law->~>id~> = {!!}
+             ; law->~>>~>  = {!!}
+             }
+             where open _=>_
+
+-- 45:35
+-- Category where Obj are FUNCTORS
