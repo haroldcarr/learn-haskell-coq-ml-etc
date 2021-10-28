@@ -1,6 +1,7 @@
 {-# OPTIONS --type-in-type #-} -- enables cheating
                                -- 2:10 : why
 
+{-# OPTIONS --allow-unsolved-metas #-}
 
 -- https://www.youtube.com/watch?v=2LxtHeZlaVw
 
@@ -110,9 +111,9 @@ DISCRETE X = record
                ; _~>_        = _==_
                ; id~>        = λ {x} -> refl x
                ; _>~>_       = λ {(refl x) (refl .x) → refl x}
-               ; law-id~>>~> = λ f     → eqUnique _ f
-               ; law->~>id~> = λ f     → eqUnique _ f
-               ; law->~>>~>  = λ f g h → eqUnique _ _
+               ; law-id~>>~> = λ s==t           → eqUnique _ _
+               ; law->~>id~> = λ s==t           → eqUnique _ _
+               ; law->~>>~>  = λ q==r r==s s==t → eqUnique _ _
                }
 
 -- 40:50
@@ -123,18 +124,39 @@ module FUNCTOR where
   record _=>_ (C D : Category) : Set where -- functor from C to D
     field
       -- operations
-      F-Obj : Obj C -> Obj D
-      F-map : {S T : Obj C} -> _~>_ C S T -> _~>_ D (F-Obj S) (F-Obj T)
+      F-Obj : Obj C -> Obj D                                            -- objects to objects
+      F-map : {S T : Obj C} -> _~>_ C S T -> _~>_ D (F-Obj S) (F-Obj T) -- arrows  to arrows
 
       -- laws
       F-map-id~> : {T : Obj C} -> F-map (id~> C {T}) == id~> D {F-Obj T}
       F-map->~>  : {R S T : Obj C} (f : _~>_ C R S) (g : _~>_ C S T)
                 -> F-map (_>~>_ C f g) == _>~>_ D (F-map f) (F-map g)
-open FUNCTOR
+open FUNCTOR public
+
+{-
+-- 22:?? https://www.youtube.com/watch?v=vTmYvoDrBlc
+
+              S
+             ^
+            /   \
+        f /       \ g
+        /           \
+      /              v
+      R -----------> T
+          f >> g
+
+
+        F-Obj S
+             ^
+            /   \
+  F-map f /       \ F-map g
+        /           \
+      /               v
+F-Obj R -----------> F-Obj T
+       F-map (f >> g)
+-}
 
 -- https://www.youtube.com/watch?v=RCRddhYegzI
-
-
 -- 4:10
 
 vMap : {n : Nat} {S T : Set} -> (S -> T) -> Vec S n -> Vec T n
@@ -226,12 +248,13 @@ CATEGORY = record
                                         ; F-map-id~> = refl (Category.id~> T)
                                         ; F-map->~>  = λ f g → refl ((T Category.>~> f) g)
                                         }
-             ; _>~>_       = λ r=>s s=>t → record
-                                             { F-Obj      = F-Obj r=>s >> F-Obj s=>t
-                                             ; F-map      = F-map r=>s >> F-map s=>t
-                                             ; F-map-id~> = {!!}
-                                             ; F-map->~>  = λ f g → {!!}
-                                             }
+             ; _>~>_       = λ {R} {S} {T} r=>s s=>t → record
+                             { F-Obj      = F-Obj r=>s >> F-Obj s=>t
+                             ; F-map      = F-map r=>s >> F-map s=>t
+                             -- 19:35 https://www.youtube.com/watch?v=vTmYvoDrBlc
+                             ; F-map-id~> = {!!} -- F-map s=>t (F-map r=>s (Category.id~> R))
+                             ; F-map->~>  = λ f g → {!!}
+                             }
              ; law-id~>>~> = {!!}
              ; law->~>id~> = {!!}
              ; law->~>>~>  = {!!}
@@ -240,3 +263,4 @@ CATEGORY = record
 
 -- 45:35
 -- Category where Obj are FUNCTORS
+
