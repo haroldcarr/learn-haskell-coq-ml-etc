@@ -1,4 +1,4 @@
-module HC-Lec1 where
+module Lec1-HC where
 
 -- ==============================================================================
 -- Lecture 1 : Programs and Proofs
@@ -61,7 +61,7 @@ _>>_ : {X Y Z : Set} -> (X -> Y) -> (Y -> Z) -> (X -> Z)
 (f >> g) x = g (f x)
 
 -- infix application
-_$_ : {S : Set}{T : S -> Set}(f : (x : S) -> T x)(s : S) -> T s
+_$_ : {S : Set} {T : S -> Set} -> (f : (x : S) -> T x) -> (s : S) -> T s
 f $ s = f s
 infixl 2 _$_
 
@@ -108,7 +108,7 @@ id = combinatorS combinatorK (combinatorK {_} {Zero})
 -- 32:05
 
 data Nat : Set where
-  zero : Nat
+  zero :        Nat
   suc  : Nat -> Nat -- recursive data type
 {-# BUILTIN NATURAL Nat #-} -- enables decimal notation
 
@@ -128,8 +128,8 @@ data _==_ {X : Set} : X -> X -> Set where
   refl : (x : X) -> x == x -- the relation that is "only reflexive"
 {-# BUILTIN EQUALITY _==_ #-}
 
-see4 : (2 +N 2) == 4
-see4 = refl 4
+_ : (2 +N 2) == 4
+_ = refl 4
 
 -- 42:35
 -- application of equalities

@@ -1,11 +1,10 @@
 {-# OPTIONS --type-in-type #-}  -- cheating
 
-module HC-Lec4 where
+module Lec4-HC where
 
-
-open import HC-Lec1
-open import HC-Lec2
-open import HC-Lec3
+open import Lec1-HC
+open import Lec2-HC
+open import Lec3-HC
 
 -- https://www.youtube.com/watch?v=vTmYvoDrBlc
 -- 24:00

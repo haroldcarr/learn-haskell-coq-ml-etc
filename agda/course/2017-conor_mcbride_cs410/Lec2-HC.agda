@@ -1,6 +1,6 @@
-module HC-Lec2 where
+module Lec2-HC where
 
-open import HC-Lec1
+open import Lec1-HC
 
 -- ==============================================================================
 -- Lecture 4 : Sigma, Difference, Vector Take
@@ -19,6 +19,9 @@ vTake (suc m) (suc n) m>=n (x :: xs) = x :: vTake m n m>=n xs
 
 vTake32 : Set
 vTake32 = vTake 3 2 <> (1 :: 2 :: 3 :: []) == (1 :: 2 :: [])
+
+_ : vTake 3 2 <> (1 :: 2 :: 3 :: []) == (1 :: 2 :: [])
+_ = refl (1 :: 2 :: [])
 
 -- 47:35 : taking ALL elements is an identity
 vTakeIdFact : (n : Nat) {X : Set} (xs : Vec X n)

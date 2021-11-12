@@ -5,10 +5,10 @@
 
 -- https://www.youtube.com/watch?v=2LxtHeZlaVw
 
-module HC-Lec3 where
+module Lec3-HC where
 
-open import HC-Lec1
-open import HC-Lec2
+open import Lec1-HC
+open import Lec2-HC
 
 postulate
   -- equal inputs go to equal outputs

@@ -20,6 +20,12 @@
 
 open import CS410-Prelude
 
+cong : ∀ {A B : Set} {x y : A}
+     → (f : A → B)
+     →   x ==   y
+       ----------
+     → f x == f y
+cong f (refl x) =  refl (f x)
 
 ------------------------------------------------------------------------------
 -- Vectors
@@ -250,6 +256,28 @@ n<=m→sucn<=sucm  oz       = os oz
 n<=m→sucn<=sucm (os n<=m) = os (n<=m→sucn<=sucm n<=m)
 n<=m→sucn<=sucm (o' n<=m) = o' (n<=m→sucn<=sucm n<=m)
 
+sucsucn<=m→sucn<=m : {n m : Nat} -> suc (suc n) <= m -> suc n <= m
+sucsucn<=m→sucn<=m (os sucn<=m)  = o' sucn<=m
+sucsucn<=m→sucn<=m (o' (os xxx)) = o' (o' xxx)
+sucsucn<=m→sucn<=m (o' (o' xxx)) = o' (o' (sucsucn<=m→sucn<=m xxx))
+
+sucn<=m→sucn<=sucm : {n m : Nat} -> suc n <= m -> suc n <= suc m
+sucn<=m→sucn<=sucm (os p) = os (o' p)
+sucn<=m→sucn<=sucm (o' p) = o' (sucn<=m→sucn<=sucm p)
+
+zero<=m : {m : Nat} -> zero <= m
+zero<=m  {zero} = oz
+zero<=m {suc m} = o' zero<=m
+
+sucn<=sucm→n<=m : {n m : Nat} -> suc n <= suc m -> n <= m
+sucn<=sucm→n<=m {zero}  {zero}       p  = oz
+sucn<=sucm→n<=m {zero}  {suc m} (os  p) = o' (zero<=m {m})
+sucn<=sucm→n<=m {zero}  {suc m} (o'  p) = o' (zero<=m {m})
+sucn<=sucm→n<=m {suc n} {zero}  (os ())
+sucn<=sucm→n<=m {suc n} {zero}  (o' ())
+sucn<=sucm→n<=m {suc n} {suc m} (os  p) = p
+sucn<=sucm→n<=m {suc n} {suc m} (o'  p) = o' (sucn<=sucm→n<=m p)
+
 -- Find all the values in each of the following <= types.
 -- This is a good opportunity to learn to use C-c C-a with the -l option
 --   (a.k.a. "google the type" without "I feel lucky")
@@ -307,24 +335,29 @@ no5<=4 (o' (o' (o' (o' ()))))
 
 _<?=_ : {X : Set}{n m : Nat} -> n <= m -> Vec X m
                      -> Vec X n
-oz    <?=       []  = []
+oz    <?=        _  = []
 os th <?= (x ,- xs) = x ,- th <?= xs
-o' th <?= (x ,- xs) =      th <?= xs
+o' th <?= (_ ,- xs) =      th <?= xs
 
 vn4 : Vec Nat 4
 vn4 = os (os (os (os oz))) <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
-_ : vn4 == (1 ,- 2 ,- 3 ,- 4 ,- [])
-_ = refl (1 ,- 2 ,- 3 ,- 4 ,- [])
+_ :                     vn4 == (1 ,- 2 ,- 3 ,- 4 ,- [])
+_ =                       refl (1 ,- 2 ,- 3 ,- 4 ,- [])
 
 vn3 : Vec Nat 3
 vn3 = o' (os (o' (os (o' (os oz))))) <?= (1 ,- 2 ,- 3 ,- 4 ,- 5 ,- 6 ,- [])
-_ : vn3 == (2 ,- 4 ,- 6 ,- [])
-_ = refl (2 ,- 4 ,- 6 ,- [])
+_ :                               vn3 ==      (2      ,- 4      ,- 6 ,- [])
+_ =                                      refl (2      ,- 4      ,- 6 ,- [])
 
 vn2 : Vec Nat 2
-vn2 = o' (os (o' (os oz))) <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
-_ : vn2 == (2 ,- 4 ,- [])
-_ = refl (2 ,- 4 ,- [])
+vn2 = os (o' (os (o' oz))) <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
+_ :                     vn2 == (1      ,- 3      ,- [])
+_ =                       refl (1      ,- 3      ,- [])
+
+vn2' : Vec Nat 2
+vn2' = o' (os (os (o' oz))) <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
+_ :                          vn2' == (2 ,- 3      ,- [])
+_ =                             refl (2 ,- 3      ,- [])
 
 -- it shouldn't matter whether you map then select or select then map
 
@@ -355,14 +388,14 @@ oe  {zero} = oz
 oe {suc n} = o' oe
 
 vnoi : Vec Nat 4
-vnoi = oi <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
-_ : vnoi == (1 ,- 2 ,- 3 ,- 4 ,- [])
-_ = refl (1 ,- 2 ,- 3 ,- 4 ,- [])
+vnoi = oi  <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
+_    : vnoi == (1 ,- 2 ,- 3 ,- 4 ,- [])
+_    =    refl (1 ,- 2 ,- 3 ,- 4 ,- [])
 
 vnoe : Vec Nat 0
 vnoe = oe <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
-_ : vnoe == []
-_ = refl []
+_    :                     vnoe == []
+_    =                        refl []
 
 
 --??--------------------------------------------------------------------------
@@ -388,12 +421,18 @@ oeUnique (o' i) rewrite oeUnique i = refl (o' oe)
 --??--1.11-(3)----------------------------------------------------------------
 
 oTooBig : {n m : Nat} -> n >= m -> suc n <= m -> Zero
-oTooBig {n} {m} n>=m th = {!!}
+oTooBig  {zero}  {zero} n>=m ()
+oTooBig  {zero} {suc m} n>=m (os th) = n>=m
+oTooBig  {zero} {suc m} n>=m (o' th) = n>=m
+oTooBig {suc n} {suc m} n>=m (os th) = oTooBig n>=m th
+oTooBig {suc n} {suc m} n>=m (o' th) = oTooBig {n} {m} n>=m (sucsucn<=m→sucn<=m th)
 
 oiUnique : {n : Nat}(n<=n : n <= n) -> n<=n == oi
-oiUnique {zero} oz                               = refl oz
-oiUnique {suc n} (os n<=n) rewrite oiUnique n<=n = refl (os oi)
-oiUnique {suc n} (o' sucn<=n) = {!!}
+oiUnique          oz                             = refl oz
+oiUnique         (os n<=n) rewrite oiUnique n<=n = refl (os oi)
+oiUnique {suc n} (o' sucn<=n)
+  with oTooBig (refl->= n) sucn<=n
+... | ()
 
 --??--------------------------------------------------------------------------
 
@@ -404,7 +443,7 @@ oiUnique {suc n} (o' sucn<=n) = {!!}
 
 id-<?= : {X : Set}{n : Nat}(xs : Vec X n) -> (oi <?= xs) == xs
 id-<?=       []  = refl []
-id-<?= (x ,- xs) rewrite id-<?= xs = refl (x ,- xs)
+id-<?= (x ,- xs) = cong (x ,-_) (id-<?= xs)
 
 --??--------------------------------------------------------------------------
 
@@ -421,44 +460,58 @@ id-<?= (x ,- xs) rewrite id-<?= xs = refl (x ,- xs)
 
 --??--1.13-(3)----------------------------------------------------------------
 
-_o>>_ : {p n m : Nat} -> p <= n -> n <= m -> p <= m
-p<=zero o>> oz      = p<=zero
-p<=sucn o>> os n<=m = trans-<= p<=sucn (n<=m→sucn<=sucm n<=m)
-p<=n    o>> o' n<=m = trans-<= p<=n                 (o' n<=m)
+-- my 1st attempt - but everything gets stuff because pattern matching on right instead of left
+_o>>1_ : {p n m : Nat} -> p <= n -> n <= m -> p <= m
+p<=zero o>>1 oz      = p<=zero
+p<=sucn o>>1 os n<=m = trans-<= p<=sucn (n<=m→sucn<=sucm n<=m)
+p<=n    o>>1 o' n<=m = trans-<= p<=n                 (o' n<=m)
+
+-- 2nd attempt - but things further down get stuck
+_o>>2_ : {p n m : Nat} -> p <= n -> n <= m -> p <= m
+oz       o>>2 oz          = oz
+os n<=m₁ o>>2 os    m₁<=m = os     (n<=m₁ o>>2    m₁<=m)
+os n<=m₁ o>>2 o' sucm₁<=m = os (o'  n<=m₁ o>>2 sucm₁<=m)
+o' p<=m₁ o>>2 os    m₁<=m =     o' (p<=m₁ o>>2    m₁<=m)
+o' p<=m₁ o>>2 o' sucm₁<=m = o' (o'  p<=m₁ o>>2 sucm₁<=m)
+oz       o>>2 o'  zero<=m = o'        (oz o>>2  zero<=m)
+
+-- https://github.com/laMudri/thinning/blob/master/src/Data/Thinning.agda
+_o>>_ : ∀ {m n o} → m <= n → n <= o → m <= o
+m<=z o>> oz   = m<=z
+os θ o>> os φ = os (θ o>> φ)
+o' θ o>> os φ = o' (θ o>> φ)
+θ    o>> o' φ = o' (θ o>> φ)
 
 
 -- empty thinning returns an empty vector
 oe-<?= : {X : Set}{n : Nat}(xs : Vec X n) -> (oe <?= xs) == []
 oe-<?=       []  = refl []
-oe-<?= (x ,- xs) rewrite oe-<?= xs = refl []
+oe-<?= (x ,- xs) = oe-<?= xs
 
 cp-<?= : {p n m : Nat}(p<=n : p <= n)(n<=m : n <= m) ->
          {X : Set}(xs : Vec X m) ->
          ((p<=n o>> n<=m) <?= xs) == (p<=n <?= (n<=m <?= xs))
-cp-<?= oz oz [] = refl []
-cp-<?= oz (o' zero<=m) (x ,- xs)
-  rewrite
-    oeUnique zero<=m
-  | oe-<?= xs
-  = refl []
-cp-<?= (os p<=n) (os n<=m) (x ,- xs)
-  = {!!}
-cp-<?= (os p<=n) (o' n<=m) xs = {!!}
-cp-<?= (o' p<=n) (os n<=m) xs = {!!}
-cp-<?= (o' p<=n) (o' n<=m) xs = {!!}
+cp-<?=     p<=n   oz             []  = refl (p<=n <?= [])
+cp-<?=     p<=n  (o' n<=m) (_ ,- xs) = cp-<?= p<=n n<=m xs
+cp-<?= (o' p<=n) (os n<=m) (_ ,- xs) = cp-<?= p<=n n<=m xs
+cp-<?= (os p<=n) (os n<=m) (x ,- xs) = cong (x ,-_) (cp-<?= p<=n n<=m xs)
 
 
 zero<=4 : zero <= 4
 zero<=4 = o' (o' (o' (o' oz)))
 
-1<=4 : 1 <= 4
-1<=4 = os (o' (o' (o' oz)))
+1<=4    : 1    <= 4
+1<=4    = os (o' (o' (o' oz)))
 
-v04 : Vec Nat zero
-v04 = zero<=4 <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
+v04     : Vec Nat zero
+v04     = zero<=4 <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
+_       :                           v04 == []
+_       =                             refl []
 
-v14 : Vec Nat 1
-v14 = 1<=4 <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
+v14     : Vec Nat 1
+v14     =    1<=4 <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
+_       :      v14 == (1                ,- [])
+_       =        refl (1                ,- [])
 
 
 --??--------------------------------------------------------------------------
@@ -471,16 +524,23 @@ v14 = 1<=4 <?= (1 ,- 2 ,- 3 ,- 4 ,- [])
 --??--1.14-(3)----------------------------------------------------------------
 
 idThen-o>> : {n m : Nat}(n<=m : n <= m) -> (oi o>> n<=m) == n<=m
-idThen-o>>  oz       = refl oz
-idThen-o>> (os n<=m) = {!!}
-idThen-o>> (o' n<=m) = {!!}
+idThen-o>>  oz                               = refl oz
+idThen-o>> (os n<=m) = cong os (idThen-o>> n<=m) -- rewrite idThen-o>> n<=m = refl (os n<=m)
+idThen-o>> (o' n<=m) = cong o' (idThen-o>> n<=m)
 
 idAfter-o>> : {n m : Nat}(n<=m : n <= m) -> (n<=m o>> oi) == n<=m
-idAfter-o>> n<=m = {!!}
+idAfter-o>>  oz       = refl oz
+idAfter-o>> (os n<=m) = cong os (idAfter-o>> n<=m) -- rewrite idAfter-o>> n<=m = refl (os n<=m)
+idAfter-o>> (o' n<=m) = cong o' (idAfter-o>> n<=m) -- rewrite idAfter-o>> n<=m = refl (o' n<=m)
 
-assoc-o>> : {q p n m : Nat}(th0 : q <= p)(th1 : p <= n)(th2 : n <= m) ->
-            ((th0 o>> th1) o>> th2) == (th0 o>> (th1 o>> th2))
-assoc-o>> th0 th1 th2 = {!!}
+assoc-o>> : {q p n m : Nat}(q<=p : q <= p)(p<=n : p <= n)(n<=m : n <= m) ->
+            ((q<=p o>> p<=n) o>> n<=m) == (q<=p o>> (p<=n o>> n<=m))
+assoc-o>>     q<=p      p<=n   oz       = refl (q<=p o>> p<=n)
+assoc-o>>     q<=p      p<=n  (o' n<=m) = cong o' (assoc-o>> q<=p p<=n n<=m)
+assoc-o>>     q<=p  (o' p<=n) (os n<=m) = cong o' (assoc-o>> q<=p p<=n n<=m)
+assoc-o>> (o' q<=p) (os p<=n) (os n<=m) = cong o' (assoc-o>> q<=p p<=n n<=m)
+assoc-o>> (os q<=p) (os p<=n) (os n<=m) = cong os (assoc-o>> q<=p p<=n n<=m)
+
 
 --??--------------------------------------------------------------------------
 
@@ -496,6 +556,12 @@ assoc-o>> th0 th1 th2 = {!!}
 vProject : {n : Nat}{X : Set} -> Vec X n -> 1 <= n -> X
 vProject xs i = vHead (i <?= xs)
 
+vp3 : Nat
+vp3 = vProject (1 ,- 2 ,- 3 ,- 4 ,- []) (o' (o' (os (o' oz))))
+_ :                vp3 == 3
+_ =                  refl 3
+
+
 -- Your (TRICKY) mission is to reverse the process, tabulating a function
 -- from indices as a vector. Then show that these operations are inverses.
 
@@ -503,12 +569,25 @@ vProject xs i = vHead (i <?= xs)
 
 -- HINT: composition of functions
 vTabulate : {n : Nat}{X : Set} -> (1 <= n -> X) -> Vec X n
-vTabulate {n} f = {!!}
+vTabulate  {zero} _ = []
+vTabulate {suc n} f = f (os (zero<=m {n})) ,- (vTabulate (λ 1<=n → f (o' 1<=n)))
+
+vt : Vec Nat 4
+vt = vTabulate f
+ where
+  f : (1 <= 4) → Nat
+  f             (os _)    = 1
+  f         (o' (os _))   = 2
+  f     (o' (o' (os _)))  = 3
+  f (o' (o' (o' (os _)))) = 4
+_ : vt == (1 ,- 2 ,- 3 ,- 4 ,- [])
+_ =  refl (1 ,- 2 ,- 3 ,- 4 ,- [])
 
 -- This should be easy if vTabulate is correct.
 vTabulateProjections : {n : Nat}{X : Set}(xs : Vec X n) ->
                        vTabulate (vProject xs) == xs
-vTabulateProjections xs = {!!}
+vTabulateProjections [] = refl []
+vTabulateProjections (x ,- xs) = cong (x ,-_) (vTabulateProjections xs)
 
 -- HINT: oeUnique
 vProjectFromTable : {n : Nat}{X : Set}(f : 1 <= n -> X)(i : 1 <= n) ->
