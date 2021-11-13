@@ -575,11 +575,9 @@ vTabulate {suc n} f = f (os (zero<=m {n})) ,- (vTabulate (λ 1<=n → f (o' 1<=n
 vt : Vec Nat 4
 vt = vTabulate f
  where
-  f : (1 <= 4) → Nat
-  f             (os _)    = 1
-  f         (o' (os _))   = 2
-  f     (o' (o' (os _)))  = 3
-  f (o' (o' (o' (os _)))) = 4
+  f : {n : Nat} -> (1 <= n) → Nat
+  f (os _) = 1
+  f (o' x) = 1 +N f x
 _ : vt == (1 ,- 2 ,- 3 ,- 4 ,- [])
 _ =  refl (1 ,- 2 ,- 3 ,- 4 ,- [])
 
@@ -592,6 +590,10 @@ vTabulateProjections (x ,- xs) = cong (x ,-_) (vTabulateProjections xs)
 -- HINT: oeUnique
 vProjectFromTable : {n : Nat}{X : Set}(f : 1 <= n -> X)(i : 1 <= n) ->
                     vProject (vTabulate f) i == f i
-vProjectFromTable f i = {!!}
+vProjectFromTable {suc n} f (os 0<=n)
+  rewrite oeUnique 0<=n | oeUnique (zero<=m {n})
+  = refl (f (os oe))
+vProjectFromTable {suc n} f (o' 1<=n)
+  = vProjectFromTable (λ 1<=n → f (o' 1<=n)) 1<=n
 
 --??--------------------------------------------------------------------------
