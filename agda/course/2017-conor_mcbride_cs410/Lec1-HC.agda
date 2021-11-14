@@ -139,6 +139,14 @@ _=$=_ : {X Y : Set} {f f' : X -> Y} {x x' : X}
      -> f x == f' x
 refl f =$= refl x = refl (f x)
 
+-- HC : use this instead
+cong : ∀ {A B : Set} {x y : A}
+     → (f : A → B)
+     →   x ==   y
+       ----------
+     → f x == f y
+cong f (refl x) =  refl (f x)
+
 ------------------------------------------------------------------------------
 -- computing types
 
@@ -169,7 +177,7 @@ trans->= (suc x) (suc y) (suc z) x>=y y>=z = trans->= x y z x>=y y>=z
 
 -- 47:38
 
-record Sg (S : Set) (T : S -> Set) : Set where -- Sg is short for "Sigma"
+record Sg (S : Set) (T : S -> Set) : Set where -- Sg is short for "Sigma" (i.e., Σ)
   constructor _,_
   field
     fst : S       -- a value
@@ -206,16 +214,13 @@ zero-+N n = refl n -- by definition
 -- HC alternate version
 +N-zero : (n : Nat) -> (n +N zero) == n
 +N-zero  zero   = refl zero -- by definition
-+N-zero (suc n)
-  with +N-zero n
-...| n+N0==n
-  rewrite n+N0==n
-   = refl (suc n)
++N-zero (suc n) = cong suc (+N-zero n)
 
 -- 26:00
 -- version in video
--- assocLR-+N' : (x y z : Nat) -> ((x +N y) +N z) == (x +N (y +N z))
--- assocLR-+N'  zero   y z = refl (y +N z)
+assocLR-+N' : (x y z : Nat) -> ((x +N y) +N z) == (x +N (y +N z))
+assocLR-+N'  zero   y z = refl (y +N z)
+assocLR-+N' (suc x) y z = cong suc (assocLR-+N' x y z)
 -- assocLR-+N' (suc x) y z = refl suc =$= assocLR-+N' x y z -- TODO : does not compile
 
 -- 30:21
@@ -267,10 +272,53 @@ difference'' (suc m) (suc n) m>=n
   with difference'' m n m>=n
 ...| d , m==n+Nd
   with m==n+Nd
-... | refl .(n +N d) = d , (refl (suc (n +N d)))
+... | refl .(n +N d)
+  = d , (refl (suc (n +N d)))
 
-tryMe     = difference 42 37
+tryMe-42-37
+    : Sg Nat
+          (λ z →
+             42 ==
+             suc
+             (suc
+              (suc
+               (suc
+                (suc
+                 (suc
+                  (suc
+                   (suc
+                    (suc
+                     (suc
+                      (suc
+                       (suc
+                        (suc
+                         (suc
+                          (suc
+                           (suc
+                            (suc
+                             (suc
+                              (suc
+                               (suc
+                                (suc
+                                 (suc
+                                  (suc
+                                   (suc
+                                    (suc
+                                     (suc
+                                      (suc
+                                       (suc
+                                        (suc
+                                         (suc
+                                          (suc
+                                           (suc
+                                            (suc (suc (suc (suc (suc z)))))))))))))))))))))))))))))))))))))
+tryMe-42-37     = difference 42 37 <>
 -- dontTryMe = difference 37 42 {!!}
+
+tryMe-5-3 : Sg Nat (λ z → 5 == suc (suc (suc z)))
+tryMe-5-3 = difference 5 3 <>
+_ : tryMe-5-3 == (2 , refl 5)
+_ =         refl (2 , refl 5)
 
 ------------------------------------------------------------------------------
 -- things to remember to say

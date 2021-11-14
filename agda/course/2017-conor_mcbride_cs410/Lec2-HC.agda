@@ -27,7 +27,7 @@ _ = refl (1 :: 2 :: [])
 vTakeIdFact : (n : Nat) {X : Set} (xs : Vec X n)
            -> vTake n n (refl->= n) xs == xs
 vTakeIdFact .0             [] = refl []
-vTakeIdFact (suc n) (x :: xs) rewrite vTakeIdFact n xs = refl (x :: xs)
+vTakeIdFact (suc n) (x :: xs) = cong (x ::_) (vTakeIdFact n xs)
 
 -- 48:17 : taking p elements from Vm is same as taking n elements from Vm, forming Vn
 --         then taking p elments from Vn
@@ -35,9 +35,8 @@ vTakeCpFact : (m n p : Nat) (m>=n : m >= n) (n>=p : n >= p) {X : Set} (xs : Vec 
            -> vTake m p (trans->= m n p m>=n n>=p)                 xs
            == vTake n p                      n>=p  (vTake m n m>=n xs)
 vTakeCpFact      m       n   zero   m>=n n>=p _ = refl []
-vTakeCpFact (suc m) (suc n) (suc p) m>=n n>=p (x :: xs)
-  rewrite vTakeCpFact  m n p m>=n n>=p xs
-  = refl (x :: (vTake n p n>=p (vTake m n m>=n xs)))
+vTakeCpFact (suc m) (suc n) (suc p) m>=n n>=p (x :: xs) =
+  cong (x ::_) (vTakeCpFact  m n p m>=n n>=p xs)
 
 -- 48:54
 -- vTakeIdFact : reflexivity  turns into identity
@@ -98,17 +97,17 @@ data _<[_]>_ : Nat -> Nat -> Nat -> Set where
   rrr : {l m r : Nat} ->     l <[     m ]>     r
                       ->     l <[ suc m ]> suc r
 
--- xzzz : Set
--- xzzz = zero <[ zero ]> zero
+xzzz : Set
+xzzz = zero <[ zero ]> zero
 
--- x1z1 : Set
--- x1z1 = 1 <[ zero ]> 1
+x1z1 : Set
+x1z1 = 1 <[ zero ]> 1
 
--- x159 : Set
--- x159 = 1 <[ 5 ]> 9
+x159 : Set
+x159 = 1 <[ 5 ]> 9
 
--- x951 : Set
--- x951 = 9 <[ 5 ]> 1
+x951 : Set
+x951 = 9 <[ 5 ]> 1
 
 -- 41:08
 -- combine two vectors into one according to given instructions
@@ -138,13 +137,11 @@ xl        >[ rrr mmm ]< (x :: xr) = x :: (xl >[ mmm ]< xr)
 
 v6rl : Vec Nat 6
 v6rl = (0 :: 2 :: 3 :: []) >[ rrr (rrr (rrr (lll (lll (lll zzz))))) ]< (7 :: 8 :: 9 :: [])
-
 _ : v6rl == (7 :: 8 :: 9 :: 0 :: 2 :: 3 :: [])
 _ = refl    (7 :: 8 :: 9 :: 0 :: 2 :: 3 :: [])
 
 v6   : Vec Nat 6
 v6   = (0 :: 2 :: 3 :: []) >[ lll (rrr (lll (rrr (lll (rrr zzz))))) ]< (7 :: 8 :: 9 :: [])
-
 _ : v6 == (0 :: 7 :: 2 :: 8 :: 3 :: 9 :: [])
 _ = refl  (0 :: 7 :: 2 :: 8 :: 3 :: 9 :: [])
 

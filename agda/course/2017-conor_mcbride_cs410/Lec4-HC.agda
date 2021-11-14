@@ -16,8 +16,8 @@ _>F>_ : (SET => SET) -> (SET => SET) -> (SET => SET)
 F >F> G = F >~> G where open Category CATEGORY
 
 data Maybe (X : Set) : Set where
-  yes : (x : X) -> Maybe X
-  no  :            Maybe X
+  yes : X -> Maybe X
+  no  :      Maybe X
 
 maybe : {S T : Set} -> (S -> T) -> Maybe S -> Maybe T
 maybe f (yes x) = yes (f x)

@@ -51,6 +51,23 @@ SET = record
         ; law->~>>~>  = λ f g h → refl (λ x → h (g (f x)))
         }
 
+nat→one      : Set
+nat→one      = Category._~>_ SET Nat One
+nat→one'     : nat→one
+nat→one'     = λ _ → <>
+
+one→nat      : Set
+one→nat      = Category._~>_ SET One Nat
+one→nat'     : one→nat
+one→nat'     = λ _ → 33
+
+nat→one→nat  : Nat → Nat
+nat→one→nat  = Category._>~>_ SET nat→one' one→nat'
+nat→one→nat' : Nat
+nat→one→nat' = nat→one→nat 3
+_            : nat→one→nat' == 33
+_            = refl 33
+
 -- 11:50
 -- A PREORDER is a category where there is at most one arrow between any two objects.
 -- Therefore arrows are unique.
@@ -79,15 +96,66 @@ NAT->= = record
 -- A MONOID is a category with Obj = One.
 -- The values in the monoid are the *arrows*.
 -- Only one object, so arrows are the ways to get from Nat to Nat.
+------------------------------------------------------------------
+-- https://eed3si9n.com/herding-cats/Monoid-as-categories.html
+-- A monoid is a category with just one object.
+-- The arrows of the category are the elements of the monoid.
+-- - The identity arrow is the unit element u.
+-- Composition of arrows is the binary operation m · n for the monoid.
+------------------------------------------------------------------
+-- https://graphicallinearalgebra.net/2017/04/16/a-monoid-is-a-category-a-category-is-a-monad-a-monad-is-a-monoid/
+-- A category with exactly one object – One.
+-- There is just one identity arrow  (the identity on One).
+-- Every arrow has One as both domain and codomain, since there are no other objects around. ??
+-- The fact that there is an object One, adds no interesting information.
 ONE-Nat : Category
 ONE-Nat = record
             { Obj         = One
-            ; _~>_        = λ _ _ -> Nat
+            ; _~>_        = λ _ _ -> Nat -- ?? TODO
             ; id~>        = zero
             ; _>~>_       = _+N_
             ; law-id~>>~> = refl
             ; law->~>id~> = +N-zero
             ; law->~>>~>  = assocLR-+N
+            }
+
+_ : Set
+_ = Category._~>_ ONE-Nat <> <>
+_ : Category._~>_ ONE-Nat <> <>
+_ = 99
+
+_ : Nat
+_ = Category._>~>_ ONE-Nat 4 3
+_ : Category._>~>_ ONE-Nat 4 3 == 7
+_ = refl 7
+
+_*N_ : Nat -> Nat -> Nat
+zero  *N n = zero
+suc m *N n = n +N (m *N n)
+
+_ : (2 *N 5) == 10
+_ = refl 10
+
+*N-1 : (n : Nat) → (n *N 1) == n
+*N-1  zero   = refl zero
+*N-1 (suc n) = cong suc (*N-1 n)
+
+1-*N : (n : Nat) → (1 *N n) == n
+1-*N  zero   = refl zero
+1-*N (suc n) = cong suc (1-*N n)
+
+postulate
+  *N-assoc : (m n o : Nat) -> ((m *N n) *N o) == (m *N (n *N o))
+
+ONE-Nat* : Category
+ONE-Nat* = record
+            { Obj         = One
+            ; _~>_        = λ _ _ -> Nat
+            ; id~>        = suc zero
+            ; _>~>_       = _*N_
+            ; law-id~>>~> = 1-*N
+            ; law->~>id~> = *N-1
+            ; law->~>>~>  = *N-assoc
             }
 
 -- 26:05
@@ -136,17 +204,17 @@ open FUNCTOR public
 {-
 -- 22:?? https://www.youtube.com/watch?v=vTmYvoDrBlc
 
-              S
+             S
              ^
             /   \
         f /       \ g
         /           \
       /              v
       R -----------> T
-          f >> g
+           f >> g
 
 
-        F-Obj S
+          F-Obj S
              ^
             /   \
   F-map f /       \ F-map g
@@ -165,19 +233,14 @@ vMap f (x :: xs) = f x :: vMap f xs
 
 vMap-id : {n : Nat} {X : Set} (xs : Vec X n) -> vMap id xs == id xs
 vMap-id       []  = refl []
-vMap-id (x :: xs)
-  rewrite vMap-id xs
-  = refl (x :: xs)
+vMap-id (x :: xs) = cong (x ::_) (vMap-id xs)
 
 vMapCp : {n : Nat} {R S T : Set} {r->s : R -> S} {s->t : S -> T}
       -> (xs : Vec R n)
       -> vMap (r->s >> s->t) xs == vMap s->t (vMap r->s xs)
 vMapCp []  = refl []
-vMapCp {r->s = r->s} {s->t = s->t} (r :: rs)
-  with vMapCp {r->s = r->s} {s->t = s->t} rs
-...| xxx
-  rewrite xxx
-   = refl (s->t (r->s r) :: vMap s->t (vMap r->s rs))
+vMapCp {r->s = r->s} {s->t = s->t} (r :: rs) =
+  cong (s->t (r->s r) ::_) (vMapCp {r->s = r->s} {s->t = s->t} rs)
 
 -- vector as a functor
 VEC : Nat -> SET => SET
@@ -238,6 +301,7 @@ ADD d = record
 
 -- 41:00
 
+-- see Lec3Done for complete version
 CATEGORY : Category
 CATEGORY = record
              { Obj         = Category
