@@ -202,11 +202,11 @@ module FUNCTOR where
 open FUNCTOR public
 
 {-
--- 22:?? https://www.youtube.com/watch?v=vTmYvoDrBlc
+-- 21:00 https://www.youtube.com/watch?v=vTmYvoDrBlc
 
              S
              ^
-            /   \
+            ^   \
         f /       \ g
         /           \
       /              v
@@ -216,7 +216,7 @@ open FUNCTOR public
 
           F-Obj S
              ^
-            /   \
+            ^   \
   F-map f /       \ F-map g
         /           \
       /               v
@@ -301,7 +301,8 @@ ADD d = record
 
 -- 41:00
 
--- see Lec3Done for complete version
+-- See Lec3Done for complete category of categories
+
 CATEGORY : Category
 CATEGORY = record
              { Obj         = Category

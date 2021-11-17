@@ -87,14 +87,15 @@ module MAYBE-CAT where
 
   MAYBE-CAT : Category
   MAYBE-CAT = record
-    { Obj = Set
-    ; _~>_ = λ S T -> S -> Maybe T -- a function from S to T that might go wrong (i.e., exception)
-    ; id~> = yes
+    { Obj         = Set
+      -- a function from S to T that might go wrong (i.e., exception)
+    ; _~>_        = λ S T -> S -> Maybe T
+    ; id~>        = yes
       -- work with arrows (instead of applied functions)
-    ; _>~>_ = λ f g -> f >> (F-map g >> joinMaybe)
+    ; _>~>_       = λ f g -> f >> (F-map g >> joinMaybe)
     ; law-id~>>~> = \f -> refl f
     ; law->~>id~> = λ s->mt → extensionality λ s -> idR s->mt s
-    ; law->~>>~> = λ q->mr r->ms s->mt → extensionality λ q → cmp q->mr r->ms s->mt q
+    ; law->~>>~>  = λ q->mr r->ms s->mt → extensionality λ q → cmp q->mr r->ms s->mt q
     }
    where
     idR : {S T : Set} (s->mt : S → Maybe T) (s : S)
@@ -123,4 +124,27 @@ module MAYBE-CAT where
 -- https://www.youtube.com/watch?v=2sykXdidZVA
 
 -- 17:27
--- Discussion of CS410-Prelude (for use with exercise 2)
+-- Discussion of CS410-Categories (for use with exercise 2)
+{-
+extensionality  : to prove functions (with explicit argument) are equal
+extensionality' : to prove functions (with implicit argument) are equal
+_=$'_           : like cong
+def of Category
+def of SET
+def of Functor
+def of identity Functor
+def of Functor composotion
+
+21:04
+CS410-Prelude
+
+chain equality proofs together: (see usage in Functor Composition in CS410-Categories
+_[QED]
+
+KEY THING:  NATURAL-TRANSFORMATION
+- a kind of arrow between two functors
+- naturality : doesn't matter if work on elements then structure or vice-versa
+
+32:06 : show naturality
+see Lec4-HC-2
+-}

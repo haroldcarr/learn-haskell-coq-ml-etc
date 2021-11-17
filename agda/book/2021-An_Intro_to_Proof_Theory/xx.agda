@@ -120,6 +120,16 @@ data ⊥ : Set where
 ¬ A = A → ⊥
 infix 3 ¬_
 
+¬-elim : ∀ {A : Set}
+  → ¬ A
+  →   A
+    ---
+  →   ⊥
+¬-elim ¬a a = ¬a a
+
+⊥-elim : {A : Set} -> ⊥ -> A
+⊥-elim ()
+
 {-
 --------------------------------------------------
 -- p 18 2.4 Logical calculi
@@ -175,14 +185,19 @@ pl10 (a→b , a→¬b) = λ a → (a→¬b a) (a→b a)
 -- J₀
 
 pl11 : {A B : Set} -> ¬ A -> (A -> B)
-pl11 ¬a = λ a -> {!!}
+pl11 ¬a a
+  with ¬-elim ¬a
+... | a→⊥
+  with a→⊥ a
+...| ⊥
+  = ⊥-elim ⊥
 
 -------------------------
 -- p 19 2.4.3 Classical logic
 -- K₀
 
-pl12 : {A : Set} -> ¬ ¬ A -> A
-pl12 ¬¬a = {!!}
+postulate -- cannot be defined constructively
+  pl12 : {A : Set} -> ¬ ¬ A -> A
 
 {-
 --------------------------------------------------

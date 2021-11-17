@@ -237,7 +237,7 @@ data _<=_ : Nat -> Nat -> Set where
   o' : {n m : Nat} -> n <= m ->     n <= suc m -- skip this one and keep going
 
 refl-<= : (n : Nat) -> n <= n
-refl-<= zero    = oz
+refl-<=  zero   = oz
 refl-<= (suc n) = os (refl-<= n)
 
 trans-<= : {n m p : Nat} -> n <= m -> m <= p -> n <= p
@@ -246,6 +246,13 @@ trans-<= (os n<=m) (os sucm<=p) = os (trans-<=     n<=m  sucm<=p)
 trans-<= (os n<=m) (o' sucm<=p) = os (trans-<= (o' n<=m) sucm<=p)
 trans-<= (o' n<=m) (os    m<=p) = o' (trans-<=     n<=m     m<=p)
 trans-<= (o' n<=m) (o'    m<=p) = o' (trans-<= (o' n<=m)    m<=p)
+
+leftId : {S T : Nat} (S<=T : S <= T) → trans-<= (refl-<= S) S<=T == S<=T
+leftId  oz       = refl oz
+          -- Goal: os (trans-<= (refl-<= n) S<=T) == os S<=T
+leftId (os S<=T) = cong os (leftId S<=T)
+          -- Goal: trans-<= (refl-<= S) (o' S<=T) == o' S<=T
+leftId {S} (o' S<=T) = {!!}
 
 <=-suc : (x : Nat) -> x <= suc x
 <=-suc  zero   = o' oz
@@ -460,13 +467,13 @@ id-<?= (x ,- xs) = cong (x ,-_) (id-<?= xs)
 
 --??--1.13-(3)----------------------------------------------------------------
 
--- my 1st attempt - but everything gets stuff because pattern matching on right instead of left
+-- my 1st attempt - but other proofs get stuck because pattern matching on right instead of left
 _o>>1_ : {p n m : Nat} -> p <= n -> n <= m -> p <= m
 p<=zero o>>1 oz      = p<=zero
 p<=sucn o>>1 os n<=m = trans-<= p<=sucn (n<=m→sucn<=sucm n<=m)
 p<=n    o>>1 o' n<=m = trans-<= p<=n                 (o' n<=m)
 
--- 2nd attempt - but things further down get stuck
+-- 2nd attempt - but other proofs get get stuck
 _o>>2_ : {p n m : Nat} -> p <= n -> n <= m -> p <= m
 oz       o>>2 oz          = oz
 os n<=m₁ o>>2 os    m₁<=m = os     (n<=m₁ o>>2    m₁<=m)
@@ -476,12 +483,31 @@ o' p<=m₁ o>>2 o' sucm₁<=m = o' (o'  p<=m₁ o>>2 sucm₁<=m)
 oz       o>>2 o'  zero<=m = o'        (oz o>>2  zero<=m)
 
 -- https://github.com/laMudri/thinning/blob/master/src/Data/Thinning.agda
+-- an element is kept iff it is kept by both thinnings
 _o>>_ : ∀ {m n o} → m <= n → n <= o → m <= o
 m<=z o>> oz   = m<=z
 os θ o>> os φ = os (θ o>> φ)
 o' θ o>> os φ = o' (θ o>> φ)
 θ    o>> o' φ = o' (θ o>> φ)
 
+-- Category laws
+oi->> : ∀ {n o} (φ : n <= o) → (oi o>> φ) == φ
+oi->>  oz    = refl oz
+oi->> (os φ) = cong os (oi->> φ)
+oi->> (o' φ) = cong o' (oi->> φ)
+
+>>-oi : ∀ {m n} (θ : m <= n) → (θ o>> oi) == θ
+>>-oi oz     = refl oz
+>>-oi (os θ) = cong os (>>-oi θ)
+>>-oi (o' θ) = cong o' (>>-oi θ)
+
+>>->> : ∀ {m n o p} (θ : m <= n) (φ : n <= o) (χ : o <= p)
+      → ((θ o>> φ) o>> χ) == (θ o>> (φ o>> χ))
+>>->>     θ      φ   oz    = refl (θ o>> φ)
+>>->>     θ      φ  (o' χ) = cong o' (>>->> θ φ χ)
+>>->>     θ  (o' φ) (os χ) = cong o' (>>->> θ φ χ)
+>>->> (os θ) (os φ) (os χ) = cong os (>>->> θ φ χ)
+>>->> (o' θ) (os φ) (os χ) = cong o' (>>->> θ φ χ)
 
 -- empty thinning returns an empty vector
 oe-<?= : {X : Set}{n : Nat}(xs : Vec X n) -> (oe <?= xs) == []
@@ -523,10 +549,10 @@ _       =        refl (1                ,- [])
 
 --??--1.14-(3)----------------------------------------------------------------
 
-idThen-o>> : {n m : Nat}(n<=m : n <= m) -> (oi o>> n<=m) == n<=m
-idThen-o>>  oz                               = refl oz
-idThen-o>> (os n<=m) = cong os (idThen-o>> n<=m) -- rewrite idThen-o>> n<=m = refl (os n<=m)
-idThen-o>> (o' n<=m) = cong o' (idThen-o>> n<=m)
+idThen-o>>  : {n m : Nat}(n<=m : n <= m) -> (oi o>> n<=m) == n<=m
+idThen-o>>   oz       = refl oz
+idThen-o>>  (os n<=m) = cong os (idThen-o>>  n<=m) -- rewrite idThen-o>> n<=m = refl (os n<=m)
+idThen-o>>  (o' n<=m) = cong o' (idThen-o>>  n<=m)
 
 idAfter-o>> : {n m : Nat}(n<=m : n <= m) -> (n<=m o>> oi) == n<=m
 idAfter-o>>  oz       = refl oz
