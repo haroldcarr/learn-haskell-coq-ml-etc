@@ -76,15 +76,20 @@ Op C = record
   ; _>~>_        = λ S~>R T~>S -> T~>S >~> S~>R
   ; law-id~>>~>  = law->~>id~>
   ; law->~>id~>  = law-id~>>~>
-  ; law->~>>~>   = λ R~>Q S~>R T~>S -> {!!}
-  } where open Category C
+  ; law->~>>~>   = xxx
+  } where
+     open Category C
+     -- all this, just to be able to apply 'sym'
+     xxx : {Q R S T : Obj} (f : R ~> Q) (g : S ~> R) (h : T ~> S)
+         → (h >~> g >~> f) == ((h >~> g) >~> f)
+     xxx rq sr ts rewrite sym (law->~>>~> ts sr rq) = refl ((ts >~> sr) >~> rq)
 
 CHOOSE : Set -> OPE => Op SET    -- Show that thinnings from n to m...
 CHOOSE X = record                -- ...act by selection...
   { F-Obj       = Vec X          -- ...to cut vectors down from m to n.
   ; F-map       = _<?=_
-  ; F-map-id~>  = extensionality λ VecXT -> {!!}
-  ; F-map->~>   = \ R<=S S<=T -> extensionality λ VecXT -> {!!}
+  ; F-map-id~>  = extensionality λ VecXT -> id-<?= VecXT
+  ; F-map->~>   = \ R<=S S<=T -> extensionality λ VecXT -> cp-<?= R<=S S<=T VecXT
   }
 
 --??--------------------------------------------------------------------------
@@ -117,14 +122,22 @@ LIST-MONOID : Set -> Category
 LIST-MONOID X =            -- Show that _+L_ is the operation of a monoid,...
   record
   { Obj          = One     -- ... i.e., a category with one object.
-  ; _~>_         = {!!}
-  ; id~>         = {!!}
-  ; _>~>_        = {!!}
-  ; law-id~>>~>  = {!!}
-  ; law->~>id~>  = {!!}
-  ; law->~>>~>   = {!!}
-  } where
-  -- useful helper proofs (lemmas) go here
+  ; _~>_         = λ _ _ → List X
+  ; id~>         = []
+  ; _>~>_        = _+L_
+  ; law-id~>>~>  = λ l → refl l
+  ; law->~>id~>  = l+L[]==l
+  ; law->~>>~>   = -f+Lg-+Lh==f+L-g+Lh-
+  }
+ where
+  l+L[]==l : (l : List X) → (l +L []) == l
+  l+L[]==l      []  = refl []
+  l+L[]==l (x ,- l) = cong (x ,-_) (l+L[]==l l)
+
+  -f+Lg-+Lh==f+L-g+Lh- : {Q R S T : One} (f g h : List X)
+                       → ((f +L g) +L h) == (f +L g +L h)
+  -f+Lg-+Lh==f+L-g+Lh-      []  g h = refl (g +L h)
+  -f+Lg-+Lh==f+L-g+Lh- (x ,- f) g h = cong (x ,-_) (-f+Lg-+Lh==f+L-g+Lh- f g h)
 
 --??--------------------------------------------------------------------------
 
@@ -135,16 +148,25 @@ LIST-MONOID X =            -- Show that _+L_ is the operation of a monoid,...
 --??--2.3-(3)-----------------------------------------------------------------
 
 list : {X Y : Set} -> (X -> Y) -> List X -> List Y
-list f xs = {!!}
+list _       []  = []
+list f (x ,- xs) = f x ,- list f xs
 
 LIST : SET => SET
 LIST = record
   { F-Obj       = List
   ; F-map       = list
-  ; F-map-id~>  = extensionality {!!}
-  ; F-map->~>   = \ f g -> extensionality {!!}
-  } where
-  -- useful helper proofs (lemmas) go here
+  ; F-map-id~>  = extensionality fmapid
+  ; F-map->~>   = \ f g -> extensionality λ l → fmapcp g f l
+  }
+ where
+  fmapid : {T : Set} -> (l : List T)  -> list (λ x → x) l == l
+  fmapid      []  = refl []
+  fmapid (x ,- l) = cong (x ,-_) (fmapid l)
+
+  fmapcp : {T S R : Set} -> (g : S → T) -> (f : R → S) -> (l : List R)
+         → list (λ x → g (f x)) l == list g (list f l)
+  fmapcp g f      []  = refl []
+  fmapcp g f (x ,- l) = cong (g (f x) ,-_) (fmapcp g f l)
 
 --??--------------------------------------------------------------------------
 
@@ -157,10 +179,14 @@ LIST+L : {X Y : Set}(f : X -> Y) -> LIST-MONOID X => LIST-MONOID Y
 LIST+L {X}{Y} f = record
   { F-Obj       = id
   ; F-map       = list f -- this yellow will go once LIST-MONOID has arrows!
-  ; F-map-id~>  = {!!}
-  ; F-map->~>   = {!!}
-  } where
-  -- useful helper proofs (lemmas) go here
+  ; F-map-id~>  = refl []
+  ; F-map->~>   = λ l1 l2 → fmapcp f l1 l2
+  }
+ where
+  fmapcp : {X Y : Set} -> (f : X → Y) -> (l1 l2 : List X)
+     → list f (l1 +L l2) == (list f l1 +L list f l2)
+  fmapcp f       []  l2 = refl (list f l2)
+  fmapcp f (x ,- l1) l2 = cong (f x ,-_) (fmapcp f l1 l2)
 
 
 --??--------------------------------------------------------------------------
@@ -173,7 +199,7 @@ LIST+L {X}{Y} f = record
 SINGLE : ID ~~> LIST
 SINGLE = record
   { xf          = \ x -> x ,- []      -- turn a value into a singleton list
-  ; naturality  = \ f -> {!!}
+  ; naturality  = \ f -> refl (λ x → f x ,- [])
   }
 
 --??--------------------------------------------------------------------------
@@ -191,14 +217,20 @@ SINGLE = record
 --??--2.6-(3)-----------------------------------------------------------------
 
 concat : {X : Set} -> List (List X) -> List X
-concat xss = {!!}
+concat         []  = []
+concat (xs ,- xss) = xs +L (concat xss)
 
 CONCAT : (LIST >=> LIST) ~~> LIST
 CONCAT = record
   { xf          = concat
-  ; naturality  = {!!}
-  } where
-  -- useful helper proofs (lemmas) go here
+  ; naturality  = λ f → extensionality λ llx → concat-nat f llx
+  }
+ where
+  concat-nat : {X Y : Set} -> (f : X → Y) -> (llx : List (List X))
+             → (concat (list (list f) llx)) == list f (concat llx)
+  concat-nat f                []  = refl []
+  concat-nat f (      []  ,- llx) = concat-nat f llx
+  concat-nat f ((x ,- lx) ,- llx) = cong (f x ,-_) (concat-nat f (lx ,- llx))
 
 --??--------------------------------------------------------------------------
 
