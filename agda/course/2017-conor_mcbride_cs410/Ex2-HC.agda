@@ -118,6 +118,15 @@ infixr 4 _+L_
 
 --??--2.2-(3)-----------------------------------------------------------------
 
+l+L[]==l : {X : Set} -> (l : List X) → (l +L []) == l
+l+L[]==l      []  = refl []
+l+L[]==l (x ,- l) = cong (x ,-_) (l+L[]==l l)
+
++L-assoc : {X : Set} -> (f g h : List X)
+         → ((f +L g) +L h) == (f +L g +L h)
++L-assoc      []  g h = refl (g +L h)
++L-assoc (x ,- f) g h = cong (x ,-_) (+L-assoc f g h)
+
 LIST-MONOID : Set -> Category
 LIST-MONOID X =            -- Show that _+L_ is the operation of a monoid,...
   record
@@ -127,17 +136,8 @@ LIST-MONOID X =            -- Show that _+L_ is the operation of a monoid,...
   ; _>~>_        = _+L_
   ; law-id~>>~>  = λ l → refl l
   ; law->~>id~>  = l+L[]==l
-  ; law->~>>~>   = -f+Lg-+Lh==f+L-g+Lh-
+  ; law->~>>~>   = +L-assoc
   }
- where
-  l+L[]==l : (l : List X) → (l +L []) == l
-  l+L[]==l      []  = refl []
-  l+L[]==l (x ,- l) = cong (x ,-_) (l+L[]==l l)
-
-  -f+Lg-+Lh==f+L-g+Lh- : {Q R S T : One} (f g h : List X)
-                       → ((f +L g) +L h) == (f +L g +L h)
-  -f+Lg-+Lh==f+L-g+Lh-      []  g h = refl (g +L h)
-  -f+Lg-+Lh==f+L-g+Lh- (x ,- f) g h = cong (x ,-_) (-f+Lg-+Lh==f+L-g+Lh- f g h)
 
 --??--------------------------------------------------------------------------
 
@@ -246,11 +246,22 @@ module LIST-MONAD where
   ListMonad = record
     { unit      = SINGLE
     ; mult      = CONCAT
-    ; unitMult  = {!!}
-    ; multUnit  = {!!}
-    ; multMult  = {!!}
-    } where
-    -- useful helper proofs (lemmas) go here
+    ; unitMult  = extensionality λ l → l+L[]==l l
+    ; multUnit  = extensionality λ l → mu l
+    ; multMult  = extensionality λ lllx → mm lllx
+    }
+   where
+    mu : {X : Set} (l : List X) -> concat (list (λ x → x ,- []) l) == l
+    mu      []  = refl []
+    mu (x ,- l) = cong (x ,-_) (mu l)
+
+    mm : {X : Set} (lllx : List (List (List X)))
+      -> concat (concat lllx) == concat (list concat lllx)
+    mm                   []  = refl []
+    mm (         [] ,- lllx) = mm lllx
+    mm ((lx ,- llx) ,- lllx)
+      rewrite (+L-assoc lx (concat llx) (concat (list concat lllx)))
+      = cong (lx +L_) (mm (llx ,- lllx))
 
 -- open LIST-MONAD
 
