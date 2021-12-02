@@ -17,3 +17,7 @@ showAverage str = "The average word length is: " ++ show (average str) ++ "\n"
 
 main : IO ()
 main = repl "Enter a string: " showAverage
+
+{-
+average "one two three four five six seven eight nine ten qwertyui"
+-}

@@ -1,0 +1,9 @@
+cradle:
+  multi:
+    - path: "./idris/book/2017-Type_Driven_Development_with_Idris"
+      config:
+        cradle:
+          stackYaml: "./idris/book/2017-Type_Driven_Development_with_Idris/stack.yaml"
+          stack:
+            - path: "./idris/book/2017-Type_Driven_Development_with_Idris/src"
+              component: "tddwi:lib"

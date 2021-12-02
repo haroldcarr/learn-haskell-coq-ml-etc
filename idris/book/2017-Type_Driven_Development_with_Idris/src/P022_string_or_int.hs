@@ -41,3 +41,13 @@ valToString' = \case
   STrue  -> show
   SFalse -> id
 
+{-
+import P022_string_or_int
+:set -XDataKinds
+:kind! StringOrInt 'True
+:kind! StringOrInt 'False
+getStringOrInt STrue
+getStringOrInt SFalse
+valToString SFalse "d"
+valToString STrue 0
+-}

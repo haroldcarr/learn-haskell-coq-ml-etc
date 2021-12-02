@@ -1,6 +1,6 @@
-resolver: lts-10.1
+resolver: lts-13.24
 packages:
-- '.'
-extra-deps: []
-flags: {}
-extra-package-dbs: []
+- .
+#extra-deps:
+#flags: {}
+#extra-package-dbs: []

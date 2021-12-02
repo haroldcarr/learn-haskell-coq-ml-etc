@@ -1,0 +1,5 @@
+cradle:
+  stackYaml: "./stack.yaml"
+  stack:
+    - path: "./src"
+      component: "tddwi:lib"

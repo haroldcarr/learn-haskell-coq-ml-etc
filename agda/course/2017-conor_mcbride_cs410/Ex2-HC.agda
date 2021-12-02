@@ -261,7 +261,7 @@ module LIST-MONAD where
     mm (         [] ,- lllx) = mm lllx
     mm ((lx ,- llx) ,- lllx)
       rewrite (+L-assoc lx (concat llx) (concat (list concat lllx)))
-      = cong (lx +L_) (mm (llx ,- lllx))
+      = {!!} -- cong (lx +L_) (mm (llx ,- lllx))
 
 -- open LIST-MONAD
 
@@ -304,6 +304,20 @@ _-:>_ : {I : Set} -> (I -> Set) -> (I -> Set) -> (I -> Set)
 
 -- E.g., [ Vec X -:> Vec Y ] is the type of functions from X-vectors
 -- to Y-vectors which preserve length.
+
+vMapN : {X Y : Set} {S T : X -> Set}
+            -> [ Vec X -:> Vec Y ]
+            -> [ Vec X ]
+            ->           [ Vec Y ]
+vMapN st vx = λ n → st n (vx n)
+
+useit : {X Y : Set} -> X -> [ Vec Y ]
+useit {X}{Y} x = vMapN (n-vxn {X}{Y}) (n→ {X} x)
+ where
+  n-vxn : {X Y  : Set} -> [ Vec X -:> Vec Y ]
+  n-vxn {X} {Y} = λ {n vxn → {!!}}
+  n→    : {X    : Set} -> X ->        [ Vec X ]
+  n→    {X} x   = λ n → vPure x
 
 -- For any such I, we get a category of indexed sets with index-preserving
 -- functions.
