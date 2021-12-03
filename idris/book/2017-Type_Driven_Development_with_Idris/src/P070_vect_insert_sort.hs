@@ -18,10 +18,10 @@ insert
   -> VS.Vector len1 elem
 insert x y =
   let v0 = V.fromList (L.insert x (VS.toList y))
-  in VS.withSized v0 $ \(v :: VS.Vector n elem) ->
-    case sameNat (Proxy @len1) (Proxy @n) of
-      Nothing   -> error "NO"
-      Just Refl -> v :: VS.Vector len1 elem
+   in VS.withSized v0 $ \(v :: VS.Vector n elem) ->
+     case sameNat (Proxy @len1) (Proxy @n) of
+       Nothing   -> error "NO"
+       Just Refl -> v :: VS.Vector len1 elem
 
 insSort
   :: forall n elem. (KnownNat n, Ord elem)
@@ -29,10 +29,10 @@ insSort
   -> VS.Vector n elem
 insSort x =
   let v0  = (V.fromList . L.sort . VS.toList) x
-  in VS.withSized v0 $ \(v :: VS.Vector m elem) ->
-    case sameNat (Proxy @m) (Proxy @n) of
-      Nothing   -> error "NO"
-      Just Refl -> v :: VS.Vector m elem
+   in VS.withSized v0 $ \(v :: VS.Vector m elem) ->
+     case sameNat (Proxy @m) (Proxy @n) of
+       Nothing   -> error "NO"
+       Just Refl -> v :: VS.Vector m elem
 
 exis :: VS.Vector 8 Int
 exis  = case VS.fromList [1,3,9,7,6,4,5,8] :: Maybe (VS.Vector 8 Int) of

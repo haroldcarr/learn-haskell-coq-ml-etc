@@ -1,9 +1,8 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE GADTs               #-}
+{-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE TypeOperators       #-}
 
 module P075_exercises_length_reverse_map where
 
@@ -11,65 +10,68 @@ import           Data.Maybe
 import qualified Data.List          as L
 import           Data.Proxy
 import           Data.Type.Equality
-import qualified Data.Vector        as V0
-import           Data.Vector.Sized  as V
+import qualified Data.Vector        as V
+import qualified Data.Vector.Sized  as VS
 import           GHC.TypeLits
 
 len0
-  :: forall n a.
-     KnownNat n
-  => Vector n a
+  :: forall n a
+   . KnownNat n
+  => VS.Vector n a
   -> Integer
-len0 x = natVal (Proxy @n)
+len0 _ = natVal (Proxy @n)
 
 len1
-  :: forall n a.
-     KnownNat n
-  => Vector n a
+  :: forall n a
+   . VS.Vector n a
   -> Proxy n
-len1 x = Proxy @n
+len1 _ = Proxy @n
 
-(Just x) = V.fromList [1,3,9,7,6,4,5,8] :: Maybe (Vector 8 Int)
-l0 = len0 x
-l1 = len1 x
+exx :: VS.Vector 8 Int
+exx = case VS.fromList [1,3,9,7,6,4,5,8] :: Maybe (VS.Vector 8 Int) of
+        Just vs -> vs
+        Nothing -> error "NO"
+l0 :: Integer
+l0  = len0 exx
+l1 :: (Proxy (8 :: Nat))
+l1  = len1 exx
 
 rev0
-  :: forall n a.
-     KnownNat n
-  => Vector n a
-  -> Vector n a
-rev0 = V.reverse
+  :: forall n a
+   . VS.Vector n a
+  -> VS.Vector n a
+rev0 = VS.reverse
 
 rev1
-  :: forall n a.
-     KnownNat n
-  => Vector n a
-  -> Vector n a
+  :: forall n a
+   . KnownNat n
+  => VS.Vector n a
+  -> VS.Vector n a
 rev1 x =
-  let v0 = V0.reverse (V.fromSized x)
-  in fromMaybe (error "NO") (toSized v0)
+  let v0 = V.reverse (VS.fromSized x)
+  in fromMaybe (error "NO") (VS.toSized v0)
 
 rev2
-  :: forall n a.
-     KnownNat n
-  => Vector n a
-  -> Vector n a
+  :: forall n a
+   . KnownNat n
+  => VS.Vector n a
+  -> VS.Vector n a
 rev2 x =
-  let v0 = V0.reverse (V.fromSized x)
-  in withSized v0 $ \(v :: Vector n' elem) ->
+  let v0 = V.reverse (VS.fromSized x)
+  in VS.withSized v0 $ \(v :: VS.Vector n' elem) ->
     case sameNat (Proxy @n) (Proxy @n') of
       Nothing   -> error "NO"
-      Just Refl -> v :: Vector n elem
+      Just Refl -> v :: VS.Vector n elem
 
 map0
-  :: forall n a b.
-     KnownNat n
+  :: forall n a b
+   . KnownNat n
   => (a -> b)
-  -> Vector n a
-  -> Vector n b
+  -> VS.Vector n a
+  -> VS.Vector n b
 map0 f x =
-  let v0 = V0.fromList (L.map f (V.toList x))
-  in fromMaybe (error "NO") (toSized v0)
+  let v0 = V.fromList (L.map f (VS.toList x))
+  in fromMaybe (error "NO") (VS.toSized v0)
 
 
 

@@ -1,8 +1,12 @@
-module Main
+module P102_dependent_indexed_types_vehicle where
 
-%default total
+open import Data.Nat
+open import Data.Product
 
-data PowerSource = Petrol | Pedal
+Nat = ℕ
+
+data PowerSource : Set where
+  Petrol Pedal : PowerSource
 
 {-
 4.2 Defining dependent data types
@@ -23,12 +27,12 @@ Defining multiple related types at the same time.
 Power source is an index of the Vehicle family.
 The index tells you exactly which Vehicle type you mean.
 -}
-data Vehicle : PowerSource -> Type where
+data Vehicle : PowerSource -> Set where
   Bicycle :                 Vehicle Pedal
   Car     : (fuel : Nat) -> Vehicle Petrol
   Bus     : (fuel : Nat) -> Vehicle Petrol
 
-wheels : Vehicle _ -> Nat
+wheels : {ps : PowerSource} -> Vehicle ps -> Nat
 wheels Bicycle    = 2
 wheels (Car fuel) = 4
 wheels (Bus fuel) = 4
@@ -38,20 +42,10 @@ fuel (Car f) = f
 fuel (Bus f) = f
 
 refuel : Vehicle Petrol -> Vehicle Petrol
-refuel Bicycle impossible
+--refuel Bicycle ()
 refuel (Car fuel) = Car 100
 refuel (Bus fuel) = Bus 200
 
-refuel' : Vehicle Petrol -> (Vehicle Petrol, Nat)
-refuel' c@(Car f) = let c' = refuel c in (c', fuel c' {- - f-})
-refuel' b@(Bus f) = let b' = refuel b in (b', fuel b' {- - f-})
-
-{-
- `-- P102_dependent_indexed_types_vehicle.idr line 46 col 54:
-     When checking right hand side of refuel' with expected type
-             (Vehicle Petrol, Nat)
-
-     When checking argument smaller to function Prelude.Nat.-:
-             Can't find a value of type
-                     LTE f 100
--}
+refuel' : Vehicle Petrol -> (Vehicle Petrol × Nat)
+refuel' c@(Car f) = let c' = refuel c in (c' , fuel c' ∸ f)
+refuel' b@(Bus f) = let b' = refuel b in (b' , fuel b' ∸ f)

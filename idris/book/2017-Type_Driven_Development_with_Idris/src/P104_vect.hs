@@ -7,11 +7,12 @@
 
 module P104_vect where
 
-import Data.Finite
+--import Data.Finite
 import Data.Proxy
 import GHC.Types
 import GHC.TypeNats
-import GHC.TypeLits.Witnesses
+--import GHC.TypeLits.Witnesses
+import Prelude hiding (zip)
 
 infixr 7 :>
 
@@ -27,10 +28,11 @@ instance Show a => Show (Vec n a) where
   show V0        = "V0"
   show (l :> ls) = show l ++ " :> " ++ show ls
 
-t1 = 3 :> 2 :> 1 :> V0
+t1 :: Vec 3 Int
+t1  = 3 :> 2 :> 1 :> V0
 
-v :: forall a m n. (KnownNat m, KnownNat n) => Vec m a -> Vec n a -> Proxy (m + n)
--- v xs ys = withNatOp (%+) (Proxy @n) (Proxy @m) $ Proxy::Proxy (m + n)
+v :: forall a m n. Vec m a -> Vec n a -> Proxy (m + n)
+--v _ _  = withNatOp (%+) (Proxy @n) (Proxy m) $ Proxy::Proxy (m + n)
 v _ _ = Proxy::Proxy (m + n)
 
 {-
@@ -39,21 +41,22 @@ vappend       V0  ys =                 ys
 vappend (x :> xs) ys =
   withNatOp (%+) (Proxy @n) (Proxy @m) $ natVal (Proxy::Proxy (m + n))
 
-append : Vec n elem -> Vec m elem -> Vec (n + m) elem
+append :: forall elem m n. Vec n elem -> Vec m elem -> Vec (n + m) elem
 append       V0  ys = ys
 append (x :> xs) ys = x :> append xs ys
 
-zip : Vec n a -> Vec n b -> Vec n (a, b)
+zip :: Vec n a -> Vec n b -> Vec n (a, b)
 zip       V0        V0  = V0
+zip       V0  (_ :> _)  = V0
+zip (_ :> _)        V0  = V0
 zip (x :> xs) (y :> ys) = (x, y) :> zip xs ys
 
-{-
 Fin n : unsigned number with non-inclusive upper bound of n.
 name "Fin" says number is finitely bounded.
 
 FZ and FS are constructors of Fin, corresponding to Z and S Nat constructors.
 Can use numeric literals, as with Nat.
--}
+
 index : Fin n -> Vec n a -> a
 index  FZ    (x :>  _) = x
 index (FS i) (_ :> ys) = index i ys

@@ -15,12 +15,27 @@ dependencies:
 - base >= 4.7 && < 5
 - finite-typelits
 - ghc-prim
+- ieee754
 - reflection
+- text
 - typelits-witnesses
 - vector
 - vector-sized
 
 library:
-  source-dirs: src
+  source-dirs:
+  - src
+  - src-generated
   ghc-options:
   - -O2
+
+executables:
+  m:
+    source-dirs:         app
+    main:                Main.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - tddwi

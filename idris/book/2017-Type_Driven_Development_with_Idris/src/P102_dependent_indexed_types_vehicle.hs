@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
+
 {-# LANGUAGE DataKinds      #-}
 {-# LANGUAGE GADTs          #-}
 {-# LANGUAGE KindSignatures #-}
@@ -45,6 +47,6 @@ refuel (Car _) = Car 100
 refuel (Bus _) = Bus 200
 
 refuel' :: Vehicle Petrol -> (Vehicle Petrol, Int)
-refuel' c@(Car f) = (refuel c, fuel (refuel c) - f)
-refuel' b@(Bus f) = (refuel b, fuel (refuel b) - f)
+refuel' c@(Car f) = let c' = refuel c in (c', fuel c' - f)
+refuel' b@(Bus f) = let b' = refuel b in (b', fuel b' - f)
 
