@@ -2,16 +2,21 @@ module P149 where
 
 open import Data.Bool
 open import Data.Char
+open import Data.Fin
 open import Data.Float
 open import Data.List
+open import Data.Maybe
 open import Data.Nat
 import      Data.Nat.Show as DNS
 open import Data.Product
 open import Data.String
 open import Data.Vec
 open import Function.Base
+open import Relation.Nullary
 
 Nat = ℕ
+
+------------------------------------------------------------------------------
 
 -- type synonyms
 
@@ -50,6 +55,7 @@ valToString' : (isInt : Bool)
 valToString' false y = {-trim-} y
 valToString' true  y = {-cast-} DNS.show y
 
+------------------------------------------------------------------------------
 -- -- functions with variable number of args
 
 AdderType : (numargs : Nat) -> Set -> Set
@@ -70,6 +76,7 @@ adder 2 2 2 2
 adder 3 10 10 10 10
 -}
 
+------------------------------------------------------------------------------
 -- type-safe printf
 
 data Format : Set where
@@ -100,14 +107,8 @@ toFormat (c         ∷ chars) =
     (Lit lit chars') -> Lit (Data.String.fromList (c ∷ (Data.String.toList lit))) chars'
     fmt              -> Lit (Data.String.fromList (c ∷ (Data.String.toList "")))  fmt
 
-printf : (fmt : String) -> PrintfType (toFormat (Data.String.toList fmt))
-printf fmt = printfFmt _ ""
-{-
-———— Errors ————————————————————————————————————————————————
-Failed to solve the following constraints:
-  PrintfType _fmt_55
-    =< PrintfType (toFormat (Data.String.toList fmt))
--}
+printf : (fmtS : String) -> PrintfType (toFormat (Data.String.toList fmtS))
+printf fmtS = printfFmt (toFormat (Data.String.toList fmtS)) ""
 
 {-
            toFormat (Data.String.toList "%s = %d")
@@ -116,3 +117,66 @@ printfFmt (toFormat (Data.String.toList "%s = %d")) "" "this" 45
 
 printf "%s = %d" "this" 45
 -}
+
+------------------------------------------------------------------------------
+-- determine schema from user input, then use type-level functions to compute correct type for data
+
+infixr 5 _|+|_
+
+data Schema : Set where
+  SString : Schema
+  SInt    : Schema
+  _|+|_   : Schema -> Schema -> Schema
+
+SchemaType : Schema -> Set
+SchemaType SString   = String
+SchemaType SInt      = Nat
+SchemaType (x |+| y) = (SchemaType x × SchemaType y)
+
+{-
+SchemaType (SInt |+| SString)
+-}
+
+record DataStore : Set where
+  constructor MkData
+  field
+    schema : Schema
+    size   : Nat
+    items  : Vec (SchemaType schema) size
+open DataStore
+
+addToStore : (store : DataStore) -> SchemaType (schema store) -> DataStore
+addToStore (MkData schema size store) newitem = MkData schema _ (addToData store)
+ where
+  addToData : {oldsize : Nat}
+           -> Vec (SchemaType schema)      oldsize
+           -> Vec (SchemaType schema) (suc oldsize)
+  addToData            []  = newitem ∷ []
+  addToData (item ∷ items) = item ∷ addToData items
+
+getEntry : (pos : Nat) -> (store : DataStore)
+        -> Maybe (SchemaType (schema store))
+getEntry pos store
+  with pos Data.Nat.<? size store
+... | no  _ = nothing
+... | yes p = just (Data.Vec.lookup (items store) (Data.Fin.fromℕ< {pos} {size store} p))
+
+display : {schema : Schema} -> (SchemaType schema) -> String
+display {SString   }  item           = item
+display {SInt      }  item           = DNS.show item
+display {(x |+| x₁)} (iteml , itemr) =
+  display iteml Data.String.++ ", " Data.String.++ display itemr
+
+displayM : {schema : Schema} -> Maybe (SchemaType schema) -> String
+displayM nothing     = "nothing"
+displayM (just item) = display item
+
+{-
+                        MkData (SString |+| SInt) 1 (("Answer" , 42) ∷ [])
+            addToStore (MkData (SString |+| SInt) 0 []) ("Answer", 45)
+getEntry 0 (addToStore (MkData (SString |+| SInt) 0 []) ("Answer", 45))
+displayM (getEntry 0 (addToStore (MkData (SString |+| SInt) 0 []) ("Answer", 45)))
+-}
+
+-- TODO : I quit, because I was not learning anything from this point on.
+
