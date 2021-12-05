@@ -1,5 +1,7 @@
 module Eq-Ord where
 
+-- file:///Users/hcarr/Downloads/On_the_Bright_Side_of_Type_Classes_Instance_Argume.pdf
+
 open import Data.Bool
 import      Data.Nat
 open import Relation.Nullary
