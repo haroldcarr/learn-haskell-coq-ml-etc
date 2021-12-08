@@ -1,14 +1,21 @@
 module P236-257-predicates-hangman where
 
 open import Agda.Builtin.Equality
-open import Agda.Builtin.Unit using (⊤)
+open import Agda.Builtin.Unit                     using (⊤)
 open import Data.Bool
+open import Data.Char                             as C hiding (_==_) renaming (_≟_ to _≟C_)
 open import Data.Empty
-open import Data.Nat renaming (_≟_ to _≟N_)
-open import Data.List as L
-open import Data.Vec as V
+open import Data.Nat                              renaming (_≟_ to _≟N_)
+open import Data.List                             as L
+open import Data.Product
+open import Data.Vec                              as V hiding (_>>=_)
+open import Data.String                           as S hiding (_==_)
+open import Data.Sum
 open import Data.Vec.Membership.Propositional
 open import Data.Vec.Relation.Unary.Any
+open import Function.Base
+open import hcio                                  as HCIO
+open import IO                                    as IO hiding (_>>=_; _>>_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong-app; sym; subst)
 open import Relation.Nullary
 
@@ -82,47 +89,15 @@ exIsElem = isElem 3   (1 ∷ 2 ∷ 3 ∷ [])
 -- ------------------------------------------------------------------------------
 -- -- exercises
 
--- data ElemL : a -> List a -> Type where
---   Here  : ElemL x (x :: xs)
---   There : (later : ElemL x xs) -> ElemL x (y :: xs)
+data Last {A : Set} : (List A) -> A -> Set where
+  LastOne  : {a   : A}                                    -> Last (a ∷ []) a
+  LastCons : {a x : A} {xs : List A} -> (prf : Last xs a) -> Last (x ∷ xs) a
 
--- notInNilL : ElemL value [] -> Void
--- notInNilL  Here     impossible
--- notInNilL (There _) impossible
+exLast123 : Last (1 ∷ 2 ∷ 3 ∷ []) 3
+exLast123 = LastCons (LastCons LastOne)
 
--- notInTailL : (notThere : ElemL value xs -> Void) -> (notHere : (value = x) -> Void)
---           -> ElemL value (x :: xs) -> Void
--- notInTailL notThere notHere  Here         = notHere  Refl
--- notInTailL notThere notHere (There later) = notThere later
-
--- isElemL : DecEq a => (value : a) -> (xs : List a) -> Dec (ElemL value xs)
--- isElemL value       []  = No notInNilL
--- isElemL value (x :: xs) =
---   case decEq value x of
---     Yes Refl   => Yes Here
---     No notHere =>
---       case isElemL value xs of
---         Yes prf     => Yes (There prf)
---         No notThere => No (notInTailL notThere notHere)
-
--- elemL : Eq ty => (value : ty) -> (xs : List ty) -> Bool
--- elemL value       []  = False
--- elemL value (x :: xs) =
---   case value == x of
---     False => elemL value xs
---     True  => True
-
--- exIsElemL : Dec (ElemL 3 [1,2,3])
--- exIsElemL = isElemL 3 [1,2,3]
-
--- -----
-
--- data Last : List a -> a -> Type where
---   LastOne  : Last [value] value
---   LastCons : (prf : Last xs value) -> Last (x :: xs) value
-
--- exLast123 : Last [1,2,3] 3
--- exLast123 = LastCons (LastCons LastOne)
+exLastTTTF : Last (true ∷ true ∷ true ∷ false ∷ []) false
+exLastTTTF = LastCons (LastCons (LastCons LastOne))
 
 -- notLastInNil : Last [] value -> Void
 -- notLastInNil  LastOne     impossible
@@ -155,66 +130,80 @@ exIsElem = isElem 3   (1 ∷ 2 ∷ 3 ∷ [])
 -- ------------------------------------------------------------------------------
 -- -- hangman
 
--- data WordState : (guesses_remaining : Nat) -> (letters : Nat) -> Type where
---   MkWordState : (word : String) -> (missing : Vect letters Char)
---              -> WordState guesses_remaining letters
+data WordState : (guesses_remaining : Nat) -> (letters : Nat) -> Set where
+  MkWordState  : (guesses_remaining : Nat)
+              -> {letters : Nat}
+              -> (word    : String)
+              -> (missing : Vec Char letters)
+              -> WordState guesses_remaining letters
 
--- data Finished : Type where
---   Lost : (game : WordState 0 (S letters)) -> Finished
---   Won  : (game : WordState (S guesses) 0) -> Finished
+data Finished : Set where
+  Lost : {letters : Nat} (game : WordState 0 (suc letters)) -> Finished
+  Won  : {guesses : Nat} (game : WordState (suc guesses) 0) -> Finished
 
--- data ValidInput : List Char -> Type where
---   Letter : (c : Char) -> ValidInput [c]
+data ValidInput : List Char -> Set where
+  Letter : (c : Char) -> ValidInput (c ∷ [])
 
--- isValidNil : ValidInput [] -> Void
--- isValidNil (Letter _) impossible
+isValidNil : ValidInput [] -> ⊥
+isValidNil ()
 
--- isValidTwo : ValidInput (x :: y :: xs) -> Void
--- isValidTwo (Letter _) impossible
+isValidTwo : {x y : Char} {xs : List Char} -> ValidInput (x ∷ y ∷ xs) -> ⊥
+isValidTwo ()
 
--- isValidInput : (cs : List Char) -> Dec (ValidInput cs)
--- isValidInput             []   = No  isValidNil
--- isValidInput (x       :: [])  = Yes (Letter x)
--- isValidInput (x :: (y :: xs)) = No  isValidTwo
+isValidInput : (cs : List Char) -> Dec (ValidInput cs)
+isValidInput           []   = no  isValidNil
+isValidInput (x      ∷ [])  = yes (Letter x)
+isValidInput (x ∷ (y ∷ xs)) = no  isValidTwo
 
--- isValidString : (s : String) -> Dec (ValidInput (unpack s))
--- isValidString s = isValidInput (unpack s)
+isValidString : (s : String) -> Dec (ValidInput (S.toList s))
+isValidString s = isValidInput (S.toList s)
 
--- readGuess : IO (x ** ValidInput x)
--- readGuess = do
---   putStr "Guess:"
---   x <- getLine
---   case isValidString (toUpper x) of
---     Yes prf    => pure (_ ** prf)
---     No  contra => do putStrLn "Invalid guess"
---                      readGuess
--- {-
--- :exec readGuess >>= \_ => putStrLn "YES"
--- -}
+{-# TERMINATING #-}
+readGuess : IO (Σ (List Char) (λ lc -> ValidInput lc))
+readGuess = do
+  putStr "Guess:"
+  x <- HCIO.getLine
+  case isValidString (S.fromList (L.map C.toUpper (S.toList x))) of λ where
+    (yes prf)    -> return (_ , prf)
+    (no  contra) -> do putStrLn "Invalid guess"
+                       readGuess
 
--- processGuess : (letter : Char)
---             ->         WordState (S guesses) (S letters)
---             -> Either (WordState    guesses  (S letters))
---                       (WordState (S guesses)    letters)
--- processGuess letter (MkWordState word missing) =
---   case V.isElem letter missing of
---     Yes prf    => Right (MkWordState word (removeElemAuto letter missing))
---     No  contra => Left  (MkWordState word missing)
+Either = _⊎_
 
--- game : WordState (S guesses) (S letters) -> IO Finished
+isElemV : {n : Nat} (value : Char) -> (xs : Vec Char n) -> Dec (value ∈ xs)
+isElemV value      [] = no λ ()
+isElemV value (x ∷ xs)
+  with value ≟C x
+...| yes refl = yes (here refl)
+...| no  notHere
+  with isElemV value xs
+...| yes prf      = yes (there prf)
+...| no  notThere = no  (notInTail notThere notHere)
+
+processGuess : {guesses letters : Nat}
+            -> (letter : Char)
+            ->         WordState (suc guesses) (suc letters)
+            -> Either (WordState      guesses  (suc letters))
+                      (WordState (suc guesses)      letters)
+processGuess letter (MkWordState guesses_remaining word missing) =
+  case isElemV letter missing of λ where
+    (yes prf)    -> inj₂ (MkWordState  guesses_remaining      word (removeElem letter missing prf))
+    (no  contra) -> inj₁ (MkWordState (guesses_remaining ∸ 1) word missing)
+
+-- game : {guesses letters : Nat} -> WordState (suc guesses) (suc letters) -> IO Finished
 -- game {guesses} {letters} st = do
---    (_ ** Letter letter) <- readGuess
---    case processGuess letter st of
---      Left l => do
---        putStrLn "Wrong!"
---        case guesses of
---          Z   => pure (Lost l)
---          S k => game l
---      Right r => do
---        putStrLn "Right!"
---        case letters of
---          Z   => pure (Won r)
---          S k => game r
+--   (_ , Letter letter) <- readGuess
+--   case processGuess letter st of λ where
+--     (inj₁ l) -> do
+--       putStrLn "Wrong!"
+--       case guesses of λ where
+--         zero    -> return (Lost {!!})
+--         (suc k) -> game {!!}
+--     (inj₂ r) -> do
+--       putStrLn "Right!"
+--       case letters of λ where
+--         zero    -> return (Won {!!})
+--         (suc k) -> game {!!}
 
 -- main : IO ()
 -- main = do
