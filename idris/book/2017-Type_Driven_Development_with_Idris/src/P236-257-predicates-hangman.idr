@@ -62,8 +62,10 @@ notInNil : V.Elem value [] -> Void
 notInNil  Here     impossible
 notInNil (There _) impossible
 
-notInTail : (notThere : V.Elem value xs -> Void) -> (notHere : (value = x) -> Void)
-         -> Elem value (x :: xs) -> Void
+notInTail : (notThere : V.Elem value xs -> Void)
+         -> (notHere  : (value = x)     -> Void)
+         -> Elem value (x :: xs)
+         -> Void
 notInTail notThere notHere  Here         = notHere  Refl
 notInTail notThere notHere (There later) = notThere later
 

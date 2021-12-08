@@ -1,11 +1,6 @@
 module P139_read_vect where
 
 open import Agda.Builtin.Unit using (⊤)
-
-import      Relation.Nullary
-import      Relation.Binary.PropositionalEquality as Eq
-open        Eq                using (_≡_; refl; cong; cong-app)
-
 open import Data.Bool
 open import Eq-Ord
 open import Data.Fin
@@ -18,10 +13,10 @@ open import hcio              as HCIO
 open import IO                as IO hiding (_>>=_; _>>_)
 import      IO.Primitive      as Primitive
 open import Function.Base
+import      Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong-app)
 open import Relation.Nullary
 
 Nat = ℕ
-
 
 ------------------------------------------------------------------------------
 -- read a vector of known length
