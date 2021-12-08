@@ -84,43 +84,25 @@ same_lists : {xs : List a} -> {ys : List a}
           -> x :: xs = y :: ys
 same_lists Refl Refl = Refl
 
--- 3 values must be equal (i.e., transitivity of equality)
-ThreeEq : a -> b -> c -> Type
-ThreeEq a b c =
-  let ab = a = b
-      bc = b = c
-      ac = ab = bc
-   in ac
-{-
+-- 3 values must be equal
+data ThreeEq : a -> b -> c -> Type where
+  TEq : (x : a) -> ThreeEq x x x
+
 allSameS : (x, y, z : Nat) -> ThreeEq x y z -> ThreeEq (S x) (S y) (S z)
-allSameS  Z     Z     Z    teq = ?sss
-{-
-allSameS  Z     Z    (S _) Refl impossible
-allSameS  Z    (S _)  Z    Refl impossible
-allSameS  Z    (S _) (S _) Refl impossible
-allSameS (S _)  Z     Z    Refl impossible
-allSameS (S _)  Z    (S _) Refl impossible
-allSameS (S _) (S _)  Z    Refl impossible
--}
-allSameS (S x) (S y) (S z) teq = 
-TODO
-- + Errors (1)
- `-- builtin line 0 col -1:
-     Universe inconsistency.
--}
+allSameS  z z z (TEq z) = TEq (S z)
 
 ------------------------------------------------------------------------------
 -- REWRITE
 
 myReverse : Vect n elem -> Vect n elem
-myReverse [] = []
+myReverse                 []  = []
 myReverse {n = S k} (x :: xs) =
   let result = myReverse xs ++ [x]
    in rewrite plusCommutative 1 k
       in result
 
 myReverse' : Vect n elem -> Vect n elem
-myReverse' [] = []
+myReverse'       []  = []
 myReverse' (x :: xs) = reverseProof (myReverse' xs ++ [x])
  where
   reverseProof : Vect (k + 1) elem -> Vect (S k) elem
@@ -339,3 +321,4 @@ No (\xCONSxsEQyCONSys =>
                                              xCONSxsEQyCONSys9))
                         xCONSxsEQyCONSys)) : Dec (1 :> 3 :> 2 :> V0 = 1 :> 2 :> 3 :> V0)
 -}
+ 
