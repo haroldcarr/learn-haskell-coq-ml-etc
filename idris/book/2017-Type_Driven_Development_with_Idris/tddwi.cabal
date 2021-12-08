@@ -16,7 +16,6 @@ library
       P075_exercises_length_reverse_map
       P102_dependent_indexed_types_vehicle
       P104_vect
-      P139_read_vect
       P355_state_machine_door
       P358_state_machine_vending_p1
       P358_state_machine_vending_p2
@@ -94,6 +93,7 @@ library
       MAlonzo.Code.Data.Fin.Base
       MAlonzo.Code.Data.Fin.Patterns
       MAlonzo.Code.Data.Fin.Properties
+      MAlonzo.Code.Data.List
       MAlonzo.Code.Data.List.Base
       MAlonzo.Code.Data.List.Categorical
       MAlonzo.Code.Data.List.Extrema
@@ -138,6 +138,7 @@ library
       MAlonzo.Code.Data.String
       MAlonzo.Code.Data.String.Base
       MAlonzo.Code.Data.String.Properties
+      MAlonzo.Code.Data.Sum
       MAlonzo.Code.Data.Sum.Base
       MAlonzo.Code.Data.Sum.Function.Propositional
       MAlonzo.Code.Data.Sum.Function.Setoid
@@ -152,7 +153,10 @@ library
       MAlonzo.Code.Data.Vec.Base
       MAlonzo.Code.Data.Vec.Bounded
       MAlonzo.Code.Data.Vec.Bounded.Base
+      MAlonzo.Code.Data.Vec.Membership.Propositional
+      MAlonzo.Code.Data.Vec.Membership.Setoid
       MAlonzo.Code.Data.Vec.NZ45Zary
+      MAlonzo.Code.Data.Vec.Relation.Unary.Any
       MAlonzo.Code.EqZ45ZOrd
       MAlonzo.Code.Function
       MAlonzo.Code.Function.Base
@@ -176,6 +180,7 @@ library
       MAlonzo.Code.IO.Primitive
       MAlonzo.Code.Level
       MAlonzo.Code.P139_read_vect
+      MAlonzo.Code.P236Z45Z257Z45ZpredicatesZ45Zhangman
       MAlonzo.Code.Qhcio
       MAlonzo.Code.Relation.Binary
       MAlonzo.Code.Relation.Binary.Bundles

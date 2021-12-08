@@ -16,6 +16,7 @@ open import Data.Vec.Relation.Unary.Any
 open import Function.Base
 open import hcio                                  as HCIO
 open import IO                                    as IO hiding (_>>=_; _>>_)
+import      IO.Primitive                          as Primitive
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong-app; sym; subst)
 open import Relation.Nullary
 
@@ -131,8 +132,7 @@ exLastTTTF = LastCons (LastCons (LastCons LastOne))
 -- -- hangman
 
 data WordState : (guesses_remaining : Nat) -> (letters : Nat) -> Set where
-  MkWordState  : (guesses_remaining : Nat)
-              -> {letters : Nat}
+  MkWordState  : {guesses_remaining letters : Nat}
               -> (word    : String)
               -> (missing : Vec Char letters)
               -> WordState guesses_remaining letters
@@ -185,33 +185,30 @@ processGuess : {guesses letters : Nat}
             ->         WordState (suc guesses) (suc letters)
             -> Either (WordState      guesses  (suc letters))
                       (WordState (suc guesses)      letters)
-processGuess letter (MkWordState guesses_remaining word missing) =
+processGuess letter (MkWordState word missing) =
   case isElemV letter missing of λ where
-    (yes prf)    -> inj₂ (MkWordState  guesses_remaining      word (removeElem letter missing prf))
-    (no  contra) -> inj₁ (MkWordState (guesses_remaining ∸ 1) word missing)
+    (yes prf)    -> inj₂ (MkWordState word (removeElem letter missing prf))
+    (no  contra) -> inj₁ (MkWordState word missing)
 
--- game : {guesses letters : Nat} -> WordState (suc guesses) (suc letters) -> IO Finished
--- game {guesses} {letters} st = do
---   (_ , Letter letter) <- readGuess
---   case processGuess letter st of λ where
---     (inj₁ l) -> do
---       putStrLn "Wrong!"
---       case guesses of λ where
---         zero    -> return (Lost {!!})
---         (suc k) -> game {!!}
---     (inj₂ r) -> do
---       putStrLn "Right!"
---       case letters of λ where
---         zero    -> return (Won {!!})
---         (suc k) -> game {!!}
+mutual
+  game : {guesses letters : Nat} -> WordState (suc guesses) (suc letters) -> IO Finished
+  game st = do
+    (_ , Letter letter) <- readGuess
+    let pg = processGuess letter st
+    game' pg
 
--- main : IO ()
--- main = do
---   result <- game {guesses=2} (MkWordState "Test" ['T', 'E', 'S'])
---   case result of
---     Lost (MkWordState word missing) => putStrLn ("You lose. The word was " ++ word)
---     Won game                        => putStrLn "You win!"
+  game' : {guesses letters : Nat}
+       -> Either (WordState      guesses  (suc letters))
+                 (WordState (suc guesses)      letters)
+       -> IO Finished
+  game' {zero}       {_} (inj₁ l@(MkWordState {.0}             {_} word missing)) = return (Lost l)
+  game' {suc guesses}{_} (inj₁ l@(MkWordState {.(suc guesses)} {_} word missing)) = game l
+  game' {_}{zero}        (inj₂ r@(MkWordState {_} {.0}             word missing)) = return (Won r)
+  game' {_}{suc letters} (inj₂ r@(MkWordState {_} {.(suc letters)} word missing)) = game r
 
--- {-
--- :exec main
--- -}
+main : Primitive.IO ⊤
+main = run do
+  result <- game {guesses = 2} (MkWordState "Test" ('T' ∷ 'E' ∷ 'S' ∷ []))
+  case result of λ where
+    (Lost (MkWordState word missing)) -> putStrLn ("You lose.") -- The word was " V.++ word)
+    (Won game)                        -> putStrLn "You win!"
