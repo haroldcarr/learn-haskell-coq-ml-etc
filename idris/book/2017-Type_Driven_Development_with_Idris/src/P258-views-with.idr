@@ -71,6 +71,7 @@ Idris handles patterns only when it can deduce those inputs.
 
 -- example : reversing a list
 
+
 -- inefficient
 -- idris cannot determine totality
 myReverse : List a -> List a

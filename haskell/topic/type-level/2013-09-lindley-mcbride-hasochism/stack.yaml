@@ -1,10 +1,6 @@
-resolver: lts-10.1
+resolver: lts-13.25
 packages:
 - '.'
-- location:
-    git: git@github.com:haroldcarr/test-hunit-util.git
-    commit: 76246854236d38ae569c0c7907abbd506902cd05
-  extra-dep: true
-extra-deps: []
-flags: {}
-extra-package-dbs: []
+extra-deps:
+- git: git@github.com:haroldcarr/test-hunit-util.git
+  commit: 17971cdff83473fe044c7ea82aade2ed6afc47ed
