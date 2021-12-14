@@ -5,7 +5,7 @@
 > {-# LANGUAGE RankNTypes       #-}
 > {-# LANGUAGE TypeApplications #-}
 >
-> module S1M where
+> module Part1Manual where
 >
 > import Data.Kind (Type)
 

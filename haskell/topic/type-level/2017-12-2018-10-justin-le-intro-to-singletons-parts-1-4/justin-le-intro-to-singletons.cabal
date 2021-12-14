@@ -4,17 +4,17 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           justin-le-intro-to-singletons-part-one
+name:           justin-le-intro-to-singletons
 version:        0.1.0.0
 build-type:     Simple
 
 library
   exposed-modules:
-      S1M
-      S1S
-      S2
+      Part1Manual
+      Part1Sing
+      Part2
   other-modules:
-      Paths_justin_le_intro_to_singletons_part_one
+      Paths_justin_le_intro_to_singletons
   hs-source-dirs:
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths

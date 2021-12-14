@@ -4,7 +4,7 @@
 > {-# LANGUAGE TemplateHaskell #-}
 > {-# LANGUAGE TypeFamilies #-}
 >
-> module S1S where
+> module Part1Sing where
 >
 > import Data.Singletons
 > import Data.Singletons.Prelude
