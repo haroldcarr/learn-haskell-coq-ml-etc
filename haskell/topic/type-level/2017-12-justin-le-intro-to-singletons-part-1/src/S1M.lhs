@@ -54,7 +54,8 @@ use case
 > data DoorStateM = OpenedM | ClosedM | LockedM deriving (Eq, Show)
 >
 > -- | phantom 's'
-> -- There are no values of type 's' in the data value (not even possible: there are no values of type 'SClosed, 'SOpened, etc.)
+> -- There are no values of type 's' in the data value
+> -- (not even possible: there are no values of type 'OpenedM, 'ClosedM, 'LockedM, etc.)
 > newtype DoorM (s :: DoorStateM) = UnsafeMkDoorM { doorMaterialM :: String } deriving Show
 
 DoorM using GADT syntax (specifies type of constructors).
@@ -101,14 +102,16 @@ encodes pre/post-conditions in type
 > closeDoorM :: DoorM 'OpenedM -> DoorM 'ClosedM
 > closeDoorM (UnsafeMkDoorM m) = UnsafeMkDoorM m
 
-> myDoorM = UnsafeMkDoorM @'OpenedM "Spruce"
+> myDoorM :: DoorM 'OpenedM
+> myDoorM  = UnsafeMkDoorM @'OpenedM "Spruce"
 
     :t myDoorM
     => DoorM 'OpenedM
     :t closeDoorM myDoorM
     => DoorM 'ClosedM
 
-> yourDoorM = UnsafeMkDoorM @'ClosedM "Acacia"
+> yourDoorM :: DoorM 'ClosedM
+> yourDoorM  = UnsafeMkDoorM @'ClosedM "Acacia"
 
     :t closeDoorM yourDoorM
     =>  Expected type: DoorM 'OpenedM
@@ -134,7 +137,8 @@ compositions are type-checked
     => Expected type: DoorM 'ClosedM -> DoorM 'ClosedM
          Actual type: DoorM 'ClosedM -> DoorM 'OpenedM
 
-> myDoorM2 = UnsafeMkDoorM @'OpenedM "Spruce"
+> myDoorM2 :: DoorM 'OpenedM
+> myDoorM2  = UnsafeMkDoorM @'OpenedM "Spruce"
 
     :t myDoorM2
     => DoorM 'OpenedM
@@ -209,7 +213,7 @@ can now pattern match on types
 > --   locks it if necessary.
 > -- types ensure the 's' in 'SingDSM s' is the same 's' in the 'DoorM s'
 > lockAnyDoorM :: SingDSM s -> DoorM s -> DoorM 'LockedM
-> lockAnyDoorM = \case
+> lockAnyDoorM  = \case
 >   -- dependent pattern match:
 >   -- - pattern match on SingDSM s to reveal what s is, to the type checker
 >   -- when s ~ 'OpenedM, say SOpenedM is a runtime witness to s being 'OpenedM
@@ -223,7 +227,7 @@ REFLECTION: turning type variable into dynamic runtime value
 singleton relies on fact that s in SingDSM s is  same as s in DoorM s
 
 > doorStatusM :: SingDSM s -> DoorM s -> DoorStateM
-> doorStatusM = \case
+> doorStatusM  = \case
 >   SOpenedM -> const OpenedM
 >   SClosedM -> const ClosedM
 >   SLockedM -> const LockedM
@@ -236,7 +240,7 @@ downside : must explicitly give witness argument
 ------------------------------------------------------------------------------
 Implicit Passing
 
-use typeclasses to obviate
+use typeclasses to obviate passing explicit witness
 
 > class SingDSMI s where
 >   singDS :: SingDSM s
@@ -249,15 +253,16 @@ use typeclasses to obviate
 >   singDS = SLockedM
 >
 > lockAnyDoorM_ :: SingDSMI s => DoorM s -> DoorM 'LockedM
-> lockAnyDoorM_ = lockAnyDoorM singDS
+> lockAnyDoorM_  = lockAnyDoorM singDS
 >
 > doorStatusM_ :: SingDSMI s => DoorM s -> DoorStateM
-> doorStatusM_ = doorStatusM singDS
+> doorStatusM_  = doorStatusM singDS
 
 type inference says singDS :: SingDSM s is needed
 - compiler finds appropriate singleton
 
-> myDoorM3 = UnsafeMkDoorM @'OpenedM "Birch"
+> myDoorM3 :: DoorM 'OpenedM
+> myDoorM3  = UnsafeMkDoorM @'OpenedM "Birch"
 
     -- original method
     :t lockAnyDoorM SOpenedM myDoorM
@@ -310,7 +315,7 @@ To use x, SingDSMI s instance must be available.
 nicer version of mkDoorM using singletons:
 
 > mkDoorM :: SingDSM s -> String -> DoorM s
-> mkDoorM = \case
+> mkDoorM  = \case
 >   SOpenedM -> UnsafeMkDoorM
 >   SClosedM -> UnsafeMkDoorM
 >   SLockedM -> UnsafeMkDoorM
