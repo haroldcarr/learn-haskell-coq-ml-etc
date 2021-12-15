@@ -1,14 +1,17 @@
-> {-# LANGUAGE DataKinds #-}
-> {-# LANGUAGE GADTs #-}
-> {-# LANGUAGE KindSignatures #-}
+> {-# LANGUAGE DataKinds       #-}
+> {-# LANGUAGE GADTs           #-}
+> {-# LANGUAGE KindSignatures  #-}
 > {-# LANGUAGE TemplateHaskell #-}
-> {-# LANGUAGE TypeFamilies #-}
+> {-# LANGUAGE TypeFamilies    #-}
 >
 > module Part1Sing where
 >
-> import Data.Singletons
-> import Data.Singletons.Prelude
-> import Data.Singletons.TH
+> import           Data.Singletons
+> import           Data.Singletons.Prelude
+> import           Data.Singletons.TH
+> ------------------------------------------------------------------------------
+> import           Data.Data
+> import           Test.Hspec
 
 https://blog.jle.im/entry/introduction-to-singletons-1.html
 
@@ -35,9 +38,12 @@ generates (essentially):
     :t SOpened
     => Sing 'Opened
 
+> t1 :: Spec
+> t1  = it "t1" $ showsTypeRep (typeOf (SOpened)) "" `shouldBe` "Sing DoorState 'Opened"
+
 Sing
 - poly-kinded type constructor (a "data family")
-- STrue :: Sing 'True is singleton for 'True
+- STrue         :: Sing 'True           is singleton for 'True
 - SJust SOpened :: Sing ('Just 'Opened) is singleton for 'Just 'Opened
 - etc
 
@@ -67,9 +73,6 @@ generates instances for singletons of all kinds
     :t sing :: Sing ('Just 'Opened)
     => Sing ('Just 'Opened)
 
-
-
-
 generates : withSingI (equivalent to previous withSingDSMI):
 
        Justin:
@@ -85,7 +88,10 @@ instances     for kind [k]     ...
 
 let singletons library generate singletons instead of writing them manually
 
-    HC: DOES NOT WORK
+> t2 :: Spec
+> t2  = it "t2" $ showsTypeRep (typeOf (SOpened `SCons` SClosed `SCons` SLocked `SCons` SNil)) ""
+>       `shouldBe` "Sing [DoorState] (': DoorState 'Opened (': DoorState 'Closed (': DoorState 'Locked ('[] DoorState))))"
+
     :t SOpened `SCons` SClosed `SCons` SLocked `SCons` SNil
     => Sing '[ 'Opened, 'Closed, 'Locked ]
     -- 'SCons : singleton for `:`
@@ -99,7 +105,7 @@ DataKinds, so
 
 besides generating singletons
 
-provides functions for working with the different "manifestations" of our types
+provides functions for working with the different "manifestations" of types
 
 DoorState has
 - type DoorState
@@ -112,7 +118,7 @@ DoorState has
   - SLocked :: Sing 'Locked
 - SingI instances for 'Opened, 'Closed, and 'Locked'
 
-in future, with real dependent types, all these manifestations will be one thing
+in future, with real dependent types, all these will be one thing
 
 for now, must deal with converting between them
 - singletons generates
@@ -153,17 +159,17 @@ RECAP
 - how singletons can help
 - singletons library automates the pattern
 
-You can see all of the “manual singletons” code in this post here, and then see the code re-implemented using the singletons library here.
+manual singletons
+- https://github.com/mstksg/inCode/tree/master/code-samples/singletons/Door.hs
+via singletons library
+- https://github.com/mstksg/inCode/tree/master/code-samples/singletons/DoorSingletons.hs
 
-How to create a Door with state not known runtime?
-
-So far, only able to create Door and SingDS from types known at compile-time.
-
-have not yet shown how to convert value level to type level : because of type erasure
+Still CANNOT create a Door with state not known runtime.
+- have not shown how to convert value level to type level : because of type erasure
 
 Part 2 : will show how.
 
-Part 3 : express more complicated relationships with types and type-level functions / type-level programming
+Part 3 : express relationships with types and type-level functions / type-level programming
 
 original singletons paper : https://cs.brynmawr.edu/~rae/papers/2012/singletons/paper.pdf
 
@@ -171,15 +177,23 @@ Exercise
 
 write in singletons library style, with Sing instead of SingDS and SingI instead of SingDSI
 
-
-1. Write a function to unlock a door, but only if the user enters an odd number (as a password).
+1. function to unlock a door, only if given an odd number (as a password).
 
     unlockDoor ::             Int -> Door 'Locked -> Maybe (Door 'Closed)
 
-2. Write a function that can open any door, taking a password, in “implicit Sing” style:
+2. function that can open any door, taking a password, in “implicit Sing” style:
 
     openAnyDoor :: SingI s => Int -> Door s       -> Maybe (Door 'Opened)
 
-   write in terms of unlockDoor and openDoor (see above) – do not use UnsafeMkDoor directly for openAnyDoor
+   write in terms of unlockDoor and openDoor (see above)
+   do not use UnsafeMkDoor directly for openAnyDoor
 
    If the door is already unlocked or opened, it should ignore the Int input.
+
+------------------------------------------------------------------------------
+
+> test :: IO ()
+> test  =
+>   hspec $ describe "Part1Sing" $ do
+>   t1; t2
+

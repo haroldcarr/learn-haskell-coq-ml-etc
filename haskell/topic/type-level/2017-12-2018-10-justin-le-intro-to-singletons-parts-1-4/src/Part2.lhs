@@ -1,10 +1,13 @@
-> {-# LANGUAGE DataKinds       #-}
-> {-# LANGUAGE GADTs           #-}
-> {-# LANGUAGE KindSignatures  #-}
-> {-# LANGUAGE LambdaCase      #-}
-> {-# LANGUAGE RankNTypes      #-}
-> {-# LANGUAGE TemplateHaskell #-}
-> {-# LANGUAGE TypeFamilies    #-}
+> {-# LANGUAGE DataKinds            #-}
+> {-# LANGUAGE GADTs                #-}
+> {-# LANGUAGE InstanceSigs         #-}
+> {-# LANGUAGE LambdaCase           #-}
+> {-# LANGUAGE RankNTypes           #-}
+> {-# LANGUAGE ScopedTypeVariables  #-}
+> {-# LANGUAGE StandaloneDeriving   #-}
+> {-# LANGUAGE TemplateHaskell      #-}
+> {-# LANGUAGE TypeFamilies         #-}
+> {-# LANGUAGE UndecidableInstances #-}
 >
 > module Part2 where
 >
@@ -50,7 +53,7 @@ Sometimes do not care about state of door in the type of the door.
 
 Need type to just represent a door, without the status in its type.
 
-SomeDoor : keeps status as runtime value (instead of type)
+SomeDoor0
 - instead of DoorState being type parameter, it is a runtime value
 
 > data SomeDoor0 :: G.Type where
@@ -59,7 +62,7 @@ SomeDoor : keeps status as runtime value (instead of type)
 >     , someDoorMaterial0 :: String
 >     } -> SomeDoor0
 
-because SomeDoor is a different type, can’t re-use any Door functions.
+because SomeDoor0 is a different type, can’t re-use any Door functions.
 
 The Existential Datatype
 
@@ -197,7 +200,9 @@ make a door with status unknown until runtime:
 
 with mkSomeDoor: can pass in DoorState created at runtime
 
-> mySomeDoor = mkSomeDoor Opened "Birch"
+> mySomeDoor :: SomeDoor
+> mySomeDoor  = mkSomeDoor Opened "Birch"
+> pSomeDoor :: SomeDoor -> IO ()
 > pSomeDoor d = putStrLn $ case d of
 >   MkSomeDoor SOpened _ -> "mySomeDoor was opened!"
 >   MkSomeDoor SClosed _ -> "mySomeDoor was closed!"
@@ -248,15 +253,16 @@ caller of withDoor provide handler that can handle any s
 - producer is "returning" an s – existentially quantified
 
 > testWithDoor :: String
-> testWithDoor = withDoor Opened "Birch" $ \s d -> case s of
+> testWithDoor = withDoor Opened "Birch" $ \s _d -> case s of
 >   SOpened -> "Opened door!"
 >   SClosed -> "Closed door!"
 >   SLocked -> "Locked door!"
 
-Reification
+------------------------------------------------------------------------------
+REIFICATION
 
 reification : lifting runtime VALUE to type level as a TYPE
-- opposite of reflection
+- opposite of REFLECTION
 
 singletons lib generates functions to reify DoorState values:
 

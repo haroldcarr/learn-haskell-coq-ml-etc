@@ -22,6 +22,7 @@ library
       HUnit
     , base >=4.7 && <5
     , ghc-prim
+    , hspec
     , singletons
     , test-hunit-util
   default-language: Haskell2010

@@ -1,13 +1,20 @@
+> {-# LANGUAGE ConstraintKinds  #-}
 > {-# LANGUAGE DataKinds        #-}
 > {-# LANGUAGE GADTs            #-}
-> {-# LANGUAGE KindSignatures   #-}
+> -- {-# LANGUAGE KindSignatures   #-}
 > {-# LANGUAGE LambdaCase       #-}
+> {-# LANGUAGE PolyKinds        #-}
 > {-# LANGUAGE RankNTypes       #-}
 > {-# LANGUAGE TypeApplications #-}
 >
 > module Part1Manual where
 >
 > import Data.Kind (Type)
+> ------------------------------------------------------------------------------
+> import           Data.Data
+> import           Test.Hspec
+>
+> {-# ANN module ("HLint: ignore Use typeRep" :: Prelude.String) #-}
 
 HC NOTE: 'M' at the end means Manual.
 
@@ -36,14 +43,18 @@ phantom types : add additional type information
 
 > data FooM a = MkFooM -- a is phantom : declared on left, not used in right
 
-    :t MkFooM :: FooM Int
-    => FooM Int
-    :t MkFooM :: FooM Bool
-    => FooM Bool
-    :t MkFooM :: FooM Either        -- requires PolyKinds
-    => FooM Either
-    :t MkFooM :: FooM Monad         -- requires ConstraintKinds
-    => FooM Monad
+> t1,t2,t3,t4,t5 :: Spec
+> t1 = it "t1" $ showsTypeRep (typeOf (MkFooM :: FooM Int   )) ""
+>                                    `shouldBe` "FooM * Int"
+> t2 = it "t2" $ showsTypeRep (typeOf (MkFooM :: FooM Bool  )) ""
+>                                    `shouldBe` "FooM * Bool"
+> -- requires PolyKinds
+> t3 = it "t3" $ showsTypeRep (typeOf (MkFooM :: FooM Either)) ""
+>                                    `shouldBe` "FooM (* -> * -> *) Either"
+> t4 = it "t4" $ showsTypeRep (typeOf (MkFooM :: FooM Monad )) ""
+>                                    `shouldBe` "FooM ((* -> *) -> Constraint) Monad"
+> t5 = it "t5" $ showsTypeRep (typeOf (MkFooM :: FooM (* -> *))) ""
+>                                    `shouldBe` "FooM * (* -> *)"
 
 use case
 - restrict functions to certain phantom types
@@ -79,17 +90,19 @@ phantom
     :t UnsafeMkDoorM "Oak"
     => UnsafeMkDoorM "Oak" :: DoorM s
 
-    :t UnsafeMkDoorM "Birch" :: DoorM 'OpenedM
-    => DoorM 'OpenedM
-    :t UnsafeMkDoorM "Iron" :: DoorM 'LockedM
-    => DoorM 'LockedM
+> t6,t7 :: Spec
+> t6 = it "t6" $ showsTypeRep (typeOf (UnsafeMkDoorM "Birch" :: DoorM 'OpenedM)) ""
+>                                                   `shouldBe` "DoorM 'OpenedM"
+> t7 = it "t7" $ showsTypeRep (typeOf (UnsafeMkDoorM "Iron"  :: DoorM 'LockedM)) ""
+>                                                   `shouldBe` "DoorM 'LockedM"
 
-    TypeApplications extension to enables "passing" type:
+TypeApplications extension to enables "passing" type:
 
-    :t UnsafeMkDoorM @'OpenedM "Birch"
-    => DoorM 'OpenedM
-    :t UnsafeMkDoorM @'LockedM "Iron"
-    => DoorM 'LockedM
+> t8,t9 :: Spec
+> t8  = it "t8" $ showsTypeRep (typeOf (UnsafeMkDoorM @'OpenedM "Birch")) ""
+>                                                   `shouldBe` "DoorM 'OpenedM"
+> t9  = it "t9" $ showsTypeRep (typeOf (UnsafeMkDoorM @'LockedM "Iron" )) ""
+>                                                   `shouldBe` "DoorM 'LockedM"
 
 DoorM is an indexed data type
 - aka "type family" (in dependently typed programming vocabulary)
@@ -105,10 +118,9 @@ encodes pre/post-conditions in type
 > myDoorM :: DoorM 'OpenedM
 > myDoorM  = UnsafeMkDoorM @'OpenedM "Spruce"
 
-    :t myDoorM
-    => DoorM 'OpenedM
-    :t closeDoorM myDoorM
-    => DoorM 'ClosedM
+> t10,t11 :: Spec
+> t10 = it "t10" $ showsTypeRep (typeOf             myDoorM)  "" `shouldBe` "DoorM 'OpenedM"
+> t11 = it "t11" $ showsTypeRep (typeOf (closeDoorM myDoorM)) "" `shouldBe` "DoorM 'ClosedM"
 
 > yourDoorM :: DoorM 'ClosedM
 > yourDoorM  = UnsafeMkDoorM @'ClosedM "Acacia"
@@ -129,10 +141,12 @@ compositions are type-checked
 > openDoorM :: DoorM 'ClosedM -> DoorM 'OpenedM
 > openDoorM (UnsafeMkDoorM m) = UnsafeMkDoorM m
 
-    :t closeDoorM . openDoorM
-    => DoorM 'ClosedM -> DoorM 'ClosedM
-    :t lockDoorM . closeDoorM . openDoorM
-    => DoorM 'ClosedM -> DoorM 'LockedM
+> t12,t13 :: Spec
+> t12 = it "t12" $ showsTypeRep (typeOf (closeDoorM . openDoorM)) ""
+>                           `shouldBe` "DoorM 'ClosedM -> DoorM 'ClosedM"
+> t13 = it "t13" $ showsTypeRep (typeOf (lockDoorM . closeDoorM . openDoorM)) ""
+>                           `shouldBe` "DoorM 'ClosedM -> DoorM 'LockedM"
+
     :t lockDoorM . openDoorM
     => Expected type: DoorM 'ClosedM -> DoorM 'ClosedM
          Actual type: DoorM 'ClosedM -> DoorM 'OpenedM
@@ -152,7 +166,8 @@ compositions are type-checked
     :t lockDoorM (closeDoorM myDoorM2)
     => DoorM 'LockedM
 
-What can NOT be done with phantom types alone:
+----------------------------------------------
+WHAT CAN NOT BE DONE WITH PHANTOM TYPES ALONE:
 
 1. how to write fun to get state of a door (REFLECTION: turn type var into runtime val)?
 
@@ -204,10 +219,7 @@ singletons give runtime values to be used as witnesses for types and type variab
 if use  SOpenedM         constructor,  then get   type              SingDSM 'OpenedM
 if have SingDSM 'OpenedM type,         then know  constructed using SOpenedM
 
-can now pattern match on types
-
-    closeDoorM :: DoorM 'OpenedM -> DoorM 'ClosedM
-    lockDoorM  :: DoorM 'ClosedM -> DoorM 'LockedM
+CAN NOW PATTERN MATCH ON TYPES
 
 > -- | takes door of any state (a 'DoorM s' of any 's')
 > --   locks it if necessary.
@@ -235,12 +247,23 @@ singleton relies on fact that s in SingDSM s is  same as s in DoorM s
     doorStatusM SOpenedM myDoorM
     => OpenedM
 
-downside : must explicitly give witness argument
+> t14 :: Spec                                                                         -- TODO
+> t14  = it "t14" $ showsTypeRep (typeOf (doorStatusM SOpenedM myDoorM)) "" `shouldBe` "DoorStateM"
+
+downside : must explicitly give witness argument (the SingDSM)
+
+software eng: since DoorM not used, perhaps better to write:
+
+> fromSDoorState :: SingDSM s -> DoorStateM
+> fromSDoorState SOpenedM = OpenedM
+> fromSDoorState SClosedM = ClosedM
+> fromSDoorState SLockedM = LockedM
+>
+> doorStatus' :: SingDSM s -> DoorM s -> DoorStateM
+> doorStatus' s _ = fromSDoorState s
 
 ------------------------------------------------------------------------------
-Implicit Passing
-
-use typeclasses to obviate passing explicit witness
+IMPLICIT PASSING : use typeclasses to obviate passing explicit witness
 
 > class SingDSMI s where
 >   singDS :: SingDSM s
@@ -261,20 +284,18 @@ use typeclasses to obviate passing explicit witness
 type inference says singDS :: SingDSM s is needed
 - compiler finds appropriate singleton
 
-> myDoorM3 :: DoorM 'OpenedM
-> myDoorM3  = UnsafeMkDoorM @'OpenedM "Birch"
+> t15,t16,t17 :: Spec
+> -- original method
+> t15  = it "t15" $ showsTypeRep (typeOf (lockAnyDoorM SOpenedM myDoorM)) ""
+>                   `shouldBe` "DoorM 'LockedM"
+> -- original method using type inference
+> t16  = it "t16" $ showsTypeRep (typeOf (lockAnyDoorM singDS   myDoorM)) ""
+>                   `shouldBe` "DoorM 'LockedM"
+> -- no explicit singleton passed
+> t17  = it "t17" $ showsTypeRep (typeOf (lockAnyDoorM_         myDoorM)) ""
+>                   `shouldBe` "DoorM 'LockedM"
 
-    -- original method
-    :t lockAnyDoorM SOpenedM myDoorM
-
-    -- type inference
-    :t lockAnyDoorM singDS   myDoorM
-
-    -- no explicit singleton passed
-    :t lockAnyDoorM_         myDoorM
-
-    all return
-    => DoorM 'LockedM
+all return : DoorM 'LockedM
 
 constraint 'SingDSMI s =>' : essentially same as passing 'SingDSM s' explicitly
 
@@ -287,13 +308,15 @@ explicit : SingDSM  s ->
 
 above : IMPLICIT to EXPLICIT : SingDSMI s => to SingDSM  s ->
 
-------------------------------------------------------------------------------
+type inference says it wants singDS :: SingDSM s, so it will pull out
+the proper singleton for the door
 
-here  : EXPLICIT to IMPLICIT : SingDSM  s -> to SingDSMI s =>
+------------------------------------------------------------------------------
+EXPLICIT to IMPLICIT : SingDSM  s -> to SingDSMI s =>
 
 typical done via CPS-like function:
 
-To use x, SingDSMI s instance must be available.
+To use x (below), SingDSMI s instance must be available.
 - in each branch, s is now a specific, monomorphic, concrete s
 - GHC knows that such an instance exists for every branch.
 
@@ -312,7 +335,17 @@ To use x, SingDSMI s instance must be available.
 > lockAnyDoorM__ :: SingDSM s -> DoorM s -> DoorM 'LockedM
 > lockAnyDoorM__ s d = withSingDSMI s (lockAnyDoorM_ d)
 
-nicer version of mkDoorM using singletons:
+note:
+type of withSingDSMI is similar to:
+
+withSingDSI :: SDoorState s -> (SingDSMI s => r) -> r
+flip  ($)   ::            a -> (         a -> r) -> r
+
+highlights how a SingDSMI s => ..) is same as SingDSM s -> ...
+flip ($) takes a value and a function and applies the function to that value.
+withSingDSI takes a value and “something like a function” and applies the “something like a function” to that value.
+
+nicer version of door constructor using singletons:
 
 > mkDoorM :: SingDSM s -> String -> DoorM s
 > mkDoorM  = \case
@@ -322,7 +355,17 @@ nicer version of mkDoorM using singletons:
 
 SingDSM s "locks in" s type variable for DoorM s
 
-    :t mkDoorM SOpenedM "Oak"
-    => DoorM 'OpenedM
-    :t mkDoorM SLockedM "Spruce"
-    => DoorM 'LockedM
+> t18,t19 :: Spec
+> t18  = it "t18" $ showsTypeRep (typeOf (mkDoorM SOpenedM "Oak")) ""
+>                   `shouldBe` "DoorM 'OpenedM"
+> -- original method using type inference
+> t19  = it "t19" $ showsTypeRep (typeOf (mkDoorM SLockedM "Spruce")) ""
+>                   `shouldBe` "DoorM 'LockedM"
+
+------------------------------------------------------------------------------
+
+> test :: IO ()
+> test  =
+>   hspec $ describe "Part1Manual" $ do
+>   t1; t2; t3; t4; t5; t6; t7; t8; t9
+>   t10; t11; t12; t13; t14; t15; t16; t17; t18; t19
