@@ -5,6 +5,8 @@ open import Data.Nat        renaming (ℕ to Nat)
 open import Data.Nat.DivMod
 open import Data.Product    hiding (map)
 open import Data.Unit       using (⊤)
+------------------------------------------------------------------------------
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 module x where
 
@@ -28,8 +30,7 @@ INTRODUCTION
 key techniques
 - syntax of effectful computations represented as free monads
   - assigning meaning to these monads gives meaning to the syntactic ops each effect provides
-- paper shows how to assign PT semantics to computations arising
-  from Kleisli arrows on free monads
+- paper shows how to assign PT semantics to computations arising from Kleisli arrows on free monads
   - enables computing the weakest precondition associated with a given postcondition
 - using weakest precondition semantics
   - define refinement on computations
@@ -92,7 +93,7 @@ e.g., weakest precondition:
 --
 -- note: definition is just reverse function composition
 -- wp0 : ∀ {a b : Set} → (f : a → b) → (b → Set) → (a → Set)
-wp0 : ∀ {a : Set} {b :     Set} (f :       a → b)   →           (b   → Set) → (a → Set)
+wp0 : ∀ {a : Set} {b :     Set} (f :      a  → b)   →           (b   → Set) → (a → Set)
 wp0 f P = λ x → P   (f x)
 {-
 above wp semantics is sometimes too restrictive
@@ -183,15 +184,26 @@ data Expr : Set where
   Val : Nat  → Expr
   Div : Expr → Expr → Expr
 
+exv : Expr
+exv = Val 3
+exd : Expr
+exd = Div (Val 3) (Val 3)
+
 -- semantics specified using inductively defined RELATION:
 -- def rules out erroneous results by requiring the divisor evaluates to non-zero
 data _⇓_ : Expr → Nat → Set where
   Base : ∀ {x : Nat}
        → Val x ⇓ x
   Step : ∀ {l r : Expr} {v1 v2 : Nat}
-       →       l ⇓  v1
+       →     l   ⇓  v1
        →       r ⇓         (suc v2)
        → Div l r ⇓ (v1 div (suc v2))
+
+exb : Val 3 ⇓ 3
+exb = Base
+
+exs : Div (Val 3) (Val 3) ⇓ 1
+exs = Step Base Base
 
 -- Alternatively
 -- evaluate Expr via monadic INTERPRETER, using Partial to handle division-by-zero
@@ -205,12 +217,28 @@ n ÷ (suc k) = return (n div (suc k))
 ⟦ Val x ⟧     = return x
 ⟦ Div e1 e2 ⟧ = ⟦ e1 ⟧ >>= λ v1 → ⟦ e2 ⟧ >>= λ v2 → v1 ÷ v2
 
+evv   : Free C R Nat
+evv   = ⟦ Val 3 ⟧
+evv'  : evv ≡ Pure 3
+evv'  = refl
+
+evd   : Free C R Nat
+evd   = ⟦ Div (Val 3) (Val 3) ⟧
+evd'  : evd ≡ Pure 1
+evd'  = refl
+
+evd0  : Free C R Nat
+evd0  = ⟦ Div (Val 3) (Val 0) ⟧
+evd0' : evd0 ≡ Step Abort (λ ())
+evd0' = refl
+
 {-
-std lib 'div' requires implicit proof that divisor is non-zero
-
-when divisor is zero, interpreter fail explicitly with abort
-
-How to relate these two definitions?
+How to relate two definitions:
+- std lib 'div' requires implicit proof that divisor is non-zero
+  - ⇓ relation generates via pattern matching
+  - _÷_ does explicit check
+- interpreter uses _÷_
+  - fails explicitly with abort when divisor is zero
 
 Assign a weakest precondition semantics to Kleisli arrows of the form
 
