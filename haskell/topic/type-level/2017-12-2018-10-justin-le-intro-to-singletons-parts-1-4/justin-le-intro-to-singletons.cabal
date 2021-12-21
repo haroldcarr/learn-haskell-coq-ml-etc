@@ -13,6 +13,9 @@ library
       Part1Manual
       Part1Sing
       Part2
+      Part3Manual
+      Part3Sing
+      Part4
   other-modules:
       Paths_justin_le_intro_to_singletons
   hs-source-dirs:

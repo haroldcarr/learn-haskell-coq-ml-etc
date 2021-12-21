@@ -1,4 +1,5 @@
 > {-# LANGUAGE DataKinds            #-}
+> {-# LANGUAGE EmptyCase            #-}
 > {-# LANGUAGE GADTs                #-}
 > {-# LANGUAGE InstanceSigs         #-}
 > {-# LANGUAGE LambdaCase           #-}
