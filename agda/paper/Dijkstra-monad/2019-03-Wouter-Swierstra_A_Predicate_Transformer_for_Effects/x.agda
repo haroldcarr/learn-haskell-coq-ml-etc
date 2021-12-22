@@ -1,10 +1,11 @@
 {-# OPTIONS --type-in-type   #-} -- NOT SOUND!
 
 open import Data.Empty      using (⊥)
+open import Data.List       hiding (map; [_])
 open import Data.Nat        renaming (ℕ to Nat)
 open import Data.Nat.DivMod
 open import Data.Product    hiding (map)
-open import Data.Unit       using (⊤)
+open import Data.Unit       using (⊤; tt)
 ------------------------------------------------------------------------------
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
@@ -25,7 +26,8 @@ predicate transformer (PT) semantics gives a refinement relation that can be use
 - relate a program to its specification, or
 - calculate effectful programs that are correct by construction
 
-INTRODUCTION
+------------------------------------------------------------------------------
+1 INTRODUCTION
 
 key techniques
 - syntax of effectful computations represented as free monads
@@ -40,8 +42,10 @@ key techniques
 - show how programs and specifications may be mixed,
   enabling verified programs to be calculated from their specification one step at a time
 
+------------------------------------------------------------------------------
 2 BACKGROUND
 
+--------------------------------------------------
 Free monads
 -}
 
@@ -69,6 +73,7 @@ Step c x >>= f = Step c (λ r → x r >>= f)
 {-
 different effects choose C and R differently, depending on their ops
 
+--------------------------------------------------
 Weakest precondition semantics
 
 idea of associating weakest precondition semantics with imperative programs
@@ -91,8 +96,8 @@ e.g., weakest precondition:
 -- desired postcondition on the function’s output, b → Set
 -- to weakest precondition a → Set on function’s input that ensures postcondition satisfied
 --
+-- non-dependent version
 -- note: definition is just reverse function composition
--- wp0 : ∀ {a b : Set} → (f : a → b) → (b → Set) → (a → Set)
 wp0 : ∀ {a : Set} {b :     Set} (f :      a  → b)   →           (b   → Set) → (a → Set)
 wp0 f P = λ x → P   (f x)
 {-
@@ -100,6 +105,7 @@ above wp semantics is sometimes too restrictive
 - no way to specify that output is related to input
 - fix via making f dependent:
 -}
+-- dependent version
 wp  : ∀ {a : Set} {b : a → Set} (f : (x : a) → b x) → ((x : a) → b x → Set) → (a → Set)
 wp  f P = λ x → P x (f x)
 
@@ -141,11 +147,13 @@ define a function with form:
 
 'pt' def depends on semantics desired for a particulr free monad
 
-Crucially,
-choice of pt and weakest precondition semantics, wp, together
-give a way to assign weakest precondition semantics to Kleisli arrows
-representing effectful computations
+Crucially, choice of
+- pt and
+- weakest precondition semantics :  wp
+together give a way to assign weakest precondition semantics
+to Kleisli arrows representing effectful computations
 
+------------------------------------------------------------------------------
 3 PARTIALITY
 
 Partial computations : i.e., 'Maybe'
@@ -175,6 +183,7 @@ Note that responses to Abort command are empty;
 abort smart constructor abort uses this to discharge the continuation
 in the second argument of the Step constructor
 
+--------------------------------------------------
 Example: division
 
 expression language, closed under division and natural numbers:
@@ -192,23 +201,23 @@ exd = Div (Val 3) (Val 3)
 -- semantics specified using inductively defined RELATION:
 -- def rules out erroneous results by requiring the divisor evaluates to non-zero
 data _⇓_ : Expr → Nat → Set where
-  Base : ∀ {x : Nat}
-       → Val x ⇓ x
-  Step : ∀ {l r : Expr} {v1 v2 : Nat}
-       →     l   ⇓  v1
-       →       r ⇓         (suc v2)
-       → Div l r ⇓ (v1 div (suc v2))
+  ⇓Base : ∀ {x : Nat}
+        → Val x ⇓ x
+  ⇓Step : ∀ {l r : Expr} {v1 v2 : Nat}
+        →     l   ⇓  v1
+        →       r ⇓         (suc v2)
+        → Div l r ⇓ (v1 div (suc v2))
 
 exb : Val 3 ⇓ 3
-exb = Base
+exb = ⇓Base
 
 exs : Div (Val 3) (Val 3) ⇓ 1
-exs = Step Base Base
+exs = ⇓Step ⇓Base ⇓Base
 
--- Alternatively
+-- alternatively, semantics specified by an INTERPRETER
 -- evaluate Expr via monadic INTERPRETER, using Partial to handle division-by-zero
 
--- op used by ⟦_⟧ interpreter
+-- define operation used by ⟦_⟧ interpreter
 _÷_ : Nat → Nat → Partial Nat
 n ÷ zero    = abort
 n ÷ (suc k) = return (n div (suc k))
@@ -245,18 +254,19 @@ Assign a weakest precondition semantics to Kleisli arrows of the form
     a → Partial b
 -}
 
+mustPT    : ∀ {a : Set} {b : a → Set}
+          → (P : (x : a) →          b x → Set)
+          →      (x : a)
+          →                Partial (b x)
+          → Set
+mustPT P _ (Pure y)       = P _ y
+mustPT P _ (Step Abort _) = ⊥
+
 wpPartial : ∀ {a : Set} {b : a → Set}
           → (f : (x : a) → Partial (b x))
           → (P : (x : a) →          b x → Set)
           → (a → Set)
 wpPartial f P = wp f (mustPT P)
- where
-  mustPT : ∀ {a : Set} {b : a → Set}
-         → (P : (x : a) → b x → Set)
-         →      (x : a)
-         → Partial       (b x) → Set
-  mustPT P _ (Pure y)       = P _ y
-  mustPT P _ (Step Abort _) = ⊥
 {-
 To call 'wp', must show how to transform
 -      predicate                  P :         b → Set
@@ -274,9 +284,20 @@ via passing
 - interpreter: ⟦_⟧
 - desired postcondition : _⇓_
 as arguments to wpPartial:
+-}
 
-  wpPartial ⟦_⟧ _⇓_ : Expr → Set
+exwpp  : Expr → Set
+exwpp  = wpPartial ⟦_⟧ _⇓_
+exwpp' : wpPartial ⟦_⟧ _⇓_ ≡ λ z → mustPT _⇓_ z ⟦ z ⟧
+exwpp' = refl
 
+wppv1  : wpPartial ⟦_⟧ _⇓_ (Val 1)
+wppv1  = ⇓Base
+wppd   : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+wppd   = ⇓Step ⇓Base ⇓Base
+
+
+{-
 resulting in a predicate on expressions
 
 for all expressions satisfying this predicate,
@@ -291,6 +312,11 @@ SafeDiv : Expr → Set
 SafeDiv (Val x)     = ⊤
 SafeDiv (Div e1 e2) = (e2 ⇓ zero → ⊥) {-∧-} × SafeDiv e1 {-∧-} × SafeDiv e2
 
+exsdv : SafeDiv (Val 3) ≡ ⊤
+exsdv = refl
+exsdd : SafeDiv (Div (Val 3) (Val 3)) ≡ Σ ((x : Val 3 ⇓ zero) → ⊥) (λ _ → Σ ⊤ (λ _ → ⊤))
+exsdd = refl
+
 {-
 Expect : any expr e for which SafeDiv e holds
 can be evaluated without division-by-zero
@@ -300,10 +326,35 @@ can prove SafeDiv is sufficient condition for two notions of evaluation to coinc
 -- lemma relates the two semantics
 -- expressed as a relation and an evaluator
 -- for those expressions that satisfy the SafeDiv property
-correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
+-}
 
-Instead of manually defining SafeDiv, define more general predicate
-characterising the domain of a partial function:
+-- correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
+{-
+correct (Val n) tt = ⇓Base
+correct (Div exprL exprR) (exprR⇓zero→⊥ , saveDivExprL , safeDivExprR)
+  with (correct exprL) saveDivExprL
+... | mustPT_⇓_exL⟦exL⟧
+  with (correct exprR) safeDivExprR
+... | mustPT_⇓_exR⟦exR⟧
+  = {!!}
+-}
+{-
+----- another try
+correct (Val x)                                   tt                                        =
+  ⇓Base
+correct (Div (Val x1)          (Val x2))          (r2⇓zero→⊥ , tt , tt)                     =
+  {!!}
+correct (Div (Val x)           (Div expr2 expr3)) (r2⇓zero→⊥ , tt , fst , snd)              =
+  {!!}
+correct (Div (Div expr1 expr3) (Val x))           (r2⇓zero→⊥ , (fst , snd) , tt)            =
+  {!!}
+correct (Div (Div expr1 expr3) (Div expr2 expr4)) (r2⇓zero→⊥ , safeDivExpr1 , safeDivExpr2) =
+  {!!}
+-}
+
+{-
+Instead of manually defining SafeDiv,
+define more general predicate characterising the domain of a partial function:
 -}
 
 dom : ∀ {a : Set} {b : a → Set}
@@ -320,6 +371,7 @@ complete : wpPartial ⟦_⟧ _⇓_ ⊆ dom ⟦_⟧
 
 both proofs proceed by induction on the argument expression
 
+--------------------------------------------------
 Refinement
 
 weakest precondition semantics on partial computations give rise
@@ -333,7 +385,7 @@ refinement : (f g : a → Maybe b)
 use refinement to relate Kleisli morphisms,
 and to relate a program to a specification given by a pre- and postcondition
 
-
+--------------------------------------------------
 Example: Add (interpreter for stack machine)
 
 add top two elements; can fail fail if stack has too few elements
@@ -341,11 +393,75 @@ add top two elements; can fail fail if stack has too few elements
 below shows how to prove the definition meets its specification
 
 Define specification in terms of a pre/post condition.
-The specification of a function of type (x : a) → b x consists of
 -}
+-- specification of a function of type (x : a) → b x consists of:
 record Spec (a : Set) (b : a → Set) : Set where
   constructor [_,_]
   field
-    pre  : a → Set             -- a precondition on a, and
-    post : (x : a) → b x → Set -- a postcondition relating inputs that satisfy this precondition
+    pre  : a → Set             -- precondition on 'a'
+    post : (x : a) → b x → Set -- postcondition relating inputs that satisfy this precondition
                                -- and the corresponding outputs
+
+{-
+[ P , Q ] : specification consisting of precondition P and postcondition Q
+
+for non-dependent examples (e.g., type b does not depend on x : a)
+-}
+
+K : {A B : Set} → A → B → A
+K x y = x
+
+SpecK : Set → Set → Set
+SpecK a b = Spec a (K b)
+
+-- specification for addition function : describes the desired postcondition
+data Add : List Nat → List Nat → Set where
+  AddStep : {x1 x2 : Nat} {xs : List Nat}
+          → Add (x1 ∷ x2 ∷ xs) ((x1 + x2 ) ∷ xs)
+
+addSpec : SpecK (List Nat) (List Nat)
+addSpec = [ (λ xs → length xs > 1) , Add ]
+
+{-
+How to relate this specification to an implementation?
+Note: 'wpPartial' assigns predicate transformer semantics to functions
+- but do not yet have a corresponding predicate transform semantics for specifications.
+wpSpec function does that:
+-}
+
+-- Given a specification, Spec a b
+-- computes the weakest precondition that satisfies an arbitrary postcondition P
+-- i.e., the spec’s precondition should hold and its postcondition must imply P.
+wpSpec : {a : Set} {b : a → Set}
+       → Spec a b → (P : (x : a) → b x → Set) → (a → Set)
+wpSpec [ pre , post ] P = λ x → (pre x) × {-∧-} (post x ⊆ P x)
+
+-- Can now formulate program
+add : List Nat → Partial (List Nat)
+add xs =
+  pop xs >>= λ { (x1 , xs) →
+  pop xs >>= λ { (x2 , xs) →
+  return ((x1 + x2 ) ∷ xs) } }
+ where
+  pop : {a : Set} → List a → Partial (a × List a)
+  pop Data.List.[] = abort
+  pop (x ∷ xs)     = return (x , xs)
+
+-- that refines the specification given by addSpec:
+{-
+correctness : wpSpec addSpec ⊑ wpPartial add
+correctness addstep xs (pre-addSpec-xs , post-addSpec-xs-⊆-addstep-xs) =
+  {!!}
+-}
+{-
+This example illustrates how to use the refinement relation
+- to relate a specification
+  - given in terms of a pre- and postcondition,
+- to its implementation.
+
+Compared to the refinement calculus
+- have not yet described how to mix code and specifications (see Section 7)
+
+--------------------------------------------------
+Alternative semantics
+-}
