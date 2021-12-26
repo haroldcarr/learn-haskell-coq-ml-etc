@@ -288,7 +288,7 @@ as arguments to wpPartial:
 
 exwpp  : Expr → Set
 exwpp  = wpPartial ⟦_⟧ _⇓_
-exwpp' : wpPartial ⟦_⟧ _⇓_ ≡ λ z → mustPT _⇓_ z ⟦ z ⟧
+exwpp' : wpPartial ⟦_⟧ _⇓_ ≡ λ expr → mustPT _⇓_ expr ⟦ expr ⟧
 exwpp' = refl
 
 wppv1  : wpPartial ⟦_⟧ _⇓_ (Val 1)
@@ -296,6 +296,11 @@ wppv1  = ⇓Base
 wppd   : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
 wppd   = ⇓Step ⇓Base ⇓Base
 
+xxx    : mustPT _⇓_ (Div (Val 3) (Val 3)) (Pure 3 >>= (λ v1 → Pure 3 >>= _÷_ v1))
+xxx    = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
+
+xxx'   : mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
+xxx'   = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
 
 {-
 resulting in a predicate on expressions
@@ -328,16 +333,42 @@ can prove SafeDiv is sufficient condition for two notions of evaluation to coinc
 -- for those expressions that satisfy the SafeDiv property
 -}
 
--- correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
-{-
+correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
+
 correct (Val n) tt = ⇓Base
-correct (Div exprL exprR) (exprR⇓zero→⊥ , saveDivExprL , safeDivExprR)
-  with (correct exprL) saveDivExprL
-... | mustPT_⇓_exL⟦exL⟧
-  with (correct exprR) safeDivExprR
-... | mustPT_⇓_exR⟦exR⟧
-  = {!!}
--}
+
+correct (Div exprL exprR) (exprR⇓zero→⊥ , safeDivExprL , safeDivExprR)
+  with  ⟦ exprL ⟧ | ⟦ exprR ⟧
+... | Pure ln                    | Pure rn                    = {!!}
+... | Pure ln                    | Step Abort r⊥→Free-C-R-Nat = exprR⇓zero→⊥ {!!}
+... | Step Abort l⊥→Free-C-R-Nat | Pure rn                    = {!!}
+... | Step Abort l⊥→Free-C-R-Nat | Step Abort r⊥→Free-C-R-Nat = {!!}
+
+--   with exprL | exprR
+-- ... | Val ln    | Val rn    = {!!}
+-- ... | Val ln    | Div rl rr = {!!}
+-- ... | Div ll lr | Val n     = {!!}
+-- ... | Div ll lr | Div rl rr = {!!}
+
+
+--  with (correct exprL) safeDivExprL | (correct exprR) safeDivExprR | ⟦ exprL ⟧ | ⟦ exprR ⟧ | exprL | exprR
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Pure l | Pure r | Val x | Val x₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Pure l | Pure r | Val x | Div er er₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Pure l | Pure r | Div el el₁ | Val x = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Pure l | Pure r | Div el el₁ | Div er er₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Pure l | Step Abort r | Val x | Val x₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Pure l | Step Abort r | Val x | Div er er₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Pure l | Step Abort r | Div el el₁ | Val x = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Pure l | Step Abort r | Div el el₁ | Div er er₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Step Abort l | Pure r | Val x | Val x₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Step Abort l | Pure r | Val x | Div er er₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Step Abort l | Pure r | Div el el₁ | Val x = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Step Abort l | Pure r | Div el el₁ | Div er er₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Step Abort l | Step Abort r | Val x | Val x₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Step Abort l | Step Abort r | Val x | Div er er₁ = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Step Abort l | Step Abort r | Div el el₁ | Val x = {!!}
+-- ... | mustPT_⇓_exL⟦exL⟧ | mustPT_⇓_exR⟦exR⟧ | Step Abort l | Step Abort r | Div el el₁ | Div er er₁ = {!!}
+
 {-
 ----- another try
 correct (Val x)                                   tt                                        =
