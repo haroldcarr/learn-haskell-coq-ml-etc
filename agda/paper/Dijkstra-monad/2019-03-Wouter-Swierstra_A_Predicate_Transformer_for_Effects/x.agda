@@ -322,6 +322,9 @@ exsdv = refl
 exsdd : SafeDiv (Div (Val 3) (Val 3)) ≡ Σ ((x : Val 3 ⇓ zero) → ⊥) (λ _ → Σ ⊤ (λ _ → ⊤))
 exsdd = refl
 
+exsdx : SafeDiv (Div (Val 3) (Val 0)) ≡ Σ ((x : Val 0 ⇓ zero) → ⊥) (λ _ → Σ ⊤ (λ _ → ⊤))
+exsdx = refl
+
 {-
 Expect : any expr e for which SafeDiv e holds
 can be evaluated without division-by-zero

@@ -20,80 +20,98 @@ agda --compile --ghc-dont-call-ghc fizzbuzz.agda
 
 
 ==============================================================================
+* misc
 
+- key bindings
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::267 p 6.2.2 Shortcuts.][mimram]]
+- symbols
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::SYMBOLS][mimram]]
+- selected stdlib
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 268 6.2.3 The standard library.][mimram]]
+- postulates
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 277 6.3.4 Postulates.][mimram]]
+- records
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 277 6.3.5 Records.][mimram]]
+- empty / ⊥ / ⊥-elim
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 280 Empty pattern matching.][mimram]]
+- pattern matching in anonymous functions
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 281 Anonymous pattern matching.][mimram]]
+- induction principle
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 281  6.4.3 The induction principle.][mimram]]
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 285 Induction principle for Vec][mimram]] (for Vec)
+- convertibility (i.e., compare types up to β-reduction)
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 285 Convertibility.][mimram]]
+- indices viz parameters
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 285 Indices instead of parameters.][mimram]] (recommends using parameters whenever possible)
+
+==============================================================================
+* inductive types
+
+- natural numbers
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 278 6.4.1 Natural numbers][mimram]]
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 298 6.6.6 More properties with equality][mimram]] (properties)
+- booleans
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 282 Booleans][mimram]]
+- list
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 283 Lists Data.List][mimram]]
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 299 Lists][mimram]] (properties)
+- vector
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 284 6.4.7 Vectors.][mimram]]
+- finite sets
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 286 6.4.8 Finite sets.][mimram]]
+
+==============================================================================
+* dependent types
+
+- [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 284 Dependent types.][mimram]]
+
+==============================================================================
 * logic
 
-** → is implication
+- → is implication
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::6.5.1 Implication : corresponds to arrow (→) in types][mimram]]
+- × (i.e., product, pair) is conjuction
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::6.5.2 Product : corresponds to conjunction][mimram]]
+- unit type (⊤) : corresponds to truth
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 289 6.5.3 Unit type : corresponds to truth][mimram]]
+- empty type (⊥) : corresponds to falsity
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::6.5.4 Empty type : corresponds to falsity][mimram]]
+- negation (¬)
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::6.5.5 Negation][mimram]]
+- coproduct (⊎ e.g., either) : corresponds to disjunction
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 290 6.5.6 Coproduct : corresponds to disjunction][mimram]]
+- decidable types : A type A is decidable when it is known whether it is inhabited or not
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::Decidable types : A type A is decidable][mimram]]
+- Π-types : corresponds to universal quantification
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 291 6.5.7 Π-types][mimram]]
+- Σ-types : corresponds to bounded existential quantification
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 292 6.5.8 Σ-types][mimram]]
+- the axiom of choice
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 293 : the axiom of choice][mimram]]
+- predicates
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 293 : 6.5.9 Predicates][mimram]]
+- relations
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 294 Relations][mimram]]
+- inductive predicates (predicates defined by induction)
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::Inductive predicates (predicates defined by induction)][mimram]] (e.g., isEven, ≤, ≤-refl, ≤-trans)
+- equality
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 295 6.6 Equality][mimram]] (e.g., ≡, sym, trans, cong, subst)
+- equational reasoning
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 297 6.6.4 Reasoning][mimram]] (e.g., begin_, _≡⟨⟩_, _≡⟨_⟩_, _∎)
+- definitional equality
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 298 6.6.5 Definitional equality][mimram]]
+- the J rule (induction principle on equality
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 300 6.6.7 The J rule.][mimram]]
+- decidable equality
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 301 6.6.8 Decidable equality.][mimram]]
+- heterogeneous equality (compare seemingly distinct types)
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 301 6.6.9 Heterogeneous equality][mimram]]
 
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
+==============================================================================
+* proving
 
-** × (i.e., product, pair) is conjuction
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** unit type : corresponds to truth
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** empty type : corresponds to falsity
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** negation
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** coproduct (e.g., either) : corresponds to disjunction
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** decidable types : A type A is decidable when it is known whether it is inhabited or not
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** Π-types : corresponds to universal quantification
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** Σ-types : corresponds to bounded existential quantification
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** the axiom of choice
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** predicates
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** relations
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-** inductive predicates (predicates defined by induction)
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-isEven, ≤, ≤-refl, ≤-trans
-
-** equality
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-≡, sym, trans, cong, subst
-
-suc-injective, +-suc
-
-** reasoning
-
-../agda/book/2019-Program_Proof-Samuel_Mimram/z-06.agda
-
-begin_, _≡⟨⟩_, _≡⟨_⟩_, _∎
-
-+-zero, +-comm
-
-
+- extrinsic vs intrinsic
+  - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 304 6.7.1 Extrinsic vs intrinsic proofs][mimram]]
 
 
 

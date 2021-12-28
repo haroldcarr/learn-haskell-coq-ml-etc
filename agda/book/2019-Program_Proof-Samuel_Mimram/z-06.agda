@@ -306,7 +306,7 @@ data Vec (A : Set) : ℕ → Set where
 ------------------------------------------------------------------------------
 -- p 284 Dependent types.
 
-type Vec A n depends on term n : a defining feature of dependent types.
+type Vec A n depends on term n --- a defining feature of dependent types.
 -}
 
 -- also, functions whose result type depends on argument, e.g.,
@@ -333,7 +333,7 @@ _++'_ : {m n : ℕ} {A : Set}
 (x ∷ xs) ++' l = x ∷ (xs ++' l)
 
 ------------------------------------------------------------------------------
--- p 285 Induction principle for Vec-rec
+-- p 285 Induction principle for Vec
 
 -- induction principle for vectors
 Vec-rec : {A : Set}
@@ -484,7 +484,7 @@ Induction principle : ELIMINATION RULE CORRESPONDS TO THE ASSOCIATED INDUCTION P
 ×-rec : {A B : Set}
   → (P : Set)
   → (A → B → P)
-  → A × B → P
+  →  A × B → P
 ×-rec P Pp (x , y) = Pp x y
 {-
 corresponds to elimination rule for conjunction:
