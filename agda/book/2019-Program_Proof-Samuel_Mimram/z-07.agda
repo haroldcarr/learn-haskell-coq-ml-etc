@@ -1,6 +1,7 @@
 module z-07 where
 
 open import Data.Bool        hiding (if_then_else_ ; _≟_ ; _<_ ; _<?_)
+open import Data.Empty
 open import Data.Maybe
 open import Data.Nat         renaming (_+_ to _+ℕ_ ; _<?_ to _<?ℕ_) hiding (_<_)
 open import Data.Product
@@ -13,13 +14,13 @@ open import Relation.Nullary
 ------------------------------------------------------------------------------
 -- program
 
--- 1.4.3 Safety
-data SLProg : Set where -- S(mall)L(anguage)Prog(ram)
-  SLBool : Bool        → SLProg
-  SLNat  : ℕ           → SLProg
-  SLAdd  : SLProg      → SLProg   → SLProg
-  SLLt   : SLProg      → SLProg   → SLProg
-  SLIf   : SLProg      → SLProg   → SLProg   → SLProg
+-- 1.4.3 Safety : HC : do not use this.  Use the one defined in ch 7.
+-- data SLProg : Set where -- S(mall)L(anguage)Prog(ram)
+--   SLBool : Bool        → SLProg
+--   SLNat  : ℕ           → SLProg
+--   SLAdd  : SLProg      → SLProg   → SLProg
+--   SLLt   : SLProg      → SLProg   → SLProg
+--   SLIf   : SLProg      → SLProg   → SLProg   → SLProg
 
 -- 7.1 Safety of a simple language : subject reduction and progress
 data Value : Set where
@@ -45,32 +46,32 @@ l <ℕ r with l <?ℕ r
 ... | no  _ = false
 
 -- 1.4.3 one step of reduction
-red : SLProg → Maybe SLProg
-red (SLBool _) = nothing
-red (SLNat  _) = nothing
-red (SLAdd (SLNat l) (SLNat r)) = just (SLNat (l +ℕ r))
-red (SLAdd l r) =
+red : Prog → Maybe Prog
+red (V (VBool _)) = nothing
+red (V (VNat  _)) = nothing
+red (V (VNat l) + V (VNat r)) = just (V (VNat (l +ℕ r)))
+red (l + r) =
   case red l of λ where
-    (just l') → just (SLAdd l' r)
+    (just l') → just (l' + r)
     nothing   → case red r of λ where
-                  (just r') → just (SLAdd l r')
+                  (just r') → just (l + r')
                   nothing   → nothing
-red (SLLt (SLNat l) (SLNat r)) = just (SLBool (l <ℕ r))
-red (SLLt  l r) =
+red (V (VNat l) < V (VNat r)) = just (V (VBool (l <ℕ r)))
+red (l < r) =
   case red l of λ where
-    (just l') → just (SLLt l' r)
+    (just l') → just (l' < r)
     nothing   → case red r of λ where
-                  (just r') → just (SLLt l r')
+                  (just r') → just (l < r')
                   nothing   → nothing
-red (SLIf  (SLBool true)  t _) = just t
-red (SLIf  (SLBool false) _ f) = just f
-red (SLIf  c t f) =
+red (if (V (VBool  true)) then t else _) = just t
+red (if (V (VBool false)) then _ else f) = just f
+red (if c             then t else f) =
   case red c of λ where
-    (just c') → just (SLIf c' t f)
+    (just c') → just (if c' then t else f)
     nothing   → nothing
 
-_ : red (SLIf (SLBool true) (SLAdd (SLNat 3) (SLNat 4)) (SLNat 100))
-  ≡                    just (SLAdd (SLNat 3) (SLNat 4))
+_ : red (if (V (VBool true)) then (V (VNat 3) + V (VNat 4)) else (V (VNat 100)))
+  ≡                    just (V (VNat 3) + (V (VNat 4)))
 _ = refl
 
 -- reduction relation
@@ -115,23 +116,23 @@ data TypeError : Set where
 
 mutual
   -- infer type of program
-  infer : SLProg -> TypeError ⊎ Type
+  infer : Prog -> TypeError ⊎ Type
   infer = λ where
-    (SLBool _) -> inj₂ TBool
-    (SLNat _)  -> inj₂ TNat
-    (SLAdd p1 p2) ->
+    (V (VBool _)) -> inj₂ TBool
+    (V (VNat  _)) -> inj₂ TNat
+    (p1 + p2) ->
       case check p1 TNat of λ where
         (inj₁ e) -> inj₁ e
         (inj₂ _) -> case check p2 TNat of λ where
                       (inj₁ e) -> inj₁ e
                       (inj₂ _) -> inj₂ TNat
-    (SLLt p1 p2) ->
+    (p1 < p2) ->
       case check p1 TNat of λ where
         (inj₁ e) -> inj₁ e
         (inj₂ _) -> case check p2 TNat of λ where
                       (inj₁ e) -> inj₁ e
                       (inj₂ _) -> inj₂ TBool
-    (SLIf p p1 p2) ->
+    (if p then p1 else p2) ->
       case check p TBool of λ where
         (inj₁ e) -> inj₁ e
         (inj₂ _) ->
@@ -142,7 +143,7 @@ mutual
                 (inj₁ e) -> inj₁ e
                 (inj₂ _) -> inj₂ t
 
-  check : SLProg -> Type -> TypeError ⊎ Type
+  check : Prog -> Type -> TypeError ⊎ Type
   check p t =
     case infer p of λ where
       (inj₁ e)  -> inj₁ e
@@ -154,11 +155,11 @@ mutual
     d TNat  TBool   = inj₁ (typeError TNat TBool)
     d TBool TNat    = inj₁ (typeError TBool TNat)
 
-_ : infer (SLIf (SLNat 1) (SLNat 2) (SLNat 3)) ≡ inj₁ (typeError TBool TNat)
+_ : infer (if (V (VNat 1)) then (V (VNat 2)) else (V (VNat 3))) ≡ inj₁ (typeError TBool TNat)
 _ = refl
-_ : infer (SLIf (SLBool true) (SLNat 2) (SLNat 3)) ≡ inj₂ TNat
+_ : infer (if (V (VBool true)) then (V (VNat 2)) else (V (VNat 3))) ≡ inj₂ TNat
 _ = refl
-_ : infer (SLIf (SLBool true) (SLNat 2) (SLBool false)) ≡ inj₁ (typeError TNat TBool)
+_ : infer (if (V (VBool true)) then (V (VNat 2)) else (V (VBool false))) ≡ inj₁ (typeError TNat TBool)
 _ = refl
 
 -- typing relation
@@ -210,11 +211,11 @@ Other cases are similar.
 tuniq : {p : Prog} {A A' : Type}
       → ⊢ p ∷ A → ⊢ p ∷ A'
       → A ≡ A'
-tuniq (⊢-Nat  n)       (⊢-Nat     .n)    = refl
-tuniq (⊢-Bool b)       (⊢-Bool    .b)    = refl
-tuniq (⊢-Add  _  _)    (⊢-Add   _  _)    = refl
-tuniq (⊢-Lt   _  _)    (⊢-Lt    _  _)    = refl
-tuniq (⊢-If   _ lt lf) (⊢-If    _ rt rf) = tuniq lt rt -- 'tuniq lf rf' works too
+tuniq (⊢-Nat     n)    (⊢-Nat    .n)    = refl
+tuniq (⊢-Bool    b)    (⊢-Bool   .b)    = refl
+tuniq (⊢-Add  _  _)    (⊢-Add  _  _)    = refl
+tuniq (⊢-Lt   _  _)    (⊢-Lt   _  _)    = refl
+tuniq (⊢-If   _ lt lf) (⊢-If   _ rt rf) = tuniq lt rt -- 'tuniq lf rf' works too
 
 {-
 ------------------------------------------------------------------------------
@@ -373,4 +374,41 @@ and deduce that either p0 is a value or there exists p'' such that p' −→ p''
 
 The second case is impossible
 since it would contradict the maximality of the sequence of reductions.
+
+---------
+TODO
+Exercise 7.1.0.1. Formalize type inference and show that
+– it is correct: if a type is inferred for a program then the program actually admits this type
+– it is complete: if a program is typable then type inference will return a type.
 -}
+
+-- correct : (t : Type)
+--         → (p : Prog)
+--         → infer p ≡ inj₂ t
+--         → ⊢ p ∷ t
+
+cc : {p : Prog} {A A' : Type}
+  -> ⊢ p ∷ A
+  -> infer p ≡ inj₂ A'
+  -> A ≡ A'
+cc {.(V (VNat  n))}              {.TNat}          (⊢-Nat  n) refl                  = refl
+cc {.(V (VBool b))}              {.TBool}         (⊢-Bool b) refl                  = refl
+
+cc {.(V (VNat _) + _)}           {.TNat}  {TNat}  (⊢-Add (⊢-Nat _) _) _            = refl
+cc {.(V (VNat m) + _)}           {.TNat}  {TBool} (⊢-Add (⊢-Nat m) pA₁) ip         = {!!}
+cc {.((_ + _) + _)}              {.TNat}  {TNat}  (⊢-Add (⊢-Add _ _) _) _          = refl
+cc {.((_ + _) + _)}              {.TNat}  {TBool} (⊢-Add (⊢-Add pA pA₂) pA₁) ip    = {!!}
+cc {.((if _ then _ else _) + _)} {.TNat}  {TNat}  (⊢-Add (⊢-If _ _ _) _) _         = refl
+cc {.((if _ then _ else _) + _)} {.TNat}  {TBool} (⊢-Add (⊢-If pA pA₂ pA₃) pA₁) ip = {!!}
+
+cc {.(V (VNat _) < _)}           {.TBool} {TBool} (⊢-Lt  (⊢-Nat _) _) _            = refl
+cc {.(V (VNat n) < _)}           {.TBool} {TNat}  (⊢-Lt  (⊢-Nat n) pA₁) ip         = {!!}
+cc {.(_ + _ < _)}                {.TBool} {TBool} (⊢-Lt  (⊢-Add _ _) _) _          = refl
+cc {.(_ + _ < _)}                {.TBool} {TNat}  (⊢-Lt  (⊢-Add pA pA₂) pA₁) ip    = {!!}
+cc {.((if _ then _ else _) < _)} {.TBool} {TBool} (⊢-Lt  (⊢-If _ _ _) _) _         = refl
+cc {.((if _ then _ else _) < _)} {.TBool} {TNat}  (⊢-Lt  (⊢-If pA pA₂ pA₃) pA₁) ip = {!!}
+
+cc {.(if _ then _ else _)}       {TBool}  {TBool} (⊢-If _ _ _ ) _                  = refl
+cc {.(if _ then _ else _)}       {TBool}  {TNat}  (⊢-If pA pA1 pA2) ip             = {!!}
+cc {.(if _ then _ else _)}       {TNat}   {TNat}  (⊢-If _ _ _) _                   = refl
+cc {.(if _ then _ else _)}       {TNat}   {TBool} (⊢-If pA pA1 pA2) ip             = {!!}
