@@ -1,12 +1,27 @@
 module z-07 where
 
 open import Data.Bool        hiding (if_then_else_ ; _≟_ ; _<_ ; _<?_)
+open import Data.Maybe
 open import Data.Nat         renaming (_+_ to _+ℕ_ ; _<?_ to _<?ℕ_) hiding (_<_)
+open import Data.Product
+open import Data.Sum
+open import Data.Unit
+open import Function
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 
--- 7.1 Safety of a simple language : subject reduction and progress
+------------------------------------------------------------------------------
+-- program
 
+-- 1.4.3 Safety
+data SLProg : Set where -- S(mall)L(anguage)Prog(ram)
+  SLBool : Bool        → SLProg
+  SLNat  : ℕ           → SLProg
+  SLAdd  : SLProg      → SLProg   → SLProg
+  SLLt   : SLProg      → SLProg   → SLProg
+  SLIf   : SLProg      → SLProg   → SLProg   → SLProg
+
+-- 7.1 Safety of a simple language : subject reduction and progress
 data Value : Set where
   VNat  : ℕ    → Value
   VBool : Bool → Value
@@ -21,10 +36,42 @@ infix 50 _+_
 infix 40 _<_
 infix 30 if_then_else_
 
-_<?_ : ℕ → ℕ → Bool
-m <? n with m <?ℕ n
+------------------------------------------------------------------------------
+-- reduction
+
+_<ℕ_ : ℕ → ℕ → Bool
+l <ℕ r with l <?ℕ r
 ... | yes _ = true
 ... | no  _ = false
+
+-- 1.4.3 one step of reduction
+red : SLProg → Maybe SLProg
+red (SLBool _) = nothing
+red (SLNat  _) = nothing
+red (SLAdd (SLNat l) (SLNat r)) = just (SLNat (l +ℕ r))
+red (SLAdd l r) =
+  case red l of λ where
+    (just l') → just (SLAdd l' r)
+    nothing   → case red r of λ where
+                  (just r') → just (SLAdd l r')
+                  nothing   → nothing
+red (SLLt (SLNat l) (SLNat r)) = just (SLBool (l <ℕ r))
+red (SLLt  l r) =
+  case red l of λ where
+    (just l') → just (SLLt l' r)
+    nothing   → case red r of λ where
+                  (just r') → just (SLLt l r')
+                  nothing   → nothing
+red (SLIf  (SLBool true)  t _) = just t
+red (SLIf  (SLBool false) _ f) = just f
+red (SLIf  c t f) =
+  case red c of λ where
+    (just c') → just (SLIf c' t f)
+    nothing   → nothing
+
+_ : red (SLIf (SLBool true) (SLAdd (SLNat 3) (SLNat 4)) (SLNat 100))
+  ≡                    just (SLAdd (SLNat 3) (SLNat 4))
+_ = refl
 
 -- reduction relation
 data _⇒_ : Prog → Prog → Set where
@@ -39,7 +86,7 @@ data _⇒_ : Prog → Prog → Set where
           ⇒ p + q'
   ⇒-Lt    : (m n : ℕ)
           → V (VNat   m) < V (VNat n)
-          ⇒ V (VBool (m <?         n))
+          ⇒ V (VBool (m <ℕ        n))
   ⇒-Lt-l  : {p p' : Prog} → p ⇒ p' → (q : Prog)
           → p  < q
           ⇒ p' < q
@@ -57,9 +104,62 @@ data _⇒_ : Prog → Prog → Set where
 _ : (V (VNat 3) + V (VNat 4)) ⇒ V (VNat 7)
 _ = ⇒-Add 3 4
 
+------------------------------------------------------------------------------
 -- types
+
 data Type : Set where
   TNat TBool : Type
+
+data TypeError : Set where
+  typeError : Type -> Type -> TypeError
+
+mutual
+  -- infer type of program
+  infer : SLProg -> TypeError ⊎ Type
+  infer = λ where
+    (SLBool _) -> inj₂ TBool
+    (SLNat _)  -> inj₂ TNat
+    (SLAdd p1 p2) ->
+      case check p1 TNat of λ where
+        (inj₁ e) -> inj₁ e
+        (inj₂ _) -> case check p2 TNat of λ where
+                      (inj₁ e) -> inj₁ e
+                      (inj₂ _) -> inj₂ TNat
+    (SLLt p1 p2) ->
+      case check p1 TNat of λ where
+        (inj₁ e) -> inj₁ e
+        (inj₂ _) -> case check p2 TNat of λ where
+                      (inj₁ e) -> inj₁ e
+                      (inj₂ _) -> inj₂ TBool
+    (SLIf p p1 p2) ->
+      case check p TBool of λ where
+        (inj₁ e) -> inj₁ e
+        (inj₂ _) ->
+          case infer p1 of λ where
+            (inj₁ e) -> inj₁ e
+            (inj₂ t) ->
+              case check p2 t of λ where
+                (inj₁ e) -> inj₁ e
+                (inj₂ _) -> inj₂ t
+
+  check : SLProg -> Type -> TypeError ⊎ Type
+  check p t =
+    case infer p of λ where
+      (inj₁ e)  -> inj₁ e
+      (inj₂ t') -> d t t'
+   where
+    d : Type -> Type -> TypeError ⊎ Type
+    d TBool b@TBool = inj₂ b
+    d TNat  n@TNat  = inj₂ n
+    d TNat  TBool   = inj₁ (typeError TNat TBool)
+    d TBool TNat    = inj₁ (typeError TBool TNat)
+
+_ : infer (SLIf (SLNat 1) (SLNat 2) (SLNat 3)) ≡ inj₁ (typeError TBool TNat)
+_ = refl
+_ : infer (SLIf (SLBool true) (SLNat 2) (SLNat 3)) ≡ inj₂ TNat
+_ = refl
+_ : infer (SLIf (SLBool true) (SLNat 2) (SLBool false)) ≡ inj₁ (typeError TNat TBool)
+_ = refl
 
 -- typing relation
 data ⊢_∷_ : Prog → Type → Set where
@@ -83,8 +183,10 @@ _ = ⊢-If (⊢-Lt (⊢-Nat 3) (⊢-Nat 4))
          (⊢-Nat 4)
 
 {-
--- type uniqueness property : theorem 1.4.3.1
-in ⊢_∷_, the dependent pattern matching algorithm
+Theorem 1.4.3.1 (Uniqueness of types)
+Given a program p, if p is both of types A and A0 then A ≡ A0
+
+In ⊢_∷_, the dependent pattern matching algorithm
 - knows,
   - given the constructor of a program,
   - the possible types this program can have
@@ -92,6 +194,17 @@ in ⊢_∷_, the dependent pattern matching algorithm
   - given a type
   - the possible program constructors which will give rise to this type)
 therefore showing type uniqueness is almost immediate:
+
+proof : by induction on p
+- depending on the form of p, at most one rule applies.
+- if p is of the form if p0 then p1 else p2, the only rule which allows typing p is
+
+  ⊢ p0 : bool      ⊢ p1 : A       ⊢ p2 : A
+  ----------------------------------------
+       ⊢ if p0 then p1 else p2 : A
+
+Since p1 and p2 admit at most one type A by induction hypothesis, p also does.
+Other cases are similar.
 -}
 
 tuniq : {p : Prog} {A A' : Type}
@@ -103,6 +216,161 @@ tuniq (⊢-Add  _  _)    (⊢-Add   _  _)    = refl
 tuniq (⊢-Lt   _  _)    (⊢-Lt    _  _)    = refl
 tuniq (⊢-If   _ lt lf) (⊢-If    _ rt rf) = tuniq lt rt -- 'tuniq lf rf' works too
 
--- subject reduction property : TODO
+{-
+------------------------------------------------------------------------------
+-- Safety Properties
 
--- progress property : TODO
+-- SUBJECT REDUCTION
+
+Theorem 1.4.3.2 (Subject reduction). REDUCTION PRESERVES TYPING:
+
+Given programs p and p' such that p −→ p', if p has type A then p' also has type A.
+
+Proof. By hypothesis, we have both a derivation of p −→ p' and ⊢ p : A.
+We reason by induction on the former.
+Suppose the last rule is
+
+       p1 −→ p'1
+       ---------
+    p1 + p2 −→ p'1 + p2
+
+The derivation of ⊢ p : A necessarily ends with
+
+    ⊢ p1 : int    ⊢ p2 : int
+  --------------------------
+      ⊢ p1 + p2 : int
+
+In particular, we have ⊢ p1 : int and thus,
+by induction hypothesis, ⊢ p'1 : int is derivable.
+We conclude using the derivation
+
+         ⊢ p'1 : int     ⊢ p2 : int
+        ---------------------------
+             ⊢ p01 + p2 : int
+
+Other cases are similar.
+-}
+
+sred : {p p' : Prog} {A : Type}
+     → (p ⇒ p') → ⊢ p ∷ A
+     → ⊢ p' ∷ A
+sred (⇒-Add   m n) (⊢-Add _  _)  = ⊢-Nat (m +ℕ n)
+sred (⇒-Add-l l _) (⊢-Add l' r') = ⊢-Add (sred l l') r'
+sred (⇒-Add-r _ r) (⊢-Add l' r') = ⊢-Add l' (sred r r')
+sred (⇒-Lt    m n) (⊢-Lt  _  _)  = ⊢-Bool (m <ℕ n)
+sred (⇒-Lt-l  l _) (⊢-Lt  l' r') = ⊢-Lt (sred l l') r'
+sred (⇒-Lt-r  _ r) (⊢-Lt  l' r') = ⊢-Lt l' (sred r r')
+sred (⇒-If c _ _)  (⊢-If  x y z) = ⊢-If (sred c x) y z
+sred (⇒-If-t _ _)  (⊢-If  _ y _) = y
+sred (⇒-If-f _ _)  (⊢-If  _ _ z) = z
+
+{-
+-- PROGRESS
+
+Theorem 1.4.3.3 (Progress). A PROGRAM IS EITHER A VALUE OR REDUCES.
+
+Given a program p of type A, either p is a value or
+there exists a program p' such that p −→ p'.
+
+Proof. By induction on the derivation of ⊢ p : A.
+Suppose that the last rule is
+
+            ⊢ p1 : int    ⊢ p2 : int
+            -----------------------
+                ⊢ p1 + p2 : int
+
+By induction hypothesis, the following cases can happen:
+– p1 −→ p'1 : in this case, we have p1 + p2 −→ p'1 + p2 ,
+– p2 −→ p'2 : in this case, we have p1 + p2 −→ p1 + p'2 ,
+– p1 and p2 are values: in this case, they are necessarily integers
+  and p1 + p2 reduces to their sum.
+
+Other cases are similar.
+-}
+
+-- PROGRESS : a typable program is either a value or reduces to some other program.
+-- Given a program p which admits a type A, the proof is performed on the derivation of ⊢ p : A
+
+prgs : {p : Prog} {A : Type}
+     → ⊢ p ∷ A
+     → Σ Value (λ v → p ≡ V v) ⊎ Σ Prog (λ p' → p ⇒ p')
+prgs (⊢-Nat  n)   = inj₁ ((VNat  n) , refl)
+prgs (⊢-Bool b)   = inj₁ ((VBool b) , refl)
+
+prgs (⊢-Add        t  _) with prgs t
+prgs (⊢-Add        _ t') | inj₁ (v , e) with prgs t'
+prgs (⊢-Add        _  _) | inj₁ (VNat m  , refl) | inj₁ (VNat  n , refl) =
+  inj₂ (V (VNat (m +ℕ n)) , ⇒-Add m n )
+prgs (⊢-Add        _ ()) | inj₁ (VNat m  , refl) | inj₁ (VBool _ , refl)
+prgs (⊢-Add        () _) | inj₁ (VBool _ , refl) | inj₁ (_       , refl)
+prgs (⊢-Add {p} {_} _ _) | inj₁ (_       ,    _) | inj₂ (q'      , r) =
+  inj₂ (p  + q'           , ⇒-Add-r p r)
+prgs (⊢-Add {_} {q} _ _) | inj₂ (p' , r) = -- XXXX
+  inj₂ (p' + q            , ⇒-Add-l r q)
+
+prgs (⊢-Lt         t  _) with prgs t
+prgs (⊢-Lt         _ t') | inj₁ (v , e) with prgs t'
+prgs (⊢-Lt         _  _) | inj₁ (VNat m  , refl) | inj₁ (VNat  n , refl) =
+  inj₂ (V (VBool (m <ℕ n)) , ⇒-Lt m n )
+prgs (⊢-Lt         _ ()) | inj₁ (VNat m  , refl) | inj₁ (VBool _ , refl)
+prgs (⊢-Lt         () _) | inj₁ (VBool _ , refl) | inj₁ (_       , refl)
+prgs (⊢-Lt {p} {_}  _ _) | inj₁ (_       ,    _) | inj₂ (q'      , r) =
+  inj₂ (p  < q'            , ⇒-Lt-r p r)
+prgs (⊢-Lt {_} {q}  _ _) | inj₂ (p' , r) = -- XXXX
+  inj₂ ((p' < q)          , ⇒-Lt-l r q)
+
+prgs (⊢-If             b _ _) with prgs b
+prgs (⊢-If            () _ _) | inj₁ (VNat  x     , refl)
+prgs (⊢-If {_} {q} {r} _ _ _) | inj₁ (VBool true  , refl) = inj₂ (q , ⇒-If-t q r)
+prgs (⊢-If {_} {q} {r} _ _ _) | inj₁ (VBool false , refl) = inj₂ (r , ⇒-If-f q r)
+prgs (⊢-If {p} {q} {r} b t f) | inj₂ (p'          , p⇒p') = inj₂ ( if p' then q else r
+                                                                 , ⇒-If p⇒p' q r)
+
+{-
+-- TODO how does XXXX above obviate YYYY below?
+
+prg' : {p : Prog} {A : Type}
+     → ⊢ p ∷ A
+     → Σ Value (λ v → p ≡ V v) ⊎ Σ Prog (λ p' → p ⇒ p')
+prg' (⊢-Nat  n)   = inj₁ ((VNat  n) , refl)
+prg' (⊢-Bool b)   = inj₁ ((VBool b) , refl)
+-- prg' (⊢-Add (⊢-Nat m) (⊢-Nat n)) = inj₂ (V (VNat (m +ℕ n)) , ⇒-Add m n)
+prg' (⊢-Add l r)
+  with prg' l | prg' r
+prg' (⊢-Add _ ()) | inj₁ (VNat  _ , refl) | inj₁ (VBool _ , refl)
+prg' (⊢-Add () _) | inj₁ (VBool _ , refl) | inj₁ (VNat  _ , refl)
+prg' (⊢-Add _  _) | inj₁ (VNat  m , refl) | inj₁ (VNat  n , refl) =
+  inj₂ (V (VNat (m +ℕ n)) , ⇒-Add m n )
+prg' (⊢-Add {p} {_} _ _) | inj₁ (_ , _)   | inj₂ (q' , r) =
+  inj₂ (p  + q'           , ⇒-Add-r p r)
+prg' (⊢-Add {_} {q} _ _) | inj₂ (p' , r)  | inj₁ (_ , _) =
+  inj₂ (p' + q            , ⇒-Add-l r q)
+prg' (⊢-Add {p} {q} _ _) | inj₂ (lp , p⇒lp) | inj₂ (rp , q⇒rp) = -- YYYY
+  inj₂ (lp + rp , {!!})
+prg' (⊢-Lt x x₁) = {!!}
+prg' (⊢-If x x₁ x₂) = {!!}
+-}
+{-
+
+SAFETY
+
+Theorem 1.4.3.4 (Safety). TYPABLE PROGRAMS NEVER ENCOUNTER ERRORS (e.g., never stuck)
+
+A program p of type A is safe: either
+– p reduces to a value v in finitely many steps           : p −→ p1 −→ p2 −→ · · · −→ pn −→ v
+– or p loops: there is an infinite sequence of reductions : p −→ p1 −→ p2 −→ · · ·
+
+Proof.
+Consider a maximal sequence of reductions from p.
+
+If this sequence is finite, by maximality, its last element p' is an irreducible program.
+
+Since p is of type A and reduces to p',
+by the subject reduction theorem 1.4.3.2, p' also has type A.
+
+We can thus apply the progress theorem 1.4.3.3
+and deduce that either p0 is a value or there exists p'' such that p' −→ p'' .
+
+The second case is impossible
+since it would contradict the maximality of the sequence of reductions.
+-}
