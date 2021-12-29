@@ -112,6 +112,9 @@ agda --compile --ghc-dont-call-ghc fizzbuzz.agda
 
 - extrinsic vs intrinsic
   - [[file:book/2019-Program_Proof-Samuel_Mimram/z-06.agda::p 304 6.7.1 Extrinsic vs intrinsic proofs][mimram]]
+- termination
+  - fuel : mimram TODO
+  - well-founded induction : mimram TODO
 
 
 

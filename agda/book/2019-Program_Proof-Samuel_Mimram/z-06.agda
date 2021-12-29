@@ -707,7 +707,18 @@ Show that the type
      Π Bool (λ { false → A ; true → B })
 is isomorphic to
      A × B
+-}
 
+-- TODO Π is "lit" up
+{-
+pi-to-pair : {A B : Set} → Π Bool (λ { false → A ; true → B }) → A × B
+pi-to-pair (Λ x) = x false , x true
+
+pair-to-pi : {A B : Set} → A × B → Π Bool (λ { false → A ; true → B })
+pair-to-pi (a , b) = Λ λ { false → a ; true → b }
+-}
+
+{-
 ------------------------------------------------------------------------------
 -- p 292 6.5.8 Σ-types : corresponds to bounded existential quantification
 Data.Product
