@@ -78,28 +78,28 @@ data _⇒_ : Prog → Prog → Set where
   ⇒-Add   : (m n : ℕ)
           → V (VNat  m) + V (VNat n)
           ⇒ V (VNat (m  +ℕ       n))
-  ⇒-Add-l : {p p' : Prog} → p ⇒ p' → (q : Prog)
-          → p  + q
-          ⇒ p' + q
-  ⇒-Add-r : {q q' : Prog} → (p : Prog) → q ⇒ q'
-          → p + q
-          ⇒ p + q'
+  ⇒-Add-l : {m m' : Prog} → m ⇒ m' → (n : Prog)
+          → m  + n
+          ⇒ m' + n
+  ⇒-Add-r : {n n' : Prog} → (m : Prog) → n ⇒ n'
+          → m + n
+          ⇒ m + n'
   ⇒-Lt    : (m n : ℕ)
           → V (VNat   m) < V (VNat n)
           ⇒ V (VBool (m <ℕ        n))
-  ⇒-Lt-l  : {p p' : Prog} → p ⇒ p' → (q : Prog)
-          → p  < q
-          ⇒ p' < q
-  ⇒-Lt-r  : {q q' : Prog} → (p : Prog) → q ⇒ q'
-          → p < q
-          ⇒ p < q'
-  ⇒-If    : {p p' : Prog} → p ⇒ p' → (q r : Prog)
-          → if p  then q else r
-          ⇒ if p' then q else r
-  ⇒-If-t  : (p q : Prog)
-          → if V (VBool true ) then p else q ⇒ p
-  ⇒-If-f  : (p q : Prog)
-          → if V (VBool false) then p else q ⇒ q
+  ⇒-Lt-l  : {m m' : Prog} → m ⇒ m' → (n : Prog)
+          → m  < n
+          ⇒ m' < n
+  ⇒-Lt-r  : {n n' : Prog} → (m : Prog) → n ⇒ n'
+          → m < n
+          ⇒ m < n'
+  ⇒-If    : {c c' : Prog} → c ⇒ c' → (t f : Prog)
+          → if c  then t else f
+          ⇒ if c' then t else f
+  ⇒-If-t  : (t f : Prog)
+          → if V (VBool true ) then t else f ⇒ t
+  ⇒-If-f  : (t f : Prog)
+          → if V (VBool false) then t else f ⇒ f
 
 _ : (V (VNat 3) + V (VNat 4)) ⇒ V (VNat 7)
 _ = ⇒-Add 3 4
@@ -167,15 +167,15 @@ data ⊢_∷_ : Prog → Type → Set where
          → ⊢ V (VNat n)  ∷ TNat
   ⊢-Bool : (b : Bool)
          → ⊢ V (VBool b) ∷ TBool
-  ⊢-Add  : {p q : Prog}
-         → ⊢ p ∷ TNat → ⊢ q ∷ TNat
-         → ⊢ p        +   q ∷ TNat
-  ⊢-Lt   : {p q : Prog}
-         → ⊢ p ∷ TNat → ⊢ q ∷ TNat
-         → ⊢ p        <   q ∷ TBool
-  ⊢-If   : {p q r : Prog} {A : Type}
-         → ⊢ p ∷ TBool → ⊢ q ∷ A → ⊢ r ∷ A
-         → ⊢ if p then q else r ∷ A
+  ⊢-Add  : {m n : Prog}
+         → ⊢ m ∷ TNat → ⊢ n ∷ TNat
+         → ⊢ m        +   n ∷ TNat
+  ⊢-Lt   : {m n : Prog}
+         → ⊢ m ∷ TNat → ⊢ n ∷ TNat
+         → ⊢ m        <   n ∷ TBool
+  ⊢-If   : {c t f : Prog} {A : Type}
+         → ⊢ c ∷ TBool → ⊢ t ∷ A → ⊢ f ∷ A
+         → ⊢ if c then t else f ∷ A
 
 _ : ⊢ if V (VNat 3) < V (VNat 4) then V (VNat 3) else V (VNat 4) ∷ TNat
 _ = ⊢-If (⊢-Lt (⊢-Nat 3) (⊢-Nat 4))
@@ -254,15 +254,15 @@ Other cases are similar.
 sred : {p p' : Prog} {A : Type}
      → (p ⇒ p') → ⊢ p ∷ A
      → ⊢ p' ∷ A
-sred (⇒-Add   m n) (⊢-Add _  _)  = ⊢-Nat (m +ℕ n)
-sred (⇒-Add-l l _) (⊢-Add l' r') = ⊢-Add (sred l l') r'
-sred (⇒-Add-r _ r) (⊢-Add l' r') = ⊢-Add l' (sred r r')
-sred (⇒-Lt    m n) (⊢-Lt  _  _)  = ⊢-Bool (m <ℕ n)
-sred (⇒-Lt-l  l _) (⊢-Lt  l' r') = ⊢-Lt (sred l l') r'
-sred (⇒-Lt-r  _ r) (⊢-Lt  l' r') = ⊢-Lt l' (sred r r')
-sred (⇒-If c _ _)  (⊢-If  x y z) = ⊢-If (sred c x) y z
-sred (⇒-If-t _ _)  (⊢-If  _ y _) = y
-sred (⇒-If-f _ _)  (⊢-If  _ _ z) = z
+sred (⇒-Add   m n) (⊢-Add _  _)     = ⊢-Nat (m +ℕ n)
+sred (⇒-Add-l m _) (⊢-Add m' n')    = ⊢-Add (sred m m') n'
+sred (⇒-Add-r _ n) (⊢-Add m' n')    = ⊢-Add m' (sred n n')
+sred (⇒-Lt    m n) (⊢-Lt  _  _)     = ⊢-Bool (m <ℕ n)
+sred (⇒-Lt-l  m _) (⊢-Lt  m' n')    = ⊢-Lt (sred m m') n'
+sred (⇒-Lt-r  _ n) (⊢-Lt  m' n')    = ⊢-Lt m' (sred n n')
+sred (⇒-If c _ _)  (⊢-If  c' t' f') = ⊢-If (sred c c') t' f'
+sred (⇒-If-t _ _)  (⊢-If  _  t'  _) = t'
+sred (⇒-If-f _ _)  (⊢-If  _ _   f') = f'
 
 {-
 -- PROGRESS
@@ -297,34 +297,34 @@ prgs : {p : Prog} {A : Type}
 prgs (⊢-Nat  n)   = inj₁ ((VNat  n) , refl)
 prgs (⊢-Bool b)   = inj₁ ((VBool b) , refl)
 
-prgs (⊢-Add        t  _) with prgs t
-prgs (⊢-Add        _ t') | inj₁ (v , e) with prgs t'
+prgs (⊢-Add        tm _) with prgs tm
+prgs (⊢-Add        _ tn) | inj₁ (v , e) with prgs tn
 prgs (⊢-Add        _  _) | inj₁ (VNat m  , refl) | inj₁ (VNat  n , refl) =
   inj₂ (V (VNat (m +ℕ n)) , ⇒-Add m n )
 prgs (⊢-Add        _ ()) | inj₁ (VNat m  , refl) | inj₁ (VBool _ , refl)
 prgs (⊢-Add        () _) | inj₁ (VBool _ , refl) | inj₁ (_       , refl)
-prgs (⊢-Add {p} {_} _ _) | inj₁ (_       ,    _) | inj₂ (q'      , r) =
-  inj₂ (p  + q'           , ⇒-Add-r p r)
-prgs (⊢-Add {_} {q} _ _) | inj₂ (p' , r) = -- XXXX
-  inj₂ (p' + q            , ⇒-Add-l r q)
+prgs (⊢-Add {pm}{_} _ _) | inj₁ (_       ,    _) | inj₂ (pn'     , n⇒pn') =
+  inj₂ (pm  + pn'         , ⇒-Add-r pm n⇒pn')
+prgs (⊢-Add {_}{pn} _ _) | inj₂ (pm' , m⇒pm') = -- XXXX
+  inj₂ (pm' + pn          , ⇒-Add-l m⇒pm' pn)
 
-prgs (⊢-Lt         t  _) with prgs t
-prgs (⊢-Lt         _ t') | inj₁ (v , e) with prgs t'
+prgs (⊢-Lt         tm _) with prgs tm
+prgs (⊢-Lt         _ tn) | inj₁ (v , e) with prgs tn
 prgs (⊢-Lt         _  _) | inj₁ (VNat m  , refl) | inj₁ (VNat  n , refl) =
   inj₂ (V (VBool (m <ℕ n)) , ⇒-Lt m n )
 prgs (⊢-Lt         _ ()) | inj₁ (VNat m  , refl) | inj₁ (VBool _ , refl)
 prgs (⊢-Lt         () _) | inj₁ (VBool _ , refl) | inj₁ (_       , refl)
-prgs (⊢-Lt {p} {_}  _ _) | inj₁ (_       ,    _) | inj₂ (q'      , r) =
-  inj₂ (p  < q'            , ⇒-Lt-r p r)
-prgs (⊢-Lt {_} {q}  _ _) | inj₂ (p' , r) = -- XXXX
-  inj₂ ((p' < q)          , ⇒-Lt-l r q)
+prgs (⊢-Lt {pm}{_}  _ _) | inj₁ (_       ,    _) | inj₂ (pn'     , n⇒pn') =
+  inj₂ (pm  < pn'          , ⇒-Lt-r pm n⇒pn')
+prgs (⊢-Lt {_} {pn} _ _) | inj₂ (pm' , m⇒pm') = -- XXXX
+  inj₂ (pm' < pn           , ⇒-Lt-l m⇒pm' pn)
 
 prgs (⊢-If             b _ _) with prgs b
 prgs (⊢-If            () _ _) | inj₁ (VNat  x     , refl)
-prgs (⊢-If {_} {q} {r} _ _ _) | inj₁ (VBool true  , refl) = inj₂ (q , ⇒-If-t q r)
-prgs (⊢-If {_} {q} {r} _ _ _) | inj₁ (VBool false , refl) = inj₂ (r , ⇒-If-f q r)
-prgs (⊢-If {p} {q} {r} b t f) | inj₂ (p'          , p⇒p') = inj₂ ( if p' then q else r
-                                                                 , ⇒-If p⇒p' q r)
+prgs (⊢-If {_} {t} {f} _ _ _) | inj₁ (VBool true  , refl) = inj₂ (t , ⇒-If-t t f)
+prgs (⊢-If {_} {t} {f} _ _ _) | inj₁ (VBool false , refl) = inj₂ (f , ⇒-If-f t f)
+prgs (⊢-If {c} {t} {f} _ _ _) | inj₂ (c'          , c⇒c') = inj₂ ( if c' then t else f
+                                                                 , ⇒-If c⇒c' t f)
 
 {-
 -- TODO how does XXXX above obviate YYYY below?
