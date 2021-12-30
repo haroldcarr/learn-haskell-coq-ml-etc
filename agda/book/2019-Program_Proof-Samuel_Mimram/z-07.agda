@@ -150,9 +150,9 @@ mutual
       (inj₂ t') -> d t t'
    where
     d : Type -> Type -> TypeError ⊎ Type
-    d TBool b@TBool = inj₂ b
-    d TNat  n@TNat  = inj₂ n
-    d TNat  TBool   = inj₁ (typeError TNat TBool)
+    d TBool TBool   = inj₂ TBool
+    d TNat  TNat    = inj₂ TNat
+    d TNat  TBool   = inj₁ (typeError TNat  TBool)
     d TBool TNat    = inj₁ (typeError TBool TNat)
 
 _ : infer (if (V (VNat 1)) then (V (VNat 2)) else (V (VNat 3))) ≡ inj₁ (typeError TBool TNat)
@@ -165,7 +165,7 @@ _ = refl
 -- typing relation
 data ⊢_∷_ : Prog → Type → Set where
   ⊢-Nat  : (n : ℕ)
-         → ⊢ V (VNat n)  ∷ TNat
+         → ⊢ V (VNat  n) ∷ TNat
   ⊢-Bool : (b : Bool)
          → ⊢ V (VBool b) ∷ TBool
   ⊢-Add  : {m n : Prog}
@@ -175,11 +175,15 @@ data ⊢_∷_ : Prog → Type → Set where
          → ⊢ m ∷ TNat → ⊢ n ∷ TNat
          → ⊢ m        <   n ∷ TBool
   ⊢-If   : {c t f : Prog} {A : Type}
-         → ⊢ c ∷ TBool → ⊢ t ∷ A → ⊢ f ∷ A
-         → ⊢ if c then t else f ∷ A
+         → ⊢    c ∷ TBool → ⊢ t ∷ A → ⊢ f ∷ A
+         → ⊢ if c then        t else    f ∷ A
 
-_ : ⊢ if V (VNat 3) < V (VNat 4) then V (VNat 3) else V (VNat 4) ∷ TNat
+_ : ⊢ if V (VNat 3)                 < V (VNat 4) then V (VNat 3) else V (VNat 4) ∷ TNat
 _ = ⊢-If (⊢-Lt (⊢-Nat 3) (⊢-Nat 4))
+         (⊢-Nat 3)
+         (⊢-Nat 4)
+_ : ⊢ if (V (VNat 3) + V (VNat 4))  < V (VNat 4) then V (VNat 3) else V (VNat 4) ∷ TNat
+_ = ⊢-If (⊢-Lt (⊢-Add (⊢-Nat 3) (⊢-Nat 4)) (⊢-Nat 4))
          (⊢-Nat 3)
          (⊢-Nat 4)
 
@@ -382,11 +386,25 @@ Exercise 7.1.0.1. Formalize type inference and show that
 – it is complete: if a program is typable then type inference will return a type.
 -}
 
--- correct : (t : Type)
---         → (p : Prog)
---         → infer p ≡ inj₂ t
---         → ⊢ p ∷ t
+correct : {p : Prog} {t : Type}
+        → infer p ≡ inj₂ t
+        → ⊢ p ∷ t
+correct {V (VNat  n)} refl = ⊢-Nat  n
+correct {V (VBool b)} refl = ⊢-Bool b
+correct {l + r} ip   = {!!}
+correct {p < p₁} ip = {!!}
+correct {if p then p₁ else p₂} ip = {!!}
 
+-- correct {V (VNat x) + (n < n₁)} ip = {!!}
+-- correct {V (VNat x) + (if n then n₁ else n₂)} ip = {!!}
+-- correct {(m + m₁) + n} ip = {!!}
+-- correct {(m < m₁) + n} ip = {!!}
+-- correct {(if c then t else f) + n} ip = {!!}
+-- correct {m < n} ip = {!!}
+-- correct {if c then t else f} ip = {!!}
+
+
+{-
 cc : {p : Prog} {A A' : Type}
   -> ⊢ p ∷ A
   -> infer p ≡ inj₂ A'
@@ -412,3 +430,4 @@ cc {.(if _ then _ else _)}       {TBool}  {TBool} (⊢-If _ _ _ ) _             
 cc {.(if _ then _ else _)}       {TBool}  {TNat}  (⊢-If pA pA1 pA2) ip             = {!!}
 cc {.(if _ then _ else _)}       {TNat}   {TNat}  (⊢-If _ _ _) _                   = refl
 cc {.(if _ then _ else _)}       {TNat}   {TBool} (⊢-If pA pA1 pA2) ip             = {!!}
+-}
