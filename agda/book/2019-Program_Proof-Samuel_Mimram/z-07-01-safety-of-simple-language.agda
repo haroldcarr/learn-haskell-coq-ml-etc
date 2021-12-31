@@ -1,4 +1,4 @@
-module z-07 where
+module z-07-01-safety-of-simple-language where
 
 open import Data.Bool        hiding (if_then_else_ ; _≟_ ; _<_ ; _<?_)
 open import Data.Empty
