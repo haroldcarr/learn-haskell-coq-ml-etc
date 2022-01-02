@@ -1,0 +1,2 @@
+https://hackage.haskell.org/package/algebra-driven-design
+
