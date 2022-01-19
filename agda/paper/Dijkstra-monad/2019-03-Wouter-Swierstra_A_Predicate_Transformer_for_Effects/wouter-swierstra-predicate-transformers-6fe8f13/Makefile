@@ -1,0 +1,3 @@
+default :
+	agda PredicateTransformers.agda
+
