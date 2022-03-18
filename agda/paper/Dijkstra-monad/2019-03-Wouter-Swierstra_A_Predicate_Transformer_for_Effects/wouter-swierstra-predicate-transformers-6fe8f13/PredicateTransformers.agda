@@ -427,10 +427,10 @@ module Maybe where
 
   sound (Val x) h = ⇓Base
   sound (Div e1 e2) h with ⟦ e1 ⟧ | ⟦ e2 ⟧ | sound e1 | sound e2
-  sound (Div e1 e2) () | Pure v1 | Pure Zero      | ih1 | ih2
-  sound (Div e1 e2) h  | Pure v1 | Pure (Succ v2) | ih1 | ih2 = ⇓Step (ih1 tt) (ih2 tt)
-  sound (Div e1 e2) () | Pure x  | Step Abort x₁  | ih1 | ih2
-  sound (Div e1 e2) () | Step Abort x | v2 | ih1  | ih2
+  sound (Div e1 e2) () | Pure v1      | Pure Zero      | ih1 | ih2
+  sound (Div e1 e2) h  | Pure v1      | Pure (Succ v2) | ih1 | ih2 = ⇓Step (ih1 tt) (ih2 tt)
+  sound (Div e1 e2) () | Pure x       | Step Abort x₁  | ih1 | ih2
+  sound (Div e1 e2) () | Step Abort x | v2             | ih1 | ih2
 
   inDom : {v : Nat} -> (e : Expr) -> ⟦ e ⟧ == Pure v -> dom ⟦_⟧ e
   inDom (Val x) h = tt
