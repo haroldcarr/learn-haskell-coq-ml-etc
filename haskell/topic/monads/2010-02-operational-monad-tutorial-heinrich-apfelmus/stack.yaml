@@ -1,0 +1,22 @@
+resolver:
+  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/27.yaml
+compiler: ghc-8.10.7
+nix:
+  enable: true
+packages:
+- .
+#extra-deps:
+#- git: git@github.com:tweag/inline-js.git
+#  commit: 8512b09d2c0533a41d5d2aef182b11a58c420c10
+#  subdirs:
+#    - inline-js-core
+# flags: {}
+# extra-package-dbs: []
+# system-ghc: true
+# require-stack-version: -any # Default
+# require-stack-version: ">=2.7"
+# arch: i386
+# arch: x86_64
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+# compiler-check: newer-minor

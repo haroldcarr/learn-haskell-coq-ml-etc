@@ -1,0 +1,46 @@
+name:        operational-monad-tutorial-heinrich-apfelmus
+version:     0.0.1.0
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wpartial-fields
+- -Wredundant-constraints
+- -fhide-source-paths
+
+dependencies:
+- base >=4.11 && < 5
+- random
+
+library:
+  source-dirs: src
+
+_exe-ghc-options:        &exe-ghc-options
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+
+executables:
+  main:
+    source-dirs:         app
+    main:                Main.hs
+    other-modules:       ""
+    ghc-options:         *exe-ghc-options
+    dependencies:
+      - operational-monad-tutorial-heinrich-apfelmus
+
+tests:
+  test:
+    source-dirs:         test
+    main:                Main.hs
+    other-modules:       ""
+    ghc-options:         *exe-ghc-options
+    dependencies:
+      - operational-monad-tutorial-heinrich-apfelmus
+      - tasty
+      - tasty-hunit
+      - tasty-quickcheck
+
