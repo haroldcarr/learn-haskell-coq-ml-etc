@@ -1,7 +1,7 @@
 module PredicateTransformers where
 
 open import Prelude hiding (map; all)
-open import Level hiding (lift)
+open import Level   hiding (lift)
 
 ------------------------------------------------------------------------------
 
@@ -12,13 +12,20 @@ A predicate transformer semantics for effects
 
 WOUTER SWIERSTRA and TIM BAANEN, Universiteit Utrecht
 
-abstract
+------------------------------------------------------------------------------
+ABSTRACT
 
 reasoning about effectful code harder than pure code
 
 predicate transformer (PT) semantics gives a refinement relation that can be used to
 - relate a program to its specification, or
 - calculate effectful programs that are correct by construction
+
+refinement type https://en.wikipedia.org/wiki/Refinement_(computing)
+- type with a predicate which must hold for any element of the refined type
+- can express
+  - preconditions  when used as function args
+  - postconditions when used as return types
 
 ------------------------------------------------------------------------------
 1 INTRODUCTION
@@ -30,8 +37,8 @@ key techniques
   - enables computing the weakest precondition associated with a given postcondition
 - using weakest precondition semantics
   - define refinement on computations
-  - show how to
-    - use this refinement relation to show a program satisfies its specification, or
+  - show how to use this refinement relation to
+    - show a program satisfies its specification, or
     - calculate a program from its specification.
 - show how programs and specifications may be mixed,
   enabling verified programs to be calculated from their specification one step at a time
@@ -47,9 +54,9 @@ module Free where
   -- C          : type of commands
   -- Free C R   : returns an 'a' or issues command c : C
   -- For each c : C, there is a set of responses R c
-  -- 2nd arg of Step is continuation : how to proceed after receiving response R c
   data Free {l : Level} (C : Set) (R : C -> Set) (a : Set l) : Set l where
     Pure : a                              -> Free C R a
+    -- 2nd arg of Step is continuation : how to proceed after receiving response R c
     Step : (c : C) -> (R c -> Free C R a) -> Free C R a
 
   -- show that 'Free' is a monad:
@@ -57,8 +64,8 @@ module Free where
   map : forall {l l' C R} -> {a : Set l} -> {b : Set l'}
      -> (a -> b) -> Free C R a
      -> Free C R b
-  map f (Pure x)   = Pure (f x)
-  map f (Step c k) = Step c (\r -> map f (k r))
+  map f (Pure a)      = Pure (f a)
+  map f (Step c Rc→F) = Step c (\Rc -> map f (Rc→F Rc))
 
   return : forall {l C R} -> {a : Set l}
         -> a -> Free C R a
@@ -67,9 +74,9 @@ module Free where
   _>>=_ : forall {l l' C R} -> {a : Set l} -> {b : Set l'}
        -> Free C R a -> (a -> Free C R b)
        -> Free C R b
-  Pure x   >>= f = f x
-  Step c x >>= f = Step c (\r -> x r >>= f)
-  infixr 20 _>>=_
+  Pure a      >>= a→F = a→F a
+  Step c Rc→F >>= a→F = Step c (\Rc -> Rc→F Rc >>= a→F)
+  infixr 20  _>>=_
 
   _>>_ : forall {l l' C R} {a : Set l} {b : Set l'}
       -> Free C R a -> Free C R b
@@ -80,10 +87,10 @@ module Free where
   different effects choose C and R differently, depending on their ops
 
   --------------------------------------------------
-  Weakest precondition semantics
+  Weakest precondition (WP) semantics
 
-  idea of associating weakest precondition semantics with imperative programs
-  dates to Dijkstra’s Guarded Command Language [1975]
+  associating WP semantics with imperative programs dates to
+  Dijkstra’s Guarded Command Language [1975]
 
   ways to specify behaviour of function f : a -> b
   - reference implementation
@@ -91,72 +98,73 @@ module Free where
   - write contracts and test cases
   - PT semantics
 
-  call values of type a -> Set : predicate on type a
+  values of type a -> Set are called "predicate on type a"
 
   PTs are functions between predicates
   e.g., weakest precondition:
   -}
 
   -- "maps"
-  -- function f : a -> b and
-  -- desired postcondition on the function’s output, b -> Set
+  -- - function f : a -> b, and
+  -- - desired postcondition on function’s output, b -> Set
   -- to weakest precondition a -> Set on function’s input that ensures postcondition satisfied
   --
-
   -- non-dependent version
-  -- note: definition is just reverse function composition
-  wp0 : forall
-       {a : Set}  -> {b :     Set}
-    -> (f :      a  -> b)
-    ->            (b   ->  Set)
-    -> (a ->  Set)
-  wp0 f P = \x -> P   (f x)
+  -- note: definition IS reverse function composition
+  wp0 : forall {a : Set} {b : Set}
+     -> (a -> b)
+     ->      (b -> Set)
+     -> (a ->      Set)
+  wp0 a→b b→Set = \a -> b→Set (a→b a)
+
   {-
-  above wp semantics is sometimes too restrictive
+  wp0 semantics
   - no way to specify that output is related to input
   - fix via making f dependent:
   -}
 
--- dependent version
+  -- dependent version
   wp : forall {l l' l''}
-    -> {a : Set l} -> {b : a -> Set l'}
-    -> (f : (x : a) -> b x)
+    -> {a : Set l} {b : a -> Set l'}
+    -> ((x : a) -> b x)
     -> ((x : a) -> b x -> Set l'')
-    -> (a -> Set l'')
-  wp f P = \x -> P x (f x)
+    -> (     a  ->        Set l'')
+  wp a→ba a→ba→Set = \a -> a→ba→Set a (a→ba a)
 
   -- shorthand for working with predicates and predicates transformers
   _⊆_ : forall {l'} -> {a : Set}
      -> (a -> Set l')
      -> (a -> Set l')
      -> Set l'
-  P ⊆ Q = ∀ x -> P x -> Q x
+  P ⊆ Q = ∀ a -> P a -> Q a
 
-  -- refinement relation defined between PTs
-  _⊑_ : {a : Set} -> {b : a -> Set}
+  -- refinement relation between PTs
+  _⊑_ : {a : Set} {b : a -> Set}
      -> (pt1 pt2 : ((x : a) -> b x -> Set) -> (a -> Set))
      -> Set₁
   pt1 ⊑ pt2 = forall P -> pt1 P ⊆ pt2 P
 
-  ⊑-trans : {a : Set} -> {b : a -> Set} -> {P Q R : ((x : a) -> b x -> Set) -> (a -> Set)}
+  ⊑-trans : {a : Set} {b : a -> Set} {P Q R : ((x : a) -> b x -> Set) -> (a -> Set)}
          -> P ⊑ Q -> Q ⊑ R
          -> P ⊑ R
-  ⊑-trans {a} {b} {P} {Q} {R} r1 r2 p x y = r2 p x (r1 p x y)
+  ⊑-trans P⊑Q Q⊑R a→ba→Set a P_a→ba→Set_a = Q⊑R a→ba→Set a (P⊑Q a→ba→Set a P_a→ba→Set_a)
 
-  ⊑-refl  : {a : Set} -> {b : a -> Set} -> {P : ((x : a) -> b x -> Set) -> (a -> Set)}
+  ⊑-refl  : {a : Set} {b : a -> Set} {P : ((x : a) -> b x -> Set) -> (a -> Set)}
          -> P ⊑ P
-  ⊑-refl {a} {b} {P} p x H = H
+  ⊑-refl a→ba→Set a P_a→ba→Set_a = P_a→ba→Set_a
 
   ⊑-eq    : {a b : Set}
-         -> (f g : a -> b) -> wp f ⊑ wp g -> (x : a)
-         -> f x == g x
-  ⊑-eq f g R x = R (\_ y -> f x == y) x refl
+         ->   (f      g : a -> b)
+         -> wp f ⊑ wp g -> (x : a)
+         ->    f x == g x
+  ⊑-eq f g wpf⊑wpg a = wpf⊑wpg (\_ b -> f a == b) a refl
 
   eq-⊑    : {a b : Set}
-         -> (f g : a -> b) -> ((x : a) -> f x == g x)
+         -> (f g : a -> b)
+         -> ((x : a) -> f x == g x)
          -> wp f ⊑ wp g
-  eq-⊑ f g eq P x H with f x | g x | eq x
-  ... | _ | _ | refl = H
+  eq-⊑ f g eq a→b→Set a a→b→Set_a_b with f a | g a | eq a
+  ... | _ | _ | refl = a→b→Set_a_b
 
   {-
   use refinement relation
@@ -234,13 +242,13 @@ module Maybe where
   abort = Step Abort (\())
 
   {-
-  computation of type Partial a will either
-  - return a value of type a or
+  computation of type 'Partial a' will either
+  - return a value of type 'a' or
   - fail, issuing abort command
 
   Note that responses to Abort command are empty;
   abort smart constructor abort uses this to discharge the continuation
-  in the second argument of the Step constructor
+  in the second argument of Step constructor
 
   --------------------------------------------------
   Example: division
@@ -258,14 +266,14 @@ module Maybe where
   exd = Div (Val 3) (Val 3)
 
   -- semantics specified using inductively defined RELATION:
-  -- def rules out erroneous results by requiring the divisor evaluates to non-zero
+  -- requires divisor to evaluate to non-zero : rules out bad results
   data _⇓_ : Expr -> Nat -> Set where
-    ⇓Base : forall {x}
-         -> Val x ⇓ x
-    ⇓Step : forall {l r v1 v2}
-         ->     l   ⇓  v1
-         ->       r ⇓         (Succ v2)
-         -> Div l r ⇓ (v1 div (Succ v2))
+    ⇓Base : forall {n}
+         -> Val n ⇓ n
+    ⇓Step : forall {el er n1 n2}
+         ->     el    ⇓  n1
+         ->        er ⇓         (Succ n2)
+         -> Div el er ⇓ (n1 div (Succ n2))
 
   exb : Val 3 ⇓ 3
   exb = ⇓Base
@@ -316,18 +324,18 @@ module Maybe where
   -}
 
   mustPT : forall {a : Set} -> {b : a -> Set}
-        -> (P : (x : a) -> b x -> Set)
-        ->      (x : a)
-        ->                  Partial (b x)
-        -> Set
-  mustPT P _ (Pure y)       = P _ y
-  mustPT P _ (Step Abort _) = ⊥
+        -> ((x : a) -> b x -> Set)
+        ->  (x : a)
+        ->    Partial (b x)
+        ->                    Set
+  mustPT a→ba→Set _ (Pure bx)      = a→ba→Set _ bx
+  mustPT _        _ (Step Abort _) = ⊥
 
   wpPartial : {a : Set} -> {b : a -> Set}
-           -> (f : (x : a) -> Partial (b x))
-           -> (P : (x : a) ->          b x -> Set)
-           -> (a -> Set)
-  wpPartial f P = wp f (mustPT P)
+           -> ((x : a) -> Partial (b x))
+           -> ((x : a) ->          b x -> Set)
+           -> (     a  ->                 Set)
+  wpPartial a→partialBx a→ba→Set = wp a→partialBx (mustPT a→ba→Set)
 
   {-
   To call 'wp', must show how to transform
@@ -343,7 +351,7 @@ module Maybe where
   Given this PT semantics for Kleisli arrows in general,
   can now study semantics of above monadic interpreter
   via passing
-  - interpreter: ⟦_⟧
+  - interpreter           : ⟦_⟧
   - desired postcondition : _⇓_
   as arguments to wpPartial:
   -}
@@ -381,10 +389,12 @@ module Maybe where
 
   exsdv : SafeDiv (Val 3) ≡ ⊤
   exsdv = refl
-  exsdd : SafeDiv (Div (Val 3) (Val 3)) ≡ Pair ((x : Val    3 ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
+  exsdd : SafeDiv (Div (Val 3) (Val 3))
+        ≡ Pair ((x : Val    3 ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
   exsdd = refl
 
-  exsdx : SafeDiv (Div (Val 3) (Val 0)) ≡ Pair ((x : Val Zero ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
+  exsdx : SafeDiv (Div (Val 3) (Val 0))
+        ≡ Pair ((x : Val Zero ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
   exsdx = refl
 
   {-
@@ -481,7 +491,7 @@ module Maybe where
              -> (wpPartial f ⊑ wpPartial g) ↔ (∀ x -> (f x ≡ g x) ∨ (f x ≡ Nothing))
 
   use refinement to relate Kleisli morphisms,
-  and to relate a program to a specification given by a pre- and postcondition
+  and to relate a program to a specification given by a pre- and post- condition
 
   --------------------------------------------------
   Example: Add (interpreter for stack machine)
