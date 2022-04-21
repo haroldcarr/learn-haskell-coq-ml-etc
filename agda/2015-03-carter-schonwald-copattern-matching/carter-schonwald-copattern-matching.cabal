@@ -1,0 +1,58 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: ab03321dd258ef2bc37967140c20198be9bd8cb19c7ac842b50f5f0d0d75e3dc
+
+name:           carter-schonwald-copattern-matching
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+      Lib2
+      LightSwitch
+      MesiMemory
+      NonLinearFood
+  other-modules:
+      Paths_carter_schonwald_copattern_matching
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010
+
+executable m
+  main-is: Main.hs
+  other-modules:
+      
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , carter-schonwald-copattern-matching
+  default-language: Haskell2010
+
+test-suite t
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      Lib2Spec
+      LibSpec
+      LightSwitchSpec
+      MesiMemorySpec
+      NonLinearFoodSpec
+      Paths_carter_schonwald_copattern_matching
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , carter-schonwald-copattern-matching
+    , hspec
+  default-language: Haskell2010
