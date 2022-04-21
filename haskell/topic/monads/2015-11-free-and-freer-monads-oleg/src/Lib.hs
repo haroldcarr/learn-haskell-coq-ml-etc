@@ -1,15 +1,14 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use tuple-section" #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs          #-}
 {-# HLINT ignore "Use const" #-}
 {-# HLINT ignore "Use <=<" #-}
+{-# LANGUAGE KindSignatures #-}
 
 module Lib where
 
 import           Control.Applicative ()
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import           Data.Kind
 
 {-
 https://okmij.org/ftp/Computation/free-monad.html
@@ -125,9 +124,12 @@ Ignore the Applicative and Monad instances for 'State s'.
 Turns out, nothing is lost: can still use 'State s' in programs, via Free monad construction:
 -}
 
-data Free f a where
-  Pure   ::           a  -> Free f a
-  Impure :: f (Free f a) -> Free f a
+-- 'f' is a functor, and say 'm' is 'Free f'
+data Free (f :: Type -> Type) (a :: Type) where
+ -- Pure   ::           a  -> m      a -- looks like pure
+    Pure   ::           a  -> Free f a
+ -- Impure :: f (m      a) -> m      a -- looks like join
+    Impure :: f (Free f a) -> Free f a
 
 -- eta turns any functor f into the monad Free f.
 -- type constructor f must be a functor
