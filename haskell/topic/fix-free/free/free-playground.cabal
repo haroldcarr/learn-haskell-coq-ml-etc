@@ -1,34 +1,41 @@
-name:                free-playground
-version:             0.1.0.0
-build-type:          Simple
--- extra-source-files:
-cabal-version:       >=1.10
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           free-playground
+version:        0.0.1.0
+build-type:     Simple
 
 library
-  hs-source-dirs:      src
-  exposed-modules:     FA
-                     , FAM
-                     , FAM_FREE_ONLY
-                     , FA_EK_ValidationForm
-                     , FM_2013_09_andres_loeh_monads_for_free
-                     , FM_DL_free_cofree
-                     , FM_DebasishG_2013_01_a_language_and_its_interpretation
-                     , FM_EK_Teletype
-                     , FM_GG_2012_07_purify_code
-                     , FM_JD_modern_fp
-                     , FM_MX_Redis
-                     , F_JT_tour_of_recursive_types
-                     , HA_Operational_Monad_Tutorial
-                     , Test
-  build-depends:       base >= 4.7 && < 5
-                     , containers
-                     , either-unwrap
-                     , free
-                     , HUnit
-                     , monad-loops
-                     , mtl
-                     , pipes
-                     , test-hunit-util
-                     , transformers
-  default-language:    Haskell2010
-  ghc-options:         -Wall -fno-warn-unused-do-bind
+  exposed-modules:
+      F_JT_tour_of_recursive_types
+      FA
+      FA_EK_ValidationForm
+      FAM
+      FAM_FREE_ONLY
+      FM_2013_09_andres_loeh_monads_for_free
+      FM_DebasishG_2013_01_a_language_and_its_interpretation
+      FM_DL_free_cofree
+      FM_EK_Teletype
+      FM_GG_2012_07_purify_code
+      FM_JD_modern_fp
+      FM_MX_Redis
+      HA_Operational_Monad_Tutorial
+      Test
+  other-modules:
+      Paths_free_playground
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      HUnit
+    , base >=4.11 && <5
+    , containers
+    , either-unwrap
+    , free
+    , monad-loops
+    , mtl
+    , test-hunit-util
+  default-language: Haskell2010

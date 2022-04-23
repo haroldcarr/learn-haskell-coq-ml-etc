@@ -1,20 +1,24 @@
 {-
 Created       : 2014 Apr 29 (Tue) 15:48:28 by Harold Carr.
-Last Modified : 2016 Mar 14 (Mon) 20:50:32 by Harold Carr.
+Last Modified : 2022 Apr 23 (Sat) 14:53:26 by Harold Carr.
 -}
+
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 {-# LANGUAGE GADTs               #-}
-{-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module FM_2013_09_andres_loeh_monads_for_free where
 
-import           Control.Monad   (ap)
+import           Control.Monad   (ap, (<=<))
+import           Data.Kind       (Type)
 import           Test.HUnit
 import           Test.HUnit.Util as T
 
 {-# ANN module "HLint: ignore Redundant bracket" #-}
+{-# ANN module "HLint: ignore Use >>"            #-}
+{-# ANN module "HLint: ignore Use <=<"           #-}
 {-# ANN module "HLint: ignore Use const"         #-}
 {-# ANN module "HLint: ignore Use list literal"  #-}
 
@@ -79,7 +83,7 @@ ask0 = getLine
 -- solution using GADT
 -- - GADT: enables restricting the result type of constructors
 
-data Interaction1 :: * -> * where
+data Interaction1 :: Type -> Type where
     Say1    :: String -> Interaction1 ()
     Ask1    :: Interaction1 String
     Return1 :: a -> Interaction1 a
@@ -134,7 +138,7 @@ run1 (Bind1 m f) = do x <- run1 m; run1 (f x)
 -- left arg to Bind is atomic step : Say or Ask
 -- so partially apply Bind:
 
-data Interaction2 :: * -> * where
+data Interaction2 :: Type -> Type where
     Say2    :: String -> Interaction2 ()
     Ask2    :: Interaction2 String
     Return2 :: a -> Interaction2 a
@@ -150,7 +154,7 @@ ask2      = Bind2 Ask2
 -- since say2/ask2 are only atomics then just use them as constructors rather than Say2/Ask2
 -- do not need Bind because it has been fused into Say3 and Ask3
 
-data Interaction3 :: * -> * where
+data Interaction3 :: Type -> Type where
     Say3    :: String -> (() -> Interaction3 b) -> Interaction3 b
     Ask3    :: (String -> Interaction3 b) -> Interaction3 b
     Return3 :: a -> Interaction3 a
@@ -165,8 +169,8 @@ instance Monad Interaction3 where
     -- walk all the way down the steps, find the return at the end, and plug (>>= f) to the end.
     -- It looks in the data representation for the Return3, then substitutes what's in the Return3 with what we bind it to.
     -- A form of substitution or grafting.
-    Say3     msg k >>= f = Say3 msg ((>>= f) . k)
-    Ask3         k >>= f = Ask3     ((>>= f) . k)
+    Say3     msg k >>= f = Say3 msg (f <=< k)
+    Ask3         k >>= f = Ask3     (f <=< k)
     -- left identity law satisfied by construction
     Return3  x     >>= f =                f       x
 
@@ -255,12 +259,12 @@ data Interaction4 a =
 -- split the data type into
 
 --  general
-data Interaction5 :: * -> * where
+data Interaction5 :: Type -> Type where
     Return5 :: a -> Interaction5 a
     Wrap5   :: InteractionOp5 a -> Interaction5 a
 
 -- domain-specific
-data InteractionOp5 :: * -> * where
+data InteractionOp5 :: Type -> Type where
     Say5    :: String -> (() -> Interaction5 b) -> InteractionOp5 b
     Ask5    :: (String -> Interaction5 b) -> InteractionOp5 b
 
@@ -270,12 +274,12 @@ data InteractionOp5 :: * -> * where
 -- but b just appears as arg to Interaction5
 
 -- almost self-contained except depends on domain-specific InteractionOp6
-data Interaction6 :: * -> * where
+data Interaction6 :: Type -> Type where
     Return6 :: a -> Interaction6 a
     Wrap6   :: InteractionOp6 (Interaction6 a) -> Interaction6 a
 
 -- now this is self-contained - does not depend on anything else
-data InteractionOp6 :: * -> * where
+data InteractionOp6 :: Type -> Type where
     Say6    :: String -> (() -> r) -> InteractionOp6 r
     Ask6    :: (String -> r) -> InteractionOp6 r
 
@@ -287,12 +291,12 @@ data InteractionOp6 :: * -> * where
 -- and rename it to Free, since it has nothing to do with InteractionOp anymore
 
 -- completely generic
-data Free7 :: (* -> *) -> * -> * where
+data Free7 :: (Type -> Type) -> Type -> Type where
     Return7 :: a -> Free7 f a
     Wrap7   :: f (Free7 f a) -> Free7 f a
 
 -- same as InteractionOp6
-data InteractionOp7 :: * -> * where
+data InteractionOp7 :: Type -> Type where
     Say7    :: String -> (() -> r) -> InteractionOp7 r
     Ask7    :: (String -> r) -> InteractionOp7 r
 

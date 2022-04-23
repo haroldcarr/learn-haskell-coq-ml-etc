@@ -2,8 +2,8 @@
 {-# LANGUAGE AllowAmbiguousTypes  #-}
 {-# LANGUAGE ConstraintKinds      #-}
 {-# LANGUAGE DeriveFunctor        #-}
-{-# LANGUAGE ExplicitForAll       #-}
 {-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE Rank2Types           #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -97,13 +97,17 @@ type Bytes  = String
 type List a = [a]
 data Unit   = Unit
 
-data CloudFilesF a = SaveFile  Path Bytes a
-                   | ListFiles Path (List Path -> a)
-                   deriving Functor
+data CloudFilesF a
+    = SaveFile  Path Bytes a
+    | ListFiles Path (List Path -> a)
+    deriving Functor
 
 -- DSL using alebra for interacting with the API:
 
 type CloudFilesAPI a = Free CloudFilesF a
+
+instance MonadFail (Free CloudFilesF) where
+  fail = undefined
 
 saveFile :: Path -> Bytes -> CloudFilesAPI Unit
 saveFile path bytes = liftF (SaveFile path bytes Unit)

@@ -215,7 +215,7 @@ APPLICATIVE
 >
 > -- Missing rewrap, so
 >   (Free fn) <*> (Free fa) =
->      Free $ fmap (\innerFunc -> Free $ fmap (\inner -> innerFunc <*> inner) fa)
+>      Free $ fmap (\innerFunc -> Free $ fmap (innerFunc <*>) fa)
 >             fn
 >
 > -- CASE 4

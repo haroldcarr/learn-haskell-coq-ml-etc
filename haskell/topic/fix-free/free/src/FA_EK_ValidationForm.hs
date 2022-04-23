@@ -61,7 +61,7 @@ getDoc:: Ap Field a -> [String]
 getDoc        = runAp_ (\(Field n _ h e) -> [formatDoc n h e])
 
 -- | Extract documentation from form via state monad while executing
-doc :: (Monad m, Show a) => Ap Field a -> m [[String]]
+doc :: Monad m => Ap Field a -> m [[String]]
 doc form0 = execStateT (runAp inputField form0) []
   where
     inputField (Field n g h e) = do

@@ -1,10 +1,12 @@
-resolver: lts-11.12
+resolver:
+  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/1.yaml
+compiler: ghc-9.0.2
+nix:
+  enable: true
 packages:
 - '.'
-- location:
-    git: https://github.com/haroldcarr/test-hunit-util.git
-    commit: 76246854236d38ae569c0c7907abbd506902cd05
-  extra-dep: true
-extra-deps: []
+extra-deps:
+- git: https://github.com/haroldcarr/test-hunit-util.git
+  commit: 76246854236d38ae569c0c7907abbd506902cd05
 flags: {}
 extra-package-dbs: []

@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 {-# LANGUAGE DeriveFunctor #-}
 
 module FM_DebasishG_2013_01_a_language_and_its_interpretation
@@ -7,7 +8,7 @@ where
 http://debasishg.blogspot.ca/2013/01/a-language-and-its-interpretation.html
 
 Created       : 2015 Sep 01 (Tue) 10:51:58 by Harold Carr.
-Last Modified : 2016 Mar 11 (Fri) 14:34:22 by Harold Carr.
+Last Modified : 2022 Apr 23 (Sat) 15:04:59 by Harold Carr.
 -}
 
 import           Control.Monad.Free (Free (Free, Pure), liftF)
@@ -64,10 +65,11 @@ p = do push 5
        add2
        square
        end
-
+{-
 tp = U.t "tp"
     p
     (Free (Push 5 (Free (Push 6 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Push 1 (Free (Add (Free (Dup (Free (Mult (Free End)))))))))))))))))))))))
+-}
 
 {-
 Building the pure data (aka Builder)
@@ -75,12 +77,14 @@ Building the pure data (aka Builder)
 All operators take a continuation.
 Ignore anything after End.
 -}
-data JoyOperator cont = Push Int cont
-                      | Add      cont
-                      | Mult     cont
-                      | Dup      cont
-                      | End
-                      deriving (Eq, Show, Functor)
+data JoyOperator cont
+  = Push Int cont
+  | Add      cont
+  | Mult     cont
+  | Dup      cont
+  | End
+  deriving (Eq, Show, Functor)
+
 {-
 Derives 'Functor'.
 Free monads are general way of turning functors into monads.
@@ -180,4 +184,4 @@ Edward Kmett implemented the above.
 
 test :: IO Counts
 test =
-    runTestTT $ TestList $ tp ++ trp
+    runTestTT $ TestList {-$ tp ++-} trp

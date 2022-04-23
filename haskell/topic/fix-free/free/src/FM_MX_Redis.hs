@@ -18,7 +18,7 @@ import qualified Test.HUnit.Util       as U (t)
 
 data Conn = Conn
 get         :: Conn -> String -> IO (Maybe String)
-get Conn k   = do putStrLn k; v <- getLine; return (Just v)
+get Conn k   = do putStrLn k; Just <$> getLine;
 put         :: Conn -> String -> String -> IO ()
 put Conn k v = putStrLn (k ++ "/" ++ v)
 multi       :: Conn -> IO () -> IO ()
