@@ -238,6 +238,8 @@ module Maybe where
   Partial = Free C R
 
   -- smart constructor for failure
+  -- responses to Abort command are empty
+  -- use emptiness to discharge continuation in 2nd arg of Step
   abort : forall {a} -> Partial a
   abort = Step Abort (\())
 
@@ -245,10 +247,6 @@ module Maybe where
   computation of type 'Partial a' will either
   - return a value of type 'a' or
   - fail, issuing abort command
-
-  Note that responses to Abort command are empty;
-  abort smart constructor abort uses this to discharge the continuation
-  in the second argument of Step constructor
 
   --------------------------------------------------
   Example: division
@@ -311,8 +309,8 @@ module Maybe where
   evd0' = refl
 
   {-
-  How to relate two definitions:
-  - std lib 'div' requires implicit proof that divisor is non-zero
+  How to relate the two definitions:
+  - stdlib 'div' requires implicit proof that divisor is non-zero
     - ⇓ relation generates via pattern matching
     - _÷_ does explicit check
   - interpreter uses _÷_
@@ -328,14 +326,14 @@ module Maybe where
         ->  (x : a)
         ->    Partial (b x)
         ->                    Set
-  mustPT a→ba→Set _ (Pure bx)      = a→ba→Set _ bx
+  mustPT a→ba→Set _ (Pure ba)      = a→ba→Set _ ba
   mustPT _        _ (Step Abort _) = ⊥
 
   wpPartial : {a : Set} -> {b : a -> Set}
            -> ((x : a) -> Partial (b x))
            -> ((x : a) ->          b x -> Set)
            -> (     a  ->                 Set)
-  wpPartial a→partialBx a→ba→Set = wp a→partialBx (mustPT a→ba→Set)
+  wpPartial a→partialBa a→ba→Set = wp a→partialBa (mustPT a→ba→Set)
 
   {-
   To call 'wp', must show how to transform
@@ -344,7 +342,7 @@ module Maybe where
   Done via proposition 'mustPT P c'
   - holds when computation c of type Partial b successfully returns a 'b' that satisfies P
 
-  particular PT semantics of partial computations determined by def mustPT
+  particular PT semantics of partial computations determined by definition of 'mustPT'
   here: rule out failure entirely
   - so case Abort returns empty type
 
@@ -380,7 +378,7 @@ module Maybe where
   must agree on the result of evaluation
 
   What does this say about correctness of interpreter?
-  To understand the predicate better, consider defining this predicate on expressions:
+  To understand the predicate better, define this predicate on expressions:
   -}
 
   SafeDiv : Expr -> Set
