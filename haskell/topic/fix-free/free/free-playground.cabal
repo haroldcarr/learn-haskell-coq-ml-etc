@@ -11,7 +11,7 @@ build-type:     Simple
 library
   exposed-modules:
       F_JT_tour_of_recursive_types
-      FA
+      FA_args_in_parallel
       FA_EK_ValidationForm
       FAM
       FAM_FREE_ONLY
@@ -31,7 +31,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
   build-depends:
       HUnit
-    , base >=4.11 && <5
+    , base >=4.7 && <5
     , containers
     , either-unwrap
     , free

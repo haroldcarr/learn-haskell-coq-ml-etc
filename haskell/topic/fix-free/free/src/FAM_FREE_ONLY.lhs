@@ -20,25 +20,25 @@ FREE
 > deriving instance (Eq   a, Eq   (f (Free f a))) => Eq   (Free f a)
 > deriving instance (Show a, Show (f (Free f a))) => Show (Free f a)
 
-> pn,pj       ::        Free Maybe (Maybe Int)
-> pn           = Pure Nothing
-> pj           = Pure (Just 3)
-> fjjjp       ::        Free Maybe (Maybe Int)
-> fjjjp        = Free (Just (Free (Just (Free (Just (Pure (Just 3)))))))
-> jjjp        :: Maybe (Free Maybe (Maybe Int))
-> jjjp         =       Just (Free (Just (Free (Just (Pure (Just 3))))))
-> fjjp        ::        Free Maybe (Maybe Int)
-> fjjp         =             Free (Just (Free (Just (Pure (Just 3)))))
+> pn,pj           ::        Free Maybe (Maybe Int)
+> pn               = Pure Nothing
+> pj               = Pure (Just 3)
+> fjjjp           ::        Free Maybe (Maybe Int)
+> fjjjp            = Free (Just (Free (Just (Free (Just (Pure (Just 3)))))))
+> jjjp            :: Maybe (Free Maybe (Maybe Int))
+> jjjp             =       Just (Free (Just (Free (Just (Pure (Just 3))))))
+> fjjp            ::        Free Maybe (Maybe Int)
+> fjjp             =             Free (Just (Free (Just (Pure (Just 3)))))
 
-> pe,p1       ::        Free [] [Int]
-> pe           = Pure []
-> p1           = Pure [3]
-> flllp       ::        Free [] [Int]
-> flllp        = Free [Free [Free [Pure [3]]]]
-> lllp        ::       [Free [] [Int]]
-> lllp         =      [Free [Free [Pure [3]]]]
-> fllp        ::        Free [] [Int]
-> fllp         =       Free [Free [Pure [3]]]
+> pe,p1           ::        Free [] [Int]
+> pe               = Pure []
+> p1               = Pure [3]
+> flllp           ::        Free [] [Int]
+> flllp            = Free [Free [Free [Pure [3]]]]
+> lllp            ::       [Free [] [Int]]
+> lllp             =      [Free [Free [Pure [3]]]]
+> fllp            ::        Free [] [Int]
+> fllp             =       Free [Free [Pure [3]]]
 
 > unpure          :: Free f a -> a
 > unpure (Pure a)  = a
@@ -47,9 +47,9 @@ FREE
 > unfree (Free fa) = fa
 > unfree       _   = undefined
 
-> upn     = U.t "upn"     (unpure pn)    Nothing
-> upj     = U.t "unj"     (unpure pj)    (Just 3)
-> uffjjjp = U.t "uffjjjp" (unfree fjjjp) jjjp
+> upn              = U.t "upn"     (unpure pn)    Nothing
+> upj              = U.t "unj"     (unpure pj)    (Just 3)
+> uffjjjp          = U.t "uffjjjp" (unfree fjjjp) jjjp
 
 > mapF :: (a -> b) -> Free f a -> Free f b
 > mapF  f (Pure   a) = Pure (f a)
@@ -62,7 +62,7 @@ FREE
 >   Nothing -> Free Nothing
 >   Just j  -> Free (Just (mapMB f j)) -- note: this is the "two-levels" mentioned later
 
-> mmbfjjjp = U.t "mmbfjjjp"
+> mmbfjjjp         = U.t "mmbfjjjp"
 >   (mapMB (*2) fjjjp)
 >   (Free (Just (Free (Just (Free (Just (Pure (Just 6))))))))
 

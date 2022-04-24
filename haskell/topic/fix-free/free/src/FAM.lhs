@@ -1,4 +1,6 @@
 > {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+>
+> {-# LANGUAGE InstanceSigs #-}
 > {-# LANGUAGE LambdaCase           #-}
 > {-# LANGUAGE RankNTypes           #-}
 > {-# LANGUAGE StandaloneDeriving   #-}
@@ -63,6 +65,7 @@ What can you do with the above ADT?  Projections:
 > unfree (Free fa) = fa
 > unfree        _  = undefined
 
+
 See: FREE_ONLY
 
 ------------------------------------------------------------------------------
@@ -104,16 +107,16 @@ Without Free, each level of recursion shows up in the type signature
 
 With Free, type signature constant regardless of depth/kind of recursion
 
-> pn' :: Free Maybe Int
+> pn'                     :: Free Maybe        Int
 > pn, pj, fnx, fjn, fjjjp :: Free Maybe (Maybe Int)
 
 > -- fmap gets to the value, no matter how deep
-> fmm :: Show a => Maybe a -> String
-> fmm = \case Nothing -> "N"; Just a -> "J" ++ show a
-> fm :: Free Maybe (Maybe Int) -> Free Maybe String
-> fm = fmap fmm
-> fm' :: Free Maybe Int -> Free Maybe String
-> fm' = fmap show
+> fmm    :: Show a => Maybe a -> String
+> fmm     = \case Nothing -> "N"; Just a -> "J" ++ show a
+> fm     :: Free Maybe (Maybe Int) -> Free Maybe String
+> fm      = fmap fmm
+> fm'    :: Free Maybe Int -> Free Maybe String
+> fm'     = fmap show
 
 > pn      =                           Pure  Nothing
 > famPnt  = U.t "famPnt" (unpure pn)        Nothing
@@ -181,7 +184,7 @@ APPLICATIVE
 
 > -- f must be a Functor to enable 'fmap' to get "inside"
 > instance Functor f => Applicative (Free f) where
-> -- pure :: a -> Free f a
+>   pure :: a -> Free f a
 >   pure = Pure
 >
 > -- (<*>) :: Free f (a -> b) -> Free f a -> Free f b
@@ -277,7 +280,7 @@ two functions to help write a DSL using Free : liftF, foldFree
   - to turn inside of Functor into Free, utilise fmap and Pure
 
 > liftF :: Functor f => f a -> Free f a
-> liftF = Free . fmap Pure
+> liftF  = Free . fmap Pure
 
 - foldFree : fold Free structure into a Monad
   - for interpreting our DSL into some Monad

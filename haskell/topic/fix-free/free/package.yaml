@@ -12,7 +12,7 @@ ghc-options:
 - -fhide-source-paths
 
 dependencies:
-- base >=4.11 && < 5
+- base >= 4.7 && < 5
 - containers
 - either-unwrap
 - free

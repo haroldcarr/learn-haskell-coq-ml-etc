@@ -1,9 +1,9 @@
--- https://github.com/ekmett/free/blob/master/examples/ValidationForm.hs
-
 -- for 'doc'
 {-# LANGUAGE FlexibleContexts #-}
 
 module FA_EK_ValidationForm where
+
+-- https://github.com/ekmett/free/blob/master/examples/ValidationForm.hs
 
 import           Control.Applicative.Free (Ap, liftAp, runAp, runAp_)
 import           Control.Monad.State      (evalStateT, execStateT, get, modify,
