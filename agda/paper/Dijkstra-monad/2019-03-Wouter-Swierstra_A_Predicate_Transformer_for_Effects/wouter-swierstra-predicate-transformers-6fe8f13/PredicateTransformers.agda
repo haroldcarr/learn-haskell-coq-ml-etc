@@ -157,7 +157,7 @@ module Free where
          ->   (f      g : a -> b)
          -> wp f ⊑ wp g -> (x : a)
          ->    f x == g x
-  ⊑-eq f g wpf⊑wpg a = wpf⊑wpg (\_ b -> f a == b) a refl
+  ⊑-eq f _ wpf⊑wpg a = wpf⊑wpg (\_ b -> f a == b) a refl
 
   eq-⊑    : {a b : Set}
          -> (f g : a -> b)
@@ -270,19 +270,25 @@ module Maybe where
          -> Val n ⇓ n
     ⇓Step : forall {el er n1 n2}
          ->     el    ⇓  n1
-         ->        er ⇓         (Succ n2)
+         ->        er ⇓         (Succ n2) -- divisor is non-zero
          -> Div el er ⇓ (n1 div (Succ n2))
 
-  exb : Val 3 ⇓ 3
-  exb = ⇓Base
+  exb0 : Val 0 ⇓ 0
+  exb0 = ⇓Base
 
-  exs : Div (Val 3) (Val 3) ⇓ 1
-  exs = ⇓Step ⇓Base ⇓Base
+  exb3 : Val 3 ⇓ 3
+  exb3 = ⇓Base
 
-  -- alternatively, semantics specified by an INTERPRETER
-  -- evaluate Expr via monadic INTERPRETER, using Partial to handle division-by-zero
+  exs331 : Div (Val 3) (Val 3) ⇓ 1
+  exs331 = ⇓Step ⇓Base ⇓Base
 
-  -- define operation used by ⟦_⟧ interpreter
+  exs931 : Div (Val 9) (Val 3) ⇓ 3
+  exs931 = ⇓Step ⇓Base ⇓Base
+
+  -- semantics can also be specified by an INTERPRETER
+  -- monadic INTERPRETER, using Partial to handle division-by-zero
+
+  -- div operation used by ⟦_⟧ interpreter
   _÷_ : Nat -> Nat -> Partial Nat
   n ÷ Zero     = abort
   n ÷ (Succ k) = return (n div (Succ k))
@@ -309,14 +315,14 @@ module Maybe where
   evd0' = refl
 
   {-
-  How to relate the two definitions:
+  relate the two definitions:
   - stdlib 'div' requires implicit proof that divisor is non-zero
     - ⇓ relation generates via pattern matching
     - _÷_ does explicit check
   - interpreter uses _÷_
     - fails explicitly with abort when divisor is zero
 
-  Assign a weakest precondition semantics to Kleisli arrows of the form
+  Assign weakest precondition semantics to Kleisli arrows of the form
 
       a -> Partial b
   -}
@@ -326,7 +332,7 @@ module Maybe where
         ->  (x : a)
         ->    Partial (b x)
         ->                    Set
-  mustPT a→ba→Set _ (Pure ba)      = a→ba→Set _ ba
+  mustPT a→ba→Set a (Pure ba)      = a→ba→Set a ba
   mustPT _        _ (Step Abort _) = ⊥
 
   wpPartial : {a : Set} -> {b : a -> Set}
