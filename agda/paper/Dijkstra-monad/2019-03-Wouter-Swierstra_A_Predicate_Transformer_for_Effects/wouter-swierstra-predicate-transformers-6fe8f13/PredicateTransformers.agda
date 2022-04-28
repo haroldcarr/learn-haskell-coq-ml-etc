@@ -78,9 +78,9 @@ module Free where
   Step c Rc→F >>= a→F = Step c (\Rc -> Rc→F Rc >>= a→F)
   infixr 20  _>>=_
 
-  _>>_ : forall {l l' C R} {a : Set l} {b : Set l'}
-      -> Free C R a -> Free C R b
-      -> Free C R b
+  _>>_  : forall {l l' C R} {a : Set l} {b : Set l'}
+       -> Free C R a ->       Free C R b
+       -> Free C R b
   c1 >> c2 = c1 >>= \_ -> c2
 
   {-
@@ -268,10 +268,10 @@ module Maybe where
   data _⇓_ : Expr -> Nat -> Set where
     ⇓Base : forall {n}
          -> Val n ⇓ n
-    ⇓Step : forall {el er n1 n2}
-         ->     el    ⇓  n1
-         ->        er ⇓         (Succ n2) -- divisor is non-zero
-         -> Div el er ⇓ (n1 div (Succ n2))
+    ⇓Step : forall {el er nl nr}
+         ->     el    ⇓  nl
+         ->        er ⇓         (Succ nr) -- divisor is non-zero
+         -> Div el er ⇓ (nl div (Succ nr))
 
   exb0 : Val 0 ⇓ 0
   exb0 = ⇓Base
@@ -295,8 +295,8 @@ module Maybe where
 
   ⟦_⟧ : Expr -> Partial Nat
   ⟦ Val x ⟧     =  return x
-  ⟦ Div e1 e2 ⟧ =  ⟦ e1 ⟧ >>= \v1 ->
-                   ⟦ e2 ⟧ >>= \v2 ->
+  ⟦ Div el er ⟧ =  ⟦ el ⟧ >>= \v1 ->
+                   ⟦ er ⟧ >>= \v2 ->
                    v1 ÷ v2
 
   evv   : Free C R Nat
@@ -331,7 +331,7 @@ module Maybe where
         -> ((x : a) -> b x -> Set)
         ->  (x : a)
         ->    Partial (b x)
-        ->                    Set
+        ->                   Set
   mustPT a→ba→Set a (Pure ba)      = a→ba→Set a ba
   mustPT _        _ (Step Abort _) = ⊥
 
@@ -389,7 +389,7 @@ module Maybe where
 
   SafeDiv : Expr -> Set
   SafeDiv (Val x)     = ⊤
-  SafeDiv (Div e1 e2) = (e2 ⇓ Zero -> ⊥) ∧ SafeDiv e1 ∧ SafeDiv e2
+  SafeDiv (Div el er) = (er ⇓ Zero -> ⊥) ∧ SafeDiv el ∧ SafeDiv er
 
   exsdv : SafeDiv (Val 3) ≡ ⊤
   exsdv = refl
@@ -414,11 +414,11 @@ module Maybe where
 
   correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
   correct (Val x) h = ⇓Base
-  correct (Div e1 e2) (e2nz , (sde1 , sde2)) with ⟦ e1 ⟧ | ⟦ e2 ⟧ | correct e1 sde1 | correct e2 sde2
-  correct (Div e1 e2) (e2nz , (sde1 , sde2)) | Pure v1      | Pure Zero         | e1⇓v1 | e2⇓Z   = magic (e2nz e2⇓Z)
-  correct (Div e1 e2) (e2nz , (sde1 , sde2)) | Pure v1      | Pure (Succ v2)    | e1⇓v1 | e2⇓Sv2 = ⇓Step e1⇓v1 e2⇓Sv2
-  correct (Div e1 e2) (e2nz , (sde1 , sde2)) | Pure v1      | Step Abort ⊥→FCRN | e1⇓v1 | ()
-  correct (Div e1 e2) (e2nz , (sde1 , sde2)) | Step Abort _ | _                 | ()    | _
+  correct (Div el er) (ernz , (sdel , sder)) with ⟦ el ⟧ | ⟦ er ⟧ | correct el sdel | correct er sder
+  correct (Div el er) (ernz , (sdel , sder)) | Pure v1      | Pure Zero         | el⇓v1 | er⇓Z   = magic (ernz er⇓Z)
+  correct (Div el er) (ernz , (sdel , sder)) | Pure v1      | Pure (Succ v2)    | el⇓v1 | er⇓Sv2 = ⇓Step el⇓v1 er⇓Sv2
+  correct (Div el er) (ernz , (sdel , sder)) | Pure v1      | Step Abort ⊥→FCRN | el⇓v1 | ()
+  correct (Div el er) (ernz , (sdel , sder)) | Step Abort _ | _                 | ()    | _
 
   {-
   Instead of manually defining SafeDiv,
@@ -440,47 +440,47 @@ module Maybe where
   -- both proofs proceed by induction on the argument expression
 
   sound (Val x) h = ⇓Base
-  sound (Div e1 e2) h with ⟦ e1 ⟧ | ⟦ e2 ⟧ | sound e1 | sound e2
-  sound (Div e1 e2) () | Pure v1      | Pure Zero      | ih1 | ih2
-  sound (Div e1 e2) h  | Pure v1      | Pure (Succ v2) | ih1 | ih2 = ⇓Step (ih1 tt) (ih2 tt)
-  sound (Div e1 e2) () | Pure x       | Step Abort x₁  | ih1 | ih2
-  sound (Div e1 e2) () | Step Abort x | v2             | ih1 | ih2
+  sound (Div el er) h with ⟦ el ⟧ | ⟦ er ⟧ | sound el | sound er
+  sound (Div el er) () | Pure v1      | Pure Zero      | ih1 | ih2
+  sound (Div el er) h  | Pure v1      | Pure (Succ v2) | ih1 | ih2 = ⇓Step (ih1 tt) (ih2 tt)
+  sound (Div el er) () | Pure x       | Step Abort x₁  | ih1 | ih2
+  sound (Div el er) () | Step Abort x | v2             | ih1 | ih2
 
   inDom : {v : Nat} -> (e : Expr) -> ⟦ e ⟧ == Pure v -> dom ⟦_⟧ e
   inDom (Val x) h = tt
-  inDom (Div e1 e2) h with ⟦ e1 ⟧ | ⟦ e2 ⟧
-  inDom (Div e1 e2) () | Pure v1      | Pure Zero
-  inDom (Div e1 e2) h  | Pure v1      | Pure (Succ v2) = tt
-  inDom (Div e1 e2) () | Pure _       | Step Abort _
-  inDom (Div e1 e2) () | Step Abort _ | _
+  inDom (Div el er) h with ⟦ el ⟧ | ⟦ er ⟧
+  inDom (Div el er) () | Pure v1      | Pure Zero
+  inDom (Div el er) h  | Pure v1      | Pure (Succ v2) = tt
+  inDom (Div el er) () | Pure _       | Step Abort _
+  inDom (Div el er) () | Step Abort _ | _
 
   aux : (e : Expr) (v : Nat) -> ⟦ e ⟧ ≡ Pure v -> e ⇓ v
   aux e v eq with sound e (inDom e eq)
   ... | H rewrite eq = H
 
-  wpPartial1 : {e1 e2 : Expr} -> wpPartial ⟦_⟧ _⇓_ (Div e1 e2) -> wpPartial ⟦_⟧ _⇓_ e1
-  wpPartial1 {e1} {e2} h with ⟦ e1 ⟧ | inspect ⟦_⟧ e1 | ⟦ e2 ⟧
-  wpPartial1 {e1} {e2} () | Pure x       | eq         | Pure Zero
-  wpPartial1 {e1} {e2} h  | Pure x       | [[[ eq ]]] | Pure (Succ y) = aux e1 x eq
-  wpPartial1 {e1} {e2} () | Pure x       | eq         | Step Abort x₁
-  wpPartial1 {e1} {e2} () | Step Abort x | eq         | ve2
+  wpPartial1 : {el er : Expr} -> wpPartial ⟦_⟧ _⇓_ (Div el er) -> wpPartial ⟦_⟧ _⇓_ el
+  wpPartial1 {el} {er} h with ⟦ el ⟧ | inspect ⟦_⟧ el | ⟦ er ⟧
+  wpPartial1 {el} {er} () | Pure x       | eq         | Pure Zero
+  wpPartial1 {el} {er} h  | Pure x       | [[[ eq ]]] | Pure (Succ y) = aux el x eq
+  wpPartial1 {el} {er} () | Pure x       | eq         | Step Abort x₁
+  wpPartial1 {el} {er} () | Step Abort x | eq         | ver
 
-  wpPartial2 : {e1 e2 : Expr} -> wpPartial ⟦_⟧ _⇓_ (Div e1 e2) -> wpPartial ⟦_⟧ _⇓_ e2
-  wpPartial2 {e1} {e2} h with ⟦ e1 ⟧ | inspect ⟦_⟧ e1 | ⟦ e2 ⟧ | inspect ⟦_⟧ e2
-  wpPartial2 {e1} {e2} h  | Pure x       | [[[ eqx ]]] | Pure y        | [[[ eqy ]]] = aux e2 y eqy
-  wpPartial2 {e1} {e2} () | Pure x       | [[[ eq ]]]  | Step Abort x₁ | eq2
-  wpPartial2 {_}  {_}  () | Step Abort x | eq1         | se2           | eq2
+  wpPartial2 : {el er : Expr} -> wpPartial ⟦_⟧ _⇓_ (Div el er) -> wpPartial ⟦_⟧ _⇓_ er
+  wpPartial2 {el} {er} h with ⟦ el ⟧ | inspect ⟦_⟧ el | ⟦ er ⟧ | inspect ⟦_⟧ er
+  wpPartial2 {el} {er} h  | Pure x       | [[[ eqx ]]] | Pure y        | [[[ eqy ]]] = aux er y eqy
+  wpPartial2 {el} {er} () | Pure x       | [[[ eq ]]]  | Step Abort x₁ | eq2
+  wpPartial2 {_}  {_}  () | Step Abort x | eq1         | ser           | eq2
 
   complete (Val x) h = tt
-  complete (Div e1 e2) h
-    with ⟦ e1 ⟧ | inspect ⟦_⟧ e1 | ⟦ e2 ⟧ | inspect ⟦_⟧ e2
-      | complete e1 (wpPartial1 {e1} {e2} h)
-      | complete e2 (wpPartial2 {e1} {e2} h)
-  complete (Div e1 e2) h | Pure x       | [[[ eqx ]]] | Pure Zero     | [[[ eqy ]]] | p1 | p2
+  complete (Div el er) h
+    with ⟦ el ⟧ | inspect ⟦_⟧ el | ⟦ er ⟧ | inspect ⟦_⟧ er
+      | complete el (wpPartial1 {el} {er} h)
+      | complete er (wpPartial2 {el} {er} h)
+  complete (Div el er) h | Pure x       | [[[ eqx ]]] | Pure Zero     | [[[ eqy ]]] | p1 | p2
     rewrite eqx | eqy = magic h
-  complete (Div e1 e2) h | Pure x       | [[[ eqx ]]] | Pure (Succ y) | [[[ eqy ]]] | p1 | p2 = tt
-  complete (Div e1 e2) h | Pure x       | eq1         | Step Abort x₁ | eq2         | p1 | ()
-  complete (Div e1 e2) h | Step Abort x | eq1         | se2           | eq2         | () | p2
+  complete (Div el er) h | Pure x       | [[[ eqx ]]] | Pure (Succ y) | [[[ eqy ]]] | p1 | p2 = tt
+  complete (Div el er) h | Pure x       | eq1         | Step Abort x₁ | eq2         | p1 | ()
+  complete (Div el er) h | Step Abort x | eq1         | ser           | eq2         | () | p2
 
   {-
   --------------------------------------------------
