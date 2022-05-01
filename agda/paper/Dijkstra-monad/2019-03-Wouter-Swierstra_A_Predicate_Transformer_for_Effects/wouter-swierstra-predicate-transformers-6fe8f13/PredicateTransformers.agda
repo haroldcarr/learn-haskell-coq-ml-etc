@@ -617,7 +617,7 @@ module Maybe where
   wpPartial1 {el} {er} Diveler⇓_nldivSuccn
                          with ⟦ el ⟧       | inspect ⟦_⟧ el | ⟦ er ⟧
   wpPartial1 { _} { _} ()   | Pure _       | _             | Pure Zero
-  wpPartial1 {el} { _} h    | Pure nl      | [[[ eq ]]]    | Pure (Succ _) = aux el nl eq
+  wpPartial1 {el} { _} _    | Pure nl      | [[[ eq ]]]    | Pure (Succ _) = aux el nl eq
   wpPartial1 { _} { _} ()   | Pure _       | _             | Step Abort _
   wpPartial1 { _} { _} ()   | Step Abort _ | _             | _
 
