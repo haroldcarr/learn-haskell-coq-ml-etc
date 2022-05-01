@@ -130,8 +130,7 @@ module Free where
      -> (a ->      Set)
   wp0 a→b b→Set = \a -> b→Set (a→b a)
 
-  module WP0 where
-
+  module WP0Test where
     open import Data.Nat using (ℕ; zero; suc; _+_)
     data isEven : ℕ → Set where
       even-z : isEven Nat.zero
@@ -149,7 +148,7 @@ module Free where
   {-
   wp0 semantics
   - no way to specify that output is related to input
-  - enable via making f dependent:
+  - enable via making dependent:
   -}
 
   -- dependent version
@@ -327,11 +326,6 @@ module Maybe where
     Val : Nat  -> Expr
     Div : Expr -> Expr -> Expr
 
-  exv : Expr
-  exv = Val 3
-  exd : Expr
-  exd = Div (Val 3) (Val 3)
-
   -- BIG-STEP SEMANTICS specified using inductively defined RELATION:
   -- requires divisor to evaluate to non-zero : rules out bad results
   data _⇓_ : Expr -> Nat -> Set where
@@ -342,23 +336,29 @@ module Maybe where
          ->        er ⇓         (Succ nr) -- divisor is non-zero
          -> Div el er ⇓ (nl div (Succ nr))
 
-  exb0      : Val 0 ⇓ 0
-  exb0      = ⇓Base
+  module ⇓Test where
+    exv       : Expr
+    exv       = Val 3
+    exd       : Expr
+    exd       = Div (Val 3) (Val 0)
 
-  exb3      : Val 3 ⇓ 3
-  exb3      = ⇓Base
+    exb0      : Val 0 ⇓ 0
+    exb0      = ⇓Base
 
-  exs331    : Div (Val 3) (Val 3) ⇓ 1
-  exs331    = ⇓Step ⇓Base ⇓Base
+    exb3      : Val 3 ⇓ 3
+    exb3      = ⇓Base
 
-  exs931    : Div (Val 9) (Val 3) ⇓ 3
-  exs931    = ⇓Step ⇓Base ⇓Base
+    exs331    : Div (Val 3) (Val 3) ⇓ 1
+    exs331    = ⇓Step ⇓Base ⇓Base
 
-  exs9d31   : Div (Val 9) (Div (Val 3) (Val 1)) ⇓ 3
-  exs9d31   = ⇓Step ⇓Base (⇓Step ⇓Base ⇓Base)
+    exs931    : Div (Val 9) (Val 3) ⇓ 3
+    exs931    = ⇓Step ⇓Base ⇓Base
 
-  exsd91d31 : Div (Div (Val 9) (Val 1)) (Div (Val 3) (Val 1)) ⇓ 3
-  exsd91d31 = ⇓Step (⇓Step ⇓Base ⇓Base) (⇓Step ⇓Base ⇓Base)
+    exs9d31   : Div (Val 9) (Div (Val 3) (Val 1)) ⇓ 3
+    exs9d31   = ⇓Step ⇓Base (⇓Step ⇓Base ⇓Base)
+
+    exsd91d31 : Div (Div (Val 9) (Val 1)) (Div (Val 3) (Val 1)) ⇓ 3
+    exsd91d31 = ⇓Step (⇓Step ⇓Base ⇓Base) (⇓Step ⇓Base ⇓Base)
 
   -- semantics can also be specified by an INTERPRETER
   -- monadic INTERPRETER, using Partial to handle division-by-zero
@@ -374,20 +374,21 @@ module Maybe where
                    ⟦ er ⟧ >>= \v2 ->
                    v1 ÷ v2
 
-  evv   : Free C R Nat
-  evv   = ⟦ Val 3 ⟧
-  evv'  : evv ≡ Pure 3
-  evv'  = refl
+  module InterpTest where
+    evv   : Free C R Nat
+    evv   = ⟦ Val 3 ⟧
+    evv'  : evv ≡ Pure 3
+    evv'  = refl
 
-  evd   : Free C R Nat
-  evd   = ⟦ Div (Val 3) (Val 3) ⟧
-  evd'  : evd ≡ Pure 1
-  evd'  = refl
+    evd   : Free C R Nat
+    evd   = ⟦ Div (Val 3) (Val 3) ⟧
+    evd'  : evd ≡ Pure 1
+    evd'  = refl
 
-  evd0  : Free C R Nat
-  evd0  = ⟦ Div (Val 3) (Val 0) ⟧
-  evd0' : evd0 ≡ Step Abort (λ ())
-  evd0' = refl
+    evd0  : Free C R Nat
+    evd0  = ⟦ Div (Val 3) (Val 0) ⟧
+    evd0' : evd0 ≡ Step Abort (λ ())
+    evd0' = refl
 
   {-
   to relate big step semantics to monadic interpreter
@@ -424,8 +425,7 @@ module Maybe where
                                        -- note: could give ⊤ here, but want to rule out failure
                                        -- (total correctness)
 
-  module MPT where
-
+  module MustPTTest where
     bs⇓     : Expr -> Nat -> Set
     bs⇓     = _⇓_
 
@@ -471,19 +471,26 @@ module Maybe where
   as arguments to wpPartial:
   -}
 
-  module WPP where
+  module WpPartialTest where
+    exwpp   : Expr -> Set
+    exwpp   = wpPartial ⟦_⟧ _⇓_
+    exwpp'  : wpPartial ⟦_⟧ _⇓_ ≡ λ expr -> mustPT _⇓_ expr ⟦ expr ⟧
+    exwpp'  = refl
 
-    exwpp  : Expr -> Set
-    exwpp  = wpPartial ⟦_⟧ _⇓_
-    exwpp' : wpPartial ⟦_⟧ _⇓_ ≡ λ expr -> mustPT _⇓_ expr ⟦ expr ⟧
-    exwpp' = refl
+    wppv1   : wpPartial ⟦_⟧ _⇓_ (Val 1)
+    wppv1   = ⇓Base
 
-    wppv1  : wpPartial ⟦_⟧ _⇓_ (Val 1)
-    wppv1  = ⇓Base
-    wppd   : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
-    wppd   = ⇓Step ⇓Base ⇓Base
-    wppd'  : Set
-    wppd'  = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+    wppd11  : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+    wppd11  = ⇓Step ⇓Base ⇓Base
+    wppd11' : Set
+    wppd11' = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+
+    {- this type cannot be constructed
+    wppd10  : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
+    wppd10  = {!!}
+    -}
+    wppd10' : Set
+    wppd10' = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
 
   {-
   wpPartial ⟦_⟧ _⇓_ : a predicate on expressions
@@ -494,21 +501,22 @@ module Maybe where
   - relational big-step specification
   must agree on result of evaluation
 
-  for a given e : Expr, satisfaction of predicate means
-  - 'e' evaluates to a value by big-step operational semantics
+  for a given Expr, satisfaction of predicate means
+  - Expr evaluates to a value by big-step operational semantics
   - if interpreter returns a value at all
     then that value agrees with big step semantics
   - if interpreter aborts
     then have a proof of ⊥ (so, it does not abort)
+    which will NOT agree with ⇓ big-step semantics since ⇓ does not allow div-by-0
 
   What does this say about correctness of interpreter?
 
   does not specify how many Expr that satisfy that characterization also satisfy wpPartial ⟦_⟧ _⇓_
 
   to understand wpPartial ⟦_⟧ _⇓_ better
-  - define safety criteria that we believe in
-  - prove every expression that satisfies that criteria satisfies wpPartial ⟦_⟧ _⇓_
-    - so SafeDiv refines wpPartial ⟦_⟧ _⇓_
+  - define SafeDiv : safety criteria that we believe in
+  - prove every expression that satisfies SafeDiv satisfies wpPartial ⟦_⟧ _⇓_
+    - SafeDiv refines wpPartial ⟦_⟧ _⇓_
   - if we gave ⊤ above, then 'correct' would not say that SafeDiv rules out undefined behavior
   -}
 
@@ -516,21 +524,28 @@ module Maybe where
   SafeDiv (Val x)     = ⊤
   SafeDiv (Div el er) = (er ⇓ Zero -> ⊥) ∧ SafeDiv el ∧ SafeDiv er
 
-  module SD where
+  module SafeDivTest where
+    exsdv3  : SafeDiv (Val 3) ≡ ⊤
+    exsdv3  = refl
+    exsdv0  : SafeDiv (Val 0) ≡ ⊤
+    exsdv0  = refl
+    exsdv0' : Set
+    exsdv0' = SafeDiv (Val 0)
 
-    exsdv : SafeDiv (Val 3) ≡ ⊤
-    exsdv = refl
-    exsdd : SafeDiv (Div (Val 3) (Val 3))
-          ≡ Pair ((x : Val    3 ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
-    exsdd = refl
+    exsd33  : SafeDiv (Div (Val 3) (Val 3))
+            ≡ Pair ((x : Val    3 ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
+    exsd33  = refl
+    exsd33' : Set
+    exsd33' = SafeDiv (Div (Val 3) (Val 3))
 
-    exsdx : SafeDiv (Div (Val 3) (Val 0))
-          ≡ Pair ((x : Val Zero ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
-    exsdx = refl
+    exsd30  : SafeDiv (Div (Val 3) (Val 0))
+            ≡ Pair ((x : Val Zero ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
+    exsd30  = refl
+    exsd30' : Set
+    exsd30' = SafeDiv (Div (Val 3) (Val 0))
 
   {-
-  Expect : any expr e for which SafeDiv e holds
-  can be evaluated without division-by-zero
+  Expect : any expr e for which SafeDiv e holds can be evaluated without division-by-zero
 
   can prove SafeDiv is sufficient condition for two notions of evaluation to coincide:
 
@@ -541,73 +556,108 @@ module Maybe where
 
   correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
   correct (Val x) h = ⇓Base
-  correct (Div el er) (   _ , (sdel , sder)) with ⟦ el ⟧ | ⟦ er ⟧ | correct el sdel | correct er sder
-  correct (Div  _  _) (ernz , (   _ ,    _)) | Pure _       | Pure Zero     |     _ | er⇓Zvr = magic (ernz er⇓Zvr)
-  correct (Div  _  _) (   _ , (   _ ,    _)) | Pure _       | Pure (Succ _) | el⇓vl | er⇓Svr = ⇓Step el⇓vl er⇓Svr
-  correct (Div  _  _) (   _ , (   _ ,    _)) | Pure _       | Step Abort _  |     _ | ()
-  correct (Div  _  _) (   _ , (   _ ,    _)) | Step Abort _ | _             | ()    | _
+  correct (Div el er) (   _ , (sdel , sder))
+                                          with ⟦ el ⟧       | ⟦ er ⟧         | correct el sdel | correct er sder
+  correct (Div  _  _) (ernz , (   _ ,    _)) | Pure _       | Pure Zero     | _               | er⇓Zvr = magic (ernz er⇓Zvr)
+  correct (Div  _  _) (   _ , (   _ ,    _)) | Pure _       | Pure (Succ _) | el⇓vl           | er⇓Svr = ⇓Step el⇓vl er⇓Svr
+  correct (Div  _  _) (   _ , (   _ ,    _)) | Pure _       | Step Abort _  | _               | ()
+  correct (Div  _  _) (   _ , (   _ ,    _)) | Step Abort _ | _             | ()              | _
 
   {-
+  Generalize above.
   Instead of manually defining SafeDiv,
-  define more general predicate characterising the domain of a partial function:
+  define more general predicate
+  characterising the domain of a partial function using wpPartial
   -}
 
+  -- HC: compare to 'mustPT'
   dom : {a : Set} -> {b : a -> Set}
-     -> ((x : a)
-     -> Partial (b x))
+     -> ((x : a) -> Partial (b x))
      -> (a -> Set)
   dom f = wpPartial f (\_ _ -> ⊤)
 
-  -- can show that the two semantics agree precisely on the domain of the interpreter:
+  --can show that the two semantics agree precisely on the domain of the interpreter:
 
+  -- everything in domain of interpreter
+  -- gets evaluated in agreement with big step semantics
   sound     : dom       ⟦_⟧       ⊆   wpPartial ⟦_⟧ _⇓_
 
+  -- only things interpreted in agreement with big step semantics
+  -- are those that are in domain of interpreter
   complete  : wpPartial ⟦_⟧ _⇓_   ⊆   dom       ⟦_⟧
 
-  -- both proofs proceed by induction on the argument expression
+  -- both proofs proceed by induction on argument expression
 
-  sound (Val x) h = ⇓Base
-  sound (Div el er) h with ⟦ el ⟧ | ⟦ er ⟧ | sound el | sound er
-  sound (Div el er) () | Pure v1      | Pure Zero      | ih1 | ih2
-  sound (Div el er) h  | Pure v1      | Pure (Succ v2) | ih1 | ih2 = ⇓Step (ih1 tt) (ih2 tt)
-  sound (Div el er) () | Pure x       | Step Abort x₁  | ih1 | ih2
-  sound (Div el er) () | Step Abort x | v2             | ih1 | ih2
+  sound (Val x) _ = ⇓Base
+  sound (Div el er) _ with ⟦ el ⟧       | ⟦ er ⟧          | sound el    | sound er
+  sound (Div  _  _) ()   | Pure _       | Pure Zero      | _            | _
+  sound (Div  _  _) _    | Pure nl      | Pure (Succ nr) | ⊤'zero→el⇓nl | ⊤'zero→er⇓Succnr
+    = ⇓Step (⊤'zero→el⇓nl tt) (⊤'zero→er⇓Succnr tt)
+  sound (Div  _  _) ()   | Pure _       | Step Abort _   | _            | _
+  sound (Div  _  _) ()   | Step Abort _ | _              | _            | _
 
-  inDom : {v : Nat} -> (e : Expr) -> ⟦ e ⟧ == Pure v -> dom ⟦_⟧ e
-  inDom (Val x) h = tt
-  inDom (Div el er) h with ⟦ el ⟧ | ⟦ er ⟧
-  inDom (Div el er) () | Pure v1      | Pure Zero
-  inDom (Div el er) h  | Pure v1      | Pure (Succ v2) = tt
-  inDom (Div el er) () | Pure _       | Step Abort _
-  inDom (Div el er) () | Step Abort _ | _
+  inDom : {v : Nat}
+       -> (e : Expr)
+       -> ⟦ e ⟧ == Pure v
+       -> dom ⟦_⟧ e
+  inDom (Val _) _ = tt
+  inDom (Div el er) _ with ⟦ el ⟧       | ⟦ er ⟧
+  inDom (Div  _  _) ()   | Pure _       | Pure Zero
+  inDom (Div  _  _) _    | Pure _       | Pure (Succ _) = tt
+  inDom (Div  _  _) ()   | Pure _       | Step Abort _
+  inDom (Div  _  _) ()   | Step Abort _ | _
 
   aux : (e : Expr) (v : Nat) -> ⟦ e ⟧ ≡ Pure v -> e ⇓ v
   aux e v eq with sound e (inDom e eq)
   ... | H rewrite eq = H
 
-  wpPartial1 : {el er : Expr} -> wpPartial ⟦_⟧ _⇓_ (Div el er) -> wpPartial ⟦_⟧ _⇓_ el
-  wpPartial1 {el} {er} h with ⟦ el ⟧ | inspect ⟦_⟧ el | ⟦ er ⟧
-  wpPartial1 {el} {er} () | Pure x       | eq         | Pure Zero
-  wpPartial1 {el} {er} h  | Pure x       | [[[ eq ]]] | Pure (Succ y) = aux el x eq
-  wpPartial1 {el} {er} () | Pure x       | eq         | Step Abort x₁
-  wpPartial1 {el} {er} () | Step Abort x | eq         | ver
+  wpPartial1 : {el er : Expr}
+            -> wpPartial ⟦_⟧ _⇓_ (Div el er)
+            -> wpPartial ⟦_⟧ _⇓_      el
+  wpPartial1 {el} {er} Diveler⇓_nldivSuccn
+                         with ⟦ el ⟧       | inspect ⟦_⟧ el | ⟦ er ⟧
+  wpPartial1 { _} { _} ()   | Pure _       | _             | Pure Zero
+  wpPartial1 {el} { _} h    | Pure nl      | [[[ eq ]]]    | Pure (Succ _) = aux el nl eq
+  wpPartial1 { _} { _} ()   | Pure _       | _             | Step Abort _
+  wpPartial1 { _} { _} ()   | Step Abort _ | _             | _
 
-  wpPartial2 : {el er : Expr} -> wpPartial ⟦_⟧ _⇓_ (Div el er) -> wpPartial ⟦_⟧ _⇓_ er
-  wpPartial2 {el} {er} h with ⟦ el ⟧ | inspect ⟦_⟧ el | ⟦ er ⟧ | inspect ⟦_⟧ er
-  wpPartial2 {el} {er} h  | Pure x       | [[[ eqx ]]] | Pure y        | [[[ eqy ]]] = aux er y eqy
-  wpPartial2 {el} {er} () | Pure x       | [[[ eq ]]]  | Step Abort x₁ | eq2
-  wpPartial2 {_}  {_}  () | Step Abort x | eq1         | ser           | eq2
+  wpPartial2 : {el er : Expr}
+            -> wpPartial ⟦_⟧ _⇓_ (Div el er)
+            -> wpPartial ⟦_⟧ _⇓_         er
+  wpPartial2 {el} {er} _ with ⟦ el ⟧       | inspect ⟦_⟧ el | ⟦ er ⟧       | inspect ⟦_⟧ er
+  wpPartial2 { _} {er} _    | Pure _       | _             | Pure nr      | [[[ eqnr ]]] = aux er nr eqnr
+  wpPartial2 { _} { _} ()   | Pure _       | _             | Step Abort _ | _
+  wpPartial2 { _} { _} ()   | Step Abort _ | _             | _            | _
 
   complete (Val x) h = tt
   complete (Div el er) h
-    with ⟦ el ⟧ | inspect ⟦_⟧ el | ⟦ er ⟧ | inspect ⟦_⟧ er
-      | complete el (wpPartial1 {el} {er} h)
-      | complete er (wpPartial2 {el} {er} h)
-  complete (Div el er) h | Pure x       | [[[ eqx ]]] | Pure Zero     | [[[ eqy ]]] | p1 | p2
-    rewrite eqx | eqy = magic h
-  complete (Div el er) h | Pure x       | [[[ eqx ]]] | Pure (Succ y) | [[[ eqy ]]] | p1 | p2 = tt
-  complete (Div el er) h | Pure x       | eq1         | Step Abort x₁ | eq2         | p1 | ()
-  complete (Div el er) h | Step Abort x | eq1         | ser           | eq2         | () | p2
+    with           ⟦ el ⟧
+       | inspect ⟦_⟧ el
+       |           ⟦ er ⟧
+       | inspect ⟦_⟧ er
+       | complete    el (wpPartial1 {el} {er} h)
+       | complete    er (wpPartial2 {el} {er} h)
+  complete (Div _ _) h   | Pure nl      | [[[ ⟦el⟧≡Purenl ]]] | Pure Zero     | [[[ ⟦er⟧≡Pure0 ]]] | _  | _
+                    -- Goal
+                    -- mustPT  (λ _ _ → ⊤' zero)  (Div el er)  (Pure nl >>= (λ v1 → Pure Zero >>= _÷_ v1))
+                    -- ⊥
+                    -- Context
+                    -- h : mustPT _⇓_ (Div el er) (⟦ el ⟧ >>= (λ v1 → ⟦ er ⟧ >>= _÷_ v1))
+    rewrite
+        ⟦el⟧≡Purenl -- h : mustPT _⇓_ (Div el er)                    (⟦ er ⟧ >>= _÷_ nl)
+      | ⟦er⟧≡Pure0  -- h : ⊥
+    = magic h
+  complete (Div _ _)   _ | Pure _       | _            | Pure (Succ _) | _            | _  | _ = tt
+  complete (Div _ _)   _ | Pure _       | _            | Step Abort _  | _            | _  | ()
+  complete (Div _ _)   _ | Step Abort _ | _            | _             | _            | () | _
+
+  module CompleteTest where
+    {-
+    xxx  : mustPT _⇓_ (Div (Val 1) (Val 0)) (⟦ Val 0 ⟧ >>= _÷_ 1)
+    xxx  = {!!}
+    -}
+    xxx' : Set
+    xxx' = mustPT _⇓_ (Div (Val 1) (Val 0)) (⟦ Val 0 ⟧ >>= _÷_ 1)
 
   {-
   --------------------------------------------------
