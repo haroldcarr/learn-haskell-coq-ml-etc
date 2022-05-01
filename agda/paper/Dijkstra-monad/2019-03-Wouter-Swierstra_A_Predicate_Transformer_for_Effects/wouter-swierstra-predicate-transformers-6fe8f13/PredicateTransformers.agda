@@ -27,6 +27,15 @@ refinement type https://en.wikipedia.org/wiki/Refinement_(computing)
   - preconditions  when used as function args
   - postconditions when used as return types
 
+the problem statement is centered around /compositionality/
+- pure functions enable compositional reasoning
+- effectful programs require reasoning about context
+- paper provides mechanism for reasoning about effectful programs (and for program calculation)
+
+main idea
+- represent effectful computation as a free monad
+- write an "interpreter" that computes a predicate transformer
+
 ------------------------------------------------------------------------------
 1 INTRODUCTION
 
@@ -51,9 +60,11 @@ Free monads
 -}
 
 module Free where
+  -- Free       : represents syntax of an effectful computation
   -- C          : type of commands
   -- Free C R   : returns an 'a' or issues command c : C
   -- For each c : C, there is a set of responses R c
+  -- - R : C -> Set :  is type family of responses for commands
   data Free {l : Level} (C : Set) (R : C -> Set) (a : Set l) : Set l where
     Pure : a                              -> Free C R a
     -- 2nd arg of Step is continuation : how to proceed after receiving response R c
@@ -104,10 +115,12 @@ module Free where
   e.g., weakest precondition:
   -}
 
-  -- "maps"
-  -- - function f : a -> b, and
-  -- - desired postcondition on function’s output, b -> Set
-  -- to weakest precondition a -> Set on function’s input that ensures postcondition satisfied
+  -- "maps" input to output
+  -- input
+  -- - pure function 'a→b : a -> b'
+  -- - postcondition 'b -> Set' (on output of a→b)
+  -- output
+  -- - weakest precondition 'a -> Set' on input to a→b that ensures postcondition satisfied
   --
   -- non-dependent version
   -- note: definition IS reverse function composition
@@ -117,10 +130,26 @@ module Free where
      -> (a ->      Set)
   wp0 a→b b→Set = \a -> b→Set (a→b a)
 
+  module WP0 where
+
+    open import Data.Nat using (ℕ; zero; suc; _+_)
+    data isEven : ℕ → Set where
+      even-z : isEven Nat.zero
+      even-s : {n : ℕ} → isEven n → isEven (Nat.suc (Nat.suc n))
+
+    isEvenPT : ℕ -> Set
+    isEvenPT = wp0 (_+ 2) isEven
+
+    isEven5  : Set
+    isEven5  = isEvenPT 5
+
+    isEven5' : isEvenPT 5 ≡ isEven 7
+    isEven5' = refl
+
   {-
   wp0 semantics
   - no way to specify that output is related to input
-  - fix via making f dependent:
+  - enable via making f dependent:
   -}
 
   -- dependent version
@@ -132,13 +161,52 @@ module Free where
   wp a→ba a→ba→Set = \a -> a→ba→Set a (a→ba a)
 
   -- shorthand for working with predicates and predicates transformers
+  -- every element a that satisfies P is contained in the set of things that satifies Q
+  --
+  -- implication between predicates
+  --
+  --  P a says a ∈ P,
+  --   if the extents of P, Q : A → Set is taken to be
+  --   the subset of A satisfying predicates P, Q
+  --
+  -- the extent of P : A -> Set is the subset of terms of type A satisfying P.
+  -- "extent" indicates a kind of black-box view of things,
+  -- e.g.,  the "extent" of a function is the set of its input-output pairs.
+  --
+  -- https://en.wikipedia.org/wiki/Extension_%28semantics%29
+  -- the extension of a concept, idea, or sign consists of the things to which it applies
   _⊆_ : forall {l'} -> {a : Set}
      -> (a -> Set l')
      -> (a -> Set l')
      -> Set l'
   P ⊆ Q = ∀ a -> P a -> Q a
 
-  -- refinement relation between PTs
+  -- refinement relation between PTs : pt1 refined by pt2
+  --
+  -- (same thing as ⊆, but one level up)
+  -- for every post condition, pt2 weakens the precondition
+  -- "weakest" is the right side : pt2 P
+  --
+  -- pt1 , pt2 : preconditions for satisfying a program
+  -- refinement : pt1 maybe be a stronger requirement than pt2
+  --
+  -- pt2 is a refinement because it weakens what is required by pt1
+  -- e.g., pt1      pt2
+  --      >= 20    >= 10
+  --
+  -- weakening the input assumptions gives a stronger result
+  --
+  -- contract says establish a pre and I will give you a post, i.e.,
+  -- "stronger" post condition
+  -- or "weaker" pre condition
+  --
+  -- refinement of predicate transformers
+  --
+  -- use case: relate different implementations of the "same program"
+  -- pt1 ⊑ pt2 : pt1 is refined by pt2
+  -- - if pt1 is understood as giving preconditions which satisfy
+  --   postcondition P for some given program f1
+  --   then his says the precondition can be /weakened/ and still guarantee the postcondition
   _⊑_ : {a : Set} {b : a -> Set}
      -> (pt1 pt2 : ((x : a) -> b x -> Set) -> (a -> Set))
      -> Set₁
@@ -155,7 +223,8 @@ module Free where
 
   ⊑-eq    : {a b : Set}
          ->   (f      g : a -> b)
-         -> wp f ⊑ wp g -> (x : a)
+         -> wp f ⊑ wp g
+         ->     (x : a)
          ->    f x == g x
   ⊑-eq f _ wpf⊑wpg a = wpf⊑wpg (\_ b -> f a == b) a refl
 
@@ -167,17 +236,22 @@ module Free where
   ... | _ | _ | refl = a→b→Set_a_b
 
   {-
-  use refinement relation
-  - to relate PT semantics between programs and specifications
-  - to show a program satisfies its specification; or
-  - to show that one program is somehow ‘better’ than another,
+  use refinement relation to
+  - relate PT semantics between programs and specifications
+  - show a program satisfies its specification
+  - show that one program is somehow ‘better’ than another,
     where ‘better’ is defined by choice of PT semantics
 
   in pure setting, this refinement relation is not interesting:
-  the refinement relation corresponds to extensional equality between functions:
+  - corresponds to extensional equality between functions:
 
   lemma follows from the ‘Leibniz rule’ for equality in intensional type theory:
   refinement : ∀ (f g : a -> b) -> (wp f ⊑ wp g) ↔ (∀ x -> f x ≡ g x)
+
+  note : for =Free C R b= programs means generating the same AST
+
+  instead, define predicate transformers that give /interpretations/
+  to a particular choice of command type C and response family R
 
   this paper defines PT semantics for Kleisli arrows of form
 
@@ -206,16 +280,9 @@ module Free where
 ------------------------------------------------------------------------------
 
 module Maybe where
-  open import Data.Nat public
-    using
-      (_+_; _>_; _*_
-      )
-    renaming
-      ( ℕ to Nat
-      ; zero to Zero
-      ; suc to Succ
-      )
-  open import Data.Nat.DivMod using (_div_)
+  open import Data.Nat            public using (_+_; _>_; _*_)
+                                  renaming (ℕ to Nat; zero to Zero; suc to Succ)
+  open import Data.Nat.DivMod     using (_div_)
   open import Data.Nat.Properties using (*-zeroʳ)
   open Free
 
@@ -228,9 +295,11 @@ module Maybe where
   make choices for commands C and responses R
   -}
 
+  -- one command
   data C : Set where
     Abort : C -- no continuation
 
+  -- response code : the program does not execute further
   R : C -> Set
   R Abort = ⊥ -- since C has no continuation, valid responses is empty
 
@@ -263,7 +332,7 @@ module Maybe where
   exd : Expr
   exd = Div (Val 3) (Val 3)
 
-  -- semantics specified using inductively defined RELATION:
+  -- BIG-STEP SEMANTICS specified using inductively defined RELATION:
   -- requires divisor to evaluate to non-zero : rules out bad results
   data _⇓_ : Expr -> Nat -> Set where
     ⇓Base : forall {n}
@@ -273,17 +342,23 @@ module Maybe where
          ->        er ⇓         (Succ nr) -- divisor is non-zero
          -> Div el er ⇓ (nl div (Succ nr))
 
-  exb0 : Val 0 ⇓ 0
-  exb0 = ⇓Base
+  exb0      : Val 0 ⇓ 0
+  exb0      = ⇓Base
 
-  exb3 : Val 3 ⇓ 3
-  exb3 = ⇓Base
+  exb3      : Val 3 ⇓ 3
+  exb3      = ⇓Base
 
-  exs331 : Div (Val 3) (Val 3) ⇓ 1
-  exs331 = ⇓Step ⇓Base ⇓Base
+  exs331    : Div (Val 3) (Val 3) ⇓ 1
+  exs331    = ⇓Step ⇓Base ⇓Base
 
-  exs931 : Div (Val 9) (Val 3) ⇓ 3
-  exs931 = ⇓Step ⇓Base ⇓Base
+  exs931    : Div (Val 9) (Val 3) ⇓ 3
+  exs931    = ⇓Step ⇓Base ⇓Base
+
+  exs9d31   : Div (Val 9) (Div (Val 3) (Val 1)) ⇓ 3
+  exs9d31   = ⇓Step ⇓Base (⇓Step ⇓Base ⇓Base)
+
+  exsd91d31 : Div (Div (Val 9) (Val 1)) (Div (Val 3) (Val 1)) ⇓ 3
+  exsd91d31 = ⇓Step (⇓Step ⇓Base ⇓Base) (⇓Step ⇓Base ⇓Base)
 
   -- semantics can also be specified by an INTERPRETER
   -- monadic INTERPRETER, using Partial to handle division-by-zero
@@ -315,9 +390,9 @@ module Maybe where
   evd0' = refl
 
   {-
-  relate the two definitions:
+  to relate big step semantics to monadic interpreter
   - stdlib 'div' requires implicit proof that divisor is non-zero
-    - ⇓ relation generates via pattern matching
+    - _⇓_ relation generates via pattern matching
     - _÷_ does explicit check
   - interpreter uses _÷_
     - fails explicitly with abort when divisor is zero
@@ -325,15 +400,62 @@ module Maybe where
   Assign weakest precondition semantics to Kleisli arrows of the form
 
       a -> Partial b
+
+  to call 'wp', must show how to transform
+  -      predicate                    P  :         b -> Set
+  - to a predicate on partial results P' : Partial b -> Set
+  done via 'mustPT P c'
+  - holds when computation c of type Partial b successfully returns a 'b' that satisfies P
+
+  particular PT semantics of partial computations determined by definition of 'mustPT'
+  here: rule out failure entirely
+  - so Abort case returns empty type
   -}
 
+  -- convert post-condition for a pure function  'f : (x : a) ->          b x'
+  -- to      post-condition on partial functions 'f : (x : A) -> Partial (b x)'
   mustPT : forall {a : Set} -> {b : a -> Set}
         -> ((x : a) -> b x -> Set)
         ->  (x : a)
         ->    Partial (b x)
         ->                   Set
-  mustPT a→ba→Set a (Pure ba)      = a→ba→Set a ba
-  mustPT _        _ (Step Abort _) = ⊥
+  mustPT a→ba→Set a (Pure ba)      = a→ba→Set a ba -- P holds if operation produces a value
+  mustPT _        _ (Step Abort _) = ⊥ -- if operation fails, there is no result to apply P to
+                                       -- note: could give ⊤ here, but want to rule out failure
+                                       -- (total correctness)
+
+  module MPT where
+
+    bs⇓     : Expr -> Nat -> Set
+    bs⇓     = _⇓_
+
+    bs⇓'    : Set
+    bs⇓'    = Val 1 ⇓ 1
+
+    bsp⇓    : Expr -> Partial Nat -> Set
+    bsp⇓    = mustPT _⇓_
+
+    bsp⇓'   : Set
+    bsp⇓'   = mustPT _⇓_ (Val 1) (Pure 1)
+
+    bsp⇓'x  : mustPT _⇓_ (Val 1) (Pure 1)
+    bsp⇓'x  = ⇓Base
+
+    bsp⇓''  : Set
+    bsp⇓''  = mustPT _⇓_ (Val 1) (Step Abort (λ ()))
+
+    {- nothing can be constructed with this type
+    bsp⇓''x : mustPT _⇓_ (Val 1) (Step Abort (λ ()))
+    bsp⇓''x = {!!}
+    -}
+    xxx     : mustPT _⇓_ (Div (Val 3) (Val 3)) (Pure 3 >>= (λ v -> Pure 3 >>= _÷ v))
+    xxx     = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
+
+    xxx'    : mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
+    xxx'    = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
+
+    xxx''   : Set
+    xxx''   = mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
 
   wpPartial : {a : Set} -> {b : a -> Set}
            -> ((x : a) -> Partial (b x))
@@ -342,64 +464,69 @@ module Maybe where
   wpPartial a→partialBa a→ba→Set = wp a→partialBa (mustPT a→ba→Set)
 
   {-
-  To call 'wp', must show how to transform
-  -      predicate                  P :         b -> Set
-  - to a predicate on partial results : Partial b -> Set
-  Done via proposition 'mustPT P c'
-  - holds when computation c of type Partial b successfully returns a 'b' that satisfies P
-
-  particular PT semantics of partial computations determined by definition of 'mustPT'
-  here: rule out failure entirely
-  - so case Abort returns empty type
-
   Given this PT semantics for Kleisli arrows in general,
-  can now study semantics of above monadic interpreter
-  via passing
+  can now study semantics of above monadic interpreter via passing
   - interpreter           : ⟦_⟧
   - desired postcondition : _⇓_
   as arguments to wpPartial:
   -}
 
-  exwpp  : Expr -> Set
-  exwpp  = wpPartial ⟦_⟧ _⇓_
-  exwpp' : wpPartial ⟦_⟧ _⇓_ ≡ λ expr -> mustPT _⇓_ expr ⟦ expr ⟧
-  exwpp' = refl
+  module WPP where
 
-  wppv1  : wpPartial ⟦_⟧ _⇓_ (Val 1)
-  wppv1  = ⇓Base
-  wppd   : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
-  wppd   = ⇓Step ⇓Base ⇓Base
+    exwpp  : Expr -> Set
+    exwpp  = wpPartial ⟦_⟧ _⇓_
+    exwpp' : wpPartial ⟦_⟧ _⇓_ ≡ λ expr -> mustPT _⇓_ expr ⟦ expr ⟧
+    exwpp' = refl
 
-  xxx    : mustPT _⇓_ (Div (Val 3) (Val 3)) (Pure 3 >>= (λ v1 -> Pure 3 >>= _÷_ v1))
-  xxx    = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
-
-  xxx'   : mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
-  xxx'   = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
+    wppv1  : wpPartial ⟦_⟧ _⇓_ (Val 1)
+    wppv1  = ⇓Base
+    wppd   : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+    wppd   = ⇓Step ⇓Base ⇓Base
+    wppd'  : Set
+    wppd'  = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
 
   {-
-  resulting in a predicate on expressions
+  wpPartial ⟦_⟧ _⇓_ : a predicate on expressions
+  - a way to express SUCCESSFUL evaluation of an Expr with intended semantics
 
-  for all expressions satisfying this predicate,
-  the monadic interpreter and the relational specification, _⇓_,
-  must agree on the result of evaluation
+  ∀ exprs satisfying this predicate
+  - monadic interpreter and
+  - relational big-step specification
+  must agree on result of evaluation
+
+  for a given e : Expr, satisfaction of predicate means
+  - 'e' evaluates to a value by big-step operational semantics
+  - if interpreter returns a value at all
+    then that value agrees with big step semantics
+  - if interpreter aborts
+    then have a proof of ⊥ (so, it does not abort)
 
   What does this say about correctness of interpreter?
-  To understand the predicate better, define this predicate on expressions:
+
+  does not specify how many Expr that satisfy that characterization also satisfy wpPartial ⟦_⟧ _⇓_
+
+  to understand wpPartial ⟦_⟧ _⇓_ better
+  - define safety criteria that we believe in
+  - prove every expression that satisfies that criteria satisfies wpPartial ⟦_⟧ _⇓_
+    - so SafeDiv refines wpPartial ⟦_⟧ _⇓_
+  - if we gave ⊤ above, then 'correct' would not say that SafeDiv rules out undefined behavior
   -}
 
   SafeDiv : Expr -> Set
   SafeDiv (Val x)     = ⊤
   SafeDiv (Div el er) = (er ⇓ Zero -> ⊥) ∧ SafeDiv el ∧ SafeDiv er
 
-  exsdv : SafeDiv (Val 3) ≡ ⊤
-  exsdv = refl
-  exsdd : SafeDiv (Div (Val 3) (Val 3))
-        ≡ Pair ((x : Val    3 ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
-  exsdd = refl
+  module SD where
 
-  exsdx : SafeDiv (Div (Val 3) (Val 0))
-        ≡ Pair ((x : Val Zero ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
-  exsdx = refl
+    exsdv : SafeDiv (Val 3) ≡ ⊤
+    exsdv = refl
+    exsdd : SafeDiv (Div (Val 3) (Val 3))
+          ≡ Pair ((x : Val    3 ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
+    exsdd = refl
+
+    exsdx : SafeDiv (Div (Val 3) (Val 0))
+          ≡ Pair ((x : Val Zero ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
+    exsdx = refl
 
   {-
   Expect : any expr e for which SafeDiv e holds
@@ -414,11 +541,11 @@ module Maybe where
 
   correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
   correct (Val x) h = ⇓Base
-  correct (Div el er) (ernz , (sdel , sder)) with ⟦ el ⟧ | ⟦ er ⟧ | correct el sdel | correct er sder
-  correct (Div el er) (ernz , (sdel , sder)) | Pure v1      | Pure Zero         | el⇓v1 | er⇓Z   = magic (ernz er⇓Z)
-  correct (Div el er) (ernz , (sdel , sder)) | Pure v1      | Pure (Succ v2)    | el⇓v1 | er⇓Sv2 = ⇓Step el⇓v1 er⇓Sv2
-  correct (Div el er) (ernz , (sdel , sder)) | Pure v1      | Step Abort ⊥→FCRN | el⇓v1 | ()
-  correct (Div el er) (ernz , (sdel , sder)) | Step Abort _ | _                 | ()    | _
+  correct (Div el er) (   _ , (sdel , sder)) with ⟦ el ⟧ | ⟦ er ⟧ | correct el sdel | correct er sder
+  correct (Div  _  _) (ernz , (   _ ,    _)) | Pure _       | Pure Zero     |     _ | er⇓Zvr = magic (ernz er⇓Zvr)
+  correct (Div  _  _) (   _ , (   _ ,    _)) | Pure _       | Pure (Succ _) | el⇓vl | er⇓Svr = ⇓Step el⇓vl er⇓Svr
+  correct (Div  _  _) (   _ , (   _ ,    _)) | Pure _       | Step Abort _  |     _ | ()
+  correct (Div  _  _) (   _ , (   _ ,    _)) | Step Abort _ | _             | ()    | _
 
   {-
   Instead of manually defining SafeDiv,
