@@ -556,12 +556,12 @@ module Maybe where
 
   correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
   correct (Val x) h = ⇓Base
-  correct (Div el er) (   _ , (sdel , sder))
-                                          with ⟦ el ⟧       | ⟦ er ⟧         | correct el sdel | correct er sder
-  correct (Div  _  _) (ernz , (   _ ,    _)) | Pure _       | Pure Zero     | _               | er⇓Zvr = magic (ernz er⇓Zvr)
-  correct (Div  _  _) (   _ , (   _ ,    _)) | Pure _       | Pure (Succ _) | el⇓vl           | er⇓Svr = ⇓Step el⇓vl er⇓Svr
-  correct (Div  _  _) (   _ , (   _ ,    _)) | Pure _       | Step Abort _  | _               | ()
-  correct (Div  _  _) (   _ , (   _ ,    _)) | Step Abort _ | _             | ()              | _
+  correct (Div el er) (ernz , (sdel , sder))
+   with ⟦ el ⟧       | ⟦ er ⟧         | correct el sdel | correct er sder
+  ... | Pure _       | Pure Zero     | _               | er⇓Zvr = magic (ernz er⇓Zvr)
+  ... | Pure _       | Pure (Succ _) | el⇓vl           | er⇓Svr = ⇓Step el⇓vl er⇓Svr
+  ... | Pure _       | Step Abort _  | _               | ()
+  ... | Step Abort _ | _             | ()              | _
 
   {-
   Generalize above.
