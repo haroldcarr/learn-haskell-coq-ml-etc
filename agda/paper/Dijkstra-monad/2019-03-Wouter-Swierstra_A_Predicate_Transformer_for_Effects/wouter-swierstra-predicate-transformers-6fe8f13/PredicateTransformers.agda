@@ -448,7 +448,7 @@ module Maybe where
     bsp⇓''x : mustPT _⇓_ (Val 1) (Step Abort (λ ()))
     bsp⇓''x = {!!}
     -}
-    xxx     : mustPT _⇓_ (Div (Val 3) (Val 3)) (Pure 3 >>= (λ v -> Pure 3 >>= _÷ v))
+    xxx     : mustPT _⇓_ (Div (Val 3) (Val 3)) (Pure 3 >>= (λ n -> Pure 3 >>= _÷ n))
     xxx     = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
 
     xxx'    : mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
@@ -640,15 +640,16 @@ module Maybe where
        | complete    el (wpPartial1 {el} {er} h)
        | complete    er (wpPartial2 {el} {er} h)
   complete (Div _ _) h   | Pure nl      | [[[ ⟦el⟧≡Purenl ]]] | Pure Zero     | [[[ ⟦er⟧≡Pure0 ]]] | _  | _
-                    -- Goal
-                    -- mustPT  (λ _ _ → ⊤' zero)  (Div el er)  (Pure nl >>= (λ v1 → Pure Zero >>= _÷_ v1))
-                    -- ⊥
-                    -- Context
-                    -- h : mustPT _⇓_ (Div el er) (⟦ el ⟧ >>= (λ v1 → ⟦ er ⟧ >>= _÷_ v1))
+                  -- Goal
+                  -- mustPT (λ _ _ → ⊤' zero)
+                  --                (Div el er) (Pure nl >>= (λ nl' → Pure Zero >>= _÷_ nl'))
+                  -- ⊥
+                  -- Context
+                  -- h : mustPT _⇓_ (Div el er)  (⟦ el ⟧ >>= (λ nl' → ⟦ er ⟧    >>= _÷_ nl'))
     rewrite
-        ⟦el⟧≡Purenl -- h : mustPT _⇓_ (Div el er)                    (⟦ er ⟧ >>= _÷_ nl)
-      | ⟦er⟧≡Pure0  -- h : ⊥
-    = magic h
+      ⟦el⟧≡Purenl -- h : mustPT _⇓_ (Div el er)                      (⟦ er ⟧    >>= _÷_ nl)
+    | ⟦er⟧≡Pure0  -- h : ⊥
+    = h -- magic h
   complete (Div _ _)   _ | Pure _       | _            | Pure (Succ _) | _            | _  | _ = tt
   complete (Div _ _)   _ | Pure _       | _            | Step Abort _  | _            | _  | ()
   complete (Div _ _)   _ | Step Abort _ | _            | _             | _            | () | _
