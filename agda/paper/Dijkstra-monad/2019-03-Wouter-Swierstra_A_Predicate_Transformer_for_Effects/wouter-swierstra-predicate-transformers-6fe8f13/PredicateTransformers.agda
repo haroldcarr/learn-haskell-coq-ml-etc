@@ -180,6 +180,23 @@ module Free where
      -> Set l'
   P ⊆ Q = ∀ a -> P a -> Q a
 
+  module ⊆Test where
+    open import Data.Nat using (ℕ; zero; suc; _+_)
+    data _≤_ : ℕ → ℕ → Set where
+      z≤n : ∀   {n : ℕ}         →         0 ≤         n
+      s≤s : ∀ {m n : ℕ} → m ≤ n → Nat.suc m ≤ Nat.suc n
+
+    ≤1⊆≤2 : (_≤ 1) ⊆ (_≤ 2)
+    --    (a : ℕ)    (a ≤ 1)    (a ≤ 2)
+    ≤1⊆≤2       Zero       _  = z≤n
+    ≤1⊆≤2 (Succ Zero) (s≤s _) = s≤s z≤n
+
+    {- cannot be proved
+    ≤2⊆≤1 : (_≤ 2) ⊆ (_≤ 1)
+    ≤2⊆≤1  Zero _          = z≤n
+    ≤2⊆≤1 (Succ a) (s≤s p) = {!!}
+    -}
+
   -- refinement relation between PTs : pt1 refined by pt2
   --
   -- (same thing as ⊆, but one level up)
@@ -390,28 +407,7 @@ module Maybe where
     evd0' : evd0 ≡ Step Abort (λ ())
     evd0' = refl
 
-  {-
-  to relate big step semantics to monadic interpreter
-  - stdlib 'div' requires implicit proof that divisor is non-zero
-    - _⇓_ relation generates via pattern matching
-    - _÷_ does explicit check
-  - interpreter uses _÷_
-    - fails explicitly with abort when divisor is zero
-
-  Assign weakest precondition semantics to Kleisli arrows of the form
-
-      a -> Partial b
-
-  to call 'wp', must show how to transform
-  -      predicate                    P  :         b -> Set
-  - to a predicate on partial results P' : Partial b -> Set
-  done via 'mustPT P c'
-  - holds when computation c of type Partial b successfully returns a 'b' that satisfies P
-
-  particular PT semantics of partial computations determined by definition of 'mustPT'
-  here: rule out failure entirely
-  - so Abort case returns empty type
-  -}
+  -- relate big step semantics to monadic interpreter
 
   -- convert post-condition for a pure function  'f : (x : a) ->          b x'
   -- to      post-condition on partial functions 'f : (x : A) -> Partial (b x)'
@@ -443,7 +439,6 @@ module Maybe where
 
     bsp⇓''  : Set
     bsp⇓''  = mustPT _⇓_ (Val 1) (Step Abort (λ ()))
-
     {- nothing can be constructed with this type
     bsp⇓''x : mustPT _⇓_ (Val 1) (Step Abort (λ ()))
     bsp⇓''x = {!!}
@@ -456,6 +451,29 @@ module Maybe where
 
     xxx''   : Set
     xxx''   = mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
+
+  {-
+  to relate big step semantics to monadic interpreter
+  - stdlib 'div' requires implicit proof that divisor is non-zero
+    - _⇓_ relation generates via pattern matching
+    - _÷_ does explicit check
+  - interpreter uses _÷_
+    - fails explicitly with abort when divisor is zero
+
+  Assign weakest precondition semantics to Kleisli arrows of the form
+
+      a -> Partial b
+
+  to call 'wp', must show how to transform
+  -      predicate                    P  :         b -> Set
+  - to a predicate on partial results P' : Partial b -> Set
+    - done via 'mustPT P c'
+  - holds when computation c of type Partial b successfully returns a 'b' that satisfies P
+
+  particular PT semantics of partial computations determined by definition of 'mustPT'
+  here: rule out failure entirely
+  - so mustPT Abort case returns empty type
+  -}
 
   wpPartial : {a : Set} -> {b : a -> Set}
            -> ((x : a) -> Partial (b x))
@@ -555,7 +573,8 @@ module Maybe where
   -}
 
   correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
-  correct (Val _) _ = ⇓Base
+  --      (a : Expr)  (SafeDiv a)                                 (wpPartial ⟦_⟧ _⇓_ a)
+  correct (Val _)     _                                         = ⇓Base
   correct (Div el er) (er⇓0→⊥ , (sdel , sder))
    with ⟦ el ⟧       | ⟦ er ⟧         | correct el sdel | correct er sder
   ... | Pure _       | Pure Zero     | _               | er⇓0   = magic (er⇓0→⊥ er⇓0)
@@ -563,6 +582,16 @@ module Maybe where
   ... | Pure _       | Step Abort _  | _               | ()
   ... | Step Abort _ | _             | ()              | _
 
+  module CorrectTest where
+    xxx : wpPartial ⟦_⟧ _⇓_ (Val 3)
+    xxx = ⇓Base
+
+    yyy : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 1))
+    yyy = ⇓Step ⇓Base ⇓Base
+    {-
+    zzz : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 0))
+    zzz = {!!}
+    -}
   {-
   Generalize above.
   Instead of manually defining SafeDiv,
