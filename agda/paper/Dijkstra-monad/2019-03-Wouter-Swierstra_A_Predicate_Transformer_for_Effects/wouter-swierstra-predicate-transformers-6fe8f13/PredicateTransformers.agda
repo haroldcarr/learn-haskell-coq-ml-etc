@@ -369,10 +369,10 @@ module Maybe where
   n ÷ (Succ k) = return (n div (Succ k))
 
   ⟦_⟧ : Expr -> Partial Nat
-  ⟦ Val x ⟧     =  return x
-  ⟦ Div el er ⟧ =  ⟦ el ⟧ >>= \v1 ->
-                   ⟦ er ⟧ >>= \v2 ->
-                   v1 ÷ v2
+  ⟦ Val n ⟧     =  return n
+  ⟦ Div el er ⟧ =  ⟦ el ⟧ >>= \nl ->
+                   ⟦ er ⟧ >>= \nr ->
+                   nl ÷ nr
 
   module InterpTest where
     evv   : Free C R Nat
@@ -521,7 +521,7 @@ module Maybe where
   -}
 
   SafeDiv : Expr -> Set
-  SafeDiv (Val x)     = ⊤
+  SafeDiv (Val _)     = ⊤
   SafeDiv (Div el er) = (er ⇓ Zero -> ⊥) ∧ SafeDiv el ∧ SafeDiv er
 
   module SafeDivTest where
@@ -555,11 +555,11 @@ module Maybe where
   -}
 
   correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
-  correct (Val x) h = ⇓Base
+  correct (Val _) _ = ⇓Base
   correct (Div el er) (ernz , (sdel , sder))
    with ⟦ el ⟧       | ⟦ er ⟧         | correct el sdel | correct er sder
-  ... | Pure _       | Pure Zero     | _               | er⇓Zvr = magic (ernz er⇓Zvr)
-  ... | Pure _       | Pure (Succ _) | el⇓vl           | er⇓Svr = ⇓Step el⇓vl er⇓Svr
+  ... | Pure _       | Pure Zero     | _               | er⇓Znr = magic (ernz er⇓Znr)
+  ... | Pure _       | Pure (Succ _) | el⇓nl           | er⇓Snr = ⇓Step el⇓nl er⇓Snr
   ... | Pure _       | Step Abort _  | _               | ()
   ... | Step Abort _ | _             | ()              | _
 
@@ -588,7 +588,7 @@ module Maybe where
 
   -- both proofs proceed by induction on argument expression
 
-  sound (Val x) _ = ⇓Base
+  sound (Val _) _ = ⇓Base
   sound (Div el er) _ with ⟦ el ⟧       | ⟦ er ⟧          | sound el    | sound er
   sound (Div  _  _) ()   | Pure _       | Pure Zero      | _            | _
   sound (Div  _  _) _    | Pure nl      | Pure (Succ nr) | ⊤'zero→el⇓nl | ⊤'zero→er⇓Succnr
@@ -596,9 +596,9 @@ module Maybe where
   sound (Div  _  _) ()   | Pure _       | Step Abort _   | _            | _
   sound (Div  _  _) ()   | Step Abort _ | _              | _            | _
 
-  inDom : {v : Nat}
+  inDom : {n : Nat}
        -> (e : Expr)
-       -> ⟦ e ⟧ == Pure v
+       -> ⟦ e ⟧ == Pure n
        -> dom ⟦_⟧ e
   inDom (Val _) _ = tt
   inDom (Div el er) _ with ⟦ el ⟧       | ⟦ er ⟧
@@ -607,8 +607,10 @@ module Maybe where
   inDom (Div  _  _) ()   | Pure _       | Step Abort _
   inDom (Div  _  _) ()   | Step Abort _ | _
 
-  aux : (e : Expr) (v : Nat) -> ⟦ e ⟧ ≡ Pure v -> e ⇓ v
-  aux e v eq with sound e (inDom e eq)
+  ⟦e⟧≡Puren→e⇓n : (e : Expr) (n : Nat)
+               -> ⟦ e ⟧ ≡ Pure n
+               -> e ⇓ n
+  ⟦e⟧≡Puren→e⇓n e _ eq with sound e (inDom e eq)
   ... | H rewrite eq = H
 
   wpPartial1 : {el er : Expr}
@@ -617,7 +619,7 @@ module Maybe where
   wpPartial1 {el} {er} Diveler⇓_nldivSuccn
                          with ⟦ el ⟧       | inspect ⟦_⟧ el | ⟦ er ⟧
   wpPartial1 { _} { _} ()   | Pure _       | _             | Pure Zero
-  wpPartial1 {el} { _} _    | Pure nl      | [[[ eq ]]]    | Pure (Succ _) = aux el nl eq
+  wpPartial1 {el} { _} _    | Pure nl      | [[[ eq ]]]    | Pure (Succ _) = ⟦e⟧≡Puren→e⇓n el nl eq
   wpPartial1 { _} { _} ()   | Pure _       | _             | Step Abort _
   wpPartial1 { _} { _} ()   | Step Abort _ | _             | _
 
@@ -625,11 +627,11 @@ module Maybe where
             -> wpPartial ⟦_⟧ _⇓_ (Div el er)
             -> wpPartial ⟦_⟧ _⇓_         er
   wpPartial2 {el} {er} _ with ⟦ el ⟧       | inspect ⟦_⟧ el | ⟦ er ⟧       | inspect ⟦_⟧ er
-  wpPartial2 { _} {er} _    | Pure _       | _             | Pure nr      | [[[ eqnr ]]] = aux er nr eqnr
+  wpPartial2 { _} {er} _    | Pure _       | _             | Pure nr      | [[[ eqnr ]]] = ⟦e⟧≡Puren→e⇓n er nr eqnr
   wpPartial2 { _} { _} ()   | Pure _       | _             | Step Abort _ | _
   wpPartial2 { _} { _} ()   | Step Abort _ | _             | _            | _
 
-  complete (Val x) h = tt
+  complete (Val _) _ = tt
   complete (Div el er) h
     with           ⟦ el ⟧
        | inspect ⟦_⟧ el
