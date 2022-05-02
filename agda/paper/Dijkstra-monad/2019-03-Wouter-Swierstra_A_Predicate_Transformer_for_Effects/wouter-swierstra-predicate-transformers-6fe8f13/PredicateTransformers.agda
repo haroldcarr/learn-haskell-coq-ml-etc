@@ -164,7 +164,7 @@ module Free where
   --
   -- implication between predicates
   --
-  --  P a says a ∈ P,
+  --  P a says a ∈ P
   --   if the extents of P, Q : A → Set is taken to be
   --   the subset of A satisfying predicates P, Q
   --
@@ -556,9 +556,9 @@ module Maybe where
 
   correct : SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_
   correct (Val _) _ = ⇓Base
-  correct (Div el er) (ernz , (sdel , sder))
+  correct (Div el er) (er⇓0→⊥ , (sdel , sder))
    with ⟦ el ⟧       | ⟦ er ⟧         | correct el sdel | correct er sder
-  ... | Pure _       | Pure Zero     | _               | er⇓Znr = magic (ernz er⇓Znr)
+  ... | Pure _       | Pure Zero     | _               | er⇓0   = magic (er⇓0→⊥ er⇓0)
   ... | Pure _       | Pure (Succ _) | el⇓nl           | er⇓Snr = ⇓Step el⇓nl er⇓Snr
   ... | Pure _       | Step Abort _  | _               | ()
   ... | Step Abort _ | _             | ()              | _
@@ -576,7 +576,7 @@ module Maybe where
      -> (a -> Set)
   dom f = wpPartial f (\_ _ -> ⊤)
 
-  --can show that the two semantics agree precisely on the domain of the interpreter:
+  -- can show that the two semantics agree precisely on the domain of the interpreter:
 
   -- everything in domain of interpreter
   -- gets evaluated in agreement with big step semantics
