@@ -414,7 +414,7 @@ module Maybe where
 
   -- relate big step semantics to monadic interpreter
 
-  -- convert post-condition for a pure function  'f : (x : a) ->          b x'
+  -- convert post-condition for a pure function  'f : (x : A) ->          b x'
   -- to      post-condition on partial functions 'f : (x : A) -> Partial (b x)'
   mustPT : forall {a : Set} -> {b : a -> Set}
         -> ((x : a) -> b x -> Set)
@@ -604,14 +604,22 @@ module Maybe where
   Generalization.
   Instead of manually defining SafeDiv,
   define more general predicate
-  characterising the domain of a partial function using wpPartial
+  characterising the domain of a partial function using wpPartial.
   -}
 
-  -- HC: compare to 'mustPT'
+  -- returns ⊤ on Pure; ⊥ on Step Abort ...
   dom : {a : Set} -> {b : a -> Set}
      -> ((x : a) -> Partial (b x))
      -> (a -> Set)
   dom f = wpPartial f (\_ _ -> ⊤)
+
+  module DomTest where
+    domIs   : dom ⟦_⟧ ≡ λ z → mustPT (λ x _ → ⊤' zero) z ⟦ z ⟧
+    domIs   = refl
+    domIs'  : dom ⟦_⟧ (Val 0) ≡ ⊤' zero
+    domIs'  = refl
+    domIs'' : dom ⟦_⟧ (Div (Val 1) (Val 0)) ≡ ⊥
+    domIs'' = refl
 
   -- can show that the two semantics agree precisely on the domain of the interpreter:
 
@@ -670,12 +678,9 @@ module Maybe where
 
   complete (Val _) _ = tt
   complete (Div el er) h
-    with           ⟦ el ⟧
-       | inspect ⟦_⟧ el
-       |           ⟦ er ⟧
-       | inspect ⟦_⟧ er
-       | complete    el (wpPartial1 {el} {er} h)
-       | complete    er (wpPartial2 {el} {er} h)
+    with                   ⟦ el ⟧   | inspect ⟦_⟧ el    | ⟦ er ⟧        | inspect ⟦_⟧ er
+                                                                                      | complete el (wpPartial1 {el} {er} h)
+                                                                                      | complete er (wpPartial2 {el} {er} h)
   complete (Div _ _) h   | Pure nl      | [[[ ⟦el⟧≡Purenl ]]] | Pure Zero     | [[[ ⟦er⟧≡Pure0 ]]] | _  | _
                   -- Goal
                   -- mustPT (λ _ _ → ⊤' zero)
