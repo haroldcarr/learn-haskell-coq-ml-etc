@@ -139,6 +139,9 @@ module Free where
     isEvenPT : ℕ -> Set
     isEvenPT = wp0 (_+ 2) isEven
 
+    isEven'  : isEvenPT ≡ isEven ∘ (_+ 2)
+    isEven'  = refl
+
     isEven5  : Set
     isEven5  = isEvenPT 5
 
@@ -187,9 +190,11 @@ module Free where
       s≤s : ∀ {m n : ℕ} → m ≤ n → Nat.suc m ≤ Nat.suc n
 
     ≤1⊆≤2 : (_≤ 1) ⊆ (_≤ 2)
-    --    (a : ℕ)    (a ≤ 1)    (a ≤ 2)
-    ≤1⊆≤2       Zero       _  = z≤n
-    ≤1⊆≤2 (Succ Zero) (s≤s _) = s≤s z≤n
+    --           P ⊆ Q
+    --   ∀ a      ->   P a    -> Q a
+    --    (a : ℕ) ->  (a ≤ 1) -> (a ≤ 2)
+    ≤1⊆≤2       Zero       _   = z≤n
+    ≤1⊆≤2 (Succ Zero) (s≤s _)  = s≤s z≤n
 
     {- cannot be proved
     ≤2⊆≤1 : (_≤ 2) ⊆ (_≤ 1)
@@ -563,7 +568,7 @@ module Maybe where
     exsd30' = SafeDiv (Div (Val 3) (Val 0))
 
   {-
-  Expect : any expr e for which SafeDiv e holds can be evaluated without division-by-zero
+  expect : any expr : e for which SafeDiv e holds can be evaluated without division-by-zero
 
   can prove SafeDiv is sufficient condition for two notions of evaluation to coincide:
 
@@ -583,17 +588,20 @@ module Maybe where
   ... | Step Abort _ | _             | ()              | _
 
   module CorrectTest where
-    xxx : wpPartial ⟦_⟧ _⇓_ (Val 3)
-    xxx = ⇓Base
+    xxx  : wpPartial ⟦_⟧ _⇓_ (Val 3)
+    xxx  = ⇓Base
 
-    yyy : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 1))
-    yyy = ⇓Step ⇓Base ⇓Base
+    xxx' : Set
+    xxx' = wpPartial ⟦_⟧ _⇓_ (Val 3)
+
+    yyy  : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 1))
+    yyy  = ⇓Step ⇓Base ⇓Base
     {-
-    zzz : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 0))
-    zzz = {!!}
+    zzz  : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 0))
+    zzz  = {!!}
     -}
   {-
-  Generalize above.
+  Generalization.
   Instead of manually defining SafeDiv,
   define more general predicate
   characterising the domain of a partial function using wpPartial
@@ -648,7 +656,7 @@ module Maybe where
   wpPartial1 {el} {er} Diveler⇓_nldivSuccn
                          with ⟦ el ⟧       | inspect ⟦_⟧ el | ⟦ er ⟧
   wpPartial1 { _} { _} ()   | Pure _       | _             | Pure Zero
-  wpPartial1 {el} { _} _    | Pure nl      | [[[ eq ]]]    | Pure (Succ _) = ⟦e⟧≡Puren→e⇓n el nl eq
+  wpPartial1 {el} { _} _    | Pure nl      | [[[ eqnl ]]]  | Pure (Succ _) = ⟦e⟧≡Puren→e⇓n el nl eqnl
   wpPartial1 { _} { _} ()   | Pure _       | _             | Step Abort _
   wpPartial1 { _} { _} ()   | Step Abort _ | _             | _
 
