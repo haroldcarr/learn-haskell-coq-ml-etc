@@ -136,17 +136,17 @@ module Free where
       even-z : isEven Nat.zero
       even-s : {n : ℕ} → isEven n → isEven (Nat.suc (Nat.suc n))
 
-    isEvenPT : ℕ -> Set
-    isEvenPT = wp0 (_+ 2) isEven
+    isEvenWP : ℕ -> Set
+    isEvenWP = wp0 (_+ 2) isEven
 
-    isEven'  : isEvenPT ≡ isEven ∘ (_+ 2)
-    isEven'  = refl
+    _        : isEvenWP ≡ isEven ∘ (_+ 2)
+    _        = refl
 
-    isEven5  : Set
-    isEven5  = isEvenPT 5
+    _        : Set
+    _        = isEvenWP 5
 
-    isEven5' : isEvenPT 5 ≡ isEven 7
-    isEven5' = refl
+    _        : isEvenWP 5 ≡ isEven 7
+    _        = refl
 
   {-
   wp0 semantics
@@ -203,7 +203,6 @@ module Free where
     -}
 
   -- refinement relation between PTs : pt1 refined by pt2
-  --
   -- (same thing as ⊆, but one level up)
   -- for every post condition, pt2 weakens the precondition
   -- "weakest" is the right side : pt2 P
@@ -301,7 +300,7 @@ module Free where
 ------------------------------------------------------------------------------
 
 module Maybe where
-  open import Data.Nat            public using (_+_; _>_; _*_)
+  open import Data.Nat            public using (_+_; _>_; _*_; s≤s; z≤n)
                                   renaming (ℕ to Nat; zero to Zero; suc to Succ)
   open import Data.Nat.DivMod     using (_div_)
   open import Data.Nat.Properties using (*-zeroʳ)
@@ -359,28 +358,28 @@ module Maybe where
          -> Div el er ⇓ (nl div (Succ nr))
 
   module ⇓Test where
-    exv       : Expr
-    exv       = Val 3
-    exd       : Expr
-    exd       = Div (Val 3) (Val 0)
+    _ : Expr
+    _ = Val 3
+    _ : Expr
+    _ = Div (Val 3) (Val 0)
 
-    exb0      : Val 0 ⇓ 0
-    exb0      = ⇓Base
+    _ : Val 0 ⇓ 0
+    _ = ⇓Base
 
-    exb3      : Val 3 ⇓ 3
-    exb3      = ⇓Base
+    _ : Val 3 ⇓ 3
+    _ = ⇓Base
 
-    exs331    : Div (Val 3) (Val 3) ⇓ 1
-    exs331    = ⇓Step ⇓Base ⇓Base
+    _ : Div (Val 3) (Val 3) ⇓ 1
+    _ = ⇓Step ⇓Base ⇓Base
 
-    exs931    : Div (Val 9) (Val 3) ⇓ 3
-    exs931    = ⇓Step ⇓Base ⇓Base
+    _ : Div (Val 9) (Val 3) ⇓ 3
+    _ = ⇓Step ⇓Base ⇓Base
 
-    exs9d31   : Div (Val 9) (Div (Val 3) (Val 1)) ⇓ 3
-    exs9d31   = ⇓Step ⇓Base (⇓Step ⇓Base ⇓Base)
+    _ : Div (Val 9) (Div (Val 3) (Val 1)) ⇓ 3
+    _ = ⇓Step ⇓Base (⇓Step ⇓Base ⇓Base)
 
-    exsd91d31 : Div (Div (Val 9) (Val 1)) (Div (Val 3) (Val 1)) ⇓ 3
-    exsd91d31 = ⇓Step (⇓Step ⇓Base ⇓Base) (⇓Step ⇓Base ⇓Base)
+    _ : Div (Div (Val 9) (Val 1)) (Div (Val 3) (Val 1)) ⇓ 3
+    _ = ⇓Step (⇓Step ⇓Base ⇓Base) (⇓Step ⇓Base ⇓Base)
 
   -- semantics can also be specified by an INTERPRETER
   -- monadic INTERPRETER, using Partial to handle division-by-zero
@@ -399,18 +398,18 @@ module Maybe where
   module InterpTest where
     evv   : Free C R Nat
     evv   = ⟦ Val 3 ⟧
-    evv'  : evv ≡ Pure 3
-    evv'  = refl
+    _     : evv ≡ Pure 3
+    _     = refl
 
     evd   : Free C R Nat
     evd   = ⟦ Div (Val 3) (Val 3) ⟧
-    evd'  : evd ≡ Pure 1
-    evd'  = refl
+    _     : evd ≡ Pure 1
+    _     = refl
 
     evd0  : Free C R Nat
     evd0  = ⟦ Div (Val 3) (Val 0) ⟧
-    evd0' : evd0 ≡ Step Abort (λ ())
-    evd0' = refl
+    _     : evd0 ≡ Step Abort (λ ())
+    _     = refl
 
   -- relate big step semantics to monadic interpreter
 
@@ -420,42 +419,42 @@ module Maybe where
         -> ((x : a) -> b x -> Set)
         ->  (x : a)
         ->    Partial (b x)
-        ->                   Set
+        ->                    Set
   mustPT a→ba→Set a (Pure ba)      = a→ba→Set a ba -- P holds if operation produces a value
   mustPT _        _ (Step Abort _) = ⊥ -- if operation fails, there is no result to apply P to
                                        -- note: could give ⊤ here, but want to rule out failure
                                        -- (total correctness)
 
   module MustPTTest where
-    bs⇓     : Expr -> Nat -> Set
-    bs⇓     = _⇓_
+    _ : Expr -> Nat -> Set
+    _ = _⇓_
 
-    bs⇓'    : Set
-    bs⇓'    = Val 1 ⇓ 1
+    _ : Set
+    _ = Val 1 ⇓ 1
 
-    bsp⇓    : Expr -> Partial Nat -> Set
-    bsp⇓    = mustPT _⇓_
+    _ : Expr -> Partial Nat -> Set
+    _ = mustPT _⇓_
 
-    bsp⇓'   : Set
-    bsp⇓'   = mustPT _⇓_ (Val 1) (Pure 1)
+    _ : Set
+    _ = mustPT _⇓_ (Val 1) (Pure 1)
 
-    bsp⇓'x  : mustPT _⇓_ (Val 1) (Pure 1)
-    bsp⇓'x  = ⇓Base
+    _ : mustPT _⇓_ (Val 1) (Pure 1)
+    _ = ⇓Base
 
-    bsp⇓''  : Set
-    bsp⇓''  = mustPT _⇓_ (Val 1) (Step Abort (λ ()))
-    {- nothing can be constructed with this type
-    bsp⇓''x : mustPT _⇓_ (Val 1) (Step Abort (λ ()))
-    bsp⇓''x = {!!}
+    _ : Set
+    _ = mustPT _⇓_ (Val 1) (Step Abort (λ ()))
+    {- a value of this type cannot be constructed
+    _ : mustPT _⇓_ (Val 1) (Step Abort (λ ()))
+    _ = {!!}
     -}
-    xxx     : mustPT _⇓_ (Div (Val 3) (Val 3)) (Pure 3 >>= (λ n -> Pure 3 >>= _÷ n))
-    xxx     = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
+    _ : mustPT _⇓_ (Div (Val 3) (Val 3)) (Pure 3 >>= (λ n -> Pure 3 >>= _÷ n))
+    _ = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
 
-    xxx'    : mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
-    xxx'    = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
+    _ : mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
+    _ = ⇓Step {Val 3} {Val 3} {3} {2} ⇓Base ⇓Base
 
-    xxx''   : Set
-    xxx''   = mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
+    _ : Set
+    _ = mustPT _⇓_ (Div (Val 3) (Val 3)) (3 ÷ 3)
 
   {-
   to relate big step semantics to monadic interpreter
@@ -495,25 +494,25 @@ module Maybe where
   -}
 
   module WpPartialTest where
-    exwpp   : Expr -> Set
-    exwpp   = wpPartial ⟦_⟧ _⇓_
-    exwpp'  : wpPartial ⟦_⟧ _⇓_ ≡ λ expr -> mustPT _⇓_ expr ⟦ expr ⟧
-    exwpp'  = refl
+    _ : Expr -> Set
+    _ = wpPartial ⟦_⟧ _⇓_
+    _ : wpPartial ⟦_⟧ _⇓_ ≡ λ expr -> mustPT _⇓_ expr ⟦ expr ⟧
+    _ = refl
 
-    wppv1   : wpPartial ⟦_⟧ _⇓_ (Val 1)
-    wppv1   = ⇓Base
+    _ : wpPartial ⟦_⟧ _⇓_ (Val 1)
+    _ = ⇓Base
 
-    wppd11  : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
-    wppd11  = ⇓Step ⇓Base ⇓Base
-    wppd11' : Set
-    wppd11' = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+    _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+    _ = ⇓Step ⇓Base ⇓Base
+    _ : Set
+    _ = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
 
     {- this type cannot be constructed
-    wppd10  : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
-    wppd10  = {!!}
+    _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
+    _ = {!!}
     -}
-    wppd10' : Set
-    wppd10' = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
+    _ : Set
+    _ = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
 
   {-
   wpPartial ⟦_⟧ _⇓_ : a predicate on expressions
@@ -548,24 +547,24 @@ module Maybe where
   SafeDiv (Div el er) = (er ⇓ Zero -> ⊥) ∧ SafeDiv el ∧ SafeDiv er
 
   module SafeDivTest where
-    exsdv3  : SafeDiv (Val 3) ≡ ⊤
-    exsdv3  = refl
-    exsdv0  : SafeDiv (Val 0) ≡ ⊤
-    exsdv0  = refl
-    exsdv0' : Set
-    exsdv0' = SafeDiv (Val 0)
+    _ : SafeDiv (Val 3) ≡ ⊤
+    _ = refl
+    _ : SafeDiv (Val 0) ≡ ⊤
+    _ = refl
+    _ : Set
+    _ = SafeDiv (Val 0)
 
-    exsd33  : SafeDiv (Div (Val 3) (Val 3))
-            ≡ Pair ((x : Val    3 ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
-    exsd33  = refl
-    exsd33' : Set
-    exsd33' = SafeDiv (Div (Val 3) (Val 3))
+    _ : SafeDiv (Div (Val 3) (Val 3))
+                 ≡ Pair ((x : Val 3 ⇓ 0) -> ⊥) (Pair (⊤' zero) (⊤' zero))
+    _ = refl
+    _ : Set
+    _ = SafeDiv (Div (Val 3) (Val 3))
 
-    exsd30  : SafeDiv (Div (Val 3) (Val 0))
-            ≡ Pair ((x : Val Zero ⇓ Zero) -> ⊥) (Pair (⊤' zero) (⊤' zero))
-    exsd30  = refl
-    exsd30' : Set
-    exsd30' = SafeDiv (Div (Val 3) (Val 0))
+    _ : SafeDiv (Div (Val 3) (Val 0))
+                 ≡ Pair ((x : Val 0 ⇓ 0) -> ⊥) (Pair (⊤' zero) (⊤' zero))
+    _ = refl
+    _ : Set
+    _ = SafeDiv (Div (Val 3) (Val 0))
 
   {-
   expect : any expr : e for which SafeDiv e holds can be evaluated without division-by-zero
@@ -588,17 +587,17 @@ module Maybe where
   ... | Step Abort _ | _             | ()              | _
 
   module CorrectTest where
-    xxx  : wpPartial ⟦_⟧ _⇓_ (Val 3)
-    xxx  = ⇓Base
+    _ : wpPartial ⟦_⟧ _⇓_ (Val 3)
+    _ = ⇓Base
 
-    xxx' : Set
-    xxx' = wpPartial ⟦_⟧ _⇓_ (Val 3)
+    _ : Set
+    _ = wpPartial ⟦_⟧ _⇓_ (Val 3)
 
-    yyy  : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 1))
-    yyy  = ⇓Step ⇓Base ⇓Base
+    _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 1))
+    _ = ⇓Step ⇓Base ⇓Base
     {-
-    zzz  : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 0))
-    zzz  = {!!}
+    _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 0))
+    _ = {!!}
     -}
   {-
   Generalization.
@@ -607,6 +606,7 @@ module Maybe where
   characterising the domain of a partial function using wpPartial.
   -}
 
+  -- domain is well-defined Exprs (i.e., no div-by-0)
   -- returns ⊤ on Pure; ⊥ on Step Abort ...
   dom : {a : Set} -> {b : a -> Set}
      -> ((x : a) -> Partial (b x))
@@ -614,12 +614,12 @@ module Maybe where
   dom f = wpPartial f (\_ _ -> ⊤)
 
   module DomTest where
-    domIs   : dom ⟦_⟧ ≡ λ z → mustPT (λ x _ → ⊤' zero) z ⟦ z ⟧
-    domIs   = refl
-    domIs'  : dom ⟦_⟧ (Val 0) ≡ ⊤' zero
-    domIs'  = refl
-    domIs'' : dom ⟦_⟧ (Div (Val 1) (Val 0)) ≡ ⊥
-    domIs'' = refl
+    _ : dom ⟦_⟧ ≡ λ z → mustPT (λ x _ → ⊤' zero) z ⟦ z ⟧
+    _ = refl
+    _ : dom ⟦_⟧ (Val 0) ≡ ⊤' zero
+    _ = refl
+    _ : dom ⟦_⟧ (Div (Val 1) (Val 0)) ≡ ⊥
+    _ = refl
 
   -- can show that the two semantics agree precisely on the domain of the interpreter:
 
@@ -698,11 +698,11 @@ module Maybe where
 
   module CompleteTest where
     {-
-    xxx  : mustPT _⇓_ (Div (Val 1) (Val 0)) (⟦ Val 0 ⟧ >>= _÷_ 1)
-    xxx  = {!!}
+    _ : mustPT _⇓_ (Div (Val 1) (Val 0)) (⟦ Val 0 ⟧ >>= _÷_ 1)
+    _ = {!!}
     -}
-    xxx' : Set
-    xxx' = mustPT _⇓_ (Div (Val 1) (Val 0)) (⟦ Val 0 ⟧ >>= _÷_ 1)
+    _ : Set
+    _ = mustPT _⇓_ (Div (Val 1) (Val 0)) (⟦ Val 0 ⟧ >>= _÷_ 1)
 
   {-
   --------------------------------------------------
@@ -714,86 +714,93 @@ module Maybe where
   can characterise this relation by proving:
 
   refinement : (f g : a -> Maybe b)
-             -> (wpPartial f ⊑ wpPartial g) ↔ (∀ x -> (f x ≡ g x) ∨ (f x ≡ Nothing))
+            -> (wpPartial f ⊑ wpPartial g) <-> (∀ x -> (f x ≡ g x) ∨ (f x ≡ Nothing))
 
-  use refinement to relate Kleisli morphisms,
-  and to relate a program to a specification given by a pre- and post- condition
+  use refinement
+  - to relate Kleisli morphisms
+  - to relate a program to a specification given by a pre- and post- condition
 
   --------------------------------------------------
   Example: Add (interpreter for stack machine)
 
-  add top two elements; can fail fail if stack has too few elements
+  this example illustrates how to use the refinement relation
+  - to relate a specification
+    - given in terms of a pre and post condition
+  - to its implementation
 
-  below shows how to prove the definition meets its specification
+  add top two elements; fails if stack has too few elements
 
-  Define specification in terms of a pre/post condition.
+  show how to prove definition meets its specification
   -}
+
+  -- define specification in terms of a pre/post condition
   -- specification of a function of type (x : a) -> b x consists of:
   record Spec {l : Level} (a : Set) (b : a -> Set) : Set (suc l) where
     constructor [[_,_]]
     field
-      pre   : a -> Set l              -- precondition on 'a'
-      post  : (x : a) -> b x -> Set l -- postcondition relating inputs that satisfy this precondition
-                                      -- and the corresponding outputs
+      pre  :      a         -> Set l -- precondition on 'a'
+      post : (x : a) -> b x -> Set l -- postcondition relating inputs that satisfy this precondition
+                                     -- and the corresponding outputs
 
-  {-
-  [ P , Q ] : specification consisting of precondition P and postcondition Q
+  -- [ P , Q ] : specification consisting of precondition P and postcondition Q
 
-  for non-dependent examples (e.g., type b does not depend on x : a)
-  -}
-
+  -- for non-dependent examples (e.g., type b does not depend on x : a)
   SpecK : {l : Level} -> Set -> Set -> Set (suc l)
-  SpecK a b = Spec a (K b) -- K is constant function
+  SpecK a b = Spec a (K b) -- K is constant function (to discard unused arg of type a)
 
-  -- specification for addition function : describes the desired postcondition
+  -- describes desired postcondition for addition function
   data Add : List Nat -> List Nat -> Set where
     AddStep : {x1 x2 : Nat} -> {xs : List Nat}
            -> Add (x1 :: x2 :: xs) ((x1 + x2) :: xs)
 
+  -- spec for addition function
   addSpec : SpecK (List Nat) (List Nat)
   addSpec = [[ (\xs -> length xs > 1) , Add ]]
-
+  --            pre                     post
   {-
-  How to relate this specification to an implementation?
-  Note: 'wpPartial' assigns predicate transformer semantics to functions
-  - but do not yet have a corresponding predicate transform semantics for specifications.
-  wpSpec function does that:
+  need to relate spec to an implementation
+  'wpPartial' assigns predicate transformer semantics to functions
+  'wpSpec'    assigns predicate transformer semantics to specifications
   -}
-
-  -- Given a specification, Spec a b
-  -- computes the weakest precondition that satisfies an arbitrary postcondition P
-  -- i.e., the spec’s precondition should hold and its postcondition must imply P.
+  -- given a spec, Spec a b
+  -- computes weakest precondition that satisfies an arbitrary postcondition P
   wpSpec : forall {l a} -> {b : a -> Set}
         -> Spec {l} a b
         -> (P : (x : a) -> b x -> Set l)
         -> (a -> Set l)
-  wpSpec [[ pre , post ]] P = \x -> (pre x) ∧ (post x ⊆ P x)
+  wpSpec [[ pre , post ]] P = \a -> (pre a)        -- i.e., spec’s precondition should hold and
+                                  ∧ (post a ⊆ P a) --       spec's postcondition must imply P
 
-  -- Can now formulate program
+  -- using 'wpSpec' can now find a program 'add' that "refines" 'addSpec'
 
   pop : forall {a} -> List a -> Partial (a × List a)
-  pop Nil       = abort
+  pop      Nil  = abort
   pop (x :: xs) = return (x , xs)
 
   add : List Nat -> Partial (List Nat)
-  add xs =
-    pop xs >>= \{(x1 , xs) ->
-    pop xs >>= \{(x2 , xs) ->
-    return ((x1 + x2) :: xs)}}
+  add xs0 =
+    pop xs0 >>= \{(x1 , xs1) ->
+    pop xs1 >>= \{(x2 , xs2) ->
+    return ((x1 + x2) :: xs2)}}
 
-  -- that refines the specification given by addSpec:
+  -- verify correct
   correctnessAdd : wpSpec addSpec ⊑ wpPartial add
-  correctnessAdd P Nil (() , _)
-  correctnessAdd P (x :: Nil) (Data.Nat.s≤s () , _)
-  correctnessAdd P (x :: y :: xs) (_ , H) = H (x + y :: xs) AddStep
+  correctnessAdd _        (_ :: Nil) (s≤s        () , _)
+  correctnessAdd P a@(x :: y :: xs ) (s≤s (s≤s z≤n) , post_addSpec_a_⊆P_a)
+                                                        -- wpPartial add P (x :: y :: xs)
+                                                         = post_addSpec_a_⊆P_a (x + y :: xs) AddStep
+  -- paper version has "extra" 'Nil" case
+--correctnessAdd P              Nil  (           () , _)
+--correctnessAdd P        (_ :: Nil) (s≤s        () , _)
+--correctnessAdd P   (x :: y :: xs ) (            _ , H) = H                   (x + y :: xs) AddStep
 
   {-
-  This example illustrates how to use the refinement relation
+  repeat: this example illustrates how to use the refinement relation
   - to relate a specification
-    - given in terms of a pre- and postcondition,
-  - to its implementation.
+    - given in terms of a pre- and postcondition
+  - to its implementation
 
-  Compared to the refinement calculus
+  compared to the refinement calculus
   - have not yet described how to mix code and specifications (see Section 7)
 
   --------------------------------------------------
@@ -818,7 +825,7 @@ module Maybe where
            -> (P : a -> b -> Set)
            -> (a -> Set)
   wpDefault {a} {b} d f P = wp f defaultPT
-    where
+   where
     defaultPT : (x : a) -> Partial b -> Set
     defaultPT x (Pure y)       = P x y
     defaultPT x (Step Abort _) = P x d
@@ -874,13 +881,13 @@ module State (s : Set) where
   statePT' : forall {l l'} -> {b : Set l}
           -> (s -> b × s -> Set l')
           -> State b
-          -> (s -> Set l')
+          -> (s          -> Set l')
   statePT' P c i = statePT (P i) c i
 
   wpState : forall {l l' l''} -> {a : Set l} -> {b : Set l'}
-         -> (a -> State b)
+         -> (    a -> State b)
          -> (P : a × s -> b × s -> Set l'')
-         -> (a × s -> Set l'')
+         -> (    a × s          -> Set l'')
   wpState f P (x , i) = wp f ((const \c -> statePT' (\j -> P (x , j)) c i)) x
 
   soundness : forall {a b : Set}
@@ -890,7 +897,7 @@ module State (s : Set) where
            -> wpState f P (x , i)
            -> P (x , i) (run (f x) i)
   soundness {a} {b} P c i x H = lemma i (c x) H
-    where
+   where
     lemma : (st : s) -> (statec : State b) -> (statePT (P (x , i)) statec st) -> P (x , i) (run statec st)
     lemma i (Pure y)         H = H
     lemma i (Step Get     k) H = lemma i (k  i) H
