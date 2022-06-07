@@ -849,6 +849,16 @@ module Maybe where
   correctnessProduct   P (Succ x :: xs) H | Pure v       | IH                   = IH
   correctnessProduct   P (Succ x :: xs) H | Step Abort _ | IH rewrite *-zeroʳ x = IH
 
+{-
+------------------------------------------------------------------------------
+4 Mutable State
+
+predicate transformer semantics for mutable state
+giving rise to Hoare logic
+
+following assumes a fixed type s : Set (the type of the state)
+-}
+
 module State (s : Set) where
   open Free
   open Maybe using (SpecK; Spec; [[_,_]]; wpSpec)
@@ -862,34 +872,54 @@ module State (s : Set) where
 
   State : forall {l} -> Set l -> Set l
   State = Free C R
+
+  -- smart constructor
   get : State s
   get = Step Get return
 
+  -- smart constructor
   put : s -> State ⊤
   put s = Step (Put s) (\_ -> return tt)
 
+  -- map free monad to the state monad
   run : {a : Set} -> State a -> s -> a × s
-  run (Pure x)         s = (x , s)
-  run (Step Get k)     s = run (k s) s
+  run (Pure x)         s = (x ,       s)
+  run (Step  Get    k) s = run (k s)  s
   run (Step (Put s) k) _ = run (k tt) s
 
-  statePT : forall {l l'} -> {b : Set l} -> (b × s -> Set l') -> State b -> (s -> Set l')
-  statePT P (Pure x)         = \s ->         P (x , s)
+  -- predicate transformer : for every stateful computation
+  -- maps a postcondition on b × s
+  -- to the required precondition on s:
+  statePT : forall {l l'} -> {b : Set l}
+         -> (b × s -> Set l')
+         -> State b
+         -> (    s -> Set l')
+  statePT P (Pure x)         = \s ->         P (x ,   s)
   statePT P (Step  Get    k) = \s -> statePT P (k  s) s
   statePT P (Step (Put s) k) = \_ -> statePT P (k tt) s
 
+  -- generalise statePT
+  -- Sometimes describe postconditions as a relation between inputs and outputs.
+  -- For stateful computations, mean enabling the postcondition to also refer to the initial state:
   statePT' : forall {l l'} -> {b : Set l}
           -> (s -> b × s -> Set l')
           -> State b
           -> (s          -> Set l')
   statePT' P c i = statePT (P i) c i
 
+  -- weakest precondition semantics for Kleisli morphisms a → State b
   wpState : forall {l l' l''} -> {a : Set l} -> {b : Set l'}
          -> (    a -> State b)
          -> (P : a × s -> b × s -> Set l'')
          -> (    a × s          -> Set l'')
   wpState f P (x , i) = wp f ((const \c -> statePT' (\j -> P (x , j)) c i)) x
 
+  -- Given predicate P relating input, initial state, final state and result,
+  -- 'wpState' computes the weakest precondition required of input and initial state
+  -- to ensure P holds upon completing the computation.
+  -- The definition amounts to composing 'wp' and 'statePT' functions.
+
+  -- prove soundness of this semantics with respect to the run function
   soundness : forall {a b : Set}
            -> (P : a × s -> b × s -> Set)
            -> (f : a -> State b)
@@ -902,6 +932,20 @@ module State (s : Set) where
     lemma i (Pure y)         H = H
     lemma i (Step Get     k) H = lemma i (k  i) H
     lemma i (Step (Put s) k) H = lemma s (k tt) H
+
+{-
+Example showing how to reason about stateful programs using weakest precondition semantics.
+
+Verification problem proposed by Hutton and Fulger [2008]
+- input : binary tree
+- relabel tree so each leaf has a unique number associated with it
+
+Typical solution uses state monad to keep track of next unused label.
+
+Hutton and Fulger challenge : reason about the program, without expanding definition of monadic operations.
+
+Example shows how properties of refinement relation can be used to reason about arbitrary effects.
+-}
 
 module Relabel where
   open Free
@@ -935,17 +979,26 @@ module Relabel where
   seq i Zero     = Nil
   seq i (Succ n) = Cons i (seq (Succ i) n)
 
+  -- Specification.
   relabelSpec : forall {a} -> SpecK (Tree a × Nat) (Tree Nat × Nat)
+  --               precondition true regardless of input tree and initial state
+  --               v
   relabelSpec = [[ K ⊤ , relabelPost ]]
-    where
-      relabelPost : forall {a} -> Tree a × Nat -> Tree Nat × Nat -> Set
-      relabelPost (t , s) (t' , s') = (flatten t' == (seq (s) (size t))) ∧ (s + size t == s')
+   --                     ^
+   --                     postcondition is conjunction
+   where
+    relabelPost : forall {a} -> Tree a × Nat -> Tree Nat × Nat -> Set
+    relabelPost (t , s) (t' , s')
+      = (flatten t' == (seq (s) (size t))) -- flattening result t’ produces sequence of numbers from s to s + size t
+      ∧ (s + size t == s')                 -- output state 's should be precisely size t larger than input state s
 
+  -- increment current state; return value (before incr)
   fresh : State Nat
-  fresh =  get >>= \n ->
-           put (Succ n) >>
-           return n
+  fresh = get          >>= \n ->
+          put (Succ n) >>
+          return n
 
+  -- relabelling function
   relabel : forall {a} -> Tree a -> State (Tree Nat)
   relabel (Leaf x)   = map Leaf fresh
   relabel (Node l r) =
@@ -953,56 +1006,94 @@ module Relabel where
     relabel r >>= \r' ->
     return (Node l' r')
 
-  correctnessRelabel : forall {a : Set} -> wpSpec ( relabelSpec {a}) ⊑ wpState relabel
+  module RelableTest where
+    _ : Free C R (Tree Nat)
+    _ = relabel (Node (Leaf 10) (Leaf 20))
+    _ : relabel (Node (Leaf 10) (Leaf 20))
+        ≡ Step  Get (λ n1
+        → Step (Put (Succ n1)) (λ _
+        → Step  Get (λ n2
+        → Step (Put (Succ n2)) (λ _
+        → Pure (Node (Leaf n1) (Leaf n2))))))
+    _ = refl
 
-  compositionality : forall {a b : Set} -> (c : State a) (f : a -> State b) ->
-    ∀ i P -> statePT P (c >>= f) i == statePT (wpState f (const P)) c i
+    _ : Pair (Tree Nat) Nat
+    _ = run (relabel (Node (Leaf 10) (Leaf 20))) 1
+    _ : run (relabel (Node (Leaf 10) (Leaf 20))) 1 ≡ (Node (Leaf 1) (Leaf 2) , 3)
+    _ = refl
 
-  compositionality (Pure x) f i P = refl
-  compositionality (Step Get k) f i P = compositionality (k i) f i P
+  -- Show the definition satisfies the specification,
+  -- via using 'wpState' to compute weakest precondition semantics of 'relabel'
+  -- and formulating desired correctness property:
+  correctnessRelabel : forall {a : Set}
+                    -> wpSpec ( relabelSpec {a}) ⊑ wpState relabel
+
+  compositionality : forall {a b : Set}
+                  -> (c : State a)
+                     (f : a -> State b)
+                  -> ∀ i P
+                  -> statePT P (c >>= f) i == statePT (wpState f (const P)) c i
+
+  compositionality (Pure      x)    f i P = refl
+  compositionality (Step Get  k)    f i P = compositionality (k i) f i P
   compositionality (Step (Put x) k) f i P = compositionality (k tt) f x P
+
+  -- Proof by induction on input tree.
+  -- Proof of Node constructor case is proving
+  --      statePT (relabel l >>= (λ l’ → relabel r >>= (λ r’ → Pure (Node l’ r’)))) (P (Node l r , i)) i
+  -- Not obvious how apply induction hypothesis (IH states that P holds for l and r)
 
   correctnessRelabel = step2
     where
     open NaturalLemmas
-    --   Simplify proofs of refining a specification,
-    --   by first proving one side of the bind, then the second.
-    --   This is essentially the first law of consequence,
-    --   specialized to the effects of State and Spec.
-    prove-bind : ∀ {a b} (mx : State a) (f : a -> State b) P i ->
-      statePT (wpState f \_ -> P) mx i -> statePT P (mx >>= f) i
+    -- Simplify proofs of refining a specification, by first proving one side of the bind, then the second.
+    -- This is essentially the first law of consequence, specialized to the effects of State and Spec.
+    prove-bind : ∀ {a b}
+                 (                           mx : State a)
+                 (                f : a -> State b) P i
+              -> statePT (wpState f \_ -> P) mx        i
+              -> statePT                  P (mx >>= f) i
     prove-bind mx f P i x = coerce {zero} (sym (compositionality mx f i P)) x
 
-    prove-bind-spec : ∀ {a b} (mx : State a) (f : a -> State b) spec ->
-      ∀ P i -> (∀ Q -> Spec.pre spec i × (Spec.post spec i ⊆ Q) -> statePT Q mx i) ->
-      Spec.pre spec i × (Spec.post spec i ⊆ wpState f (\_ -> P)) ->
-      statePT P (mx >>= f) i
+    prove-bind-spec : ∀ {a b}
+                      (mx : State a)
+                      (f : a -> State b)
+                      spec
+                   -> ∀ P i
+                   -> (∀ Q -> Spec.pre spec i × (Spec.post spec i ⊆ Q) -> statePT Q  mx        i)
+                   ->         Spec.pre spec i × (Spec.post spec i ⊆       wpState f (\_ -> P))
+                   ->                                                     statePT P (mx >>= f) i
     prove-bind-spec mx f spec P i Hmx Hf = prove-bind mx f P i (Hmx (wpState f (\_ -> P)) Hf)
 
     --   Partially apply a specification.
-    applySpec : ∀ {a b s} -> SpecK {zero} (a × s) (b × s) -> a -> SpecK s (b × s)
+    applySpec : ∀ {a b s}
+             -> SpecK {zero} (a × s) (b × s)
+             ->               a
+             -> SpecK     s          (b × s)
     applySpec [[ pre , post ]] x = [[ (\s -> pre (x , s)) , (\s -> post (x , s)) ]]
 
     --   Ingredients for proving the postcondition holds.
     --   By abstracting over the origin of the numbers,
     --   we can do induction on them nicely.
     append-seq : ∀ a b c -> seq a b ++ seq (a + b) c ≡ seq a (b + c)
-    append-seq a Zero c = cong (\a' -> seq a' c) (sym (plus-zero a))
-    append-seq a (Succ b) c = cong (Cons a) (trans
-      (cong (\a+b -> seq (Succ a) b ++ seq a+b c) (+-succ a b))
-      (append-seq (Succ a) b c))
+    append-seq a  Zero    c = cong (\a' -> seq a' c) (sym (plus-zero a))
+    append-seq a (Succ b) c = cong (Cons a)
+                                   (trans (cong (\a+b -> seq (Succ a) b ++ seq a+b c) (+-succ a b))
+                                          (append-seq (Succ a) b c))
 
-    postcondition : ∀ s s' s'' sl fl sr fr ->
-      Pair (fl ≡ seq s sl) (s + sl ≡ s') ->
-      Pair (fr ≡ seq s' sr) (s' + sr ≡ s'') ->
-      Pair (fl ++ fr ≡ seq s (sl + sr)) (s + (sl + sr) ≡ s'')
+    postcondition : ∀ s s' s'' sl fl sr fr
+                 -> Pair       (fl ≡ seq s  sl)       (s  +  sl       ≡ s')
+                 -> Pair       (fr ≡ seq s'      sr)  (s' +       sr  ≡ s'')
+                 -> Pair (fl ++ fr ≡ seq s (sl + sr)) (s  + (sl + sr) ≡ s'')
     postcondition s .(s + sl) .(s + sl + sr) sl .(seq s sl) sr .(seq (s + sl) sr)
       (refl , refl) (refl , refl) = append-seq s sl sr , +-assoc s sl sr
 
     --   We have to rewrite the formulation of step2 slightly to make it acceptable for the termination checker.
 
-    step2' : ∀ {a} P (t : Tree a) s -> wpSpec relabelSpec P (t , s) -> statePT (P (t , s)) (relabel t) s
-    step2' P (Leaf x) s (fst , snd) = snd (Leaf s , Succ s) (refl , plus-one s)
+    step2' : ∀ {a} P (t : Tree a) s
+          -> wpSpec relabelSpec P (t , s)
+          -> statePT (P (t , s)) (relabel t) s
+    step2' P (Leaf   x) s (fst , snd) = snd (Leaf s , Succ s) (refl , plus-one s)
     step2' P (Node l r) s (fst , snd) = prove-bind-spec (relabel l) _ (applySpec relabelSpec l) _ _
       (\Q -> step2' (\_ -> Q) l s)
       (tt , \l',s' postL -> let l' = Pair.fst l',s' ; s' = Pair.snd l',s'
@@ -1027,25 +1118,33 @@ module Compositionality
   pt (Pure   x) P = P x
   pt (Step c x) P = ptalgebra c (\r -> pt (x r) P)
 
-  wpCR : {a : Set} {b : a -> Set} ->
-      ((x : a) -> Free C R (b x)) -> ((x : a) -> b x -> Set) -> (a -> Set)
+  wpCR : {a : Set} {b : a -> Set}
+      -> ((x : a) -> Free C R (b x))
+      -> ((x : a) -> b x -> Set)
+      -> (a              -> Set)
   wpCR f P x = pt (f x) (P x)
 
-  compositionality : forall {a b : Set} -> (c : Free C R a) (f : a -> Free C R b) ->
-    ∀ P -> pt (c >>= f) P ≡ pt c (wpCR f (const P))
-  compositionality (Pure x) f P = refl
-  compositionality (Step c x) f P =
-    cong (\h -> ptalgebra c h) (ext (\r -> compositionality (x r) f P))
+  compositionality : forall {a b : Set}
+                  -> (c : Free C R a) (f : a -> Free C R b)
+                  -> ∀ P
+                  -> pt (c >>= f) P ≡ pt c (wpCR f (const P))
+  compositionality (Pure   x) f P = refl
+  compositionality (Step c x) f P = cong (\h -> ptalgebra c h) (ext (\r -> compositionality (x r) f P))
 
-  _>=>_ : forall {l l' l''} -> {a : Set l} -> {b : Set l'} -> {c : Set l''} -> forall {C R} -> (a -> Free C R b) -> (b -> Free C R c) -> a -> Free C R c
+  _>=>_ : forall {l l' l''} -> {a : Set l} -> {b : Set l'} -> {c : Set l''} -> forall {C R}
+       -> (a -> Free C R b)
+       -> (b -> Free C R c)
+       ->  a
+       ->       Free C R c
   f >=> g = \x -> f x >>= g
 
-  compositionality-left : forall {a b c : Set} -> (f1 f2 : a -> Free C R b) (g : b -> Free C R c) ->
-    wpCR f1 ⊑ wpCR f2 ->
-    wpCR (f1 >=> g) ⊑ wpCR (f2 >=> g)
+  compositionality-left : forall {a b c : Set}
+                       -> (f1 f2 : a -> Free C R b) (g : b -> Free C R c)
+                       -> wpCR f1 ⊑ wpCR f2
+                       -> wpCR (f1 >=> g) ⊑ wpCR (f2 >=> g)
   compositionality-left mx my f H P x y
     rewrite compositionality (mx x) f (P x)
-    | compositionality (my x) f (P x) =
+          | compositionality (my x) f (P x) =
      H (\x y -> pt (f y) (P x)) x y
 
   compositionality-right : forall {a b c} -> (f : a -> Free C R b) (g1 g2 : b -> Free C R c) ->
