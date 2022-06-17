@@ -130,7 +130,7 @@ module Free where
      -> (a ->      Set)
   wp0 a→b b→Set = \a -> b→Set (a→b a)
 
-  module WP0Test where
+  module _ where
     open import Data.Nat using (ℕ; zero; suc; _+_)
     data isEven : ℕ → Set where
       even-z : isEven Nat.zero
@@ -183,7 +183,7 @@ module Free where
      -> Set l'
   P ⊆ Q = ∀ a -> P a -> Q a
 
-  module ⊆Test where
+  module _ where
     open import Data.Nat using (ℕ; zero; suc; _+_)
     data _≤_ : ℕ → ℕ → Set where
       z≤n : ∀   {n : ℕ}         →         0 ≤         n
@@ -357,7 +357,7 @@ module Maybe where
          ->        er ⇓         (Succ nr) -- divisor is non-zero
          -> Div el er ⇓ (nl div (Succ nr))
 
-  module ⇓Test where
+  module _ where
     _ : Expr
     _ = Val 3
     _ : Expr
@@ -395,7 +395,7 @@ module Maybe where
                    ⟦ er ⟧ >>= \nr ->
                    nl ÷ nr
 
-  module InterpTest where
+  module _ where
     evv   : Free C R Nat
     evv   = ⟦ Val 3 ⟧
     _     : evv ≡ Pure 3
@@ -425,7 +425,7 @@ module Maybe where
                                        -- note: could give ⊤ here, but want to rule out failure
                                        -- (total correctness)
 
-  module MustPTTest where
+  module _ where
     _ : Expr -> Nat -> Set
     _ = _⇓_
 
@@ -493,7 +493,7 @@ module Maybe where
   as arguments to wpPartial:
   -}
 
-  module WpPartialTest where
+  module _ where
     _ : Expr -> Set
     _ = wpPartial ⟦_⟧ _⇓_
     _ : wpPartial ⟦_⟧ _⇓_ ≡ λ expr -> mustPT _⇓_ expr ⟦ expr ⟧
@@ -502,17 +502,17 @@ module Maybe where
     _ : wpPartial ⟦_⟧ _⇓_ (Val 1)
     _ = ⇓Base
 
-    _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
-    _ = ⇓Step ⇓Base ⇓Base
     _ : Set
     _ = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+    _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 1))
+    _ = ⇓Step ⇓Base ⇓Base
 
+    _ : Set
+    _ = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
     {- this type cannot be constructed
     _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
     _ = {!!}
     -}
-    _ : Set
-    _ = wpPartial ⟦_⟧ _⇓_ (Div (Val 1) (Val 0))
 
   {-
   wpPartial ⟦_⟧ _⇓_ : a predicate on expressions
@@ -546,25 +546,26 @@ module Maybe where
   SafeDiv (Val _)     = ⊤
   SafeDiv (Div el er) = (er ⇓ Zero -> ⊥) ∧ SafeDiv el ∧ SafeDiv er
 
-  module SafeDivTest where
+  module _ where
     _ : SafeDiv (Val 3) ≡ ⊤
     _ = refl
-    _ : SafeDiv (Val 0) ≡ ⊤
-    _ = refl
+
     _ : Set
     _ = SafeDiv (Val 0)
+    _ : SafeDiv (Val 0) ≡ ⊤
+    _ = refl
 
+    _ : Set
+    _ = SafeDiv (Div (Val 3) (Val 3))
     _ : SafeDiv (Div (Val 3) (Val 3))
                  ≡ Pair ((x : Val 3 ⇓ 0) -> ⊥) (Pair (⊤' zero) (⊤' zero))
     _ = refl
-    _ : Set
-    _ = SafeDiv (Div (Val 3) (Val 3))
 
+    _ : Set
+    _ = SafeDiv (Div (Val 3) (Val 0))
     _ : SafeDiv (Div (Val 3) (Val 0))
                  ≡ Pair ((x : Val 0 ⇓ 0) -> ⊥) (Pair (⊤' zero) (⊤' zero))
     _ = refl
-    _ : Set
-    _ = SafeDiv (Div (Val 3) (Val 0))
 
   {-
   expect : any expr : e for which SafeDiv e holds can be evaluated without division-by-zero
@@ -586,19 +587,23 @@ module Maybe where
   ... | Pure _       | Step Abort _  | _               | ()
   ... | Step Abort _ | _             | ()              | _
 
-  module CorrectTest where
-    _ : wpPartial ⟦_⟧ _⇓_ (Val 3)
-    _ = ⇓Base
+  module _ where
+    _ :          Val 3 ⇓ 3
+    _ = correct (Val 3) tt
 
-    _ : Set
-    _ = wpPartial ⟦_⟧ _⇓_ (Val 3)
+    _ :          Div (Val 3) (Val 1) ⇓ 3
+    _ = correct (Div (Val 3) (Val 1)) ((λ ()) , (tt , tt))
 
-    _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 1))
-    _ = ⇓Step ⇓Base ⇓Base
-    {-
-    _ : wpPartial ⟦_⟧ _⇓_ (Div (Val 3) (Val 0))
-    _ = {!!}
+    {- TODO
+    _  : Set
+    _  = SafeDiv (Div (Val 3) (Val 0))
+    sd : SafeDiv (Div (Val 3) (Val 0))
+    sd = {!!} , (tt , tt)
+
+    _ :          ⊥
+    _ = correct (Div (Val 3) (Val 0)) sd
     -}
+
   {-
   Generalization.
   Instead of manually defining SafeDiv,
@@ -613,7 +618,7 @@ module Maybe where
      -> (a -> Set)
   dom f = wpPartial f (\_ _ -> ⊤)
 
-  module DomTest where
+  module _ where
     _ : dom ⟦_⟧ ≡ λ z → mustPT (λ x _ → ⊤' zero) z ⟦ z ⟧
     _ = refl
     _ : dom ⟦_⟧ (Val 0) ≡ ⊤' zero
@@ -696,7 +701,7 @@ module Maybe where
   complete (Div _ _)   _ | Pure _       | _            | Step Abort _  | _            | _  | ()
   complete (Div _ _)   _ | Step Abort _ | _            | _             | _            | () | _
 
-  module CompleteTest where
+  module _ where
     {-
     _ : mustPT _⇓_ (Div (Val 1) (Val 0)) (⟦ Val 0 ⟧ >>= _÷_ 1)
     _ = {!!}
@@ -930,7 +935,7 @@ module State (s : Set) where
    where
     lemma : (st : s) -> (statec : State b) -> (statePT (P (x , i)) statec st) -> P (x , i) (run statec st)
     lemma i (Pure y)         H = H
-    lemma i (Step Get     k) H = lemma i (k  i) H
+    lemma i (Step  Get    k) H = lemma i (k  i) H
     lemma i (Step (Put s) k) H = lemma s (k tt) H
 
 {-
@@ -1006,7 +1011,7 @@ module Relabel where
     relabel r >>= \r' ->
     return (Node l' r')
 
-  module RelableTest where
+  module _ where
     _ : Free C R (Tree Nat)
     _ = relabel (Node (Leaf 10) (Leaf 20))
     _ : relabel (Node (Leaf 10) (Leaf 20))
@@ -1375,7 +1380,7 @@ module Recursion where
     open Data.Nat
     open import Data.Nat.Properties
 
-    100-≮-91 : (i : Nat) -> ¬ (i + 10 ≤ i)
+    100-≮-91 : (i : Nat) -> ¬ (i + 10 Data.Nat.≤ i)
     100-≮-91 Zero ()
     100-≮-91 (Succ i) (s≤s pf) = 100-≮-91 i pf
 
@@ -1601,7 +1606,7 @@ module StateExample where
   maxProof xs P .0 ((refl , Hnil) , snd) = tt , \o H -> snd o (unAllCons (Pair.fst H) , lemma xs Hnil (Pair.fst o) H)
     where
     lemma : ∀ xs -> ¬ (xs == Nil) ->
-      ∀ w -> Pair (All (\n -> n ≤ w) (0 :: xs)) (w ∈ (0 :: xs)) -> w ∈ xs
+      ∀ w -> Pair (All (\n -> n Data.Nat.≤ w) (0 :: xs)) (w ∈ (0 :: xs)) -> w ∈ xs
     lemma Nil Hnil w H = magic (Hnil refl)
     lemma (.0 :: xs) _ .0 (AllCons x₂ (AllCons z≤n fst) , ∈Head) = ∈Head
     lemma (x :: xs) _ w (_ , ∈Tail snd) = snd
@@ -1612,48 +1617,48 @@ module StateExample where
     where
     lemma : ∀ i x ->
       Pair ⊤ (Pair (x ≡ i) (x ≡ i)) ->
-      Pair (All (\n -> n ≤ i) (x :: Nil)) (i ∈ (x :: Nil))
+      Pair (All (\n -> n Data.Nat.≤ i) (x :: Nil)) (i ∈ (x :: Nil))
     lemma i .i (fst , (refl , refl)) = (AllCons ≤-refl AllNil) , ∈Head
 
   max'Proof1 : ∀ x xs i ->
-    Succ x ≤ i ->
+    Succ x Data.Nat.≤ i ->
     ∀ (P : Nat -> Nat × Nat -> Set) x₁ ->
     Pair (Sigma ℕ (\x₂ -> Pair ⊤ (Pair (x₂ ≡ i) (x₂ ≡ x₁))))
     (∀ x₂ ->
     (∀ x₃ ->
     Pair ⊤ (Pair (x₃ ≡ i) (x₃ ≡ x₁)) ->
-    Pair (All (\n -> n ≤ Pair.fst x₂) (x₃ :: x :: xs))
+    Pair (All (\n -> n Data.Nat.≤ Pair.fst x₂) (x₃ :: x :: xs))
     (Pair.fst x₂ ∈ (x₃ :: x :: xs))) ->
     P x₁ x₂) ->
     Pair ⊤
     (∀ x₂ ->
-    Pair (All (\n -> n ≤ Pair.fst x₂) (x₁ :: xs))
+    Pair (All (\n -> n Data.Nat.≤ Pair.fst x₂) (x₁ :: xs))
     (Pair.fst x₂ ∈ (x₁ :: xs)) ->
     P x₁ x₂)
   max'Proof1 x xs i x<i P .i ((.i , (_ , (refl , refl))) , snd) = tt , \x₂ x₁ -> snd x₂ (lemma x₂ x₁)
     where
     lemma : ∀ (x₂ : Nat × Nat) ->
-      Pair (All (\n -> n ≤ Pair.fst x₂) (i :: xs))
+      Pair (All (\n -> n Data.Nat.≤ Pair.fst x₂) (i :: xs))
       (Pair.fst x₂ ∈ (i :: xs)) ->
       ∀ x₃ -> Pair ⊤ (Pair (x₃ ≡ i) (x₃ ≡ i)) ->
-      Pair (All (\n -> n ≤ Pair.fst x₂) (x₃ :: x :: xs))
+      Pair (All (\n -> n Data.Nat.≤ Pair.fst x₂) (x₃ :: x :: xs))
       (Pair.fst x₂ ∈ (x₃ :: x :: xs))
     lemma x₂ (AllCons x₁ fst , ∈Head) .i (_ , (refl , refl)) = (AllCons x₁ (AllCons (<⇒≤ x<i) fst)) , ∈Head
     lemma x₂ (AllCons x₁ fst , ∈Tail snd) _ (_ , (refl , refl)) = (AllCons x₁ (AllCons (≤-trans (<⇒≤ x<i) x₁) fst)) , ∈Tail (∈Tail snd)
 
-  max'Proof2 : ∀ i x xs -> (Succ x ≤ i -> ⊥) ->
+  max'Proof2 : ∀ i x xs -> (Succ x Data.Nat.≤ i -> ⊥) ->
     ∀ (P : Nat -> Nat × Nat -> Set) x₁ -> Pair (Sigma ℕ (\x₂ -> Pair (Sigma ℕ (\x₃
     -> Pair ⊤ (Pair (x₃ ≡ i) (x₃ ≡ x₂)))) (x ≡ x₁))) (∀ x₂ -> (∀ x₃ -> Pair (Sigma
     ℕ (\x₄ -> Pair ⊤ (Pair (x₄ ≡ i) (x₄ ≡ x₃)))) (x ≡ x₁) -> ∀ x₄ -> Pair ⊤ (Pair
-    (x₄ ≡ i) (x₄ ≡ x₃)) -> Pair (All (\n -> n ≤ Pair.fst x₂) (x₄ :: x :: xs))
+    (x₄ ≡ i) (x₄ ≡ x₃)) -> Pair (All (\n -> n Data.Nat.≤ Pair.fst x₂) (x₄ :: x :: xs))
     (Pair.fst x₂ ∈ (x₄ :: x :: xs))) -> P x₁ x₂) -> Pair ⊤ (∀ x₂ -> Pair (All (\n
-    -> n ≤ Pair.fst x₂) (x₁ :: xs)) (Pair.fst x₂ ∈ (x₁ :: xs)) -> P x₁ x₂)
+    -> n Data.Nat.≤ Pair.fst x₂) (x₁ :: xs)) (Pair.fst x₂ ∈ (x₁ :: xs)) -> P x₁ x₂)
   max'Proof2 i x xs x≥i P .x ((.i , ((.i , (fst₂ , (refl , refl))) , refl)) , snd) = tt , \x₄ x₁ -> snd x₄ (lemma x₄ x₁)
     where
-    lemma : ∀ (x₄ : Pair Nat Nat) -> Pair (All (\n -> n ≤ Pair.fst x₄) (x :: xs))
+    lemma : ∀ (x₄ : Pair Nat Nat) -> Pair (All (\n -> n Data.Nat.≤ Pair.fst x₄) (x :: xs))
       (Pair.fst x₄ ∈ (x :: xs)) -> ∀ x₃ -> Pair (Sigma ℕ (\x₅ -> Pair ⊤ (Pair (x₅
       ≡ i) (x₅ ≡ x₃)))) (x ≡ x) -> ∀ x₅ -> Pair ⊤ (Pair (x₅ ≡ i) (x₅ ≡ x₃)) -> Pair
-      (All (\n -> n ≤ Pair.fst x₄) (x₅ :: x :: xs)) (Pair.fst x₄ ∈ (x₅ :: x :: xs))
+      (All (\n -> n Data.Nat.≤ Pair.fst x₄) (x₅ :: x :: xs)) (Pair.fst x₄ ∈ (x₅ :: x :: xs))
     lemma (_ , _) (AllCons x fst , ∈Head) _ ((_ , (_ , (refl , refl))) , refl) _ (_ , (refl , refl)) = (AllCons (≮⇒≥ x≥i) (AllCons x fst)) , (∈Tail ∈Head)
     lemma x₄ (AllCons x₁ fst , ∈Tail snd) _ ((_ , (_ , (refl , refl))) , refl) _ (_ , (refl , refl)) = (AllCons (≤-trans (≮⇒≥ x≥i) x₁) (AllCons x₁ fst)) , (∈Tail (∈Tail snd))
 
