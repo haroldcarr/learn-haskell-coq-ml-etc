@@ -1,0 +1,10 @@
+name:    eisenberg-choose-between-typeable-data-generics
+version: 0.0.1.0
+description: https://www.youtube.com/watch?v=Zj8KXD9MRA0&t=2s
+
+dependencies:
+  - base >=4.11 && < 5
+  - syb <= 0.7.2.1
+
+library:
+  source-dirs: src
