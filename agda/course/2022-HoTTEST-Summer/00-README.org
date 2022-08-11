@@ -1,0 +1,22 @@
+
+lectures
+https://www.youtube.com/user/jdchristensen123
+
+
+
+
+------------------------------------------------------------------------------
+* lecture 1 - Page North
+
+https://www.youtube.com/watch?v=HvYYCHMeM-8
+
+./github-HoTTEST-Summer-School/HoTT/HoTTEST_Lecture_1.pdf
+
+surprising connection : functional programming <-> homotopy theory
+
+_Logic and Proof_ by Avigad et al
+https://leanprover.github.io/logic_and_proof/logic_and_proof.pdf
+
+
+
+

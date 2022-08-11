@@ -1,0 +1,515 @@
+* Swierstra, W., & Baanen, T. (2019): A predicate transformer semantics for effects (functional pearl) :ATTACH:
+  :PROPERTIES:
+  :Custom_ID: SB19_A-Predicate-Transformer-Semantics-for-Effects
+  :INTERLEAVE_PDF: ~/Documents/Papers/SB19_A-Predicate-Transformer-Semantics-for-Effects.pdf
+  :NOTER_DOCUMENT: ~/Documents/Papers/SB19_A-Predicate-Transformer-Semantics-for-Effects.pdf
+  :ID:       eb9e6724-eb20-4222-9aad-c1605f37180a
+  :END:
+
+** Introduction
+   :PROPERTIES:
+   :NOTER_PAGE: (1 . 0.2794853466761973)
+   :END:
+
+   - They frame the problem statement around /compositionality/: pure functions
+     enable compositional reasoning, but effectful programs require reasoning
+     about context
+
+   - This paper is not only providing a general mechanism for reasoning about
+     effectful programs -- predicate transformer semantics -- but even a
+     framework for program calculation (wow!)
+
+   - The main idea is to
+     - represent the effectful computation using a free monad
+
+       These are often used in FP when you want to define different interpreters
+       for your monadic operation
+
+       This is what the paper will be doing too -- except we will write an
+       "interpreter" that computes a predicate transformer
+
+#  LocalWords:  effectful monadic
+
+** Background
+   :PROPERTIES:
+   :NOTER_PAGE: (2 . 0.2551822730521801)
+   :END:
+
+*** Free monads
+    :PROPERTIES:
+    :NOTER_PAGE: (2 . 0.2673338098641887)
+    :END:
+
+    - =Free= is a datatype representing the syntax of an effectful computation,
+      where
+      - =C= is the type of commands
+      - =R : C -> Set= is the type family of responses for commands
+    - a =Pure= computation can be considered an effectful one
+    - a computation step issues a command, then when given a response moves on
+      to the next computation
+
+    - Comparing to http://okmij.org/ftp/Computation/free-monad.html, it's not an
+      /exact/ match. But, I suppose you can instantiate
+      =f = Sigma C (\ c -> R c -> Free C r a)=
+
+      Can you go the other way?
+
+
+    =map=, =return=, and =bind= are fairly straightforward
+
+*** Weakest precondition semantics
+    :PROPERTIES:
+    :NOTER_PAGE: (2 . 0.6926375982844889)
+    :END:
+
+    - =wp= for a pure function =f : a -> b= gives you the weakest precondition
+      for the postcondition =P : b -> Set=
+
+      - The definition is pretty immediate, but usually we want something more
+        interesting when it comes to effectful programs
+      - Even in the pure setting, we can make it a bit more informative by
+        generalizing to dependent types
+    
+    - working on the level of predicate transformers, it is useful to define
+      - implication between predicates, \(\subseteq\)
+
+        Because \(P\ x\) can be understood as saying \(x \in P\), if we take the
+        extents of \(P,Q : A \to \mathit{Set}\) to be the subset of \(A\)
+        satisfying the predicates \(P,Q\)
+      - refinement of predicate transformers, \(\sqsubseteq\)
+
+        - we can for example relate different implementations of the "same
+          program" using this.
+
+        - \(pt_1 \sqsubseteq pt_2\) is read "\(pt_1\) is refined by \(pt_2\)"
+          - As long as we understand \(pt_1\) as giving us preconditions which
+            satisfy the postcondition \(P\) for some given program \(f_1\), then
+            this says we can /weaken/ the precondition and still guarantee the
+            postcondition
+
+
+    All this is good, but refinement in the pure setting means extensional
+    equality --- which for our =Free C R b= programs means generating the same
+    AST! What we can do instead is define predicate transformers that give
+    /interpretations/ to a particular choice of command type =C= and response
+    family =R=
+
+** Partiality
+   :PROPERTIES:
+   :NOTER_PAGE: (4 . 0.23087919942816296)
+   :END:
+
+   For =Partial=, there is one command (=Abort=), and the response code is
+   \(\bot\) (the program does not execute further)
+
+*** Division
+    :PROPERTIES:
+    :NOTER_PAGE: (4 . 0.6075768406004288)
+    :END:
+
+    - =Expr= is a simple expression language with values and division
+
+    - The big-step semantics is given by \(\_\Downarrow\_\)
+
+    - And an interpreter is given by \([\![\_]\!]\)
+
+
+    Here's where it becomes quite cool, in my opinion: relating the big step
+    semantics to the interpreter.
+
+    - =mustPT= converts a postcondition for a pure function =g : (x : a) -> b x=
+      to a post-condition on a partial functions =f : (x : A) -> Partial (b x)=
+
+      - we just have that =P= holds if the operation produces a value
+      - if the operation fails, there is not result to apply =P= to
+
+        We could also give \(\top\) here, but here want to rule out failure
+        (total correctness)
+
+
+    So now we have a way of expressing successful evaluation of an =Expr= with
+    the intended semantics: \(\textsf{wpPartial}\ [\![\_]\!]\ \_\!\Downarrow\!\_\)
+
+    For a given =e : Expr=, satisfaction of the above predicate means:
+    - if our interpreter returns a value at all, then the returned value agrees
+      with the big step semantics we gave
+    - if the interpreter aborts, we have a proof of \(\bot\) (so, it does not
+      abort)
+    - ==> \(e\) evaluates to a value by the big-step operational semantics
+      
+
+    Ok, but this doesn't actually tell us how many \(e\) which satisfy that
+    characteriation satisfy \(\textsf{wpPartial}\ [\![\_]\!]\
+    \_\!\Downarrow\!\_\)
+    - so sanity check: hand roll our own safety criteria that we believe in
+    - prove every expression which satisfies that criteria satisfies
+      \(\textsf{wpPartial}\ [\![\_]\!]\ \_\!\Downarrow\!\_\) (so
+      \(\textsf{SafeDiv}\) refines the above predicate)
+    - if we gave \(\top\) above, then =correct= would not tell us that =SafeDiv=
+      rules out undefined behavior
+
+
+    *But* we can do more general things!
+    - define the *domain* of a partial operation using =wpPartial=
+
+    - then we say: =sound=, everything in the domain of the interpreter gets
+      evaluated in agreement with the big step semantics
+      =complete=, the only things interpreted in agreement with the big step
+      semantics are those which are in the domain of the interpreter
+
+*** Refinement
+    :PROPERTIES:
+    :NOTER_PAGE: (6 . 0.2794853466761973)
+    :END:
+
+    - =f= is refined by =g= means that =f= and =g= agree =f='s domain, which may
+      be contained within =g='s
+
+*** Example: add
+    :PROPERTIES:
+    :NOTER_PAGE: (6 . 0.4617583988563259)
+    :END:
+
+    - A simple stack machine that adds the first two elements and replaces them
+      with their sum
+      So, it can fail on an underflow
+
+    - =Add= captures the desired postcondition the pre and post state
+
+
+    So now we need to convert a specification as a predicate transformer
+    - Given a post-condition =P=, the precondition we want is for the spec's
+      precondition to hold and for the spec's post-condition to entail =P=
+
+
+    And now we can say: =wpSpec addSpec= is refined by =wpPartial add=
+
+*** Alternative semantics
+    :PROPERTIES:
+    :NOTER_PAGE: (7 . 0.7290922087205146)
+    :END:
+
+    - Now we want to treat partiality as an exception we can handle. So, we
+      don't want =wpPartial=, but to define a different semantics, =wpDefault=
+
+
+    The example: a short-circuiting product of numbers.
+
+    with =correctness=, we show that the standard version is refined by the
+    short-circuiting one
+
+** Mutable state
+   :PROPERTIES:
+   :NOTER_PAGE: (8 . 0.8263045032165832)
+   :END:
+
+   - The commands are =Get= and =Put=, with the appropriate results
+
+   - We have the expected interpreter =run=
+
+   - we can also define a predicate transformer for a =State= program
+
+   - And we can define a predicate transformer for a Kleisli arrow for state
+     
+     - Let P be a relation between the a starting value and state, and the
+       resulting value and state
+
+       So, a post-condition
+
+     - The property we give to =wp f= is that, for the given stateful
+       computation =c=, the weakest precondition associated to =P= holding of
+       the initial state / starting value (and the final state and resulting
+       value)
+
+   - Then we show soundness of the predicate transformer wrt the interpreter
+
+*** Tree labelling
+    :PROPERTIES:
+    :NOTER_PAGE: (10 . 0.2187276626161544)
+    :END:
+
+    - The task: uniquely label the leaves of a binary tree, then prove this is a
+      correct labelling
+
+    - The specification is that flattenning the tree produces an enumeration
+      from the initial state =s= to =s + size t=, and that this latter quantity
+      is the post-state =s'=
+
+    - Now, we can prove that:
+
+      the predicate transformer given to us from =relabelSpec= is refined by the
+      predicate transformer obtained from the program =relabel=
+
+      I.e., the =relabel= operation is correct wrt the specification
+
+      - \(\forall P. \mathit{wpSpec}\ \mathit{relabelSpec}\ P \subseteq
+        \mathit{wpState}\ \mathit{relable}\ P\)
+
+      - \(\forall P. (\lambda x. \mathit{relablePost}\ x \subseteq P\ x)
+        \subseteq \mathit{wpState}\ \mathit{relable}\ P\)
+
+        *So:* if we have a post-condition P that is entailed by the
+        postcondition of the specification, then the weakest precondition for
+        \(P\) given by the relable PT is satisfied
+
+
+    They leave us with a cliff-hanger in this subsection: how to prove this
+    unsightly goal?
+
+*** Compositionality
+    :PROPERTIES:
+    :NOTER_PAGE: (11 . 0.2065761258041458)
+    :END:
+
+    For compositionality / sequencing, the rule is that the predicate
+    transformer obtained from sequencing two operations is given by
+    - the predicate transformer obtained from the first, =c=, applied to the
+      post-condition...
+    - that the predicate transformer obtained from the Kleisli arrow =f= applied
+      to =P= holds for the result
+
+
+    In other words: we have a post-condition =P= for the sequence, so we want a
+    precondition before running =f= that gives us =P=. That precondition is a
+    postcondition of =c=, so we compute the precondition of /this/ postcondition too!
+
+    - The compositionality result is quite neat (I looked up how they did it in
+      the source code)
+
+    - =compositionality-left=
+      if =f1= is refined by =f2=, then =f1 >> g= is refined by =f2 >> g=
+
+
+    So, we have compositionality once again for reasoning about effectful programs!
+
+*** Rule of consequence
+    :PROPERTIES:
+    :NOTER_PAGE: (12 . 0.3037884203002144)
+    :END:
+
+    We can prove that the refinement relation respects weakening of
+    preconditions and strengthening of postconditions
+
+    - for the precondition, we can understand a stronger precondition means a
+      smaller set of starting program states are accepted --- so by weakening,
+      we increase that set
+
+      So the predicate transformer on the rhs maps postconditions to less-strict preconditions
+    
+    - for the postcondition, Q' x gives us more fine-grained information about
+      the resulting program states. Because of the definition of wpSpec, this
+      means we have a more lax precondition
+    
+*** Equations
+    :PROPERTIES:
+    :NOTER_PAGE: (12 . 0.4982130092923517)
+    :END:
+
+    - We can state program equivalence as mutual refinement, and using this
+      notion prove the state laws wrt the intended semantics (=wpState=)
+
+** Non-determinism
+   :PROPERTIES:
+   :NOTER_PAGE: (13 . 0.12151536812008577)
+   :END:
+
+   - two commands: fail (response: bot) and choice (response: a coin flip)
+
+   - we have two reasonable semantics for reasoning about non-determinism: a
+     property holds for all branches, or any branch
+
+     - *allPT* uses a conjunction on choices
+
+     - *anyPT* uses a disjunction
+
+   - an interpretation function, where we accumulate all of the branches
+
+   - soundness of the all semantics wrt the interpreter
+
+*** Refinement
+    :PROPERTIES:
+    :NOTER_PAGE: (14 . 0.3280914939242316)
+    :END:
+
+    - *Elem*: a relation representing that some value is a possible result of a
+      ND computation
+
+      Then we can treat ND computations as sets of possible elements, and
+      consider containment
+
+    - *TYPO*
+
+      I spent half an hour looking at the signatures of =refineAll= and
+      =refineAny=, and I thought I was going mad because I couldn't convince
+      myself that was corrrect
+
+      - turns out this is a typo, and both the code and submitted version fix it
+
+      If, for an arb. postcondition, it holding for all outputs of f entails it
+      holds for all outputs of g, then f must contain all of g
+
+      If its satisfaction for *any* result of f entials satisfaction of any
+      result of y, then g must contain all of f
+
+*** Non-deterministic deletion
+    :PROPERTIES:
+    :NOTER_PAGE: (14 . 0.6926375982844889)
+    :END:
+
+    - Postcondition: the returned element y is in xs, and ys is the result of
+      deleting ys in the position given by the memebership proof
+
+    - for correctness, =removeCorrect= shows that all values returned satisfy
+      the spec --- but that is true for the trivially failing computation, too.
+
+      So we also want completeness
+
+** General Recursion
+   :PROPERTIES:
+   :NOTER_PAGE: (15 . 0.6561829878484632)
+   :END:
+
+   Hey look! It's Bove et al. popping up again!
+
+   - We will use McBride's call-graph representation of general recursive
+     functions
+
+     - the commands are I, the family of responses is O, and the result is
+       always (O i) (where i is the starting value)
+
+     - The "effect" is us awaiting a response from a possibly non-terminating
+       operation
+
+
+   McCarthy's 91 function is a classic example of a notoriously difficult
+   function to reason about.
+
+   - we cannot define a normal interpreter for it
+
+   - we can consider, with partial correctness, that an invariant holds for the
+     call graph for a given spec
+
+*** McCarthy's 91 function
+    :PROPERTIES:
+    :NOTER_PAGE: (16 . 0.315939957112223)
+    :END:
+
+    - The recursive structure here is complicated (nested), and difficult to
+      reason about
+
+    - We will seek to prove partial correctness (correctness on the assumption
+      its terminating)
+
+    - So, give a specification about the behavior of =f91=
+      - i > 100 -> i - 10
+      - i <= 100 -> 91
+
+    - Then we have the definition of invariant for general recursive functions based on a spec
+      - in an invocation which makes not further calls, the precondition must
+        imply the post condition
+      - otherwise, the precondition for the current call must imply the precondition
+        for the next call, and, for an arbitrary output from that call that
+        satisfies the postcondition, you should show the invariant holds for
+        the "rest" of the current call
+
+*** wpRec    
+    :PROPERTIES:
+    :NOTER_PAGE: (17 . 0.12151536812008577)
+    :END:
+
+    Here, our semantics =wpRec= requires a specification, similarly to how
+    reasoning about loops requires a loop invariant be given
+
+    - I think =f91Partial-correctness= just amounts to proving the invariant holds?
+      Yes, checked this in the code
+
+*** Petrol semantics
+    :PROPERTIES:
+    :NOTER_PAGE: (17 . 0.4739099356683345)
+    :END:
+
+    - run the recursive function for a fixed number of steps, return nothing if
+      it doesn't finish once the fuel is exhausted
+
+      - this means we have a new semantics for =Partial a=, which asks us to
+        prove nothing if the partial function aborted
+
+    - so now, sounds of predicate transformer wrt the petrol interpreter
+      - 
+    
+** Stepwise refinement
+   :PROPERTIES:
+   :NOTER_PAGE: (18 . 0.12168933428775949)
+   :END:
+
+   - Now we look at how to do step-by-step refinement of a specification to
+     program --- very cool!
+
+   - a value-specification type
+
+   - an incomplete program (either a value or spec)
+
+     - predicate transformer for these
+       swapping the arguments of =plt=, we are mapping predicates on =a= to
+       predicates on =I a=
+
+   - a monad for mixing specifications and values over some free monad
+
+   - a predicate indicating a value of type =M a= is ready for execution
+
+   - and, assuming we have a predicate transformer semantics for for Kleisli
+     arrows for the underlying monad, we can lift these to kleisli arrows for
+     partially incomplete   programs
+
+*** Defining derivations
+    :PROPERTIES:
+    :NOTER_PAGE: (19 . 0.315939957112223)
+    :END:
+
+    - a /program derivation/ is a chain of refinement steps leading to a
+      complete program
+
+    - our running example will be stateful computations
+      - we define get, put
+      - we prove that they obey the expected laws
+
+    - =step=
+
+      given some command =c : C= and a specification on a (value,state) pair,
+      we'd like to return a specification for the continuation from the
+      command's result (input and state -> output and state)
+
+      we need pts that will give us new pre/post conditions using the
+      postconditions associated to the get/put commands
+
+      For the below we can read =a= as the state
+      - \(\triangleleft\) given Q (command's post), and =P= (given
+        precondition), for the value of type =b= returned from the command we
+        want that there is some state =a= satisfying the precondition =P= and the
+        command postcondition =Q=
+
+      - \(\triangleright\) Q (commad post) and a spec =[ pre , post ]=
+        Given input value =y : b= (the result of the command) and result of the
+        continuation =z : c=, for every starting state =x : a= that satisfies
+        the spec's precondition and the command's postcondition, we want that
+        the post condition of the spec holds
+
+      So we can finally put these together for the definition of =step=
+
+    - =Derivation=
+      - The earlier =Done= case has a typo (should be =ptM (done x)=, not shown in the paper)
+
+*** Case study
+    :PROPERTIES:
+    :NOTER_PAGE: (21 . 0.41601143674052893)
+    :END:
+
+    - To understand =refineDerivation=, understand =spec'= as giving an
+      arbitrarty postcondition more to work with (such as an inductive
+      invariant). So if we can calculate a program with the more demanding spec,
+      we can do so with the less demanding one
+
+** Discussion
+   :PROPERTIES:
+   :NOTER_PAGE: (22 . 0.5704074338813437)
+   :END:
