@@ -1,0 +1,13 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:algebra-driven-design-sandy-maguire"
+
+    - path: "app/Main.hs"
+      component: "algebra-driven-design-sandy-maguire:exe:m"
+
+    - path: "app/Paths_algebra_driven_design_sandy_maguire.hs"
+      component: "algebra-driven-design-sandy-maguire:exe:m"
+
+    - path: "test"
+      component: "algebra-driven-design-sandy-maguire:test:t"
