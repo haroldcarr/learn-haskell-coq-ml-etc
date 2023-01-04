@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:hc-lib-sodium"
+
+    - path: "app/Main.hs"
+      component: "hc-lib-sodium:exe:main"
+
+    - path: "test"
+      component: "hc-lib-sodium:test:test"

@@ -1,0 +1,46 @@
+name: hc-lib-sodium
+version: 0.0.1.0
+synopsis: hc-lib-sodium
+description: See README at <https://github.com/hc-lib-sodium/hc-lib-sodium
+author: hc-lib-sodium
+github: hc-lib-sodium/hc-lib-sodium
+category: hc-lib-sodium
+license: BSD-3-Clause
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wpartial-fields
+- -Wredundant-constraints
+- -fhide-source-paths
+
+dependencies:
+  - base >=4.11 && < 5
+
+library:
+  source-dirs: src
+  dependencies:
+    - bytestring
+    - crypto-sodium
+    - memory
+
+executables:
+  main:
+    source-dirs: app
+    main: Main.hs
+    dependencies:
+      - hc-lib-sodium
+
+tests:
+  test:
+    source-dirs: test
+    main: Main.hs
+    ghc-options:
+      - -Wall
+      - -threaded
+    dependencies:
+      - hc-lib-sodium
+      - hedgehog
