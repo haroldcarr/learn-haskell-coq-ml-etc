@@ -1,0 +1,25 @@
+name:        fa-args-in-parallel
+version:     0.0.1.0
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wpartial-fields
+- -Wredundant-constraints
+- -fhide-source-paths
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+- either-unwrap
+- free
+- HUnit
+- monad-loops
+- mtl
+- test-hunit-util
+
+library:
+  source-dirs: src

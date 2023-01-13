@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Apr 29 (Tue) 15:48:28 by Harold Carr.
-Last Modified : 2022 Apr 23 (Sat) 14:53:26 by Harold Carr.
+Last Modified : 2023 Jan 13 (Fri) 16:01:03 by Harold Carr.
 -}
 
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
@@ -374,7 +374,7 @@ t7 = T.tt "t7"
 -- ...
 ------------------------------------------------------------------------------
 
-runTests :: IO Counts
-runTests = runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t3' ++ t7
+test :: IO Counts
+test  = runTestTT $ TestList $ t1 ++ t2 ++ t3 ++ t3' ++ t7
 
 -- End of file.

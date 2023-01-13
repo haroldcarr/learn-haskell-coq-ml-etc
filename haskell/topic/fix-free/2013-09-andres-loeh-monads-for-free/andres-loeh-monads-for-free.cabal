@@ -1,0 +1,28 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           andres-loeh-monads-for-free
+version:        0.0.1.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      FM_2013_09_andres_loeh_monads_for_free
+  other-modules:
+      Paths_andres_loeh_monads_for_free
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , containers
+    , either-unwrap
+    , free
+    , monad-loops
+    , mtl
+    , test-hunit-util
+  default-language: Haskell2010

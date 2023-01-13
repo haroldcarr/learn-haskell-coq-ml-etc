@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -10,6 +10,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      HA_Operational_Monad_Tutorial
       Lib
   other-modules:
       Paths_operational_monad_tutorial_heinrich_apfelmus
@@ -17,8 +18,10 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
   build-depends:
-      base >=4.11 && <5
+      HUnit
+    , base >=4.11 && <5
     , random
+    , test-hunit-util
   default-language: Haskell2010
 
 executable main
@@ -29,9 +32,11 @@ executable main
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.11 && <5
+      HUnit
+    , base >=4.11 && <5
     , operational-monad-tutorial-heinrich-apfelmus
     , random
+    , test-hunit-util
   default-language: Haskell2010
 
 test-suite test
@@ -43,10 +48,12 @@ test-suite test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.11 && <5
+      HUnit
+    , base >=4.11 && <5
     , operational-monad-tutorial-heinrich-apfelmus
     , random
     , tasty
     , tasty-hunit
     , tasty-quickcheck
+    , test-hunit-util
   default-language: Haskell2010

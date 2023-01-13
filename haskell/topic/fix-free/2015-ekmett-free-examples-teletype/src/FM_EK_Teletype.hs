@@ -78,5 +78,5 @@ hello = do
     putStrEK "Nice to meet you, "; putStrEK name; putStrEK "."; nL
     halt
 
-testEK :: IO ()
-testEK = runTeletypeIO hello
+test :: IO ()
+test  = runTeletypeIO hello
