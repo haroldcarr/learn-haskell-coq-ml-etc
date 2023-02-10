@@ -6,10 +6,9 @@
 > {-# LANGUAGE MultiParamTypeClasses      #-}
 > {-# LANGUAGE RankNTypes                 #-}
 > {-# LANGUAGE StandaloneDeriving         #-}
-> {-# LANGUAGE TypeSynonymInstances       #-}
 > {-# LANGUAGE UndecidableInstances       #-}
 >
-> module F where
+> module F1_Original where
 >
 > import           Control.Monad.State
 > import           Prelude   as P
@@ -36,8 +35,10 @@ http://www.parsonsmatt.org/2017/09/22/what_does_free_buy_us.html
 >
 > unpure          :: Free f a ->           a
 > unpure (Pure  a) =  a
+> unpure (Free  _) = error "unpure (Free  _)"
 > unfree          :: Free f a -> f (Free f a)
 > unfree (Free fa) = fa
+> unfree (Pure  _) = error "unfree (Pure  _)"
 >
 > instance Functor f => Functor (Free f) where
 >   fmap f (Pure a)   = Pure (f a)
@@ -59,12 +60,12 @@ a free monad can only build a data structure representing monadic computation
 
 > -- | the specific functor algebra
 > data Terminal a
->   = GetLine (String -> a)
->   | PrintLine String a
+>   = GetLine  (String -> a)
+>   | PrintLine String    a
 >   deriving Functor
 >
 > instance Show a => Show (Terminal a) where
->   show (GetLine f) = "GetLine f"
+>   show (GetLine _f) = "GetLine f"
 >   show (PrintLine s a) = "PrintLine " ++ s ++ " " ++ show a
 
 :t GetLine id
@@ -78,7 +79,7 @@ a free monad can only build a data structure representing monadic computation
 >
 > -- | an action in the free monad
 > getLineF :: TerminalM String
-> getLineF = Free (GetLine return)
+> getLineF  = Free (GetLine return)
 
 :t GetLine return
  :: Monad m => Terminal (m String)
@@ -96,7 +97,7 @@ a free monad can only build a data structure representing monadic computation
 
 > -- | lift a functor value into the free monad
 > liftF :: Functor f => f a -> Free f a
-> liftF = Free . fmap return
+> liftF  = Free . fmap return
 
 :t liftF (Just 3)
  :: Num a => Free Maybe a
@@ -116,7 +117,7 @@ liftF (Just 3)
 
 > -- | an entire program consisting of actions bound together using monadic bind
 > myProgramF :: TerminalM ()
-> myProgramF = do
+> myProgramF  = do
 >   a <- getLineF
 >   b <- getLineF
 >   printLineF (a ++ b)
@@ -145,12 +146,12 @@ could interpret or transform 'myProgram' value
 > foldFree _ (Pure a)  = return a
 > foldFree f (Free as) = f as >>= foldFree f
 
-> interpretF :: TerminalM a -> IO a
-> interpretF = foldFree $ \case
+> interpretFIO :: TerminalM a -> IO a
+> interpretFIO  = foldFree $ \case
 >   GetLine       next -> next <$> SIO.getLine
 >   PrintLine str next -> next <$  putStrLn str
 
-:t interpretF myProgramF
+:t interpretFIO myProgramF
  :: IO ()
 
 ------------------------------------------------------------------------------
@@ -159,7 +160,8 @@ Inspection
 free monads are not that easy to inspect
 
 to analyze 'myProgram' need to provide an environment for getting through its layers
-- e.g., way to generate values getLines would return (i.e., need to give something to the function inside GetLine to make it produce next action)
+- e.g., way to generate values getLines would return
+  (i.e., need to give something to the function inside GetLine to make it produce next action)
 - since its a monad, further actions can depend on those values
 
 functions will almost inevitably be in the functor you build upon (as in GetLine)
@@ -172,9 +174,11 @@ look at (>>=) for free monad
 
 on each use (>>=)
 - the whole structure accumulated so far needs to be traversed with fmap
-- then at the end (where Pure thing hangs) (>>= f) will be applied and chances are the "snake" will grow by one layer
+- then at the end (where Pure thing hangs) (>>= f) will be applied
+  and chances are the "snake" will grow by one layer
 
-efforts to improve : Freer monads, more extensible effects : http://okmij.org/ftp/Haskell/extensible/more.pdf
+efforts to improve : Freer monads, more extensible effects
+- http://okmij.org/ftp/Haskell/extensible/more.pdf
 - lighten prerequisites on type f (doesn’t need to be a Functor)
 - solution involves storing function (a Kleisli arrow) to apply to some initial value and
   just composing functions on the right hand side of (>>=) with that using Kleisli composition
@@ -189,7 +193,7 @@ issue: combining code in free monads with different functor types
 - solved by making the actual functor type polymorphic
 - then using functor injection as shown in : http://degoes.net/articles/modern-fp-part-2
 
-Add logging functor to terminal example:
+example: add logging functor to terminal
 
 > data Log a
 >   = Log String a
@@ -227,7 +231,8 @@ A better solution
 
 want to be able to interpret a monadic action in different ways, inspect/transform it, etc.
 
-Existing Haskell mechanism to give different concrete meanings to same abstract (i.e., polymorphic) thing: type classes
+existing Haskell mechanism to give different concrete meanings
+to same abstract (i.e., polymorphic) thing: type classes
 
 > -- | abstract actions related to working with a terminal
 > class Monad m => MonadTerm m where
@@ -235,7 +240,7 @@ Existing Haskell mechanism to give different concrete meanings to same abstract 
 >   printLineM :: String -> m ()
 >
 > myProgramM :: MonadTerm m => m () -- TerminalM ()
-> myProgramM = do
+> myProgramM  = do
 >   a <- getLineM
 >   b <- getLineM
 >   printLineM (a ++ b)
@@ -249,7 +254,8 @@ efficient IO impl:
 >   getLineM   = SIO.getLine
 >   printLineM = P.print
 
-more complex application using ReaderT design pattern : https://www.fpcomplete.com/blog/2017/06/readert-design-pattern
+more complex application using ReaderT design pattern:
+https://www.fpcomplete.com/blog/2017/06/readert-design-pattern
 
 instance (HasMyEnvA r, HasMyEnvB r) => MonadFoo (ReaderT r IO) where
   -- …
@@ -258,11 +264,14 @@ instance (HasMyEnvA r, HasMyEnvB r) => MonadFoo (ReaderT r IO) where
 - context is easy to manipulate
   - advise using lenses with this setup
     - then possible to change (not only read) a specific component of abstract 'r'
-    - can have a region of code with changed environment using local with Lens' and withReader with the more general Lens type
+    - can have a region of code with changed environment using local with Lens'
+      and withReader with the more general Lens type
 
 for performance : use INLINEABLE and SPECIALIZE pragmas
 - squeeze out undesirable polymorphism
-- unless the polymorphic code is defined in the same module where it’s used with concrete monadic stack, in which case GHC is able to specialize by itself
+- unless the polymorphic code is defined in the same module
+  where it’s used with concrete monadic stack,
+  in which case GHC is able to specialize by itself
 
 ------------------------------------------------------------------------------
 Inspection
@@ -275,18 +284,27 @@ prefer writing in polymorphic monads to writing in free monads
 >   printLineM str = liftF (PrintLine str ())
 >
 > myFreeProgram :: TerminalM ()
-> myFreeProgram = myProgramM
+> myFreeProgram  = myProgramM
 
 - effects in myProgram constrained to methods of MonadTerm
-- can turn into efficient runable code without first construct a data structure and then interpreting it
+- can turn into efficient runable code without first constructing
+- a data structure and then interpreting it
 - can do everything that can be done via writing myProgram in free monad directly
 
 > analyzeGP :: TerminalM a -> (Int, Int, [String])
 > analyzeGP t = let (_, g, p, s) = execState (a t) (['a' ..],0,0,[]) in (g,p,s)
 >  where
 >   a = foldFree $ \case
->     GetLine       next -> do (i:is,g,p,ss) <- get; put (is,g+1,p  ,ss    ); return (next [i])
->     PrintLine str next -> do (  is,g,p,ss) <- get; put (is,g  ,p+1,str:ss); return  next
+>     GetLine       next ->
+>       get >>= \case
+>         (i:is,g,p,ss) -> do
+>            put (is,g+1,p  ,    ss)
+>            return (next [i])
+>         _             -> error "analyzeGP GetLine"
+>     PrintLine str next -> do
+>         (  is,g,p,ss) <- get
+>         put    (is,g  ,p+1,str:ss)
+>         return  next
 
 analyzeGP myProgramF
 => (2,1,["ab"])
@@ -297,7 +315,7 @@ Composability
 combine actions from two different type classes : merge constraints:
 
 > myProgramMC :: (MonadTerm m, MonadLog m) => m ()
-> myProgramMC = do
+> myProgramMC  = do
 >   a <- getLineM
 >   logM "got a"
 >   b <- getLineM
@@ -322,9 +340,16 @@ https://github.com/gallais gave example:
 > instance Inject Log      f => MonadLog  (LogTerm f) where
 >   logM str       = LogTerm (liftF $ inject (Log str ()))
 >
-> toFree :: (Inject Terminal f, Inject Log f)
->        => (forall m. (MonadTerm m, MonadLog m) => m a)
->        -> Free f a
-> toFree = runLogTerm
+> --toFree :: (Inject Terminal f, Inject Log f)
+> --       => (forall m. (MonadTerm m, MonadLog m) => m a)
+> --       -> Free f a
+> toFree :: LogTerm f a -> Free f a
+> toFree  = runLogTerm
 
 
+------------------------------------------------------------------------------
+
+> test :: IO ()
+> test  = do
+>   putStrLn "interpretFIO myProgramF"
+>   interpretFIO myProgramF

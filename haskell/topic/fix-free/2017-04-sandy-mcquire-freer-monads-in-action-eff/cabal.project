@@ -1,0 +1,6 @@
+packages: .
+
+source-repository-package
+    type: git
+    location: https://github.com/haroldcarr/test-hunit-util.git
+    tag: 76246854236d38ae569c0c7907abbd506902cd05

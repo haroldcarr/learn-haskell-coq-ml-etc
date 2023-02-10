@@ -1,6 +1,6 @@
 {-
 Created       : 2014 Apr 29 (Tue) 15:48:28 by Harold Carr.
-Last Modified : 2023 Jan 13 (Fri) 16:01:03 by Harold Carr.
+Last Modified : 2023 Jan 14 (Sat) 10:24:12 by Harold Carr.
 -}
 
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
@@ -13,8 +13,8 @@ module FM_2013_09_andres_loeh_monads_for_free where
 
 import           Control.Monad   (ap, (<=<))
 import           Data.Kind       (Type)
-import           Test.HUnit
-import           Test.HUnit.Util as T
+import           Test.HUnit      (Counts, Test (TestList), runTestTT)
+import qualified Test.HUnit.Util as T
 
 {-# ANN module "HLint: ignore Redundant bracket" #-}
 {-# ANN module "HLint: ignore Use >>"            #-}
@@ -27,8 +27,8 @@ import           Test.HUnit.Util as T
 
 ------------------------------------------------------------------------------
 
--- most problems benefit from looking at them as a programming language problem: turn them into a (E)DSL
-
+-- most problems benefit from looking at them as a programming language problem:
+-- - turn them into a (E)DSL
 -- deep embedding: represent everything as data
 -- example: use data to represent programs
 

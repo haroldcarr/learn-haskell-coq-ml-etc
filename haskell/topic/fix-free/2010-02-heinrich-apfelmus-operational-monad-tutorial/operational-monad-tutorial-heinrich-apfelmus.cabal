@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.0.
+-- This file has been generated from package.yaml by hpack version 0.34.7.
 --
 -- see: https://github.com/sol/hpack
 
@@ -21,39 +21,5 @@ library
       HUnit
     , base >=4.11 && <5
     , random
-    , test-hunit-util
-  default-language: Haskell2010
-
-executable main
-  main-is: Main.hs
-  other-modules:
-      
-  hs-source-dirs:
-      app
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      HUnit
-    , base >=4.11 && <5
-    , operational-monad-tutorial-heinrich-apfelmus
-    , random
-    , test-hunit-util
-  default-language: Haskell2010
-
-test-suite test
-  type: exitcode-stdio-1.0
-  main-is: Main.hs
-  other-modules:
-      
-  hs-source-dirs:
-      test
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      HUnit
-    , base >=4.11 && <5
-    , operational-monad-tutorial-heinrich-apfelmus
-    , random
-    , tasty
-    , tasty-hunit
-    , tasty-quickcheck
     , test-hunit-util
   default-language: Haskell2010

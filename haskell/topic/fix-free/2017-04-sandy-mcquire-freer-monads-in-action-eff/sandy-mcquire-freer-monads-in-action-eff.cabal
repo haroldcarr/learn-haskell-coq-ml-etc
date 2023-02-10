@@ -1,13 +1,28 @@
-name:                sandy-mcquire-freer-monads-in-action-eff
-version:             0.1.0.0
-build-type:          Simple
-cabal-version:       >=1.10
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.7.
+--
+-- see: https://github.com/sol/hpack
+
+name:           sandy-mcquire-freer-monads-in-action-eff
+version:        0.0.1.0
+build-type:     Simple
 
 library
-  hs-source-dirs:      src
-  exposed-modules:     VEff
-  build-depends:       base >= 4.7 && < 5
-                     , freer
-                     , HUnit
-                     , test-hunit-util
-  default-language:    Haskell2010
+  exposed-modules:
+      V1_Mtl
+      V2_Eff
+  other-modules:
+      Paths_sandy_mcquire_freer_monads_in_action_eff
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  build-depends:
+      HUnit
+    , base >=4.7 && <5
+    , freer
+    , monad-logger
+    , mtl
+    , test-hunit-util
+    , transformers
+  default-language: Haskell2010

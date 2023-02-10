@@ -1,4 +1,4 @@
-name:        operational-monad-tutorial-heinrich-apfelmus
+name:        sandy-mcquire-freer-monads-in-action-eff
 version:     0.0.1.0
 
 ghc-options:
@@ -12,11 +12,13 @@ ghc-options:
 - -fhide-source-paths
 
 dependencies:
-- base >=4.11 && < 5
+- base >= 4.7 && < 5
+- freer
 - HUnit
-- random
+- monad-logger
+- mtl
 - test-hunit-util
+- transformers
 
 library:
   source-dirs: src
-

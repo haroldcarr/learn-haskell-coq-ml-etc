@@ -1,4 +1,4 @@
-name:        operational-monad-tutorial-heinrich-apfelmus
+name:        mark-karpov-free-monad-considered-harmful
 version:     0.0.1.0
 
 ghc-options:
@@ -12,11 +12,9 @@ ghc-options:
 - -fhide-source-paths
 
 dependencies:
-- base >=4.11 && < 5
-- HUnit
-- random
-- test-hunit-util
+- base >= 4.7 && < 5
+- free
+- mtl
 
 library:
   source-dirs: src
-

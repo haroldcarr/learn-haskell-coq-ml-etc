@@ -10,14 +10,14 @@
 
 -- http://reasonablypolymorphic.com/dont-eff-it-up/
 
-module VEff where
+module V2_Eff where
 
 import           Control.Monad.Freer
 import           Control.Monad.Freer.State
 import           Control.Monad.Freer.Writer
 import           Prelude hiding             (log)
 import           Test.HUnit                 (Counts, Test (TestList), runTestTT)
-import qualified Test.HUnit.Util            as U (t, e)
+import qualified Test.HUnit.Util            as U (t)
 
 ------------------------------------------------------------------------------
 -- custom version
@@ -56,43 +56,32 @@ withdraw0 desired = do
     putCurrentBalance newBalance
     return $ Just (balance, desired, newBalance)
 
--- production interpreters
+-- IO interpretation
 
-runLogger :: Member IO r
-          => Eff (Logger ': r) a
+runBankIO :: Member IO r
+          => Eff (Bank ': r) a
           -> Eff r a
-runLogger = runNat logger2io
-  where
-    logger2io :: Logger x -> IO x
-    logger2io (Log s) = putStrLn s
-
-runBank :: Member IO r
-        => Eff (Bank ': r) a
-        -> Eff r a
-runBank = runNat bank2io
+runBankIO = runNat bank2io
   where
     bank2io :: Bank x -> IO x
     bank2io GetCurrentBalance            = fmap read (putStr "> " >> getLine)
     bank2io (PutCurrentBalance newValue) = print newValue
 
-doit :: Eff '[Bank, Logger, IO] a -> IO a
-doit = runM . runLogger . runBank
-
-wd :: Int -> IO (Maybe (Int,Int,Int))
-wd a = doit $ withdraw0 a
-
--- test interpreters
-
-ignoreLogger :: forall r a
-              . Eff (Logger ': r) a
-             -> Eff r a
-ignoreLogger = handleRelay pure bind
+runLoggerIO :: Member IO r
+            => Eff (Logger ': r) a
+            -> Eff r a
+runLoggerIO = runNat logger2io
   where
-    bind :: forall x
-          . Logger x
-         -> (x -> Eff r a)
-         -> Eff r a
-    bind (Log _) cont = cont ()
+    logger2io :: Logger x -> IO x
+    logger2io (Log s) = putStrLn s
+
+runBankAndLoggerIO :: Eff '[Bank, Logger, IO] a -> IO a
+runBankAndLoggerIO = runM . runLoggerIO . runBankIO
+
+withdrawIO :: Int -> IO (Maybe (Int,Int,Int))
+withdrawIO a = runBankAndLoggerIO $ withdraw0 a
+
+-- test interpretation
 
 testBank :: forall r a
           . Int
@@ -108,14 +97,25 @@ testBank balance = handleRelayS balance (const pure) bind
     bind s GetCurrentBalance      cont = cont s  s
     bind _ (PutCurrentBalance s') cont = cont s' ()
 
-doitTest :: Int -> Eff '[Bank, Logger] c -> c
-doitTest initialBalance = run . ignoreLogger . testBank initialBalance
+ignoreLogger :: forall r a
+              . Eff (Logger ': r) a
+             -> Eff r a
+ignoreLogger = handleRelay pure bind
+  where
+    bind :: forall x
+          . Logger x
+         -> (x -> Eff r a)
+         -> Eff r a
+    bind (Log _) cont = cont ()
 
-wdTest :: Int -> Int -> Maybe (Int, Int, Int)
-wdTest i w = doitTest i $ withdraw0 w
+runBankIgnoreLoggerTest :: Int -> Eff '[Bank, Logger] c -> c
+runBankIgnoreLoggerTest initialBalance = run . ignoreLogger . testBank initialBalance
 
-twd1 = U.t "twd1" (wdTest 100 15) (Just (100,15,85))
-twd2 = U.t "twd2" (wdTest   0 15) Nothing
+withdrawTest :: Int -> Int -> Maybe (Int, Int, Int)
+withdrawTest i w = runBankIgnoreLoggerTest i $ withdraw0 w
+
+twd1 = U.t "twd1" (withdrawTest 100 15) (Just (100,15,85))
+twd2 = U.t "twd2" (withdrawTest   0 15) Nothing
 
 ------------------------------------------------------------------------------
 -- replace Bank with State and Logger with Writer
@@ -130,7 +130,7 @@ withdraw desired = do
   if balance < desired then do
     tell ("not enough funds"::String)
     return Nothing
-   else do
+  else do
     let newBalance = balance - desired
     put newBalance
     return $ Just (balance, desired, newBalance)
@@ -143,7 +143,49 @@ td2 = U.t "td2" (d 100 15) ((Just (100,15,85),                ""), 85)
 td1 = U.t "td1" (d 15 100) ((Nothing         ,"not enough funds"), 15)
 
 ------------------------------------------------------------------------------
+-- interpreting effects in terms of one another.
+{-
+data Exc e a where
+  ThrowError :: e -> Exc e a
+
+makeFreer ''Exc
+
+accumThenThrow :: ( Eq e
+                  , Monoid e
+                  , Member (Exc e) r
+                  )
+                => Eff (Writer e ': r) a
+                -> Eff r a
+accumThenThrow prog = do
+  let (a, e) = pureWriter prog
+  unless (e == mempty) $ throwError e
+  return a
+
+-- non-trivial transformations.
+
+data SetOf s a where
+  SetAdd      :: s -> SetOf s ()
+  SetContains :: s -> SetOf s Bool
+
+makeFreer ''SetOf
+
+dedupWriter :: ( Member (SetOf  w) r
+               , Member (Writer w) r
+               )
+            => Eff r a
+            -> Eff r a
+dedupWriter = interpose pure bind
+  where
+    bind (Tell w) cont = do
+      alreadyTold <- setContains w
+      unless alreadyTold $ do
+        setAdd w
+        tell w
+      cont ()
+-}
+------------------------------------------------------------------------------
 
 test :: IO Counts
 test  =
   runTestTT $ TestList $ twd1 ++ twd2 ++ td1 ++ td2
+

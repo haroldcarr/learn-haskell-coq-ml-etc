@@ -1,0 +1,4 @@
+cradle:
+  cabal:
+    - path: "./src"
+      component: "lib:debasish-ghosh-a-language-and-its-interpretation"

@@ -2,13 +2,18 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TemplateHaskell            #-}
 
-module Lib where
+module V1_Mtl where
 
 -- http://reasonablypolymorphic.com/dont-eff-it-up/
 
+import           Control.Monad.Except
 import           Control.Monad.Identity
-import           Control.Monad.IO.Class
+--import           Control.Monad.IO.Class
 import           Control.Monad.Logger
+import           Control.Monad.RWS
+import           Control.Monad.Trans.Reader
+import           Control.Monad.Trans.State
+import           Control.Monad.Trans.Writer
 import           Data.IORef
 
 ------------------------------------------------------------------------------
@@ -18,10 +23,10 @@ data Mode
   = ForReal
   | Test (IORef Int)
 
-getCurrentBalanceMTL :: (MonadIO m, MonadLogger m) => m Int
+getCurrentBalanceMTL :: (MonadIO m{-, MonadLogger m-}) => m Int
 getCurrentBalanceMTL = return 10
 
-putCurrentBalanceMTL :: (MonadIO m, MonadLogger m) => Int -> m ()
+putCurrentBalanceMTL :: (MonadIO m{-, MonadLogger m-}) => Int -> m ()
 putCurrentBalanceMTL i = liftIO $ print i
 
 withdraw :: (MonadIO m, MonadLogger m)
@@ -64,7 +69,6 @@ withdrawMTL2 desired = do
 
 -- comes with a heavy costcomes with a cost
 -- need a carrier that works with MTL
-{-
 newtype IOBankT m a = IOBankT { runIOBankT :: IdentityT m a }
   deriving ( Functor
            , Applicative
@@ -77,4 +81,23 @@ newtype IOBankT m a = IOBankT { runIOBankT :: IdentityT m a }
            , MonadTrans
            , MonadWriter w
            )
--}
+
+-- which implements our monad...
+
+instance MonadIO m => MonadBank (IOBankT m) where
+  getCurrentBalance = getCurrentBalanceMTL
+  putCurrentBalance = putCurrentBalanceMTL
+
+-- then LOTs of boilerplate
+
+instance MonadBank m => MonadBank (ReaderT r m) where
+  getCurrentBalance = lift getCurrentBalance
+  putCurrentBalance = lift . putCurrentBalance
+
+instance (MonadBank m, Monoid w) => MonadBank (WriterT w m) where
+  getCurrentBalance = lift getCurrentBalance
+  putCurrentBalance = lift . putCurrentBalance
+
+instance MonadBank m => MonadBank (StateT s m) where
+  getCurrentBalance = lift getCurrentBalance
+  putCurrentBalance = lift . putCurrentBalance
