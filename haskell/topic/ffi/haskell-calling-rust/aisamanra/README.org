@@ -1,0 +1,21 @@
+#+begin_comment
+ (eepitch-shell)
+ (eepitch-kill)
+ (eepitch-shell)
+#+end_comment
+
+* origin of code
+
+https://github.com/aisamanra/rust-haskell-ffi
+
+* use =devenv=
+
+#+begin_src
+devenv shell
+
+make clean
+make build
+make run
+make clean
+#+end_src
+

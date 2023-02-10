@@ -1,0 +1,40 @@
+name:         haskell
+version:      0.0.1.0
+synopsis:     haskell
+description:  See README at <https://github.com/haskell/haskell
+author:       haskell
+github:       haskell/haskell
+category:     haskell
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wpartial-fields
+  - -Wredundant-constraints
+  - -fhide-source-paths
+
+extra-libraries:
+  - c_api
+
+dependencies:
+  - base >=4.11 && < 5
+
+library:
+  source-dirs: src
+
+_exe-ghc-options:        &exe-ghc-options
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+
+executables:
+  main:
+    source-dirs:         app
+    main:                Main.hs
+    ghc-options:         *exe-ghc-options
+    dependencies:
+      - haskell
+

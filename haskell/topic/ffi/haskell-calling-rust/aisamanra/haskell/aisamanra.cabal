@@ -1,0 +1,54 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.7.
+--
+-- see: https://github.com/sol/hpack
+
+name:           aisamanra
+version:        0.0.1.0
+synopsis:       aisamanra
+description:    See README at <https://github.com/aisamanra/aisamanra
+category:       aisamanra
+homepage:       https://github.com/aisamanra/aisamanra#readme
+bug-reports:    https://github.com/aisamanra/aisamanra/issues
+author:         aisamanra
+maintainer:     aisamanra
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/aisamanra/aisamanra
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_aisamanra
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths
+  extra-lib-dirs:
+      /tmp
+  extra-libraries:
+      fact
+      point
+  build-depends:
+      base >=4.11 && <5
+  default-language: Haskell2010
+
+executable main
+  main-is: Main.hs
+  other-modules:
+      Paths_aisamanra
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fhide-source-paths -threaded -rtsopts -with-rtsopts=-N
+  extra-lib-dirs:
+      /tmp
+  extra-libraries:
+      fact
+      point
+  build-depends:
+      aisamanra
+    , base >=4.11 && <5
+  default-language: Haskell2010

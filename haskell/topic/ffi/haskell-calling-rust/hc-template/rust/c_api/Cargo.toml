@@ -1,0 +1,36 @@
+[package]
+name = "c_api"
+version = "0.0.1"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "C API to examples"
+
+[lib]
+doctest = false
+path = "src/lib.rs"
+crate-type = [ "cdylib"]
+
+[dependencies]
+ark-serialize.workspace = true
+ark-ff.workspace = true
+ark-ec.workspace = true
+ark-std.workspace = true
+digest.workspace = true
+rayon = {workspace = true, optional = true}
+serde.workspace = true
+serde_with.workspace = true
+zeroize.workspace = true
+libc.workspace = true
+ark-bls12-381.workspace = true
+
+[dev-dependencies]
+blake2.workspace = true
+serde_json = "1.0"
+
+[features]
+default = [ "parallel" ]
+std = [ "ark-ff/std", "ark-ec/std", "ark-std/std", "ark-serialize/std", "serde/std"]
+print-trace = [ "ark-std/print-trace" ]
+parallel = [ "std", "ark-ff/parallel", "ark-ec/parallel", "ark-std/parallel", "rayon"]

@@ -1,0 +1,11 @@
+[package]
+name    = "point"
+version = "0.1.0"
+authors = []
+license = "Apache-2.0"
+
+[lib]
+path       = "src/lib.rs"
+crate-type = ["cdylib"]
+doctest    = false
+bench      = false

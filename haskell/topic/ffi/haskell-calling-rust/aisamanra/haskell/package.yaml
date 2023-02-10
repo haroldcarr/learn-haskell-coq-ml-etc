@@ -1,0 +1,44 @@
+name:         aisamanra
+version:      0.0.1.0
+synopsis:     aisamanra
+description:  See README at <https://github.com/aisamanra/aisamanra
+author:       aisamanra
+github:       aisamanra/aisamanra
+category:     aisamanra
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wpartial-fields
+  - -Wredundant-constraints
+  - -fhide-source-paths
+
+extra-libraries:
+  - fact
+  - point
+
+extra-lib-dirs:
+  - /tmp
+
+dependencies:
+  - base >=4.11 && < 5
+
+library:
+  source-dirs: src
+
+_exe-ghc-options:        &exe-ghc-options
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+
+executables:
+  main:
+    source-dirs:         app
+    main:                Main.hs
+    ghc-options:         *exe-ghc-options
+    dependencies:
+      - aisamanra
+

@@ -1,0 +1,58 @@
+#+begin_comment
+ (eepitch-shell)
+ (eepitch-kill)
+ (eepitch-shell)
+#+end_comment
+
+* devenv
+
+** aisamanra
+
+Example of building a local Rust library then using it in Haskell.
+
+See: ./aisamanra/README.org
+
+** rure
+
+Example of getting Rust library via Nix then using it in Haskell.
+
+#+begin_src
+rm -rf ~/z-TMP-DO-NOT-COPY/rure
+git clone git@github.com:vmchale/rure.git ~/z-TMP-DO-NOT-COPY/rure
+
+cat << 'EOF' > ~/z-TMP-DO-NOT-COPY/rure/devenv.nix
+{ pkgs, ... }:
+
+{
+  packages = [ pkgs.ghc
+               pkgs.rure
+             ];
+  languages.haskell.enable = true;
+  languages.nix.enable     = true;
+}
+EOF
+
+pushd ~/z-TMP-DO-NOT-COPY/rure
+devenv shell
+cabal clean
+cabal build
+
+find /nix/store/ -name "*librure*" -print
+# /nix/store/jpxlapyzhsmf4zgv3mdzyrhgfiywgbwm-rure-0.2.2/lib/librure.a
+# /nix/store/jpxlapyzhsmf4zgv3mdzyrhgfiywgbwm-rure-0.2.2/lib/librure.dylib
+# cabal test -v --extra-lib-dirs /nix/store/jpxlapyzhsmf4zgv3mdzyrhgfiywgbwm-rure-0.2.2/lib/
+
+# HACK
+sudo cp /nix/store/jpxlapyzhsmf4zgv3mdzyrhgfiywgbwm-rure-0.2.2/lib/librure.dylib /usr/local/lib/
+sudo chmod 0664 /usr/local/lib/librure.dylib
+
+cabal test
+cabal clean
+
+sudo rm         /usr/local/lib/librure.dylib
+
+popd
+#+end_src
+
+
+
