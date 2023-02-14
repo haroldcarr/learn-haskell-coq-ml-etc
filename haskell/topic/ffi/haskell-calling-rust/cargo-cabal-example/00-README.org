@@ -1,0 +1,71 @@
+#+begin_comment
+ (eepitch-shell)
+ (eepitch-kill)
+ (eepitch-shell)
+#+end_comment
+
+* RUST
+
+https://github.com/yvan-sraka/cargo-cabal
+
+#+begin_src
+cargo new --lib greetings
+pushd greetings
+tree
+
+cargo add hs-bindgen --features full
+
+rm src/lib.rs
+
+cat << 'EOF' > src/lib.rs
+use hs_bindgen::*;
+
+#[hs_bindgen]
+fn hello(name: &str) {
+    println!("Hello, {name}!");
+}
+EOF
+
+cargo install cargo-cabal
+export PATH=~/.cargo/bin:${PATH}
+# OR
+nix run github:yvan-sraka/cargo-cabal -- cabal init
+
+echo -e '\n[lib]\ncrate-type = ["staticlib"]' >> Cargo.toml
+
+cargo cabal init
+
+tree
+
+cargo build
+
+popd
+#+end_src
+
+* HASKELL
+
+#+begin_src
+cabal init --non-interactive --minimal test
+tree test
+
+cat << 'EOF' > cabal.project
+packages: ./greetings ./test
+EOF
+
+# edit ./test/test.cabal
+# add  executable / build-depends:    base, greetings
+
+rm ./test/app/Main.hs
+
+cat << 'EOF' > ./test/app/Main.hs
+module Main where
+
+import Foreign.C.String
+import Greetings
+
+main :: IO ()
+main = withCString "Rust 🦀" hello
+EOF
+
+cabal run test
+#+end_src
