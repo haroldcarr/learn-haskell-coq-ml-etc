@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:htmx"
+
+    - path: "app/Main.hs"
+      component: "htmx:exe:main"
+
+    - path: "app/Paths_htmx.hs"
+      component: "htmx:exe:main"

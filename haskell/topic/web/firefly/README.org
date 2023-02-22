@@ -1,0 +1,24 @@
+#+begin_comment
+ (eepitch-shell)
+ (eepitch-kill)
+ (eepitch-shell)
+#+end_comment
+
+#+begin_src
+make clean
+make build
+make run
+#+end_src
+
+ (eepitch-shell2)
+
+#+begin_src
+curl 127.0.0.1:3000
+curl 127.0.0.1:3000/hello
+curl 127.0.0.1:3000/hello?name=Mingus
+
+curl 127.0.0.1:3000/users
+curl 127.0.0.1:3000/users?username=steve
+
+curl 127.0.0.1:3000/goodbye/WORLD
+#+end_src

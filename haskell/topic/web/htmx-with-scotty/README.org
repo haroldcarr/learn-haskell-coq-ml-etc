@@ -1,0 +1,49 @@
+#+begin_comment
+ (eepitch-shell)
+ (eepitch-kill)
+ (eepitch-shell)
+#+end_comment
+
+#+begin_src
+make clean
+make build
+make run
+#+end_src
+
+ (eepitch-shell2)
+
+#+begin_src
+curl 127.0.0.1:3000/
+curl 127.0.0.1:3000/foo
+curl 127.0.0.1:3000/foo?fooparam=xxx
+
+curl 127.0.0.1:3000/raise
+
+curl 127.0.0.1:3000/redirect-custom
+curl 127.0.0.1:3000/redirect
+
+curl 127.0.0.1:3000/rescue
+
+curl 127.0.0.1:3000/foo/:bar/required
+
+curl 127.0.0.1:3000/404
+
+curl 127.0.0.1:3000/random
+
+curl 127.0.0.1:3000/ints/4
+
+curl 127.0.0.1:3000/setbody
+
+curl -XPOST 127.0.0.1:3000/readbody
+
+curl 127.0.0.1:3000/header
+
+curl -i http://127.0.0.1:3000 -H 'Origin: 127.0.0.1' -v
+curl -i http://127.0.0.1:3000/foo?fooparam=WORLD -H 'Origin: 127.0.0.1' -v
+#+end_src
+
+#+begin_src
+java -cp `hcUsrLocalHcDir`/java/apache/tcpmon-1.0-bin/build/tcpmon-1.0.jar  \
+         org.apache.ws.commons.tcpmon.TCPMon \
+         3000 127.0.0.1 3001 &
+#+end_src
