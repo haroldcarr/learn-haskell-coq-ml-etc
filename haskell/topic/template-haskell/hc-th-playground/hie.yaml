@@ -1,0 +1,13 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:th-playground"
+
+    - path: "app/Main.hs"
+      component: "th-playground:exe:main"
+
+    - path: "app/Paths_th_playground.hs"
+      component: "th-playground:exe:main"
+
+    - path: "test"
+      component: "th-playground:test:test"
