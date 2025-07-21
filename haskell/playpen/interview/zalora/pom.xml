@@ -23,7 +23,7 @@ Last Modified : 2014 Jan 03 (Fri) 17:57:03 by Harold Carr.
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-fuseki</artifactId>
             <type>pom</type>
-            <version>1.0.0</version>
+            <version>5.5.0</version>
         </dependency>
 
         <dependency>
